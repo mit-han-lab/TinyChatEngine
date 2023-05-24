@@ -12,7 +12,6 @@ We currently support int8 OPT models on Intel CPU and plan to support more model
 ``` bash
 cd transformer
 ./download.sh # This will download 125m, 1.3B, 6.7B OPT models
-unzip models.zip
 make -j
 ./demo OPT6.7B
 Model: OPT6.7B selected
