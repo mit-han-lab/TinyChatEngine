@@ -19,10 +19,13 @@
 #include "ops/W8A8BFP32OFP32Linear.h"
 #include "ops/arg_max.h"
 #include "ops/linear.h"
+#include "ops/RotaryPosEmb.h"
+#include "ops/BMM_F32T.h"
 
 void softmax(const Matrix3D<float> &input, Matrix3D<float> &output, int dim);
 void batch_Add(const Matrix3D<float> &input, const Matrix3D<float> &input2, Matrix3D<float> &output);
 template <typename T>
 void linear(Matrix3D<T> &a, Matrix3D<T> &b, Matrix3D<T> &c);
+
 
 #endif  // OPERATORS_H
