@@ -403,8 +403,7 @@ std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
         auto last_n_repeat = std::min(std::min((int)last_n_tokens.size(), repeat_last_n), n_ctx);
         OPT_sample_repetition_penalty(&candidates_p, last_n_tokens.data() + last_n_tokens.size() - last_n_repeat,
                                       last_n_repeat, repeat_penalty);
-        OPT_sample_frequency_and_presence_penalties(&candidates_p,
-                                                    last_n_tokens.data() + last_n_tokens.size() - last_n_repeat,
+        OPT_sample_frequency_and_presence_penalties(&candidates_p, last_n_tokens.data() + last_n_tokens.size() - last_n_repeat,
                                                     last_n_repeat, alpha_frequency, alpha_presence);
 
         int id = 0;

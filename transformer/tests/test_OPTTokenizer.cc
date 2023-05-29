@@ -30,9 +30,9 @@ int main() {
         }
     }
     if (is_equal)
-        std::cout << "-------- Test of Encoder::encode: Passed! -------- " << std::endl;
+        std::cout << "-------- Test of Encoder::encode: Passed! --------" << std::endl;
     else
-        std::cout << "-------- Test of Encoder::encode: Failed! -------- " << std::endl;
+        std::cout << "-------- Test of Encoder::encode: Failed! --------" << std::endl;
 
     std::string decoded = encoder.decode(encoded);
     std::string decoded_answer =
@@ -41,9 +41,9 @@ int main() {
     is_equal = true;
     if (decoded != decoded_answer) is_equal = false;
     if (is_equal)
-        std::cout << "-------- Test of Encoder::decode: Passed! -------- " << std::endl;
+        std::cout << "-------- Test of Encoder::decode: Passed! --------" << std::endl;
     else
-        std::cout << "-------- Test of Encoder::decode: Failed! -------- " << std::endl;
+        std::cout << "-------- Test of Encoder::decode: Failed! --------" << std::endl;
 
     std::cout << "-------- End of test_OPTTokenizer --------" << std::endl;
 };

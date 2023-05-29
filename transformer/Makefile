@@ -3,7 +3,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -mavx2 -pthread -O3
 
 # Executable and source files
-TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM profile_OPTForCausalLM test_OPTTokenizer test_OPTGenerate demo
+TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM profile_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate demo
 
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
@@ -41,6 +41,9 @@ profile_OPTForCausalLM:
 
 test_OPTTokenizer:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTTokenizer tests/test_OPTTokenizer.cc $(SRC)
+
+test_LLaMATokenizer:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_LLaMATokenizer tests/test_LLaMATokenizer.cc $(SRC)
 
 test_OPTGenerate:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTGenerate tests/test_OPTGenerate.cc $(SRC)
