@@ -61,7 +61,7 @@ void test_OPTForCausalLM() {
     read_to_array("assets/tests/OPT_125m/causallm/1st_logits.bin", logits.m_data, logits.length());
     // print_first_k_elelment("O", output_1st.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
-    bool sucess = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(), 0.024);
+    bool success = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(), 0.024);
 
     Matrix3D<int8_t> temp_key_value(mem_buf.get_int8buffer(b * sqlen * embed_dim), num_heads, sqlen,
                                     embed_dim / num_heads);
@@ -79,10 +79,10 @@ void test_OPTForCausalLM() {
     read_to_array("assets/tests/OPT_125m/causallm/2nd_logits.bin", logits.m_data, logits.length());
     // print_first_k_elelment("O", output_2nd.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
-    sucess &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 0.028);
+    success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 0.028);
 
     Profiler::getInstance().report();
-    if (!sucess)
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -121,7 +121,7 @@ void test_OPTForCausalLM_1_3B() {
 
     OPTForCausalLM model = OPTForCausalLM("models/OPT_1.3B", get_opt_model_config(OPT_1_3B));
 
-    bool sucess = true;
+    bool success = true;
 
     struct OPTForCausalLM_output output_1st = model.forward(input_1st);
 
@@ -129,8 +129,8 @@ void test_OPTForCausalLM_1_3B() {
     read_to_array("assets/tests/OPT_1.3B/causallm/1st_logits.bin", logits.m_data, logits.length());
     // print_first_k_elelment("O", output_1st.logits.m_data, 70, 50);
     // print_first_k_elelment("G", logits.m_data, 70, 50);
-    sucess = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(),
-                             0.41);  // large error expected, see comments above
+    success = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(),
+                              0.41);  // large error expected, see comments above
 
     Matrix3D<int> arg_max(mem_buf.get_intbuffer(sqlen), 1, 1, sqlen);
     arg_max_dim2(output_1st.logits, arg_max);
@@ -143,7 +143,7 @@ void test_OPTForCausalLM_1_3B() {
         if (arg_maxGT.m_data[i] == arg_max.m_data[i]) total_hit++;
     float hit_rate = (float)total_hit / (float)sqlen;
     std::cout << "sqlen:" << sqlen << ", hits:" << total_hit << ", hit rate:" << hit_rate << std::endl;
-    sucess &= hit_rate > 0.88;
+    success &= hit_rate > 0.88;
 
     Profiler::getInstance().report();
     Profiler::getInstance().reset();
@@ -159,7 +159,7 @@ void test_OPTForCausalLM_1_3B() {
     read_to_array("assets/tests/OPT_1.3B/causallm/2nd_logits.bin", logits.m_data, logits.length());
     // print_first_k_elelment("O", output_2nd.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
-    sucess &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 1.67);
+    success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 1.67);
 
     Matrix3D<int> arg_max_2nd(mem_buf.get_intbuffer(sqlen), 1, 1, 1);
     arg_max_dim2(output_2nd.logits, arg_max_2nd);
@@ -174,10 +174,10 @@ void test_OPTForCausalLM_1_3B() {
     // arg_maxGT_2nd.m_data[0] << std::endl;
     hit_rate = (float)total_hit / (float)1;
     std::cout << "sqlen:" << 1 << ", hits:" << total_hit << ", hit rate:" << hit_rate << std::endl;
-    sucess &= hit_rate > 0.99;
+    success &= hit_rate > 0.99;
 
     Profiler::getInstance().report();
-    if (!sucess)
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -198,7 +198,7 @@ void test_OPTForCausalLM_6_7B() {
     // print_first_k_elelment("I", input_ids.m_data, 20);
     OPTForCausalLM model = OPTForCausalLM("models/OPT_6.7B", get_opt_model_config(OPT_6_7B));
 
-    bool sucess = true;
+    bool success = true;
 
     struct OPTForCausalLM_output output_1st = model.forward(input_1st);
 
@@ -206,7 +206,7 @@ void test_OPTForCausalLM_6_7B() {
     read_to_array("assets/tests/OPT_6.7B/causallm/1st_logits.bin", logits.m_data, logits.length());
     // print_first_k_elelment("O", output_1st.logits.m_data, 70, 50);
     // print_first_k_elelment("G", logits.m_data, 70, 50);
-    // sucess = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(),
+    // success = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(),
     //                          0.507);  // large error expected, see comments above
 
     Matrix3D<int> arg_max(mem_buf.get_intbuffer(sqlen), 1, 1, sqlen);
@@ -225,7 +225,7 @@ void test_OPTForCausalLM_6_7B() {
     // std::cout << std::endl;
 
     std::cout << "sqlen:" << sqlen << ", hits:" << total_hit << ", hit rate:" << hit_rate << std::endl;
-    sucess &= hit_rate > 0.88;
+    success &= hit_rate > 0.88;
 
     Profiler::getInstance().report();
     Profiler::getInstance().reset();
@@ -241,7 +241,7 @@ void test_OPTForCausalLM_6_7B() {
     read_to_array("assets/tests/OPT_6.7B/causallm/2nd_logits.bin", logits.m_data, logits.length());
     // print_first_k_elelment("O", output_2nd.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
-    sucess &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 0.184);
+    success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 0.184);
 
     Matrix3D<int> arg_max_2nd(mem_buf.get_intbuffer(sqlen), 1, 1, 1);
     arg_max_dim2(output_2nd.logits, arg_max_2nd);
@@ -256,10 +256,10 @@ void test_OPTForCausalLM_6_7B() {
     // arg_maxGT_2nd.m_data[0] << std::endl;
     hit_rate = (float)total_hit / (float)1;
     std::cout << "sqlen:" << 1 << ", hits:" << total_hit << ", hit rate:" << hit_rate << std::endl;
-    sucess &= hit_rate > 0.99;
+    success &= hit_rate > 0.99;
 
     Profiler::getInstance().report();
-    if (!sucess)
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;

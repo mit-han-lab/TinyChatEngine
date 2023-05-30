@@ -43,6 +43,7 @@ class Fp32llamaDecoderLayer {
 
     int embed_dim, num_attention_heads, hidden_dim, layer_idx;
     LlamaRMSNorm input_layernorm, post_attention_layernorm;  // from torch_int.nn
+    Linear_FP gate_proj, down_proj, up_proj;
     Fp32llamaAttention attn;
     std::string profile_name = "Fp32llamaDecoderLayer";
 };

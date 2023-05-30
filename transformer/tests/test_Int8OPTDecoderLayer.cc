@@ -121,12 +121,12 @@ void test_DecoderLayer_generate() {
     int8_t *value_statesGT = mem_buf.get_int8buffer(output.past_key_value.second.length());
     read_to_array("assets/tests/OPT_125m/present_value.bin", value_statesGT, output.past_key_value.second.length());
 
-    bool sucess = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
-    sucess &=
+    bool success = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
+    success &=
         check_two_exact_equal(output.past_key_value.first.m_data, key_statesGT, output.past_key_value.first.length());
-    sucess &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
-                                    output.past_key_value.second.length());
-    if (!sucess)
+    success &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
+                                     output.past_key_value.second.length());
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -215,12 +215,12 @@ void test_DecoderLayer_generate_1_3B() {
     int8_t *value_statesGT = mem_buf.get_int8buffer(output.past_key_value.second.length());
     read_to_array("assets/tests/OPT_1.3B/present_value.bin", value_statesGT, output.past_key_value.second.length());
 
-    bool sucess = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
-    sucess &=
+    bool success = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
+    success &=
         check_two_exact_equal(output.past_key_value.first.m_data, key_statesGT, output.past_key_value.first.length());
-    sucess &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
-                                    output.past_key_value.second.length());
-    if (!sucess)
+    success &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
+                                     output.past_key_value.second.length());
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -258,12 +258,12 @@ void test_DecoderLayer_generate_cache() {
     read_to_array("assets/tests/OPT_125m/test_present_value.bin", value_statesGT,
                   output.past_key_value.second.length());
 
-    bool sucess = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
-    sucess &=
+    bool success = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
+    success &=
         check_two_exact_equal(output.past_key_value.first.m_data, key_statesGT, output.past_key_value.first.length());
-    sucess &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
-                                    output.past_key_value.second.length());
-    if (!sucess)
+    success &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
+                                     output.past_key_value.second.length());
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -299,12 +299,12 @@ void test_DecoderLayer_generate_cache_1_3B() {
     read_to_array("assets/tests/OPT_1.3B/test_present_value.bin", value_statesGT,
                   output.past_key_value.second.length());
 
-    bool sucess = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
-    sucess &=
+    bool success = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim);
+    success &=
         check_two_exact_equal(output.past_key_value.first.m_data, key_statesGT, output.past_key_value.first.length());
-    sucess &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
-                                    output.past_key_value.second.length());
-    if (!sucess)
+    success &= check_two_exact_equal(output.past_key_value.second.m_data, value_statesGT,
+                                     output.past_key_value.second.length());
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -394,14 +394,14 @@ void test_DecoderLayer() {
     read_to_array("assets/tests/OPT_125m/DecoderLayer_present_value.bin", value_statesGT,
                   output.past_key_value.second.length());
 
-    bool sucess = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim, 4e-6);
-    sucess &=
+    bool success = check_two_equal(residualGT.m_data, output.hidden_states.m_data, b * sqlen * embed_dim, 4e-6);
+    success &=
         check_two_equal(output.past_key_value.first.m_data, key_statesGT, output.past_key_value.first.length(), 6e-5);
-    sucess &= check_two_equal(output.past_key_value.second.m_data, value_statesGT,
-                              output.past_key_value.second.length(), 6e-5);
+    success &= check_two_equal(output.past_key_value.second.m_data, value_statesGT,
+                               output.past_key_value.second.length(), 6e-5);
     // print_first_k_elelment("output.hidden_states.m_data", output.hidden_states.m_data, 10);
     // print_first_k_elelment("residualGT.m_data", residualGT.m_data, 10);
-    if (!sucess)
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;

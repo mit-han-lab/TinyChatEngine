@@ -4,6 +4,27 @@ import os, math
 import struct
 
 
+def export_LlamaRMSNorm(op, prefix):
+    outpath = prefix
+    os.makedirs(outpath, exist_ok=True)
+    with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
+        f.write(op.weight.cpu().float().numpy().tobytes())
+
+
+def export_llama_layer(layer, prefix):
+    outpath = prefix
+    os.makedirs(outpath, exist_ok=True)
+    export_attention_params(layer.self_attn, os.path.join(outpath, "self_attn"))
+    export_LlamaRMSNorm(layer.input_layernorm, os.path.join(outpath, "input_layernorm"))
+    export_LlamaRMSNorm(
+        layer.post_attention_layernorm,
+        os.path.join(outpath, "post_attention_layernorm"),
+    )
+    export_linearfp(layer.mlp.gate_proj, os.path.join(outpath, "gate_proj"))
+    export_linearfp(layer.mlp.down_proj, os.path.join(outpath, "down_proj"))
+    export_linearfp(layer.mlp.up_proj, os.path.join(outpath, "up_proj"))
+
+
 def export_linearfp(op, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
@@ -53,6 +74,7 @@ def text_generation(tokenizer, model):
     )
     print("Generating...")
     # export_attention_params(model.model.layers[0].self_attn, "transformer/assets/llama/tests/atten/first_attn")
+    # export_llama_layer(model.model.layers[0], "transformer/assets/llama/tests/layer0")
     generation_output = model.generate(
         input_ids=input_ids,
         generation_config=generation_config,

@@ -68,8 +68,8 @@ void test_LayerNormQ() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -103,8 +103,8 @@ void test_LayerNormQ_len512() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -138,8 +138,8 @@ void test_LayerNormQ_1_3B() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -171,8 +171,8 @@ void test_LayerNorm() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -204,8 +204,8 @@ void test_LayerNorm_1_3B_len512() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_equal(output_arr, GToutput_arr, b * m * n, 8e-6);
-    if (!sucess)
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n, 8e-6);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -238,8 +238,8 @@ void test_W8A8B8O8LinearReLU() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, m * n);
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -272,8 +272,8 @@ void test_W8A8B8O8LinearReLU_1_3B() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, m * n);
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -305,8 +305,8 @@ void test_W8A8BFP32OFP32Linear() {
     load_W8A8BFP32OFP32Linear_params(test_op, "models/OPT_125m/decoder/layer0/self_attn/out_proj/");
     test_op.forward(input, output);
 
-    bool sucess = check_two_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -338,8 +338,8 @@ void test_W8A8BFP32OFP32Linear_1_3B() {
     load_W8A8BFP32OFP32Linear_params(test_op, "models/OPT_1.3B/decoder/layer0/self_attn/out_proj/");
     test_op.forward(input, output);
 
-    bool sucess = check_two_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -374,8 +374,8 @@ void test_W8A8B8O8Linear() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -407,8 +407,8 @@ void test_W8A8B8O8Linear_1_3B() {
 
     test_op.forward(input, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -438,9 +438,9 @@ void test_BMM_S8T_S8N_F32T() {
     auto test_op = BMM_S8T_S8N_F32T(op_params);
     test_op.forward(input, weight, output);
 
-    bool sucess = check_two_equal(output_arr, GToutput_arr, b * m * n);
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
 
-    if (!sucess)
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -470,9 +470,9 @@ void test_BMM_S8T_S8N_F32T_1_3B() {
     load_BMM_S8T_S8N_F32T(test_op, "models/OPT_1.3B/decoder/layer0/self_attn/qk_bmm/");
     test_op.forward(input, weight, output);
 
-    bool sucess = check_two_equal(output_arr, GToutput_arr, GToutput.length());
+    bool success = check_two_equal(output_arr, GToutput_arr, GToutput.length());
 
-    if (!sucess)
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -502,8 +502,8 @@ void test_BMM_S8T_S8N_S8T() {
     auto test_op = BMM_S8T_S8N_S8T(op_params);
     test_op.forward(input, weight, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, GToutput.length());
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, GToutput.length());
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -533,8 +533,8 @@ void test_BMM_S8T_S8N_S8T_1_3B() {
     auto test_op = BMM_S8T_S8N_S8T(op_params);
     test_op.forward(input, weight, output);
 
-    bool sucess = check_two_exact_equal(output_arr, GToutput_arr, GToutput.length());
-    if (!sucess)
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, GToutput.length());
+    if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
