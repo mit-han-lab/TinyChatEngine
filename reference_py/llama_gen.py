@@ -1,7 +1,9 @@
-import torch
-from transformers import LlamaForCausalLM, LlamaTokenizer, GenerationConfig
-import os, math
+import math
+import os
 import struct
+
+import torch
+from transformers import GenerationConfig, LlamaForCausalLM, LlamaTokenizer
 
 
 def export_LlamaRMSNorm(op, prefix):
@@ -57,6 +59,7 @@ def export_attention_params(attn, prefix: str):
     export_linearfp(attn.o_proj, os.path.join(outpath, "o_proj"))
     qk_bmm_alpha = 1 / math.sqrt(attn.head_dim)
     export_BMM_F32T(qk_bmm_alpha, os.path.join(outpath, "qk_bmm"))
+    export_rotaryEmbedding(attn.rotary_emb, os.path.join(outpath, "rotary_emb"))
 
 
 @torch.no_grad()
@@ -74,7 +77,7 @@ def text_generation(tokenizer, model):
     )
     print("Generating...")
     # export_attention_params(model.model.layers[0].self_attn, "transformer/assets/llama/tests/atten/first_attn")
-    # export_llama_layer(model.model.layers[0], "transformer/assets/llama/tests/layer0")
+    export_llama_layer(model.model.layers[0], "transformer/assets/llama/tests/layer0")
     generation_output = model.generate(
         input_ids=input_ids,
         generation_config=generation_config,

@@ -1,9 +1,9 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -mavx2 -pthread -g -O0
+CXXFLAGS = -std=c++17 -mavx2 -pthread -g
 
 # Executable and source files
-TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM profile_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate demo test_Fp32llamaAttention
+TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM profile_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate demo test_Fp32llamaAttention test_Fp32llamaDecoderLayer
 
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
@@ -50,6 +50,9 @@ test_OPTGenerate:
 
 test_Fp32llamaAttention:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaAttention tests/test_Fp32llamaAttention.cc $(SRC)
+
+test_Fp32llamaDecoderLayer:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoderLayer tests/test_Fp32llamaDecoderLayer.cc $(SRC)
 
 demo:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC)

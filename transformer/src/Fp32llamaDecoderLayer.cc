@@ -8,7 +8,6 @@ static float *final_layer_norm_arr;
 static float *gate_proj_arr;
 static float *up_proj_arr;
 static float *down_proj_arr;
-static float *silu_arr;
 static float *temp;
 static float *hidden_states_arr;
 
@@ -23,11 +22,12 @@ void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
     PROFILE_END("Fp32llamaDecoderLayer::add");
 }
 
-void MulSiLu(Matrix3D<float> a, Matrix3D<float> b, Matrix3D<float> out) {
+void SiLuMul(Matrix3D<float> a, Matrix3D<float> b) {
     PROFILE_START("Fp32llamaDecoderLayer::MulSiLu");
     for (int i = 0; i < a.length(); i++) {
-        float value = a.m_data[i] * b.m_data[i];
-        out.m_data[i] = 1.0 / (1.0 + exp(-1 * value));
+        float v = a.m_data[i];
+        float silu_v = v * (1.0 / (1.0 + exp(-1 * v)));
+        a.m_data[i] = silu_v * b.m_data[i];
     }
     PROFILE_END("Fp32llamaDecoderLayer::MulSiLu");
 }
@@ -37,6 +37,7 @@ struct Fp32llamaDecoderLayer_output Fp32llamaDecoderLayer::forward(const struct 
     Matrix3D<float> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                   input.hidden_states.m_dim_z);
     this->input_layernorm.forward(input.hidden_states, hidden_states);
+    // printf("input_layernorm.sum: %f\n", hidden_states.sum());
     // print_first_k_elelment("hidden_states", hidden_states.m_data, 20);
 
     struct Fp32llamaAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
@@ -44,18 +45,20 @@ struct Fp32llamaDecoderLayer_output Fp32llamaDecoderLayer::forward(const struct 
     struct Fp32llamaAttention_output attn_output = this->attn.forward(attn_param);
     // print_first_k_elelment("attn_output.attn_output", attn_output.attn_output.m_data, 20);
     // read_to_array("assets/tests/OPT_125m/Fp32llamaAttention_attn_output_len512.bin", attn_output.attn_output.m_data,
-    // attn_output.attn_output.length());
+    // printf("attn_output.sum: %f\n", attn_output.attn_output.sum());
 
     // opt.py: residual.add_(hidden_states.to(residual.dtype))
     Matrix3D<float> residual_add(hidden_states_float_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                  input.hidden_states.m_dim_z);
     add(input.hidden_states, attn_output.attn_output, residual_add);
+    // printf("residual_add.sum: %f\n", residual_add.sum());
     // print_first_k_elelment("residual_add", residual_add.m_data, 20);
 
     // opt.py: hidden_states = self.final_layer_norm(residual)
     Matrix3D<float> post_attention_layernorm(final_layer_norm_arr, input.hidden_states.m_dim_x,
                                              input.hidden_states.m_dim_y, input.hidden_states.m_dim_z);
     this->post_attention_layernorm.forward(residual_add, post_attention_layernorm);
+    // printf("post_attention_layernorm.sum: %f\n", post_attention_layernorm.sum());
     // read_to_array("assets/tests/OPT_1.3B/layer23_final_layer_norm.bin", final_layer_norm.m_data,
     // final_layer_norm.length()); print_first_k_elelment("final_layer_norm", final_layer_norm.m_data, 20);
 
@@ -67,22 +70,23 @@ struct Fp32llamaDecoderLayer_output Fp32llamaDecoderLayer::forward(const struct 
     // this->fc1.x = final_layer_norm;
     // this->fc1.output = fc1_out;
     this->gate_proj.forward(post_attention_layernorm, gate_proj);
-    // print_first_k_elelment("fc1_out", fc1_out.m_data, 20);
+    // printf("gate_proj.sum: %f, weight: %f\n", gate_proj.sum(), this->gate_proj.weight.sum());
 
     // opt.py: hidden_states = self.fc2(hidden_states)
     Matrix3D<float> up_proj(up_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
     this->up_proj.forward(post_attention_layernorm, up_proj);
+    // printf("up_proj.sum: %f, weight: %f\n", up_proj.sum(), this->up_proj.weight.sum());
 
-    Matrix3D<float> silu(silu_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
-    MulSiLu(gate_proj, up_proj, silu);
+    SiLuMul(gate_proj, up_proj);
 
     Matrix3D<float> down_proj(down_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->embed_dim);
-    this->down_proj.forward(silu, down_proj);
-    // read_to_array("assets/tests/OPT_1.3B/fc2_out.bin", fc2_out.m_data, fc2_out.length());
-    // print_first_k_elelment("fc2_out", fc2_out.m_data, 20);
+    this->down_proj.forward(gate_proj, down_proj);
+    // printf("down_proj.sum: %f, weight: %f\n", down_proj.sum(), this->down_proj.weight.sum());
+    // print_first_k_elelment("down_proj", down_proj.m_data, 20);
 
     // opt.py: residual.add_(hidden_states.to(residual.dtype))
     add(residual_add, down_proj, residual_add);
+    // printf("residual_add: %f\n", residual_add.sum());
     // print_first_k_elelment("residual_add", residual_add.m_data, 20);
 
     struct Fp32llamaDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped,
@@ -97,7 +101,6 @@ Fp32llamaDecoderLayer::Fp32llamaDecoderLayer(std::string param_path, const struc
         allocate_aligned_memory(final_layer_norm_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         allocate_aligned_memory(gate_proj_arr, config.max_sqlen * config.hidden_dim * sizeof(float));
         allocate_aligned_memory(up_proj_arr, config.max_sqlen * config.hidden_dim * sizeof(float));
-        allocate_aligned_memory(silu_arr, config.max_sqlen * config.hidden_dim * sizeof(float));
         allocate_aligned_memory(down_proj_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         allocate_aligned_memory(hidden_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         Fp32llamaAttention::initialized_memory(config);
@@ -106,7 +109,7 @@ Fp32llamaDecoderLayer::Fp32llamaDecoderLayer(std::string param_path, const struc
     float *input_layernorm_weight_ptr;
     allocate_aligned_memory(input_layernorm_weight_ptr, config.embed_dim * sizeof(float));
     Matrix3D<float> input_layernorm_weight(input_layernorm_weight_ptr, 1, 1, config.embed_dim);
-    input_layernorm_weight.load((param_path + "/input_layernorm_weight/weight.bin").c_str());
+    input_layernorm_weight.load((param_path + "/input_layernorm/weight.bin").c_str());
     this->input_layernorm = LlamaRMSNorm(input_layernorm_weight);
 
     float *post_attention_layernorm_ptr;
@@ -127,9 +130,9 @@ Fp32llamaDecoderLayer::Fp32llamaDecoderLayer(std::string param_path, const struc
     allocate_aligned_memory(down_proj_weight, config.hidden_dim * config.embed_dim * sizeof(float));
     allocate_aligned_memory(up_proj_weight, config.embed_dim * config.hidden_dim * sizeof(float));
     this->gate_proj = Linear_FP(Matrix3D<float>(gate_proj_weight, 1, config.hidden_dim, config.embed_dim),
-                                (param_path + "/gate_proj"));
+                                (param_path + "/gate_proj/weight.bin"));
     this->down_proj = Linear_FP(Matrix3D<float>(down_proj_weight, 1, config.embed_dim, config.hidden_dim),
-                                (param_path + "/down_proj"));
-    this->up_proj =
-        Linear_FP(Matrix3D<float>(up_proj_weight, 1, config.hidden_dim, config.embed_dim), (param_path + "/up_proj"));
+                                (param_path + "/down_proj/weight.bin"));
+    this->up_proj = Linear_FP(Matrix3D<float>(up_proj_weight, 1, config.hidden_dim, config.embed_dim),
+                              (param_path + "/up_proj/weight.bin"));
 }
