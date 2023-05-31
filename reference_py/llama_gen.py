@@ -6,6 +6,23 @@ import torch
 from transformers import GenerationConfig, LlamaForCausalLM, LlamaTokenizer
 
 
+def export_embed_tokens(embed_tokens, prefix):
+    outpath = prefix
+    os.makedirs(outpath, exist_ok=True)
+    with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
+        f.write(embed_tokens.weight.cpu().float().numpy().tobytes())
+
+
+def export_llama_model(model, prefix):
+    outpath = prefix
+    os.makedirs(outpath, exist_ok=True)
+
+    export_embed_tokens(model.embed_tokens, os.path.join(outpath, "embed_tokens"))
+    export_LlamaRMSNorm(model.norm, os.path.join(outpath, "norm"))
+    for idx in range(len(model.layers)):
+        export_llama_layer(model.layers[idx], os.path.join(outpath, f"layer{idx}"))
+
+
 def export_LlamaRMSNorm(op, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
@@ -77,7 +94,8 @@ def text_generation(tokenizer, model):
     )
     print("Generating...")
     # export_attention_params(model.model.layers[0].self_attn, "transformer/assets/llama/tests/atten/first_attn")
-    export_llama_layer(model.model.layers[0], "transformer/assets/llama/tests/layer0")
+    # export_llama_layer(model.model.layers[0], "transformer/assets/llama/tests/layer0")
+    # export_llama_model(model.model, "transformer/assets/llama/tests/decoder")
     generation_output = model.generate(
         input_ids=input_ids,
         generation_config=generation_config,

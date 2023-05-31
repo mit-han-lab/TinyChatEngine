@@ -37,7 +37,7 @@ struct Fp32llamaDecoderLayer_output Fp32llamaDecoderLayer::forward(const struct 
     Matrix3D<float> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                   input.hidden_states.m_dim_z);
     this->input_layernorm.forward(input.hidden_states, hidden_states);
-    // printf("input_layernorm.sum: %f\n", hidden_states.sum());
+    // printf("input_layernorm.sum: %f, weight: %f\n", hidden_states.sum(), this->input_layernorm.weight.sum());
     // print_first_k_elelment("hidden_states", hidden_states.m_data, 20);
 
     struct Fp32llamaAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
@@ -59,32 +59,21 @@ struct Fp32llamaDecoderLayer_output Fp32llamaDecoderLayer::forward(const struct 
                                              input.hidden_states.m_dim_y, input.hidden_states.m_dim_z);
     this->post_attention_layernorm.forward(residual_add, post_attention_layernorm);
     // printf("post_attention_layernorm.sum: %f\n", post_attention_layernorm.sum());
-    // read_to_array("assets/tests/OPT_1.3B/layer23_final_layer_norm.bin", final_layer_norm.m_data,
-    // final_layer_norm.length()); print_first_k_elelment("final_layer_norm", final_layer_norm.m_data, 20);
 
     // return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
-
-    // opt.py: hidden_states = self.fc1(hidden_states)
     Matrix3D<float> gate_proj(gate_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                               this->hidden_dim);
-    // this->fc1.x = final_layer_norm;
-    // this->fc1.output = fc1_out;
     this->gate_proj.forward(post_attention_layernorm, gate_proj);
     // printf("gate_proj.sum: %f, weight: %f\n", gate_proj.sum(), this->gate_proj.weight.sum());
-
-    // opt.py: hidden_states = self.fc2(hidden_states)
     Matrix3D<float> up_proj(up_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
     this->up_proj.forward(post_attention_layernorm, up_proj);
     // printf("up_proj.sum: %f, weight: %f\n", up_proj.sum(), this->up_proj.weight.sum());
-
     SiLuMul(gate_proj, up_proj);
-
     Matrix3D<float> down_proj(down_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->embed_dim);
     this->down_proj.forward(gate_proj, down_proj);
     // printf("down_proj.sum: %f, weight: %f\n", down_proj.sum(), this->down_proj.weight.sum());
     // print_first_k_elelment("down_proj", down_proj.m_data, 20);
 
-    // opt.py: residual.add_(hidden_states.to(residual.dtype))
     add(residual_add, down_proj, residual_add);
     // printf("residual_add: %f\n", residual_add.sum());
     // print_first_k_elelment("residual_add", residual_add.m_data, 20);
