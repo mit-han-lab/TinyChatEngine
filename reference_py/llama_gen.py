@@ -5,13 +5,18 @@ import struct
 import torch
 from transformers import GenerationConfig, LlamaForCausalLM, LlamaTokenizer
 
+def export_model(model, prefix):
+    outpath = prefix
+    os.makedirs(outpath, exist_ok=True)
+    with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
+        f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
+    export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
 
 def export_embed_tokens(embed_tokens, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
     with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
         f.write(embed_tokens.weight.cpu().float().numpy().tobytes())
-
 
 def export_llama_model(model, prefix):
     outpath = prefix
@@ -96,6 +101,7 @@ def text_generation(tokenizer, model):
     # export_attention_params(model.model.layers[0].self_attn, "transformer/assets/llama/tests/atten/first_attn")
     # export_llama_layer(model.model.layers[0], "transformer/assets/llama/tests/layer0")
     # export_llama_model(model.model, "transformer/assets/llama/tests/decoder")
+    # export_model(model, "transformer/models/LLaMA_7B")
     generation_output = model.generate(
         input_ids=input_ids,
         generation_config=generation_config,
