@@ -5,6 +5,7 @@ import struct
 import torch
 from transformers import GenerationConfig, LlamaForCausalLM, LlamaTokenizer
 
+
 def export_model(model, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
@@ -12,11 +13,13 @@ def export_model(model, prefix):
         f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
     export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
 
+
 def export_embed_tokens(embed_tokens, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
     with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
         f.write(embed_tokens.weight.cpu().float().numpy().tobytes())
+
 
 def export_llama_model(model, prefix):
     outpath = prefix
