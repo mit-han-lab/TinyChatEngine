@@ -7,16 +7,18 @@ std::map<std::string, int> model_config = {
     {"OPT125M", OPT_125M},
     {"OPT1.3B", OPT_1_3B},
     {"OPT6.7B", OPT_6_7B},
+    {"LLaMA7B", LLaMA_7B},
 };
 
 std::map<int, std::string> model_path = {
     {OPT_125M, "models/OPT_125m"},
     {OPT_1_3B, "models/OPT_1.3B"},
     {OPT_6_7B, "models/OPT_6.7B"},
+    {LLaMA_7B, "models/LLaMA_7B"},
 };
 
 int main(int argc, char* argv[]) {
-    std::string target_model = "OPT1.3B";
+    std::string target_model = "LLaMA7B";
 
     if (argc > 1) {
         auto target_str = argv[1];
@@ -35,29 +37,48 @@ int main(int argc, char* argv[]) {
         std::cout << "Using default model: " + target_model << std::endl;
     }
 
-    // Load model
-    std::cout << "Loading model... " << std::flush;
-    int model_id = model_config[target_model];
-    std::string m_path = model_path[model_id];
-    OPTForCausalLM model = OPTForCausalLM(m_path, get_opt_model_config(model_id));
-    std::cout << "Finished!" << std::endl;
+    if (target_model == "LLaMA7B") {
+        // Load model
+        std::cout << "Loading model... " << std::flush;
+        int model_id = model_config[target_model];
+        std::string m_path = model_path[model_id];
+        Fp32LlamaForCausalLM model = Fp32LlamaForCausalLM(m_path, get_opt_model_config(model_id));
+        std::cout << "Finished!" << std::endl;
 
-    // Load encoder
-    std::string vocab_file = "./models/OPT_125m/vocab.json";
-    std::string bpe_file = "./models/OPT_125m/merges.txt";
-    Encoder encoder = get_encoder(vocab_file, bpe_file);
+        // Get input from the user
+        std::cout << "Please enter a line of text: ";
+        std::string input;
+        std::getline(std::cin, input);
 
-    // Get input from the user
-    std::cout << "Please enter a line of text: ";
-    std::string input;
-    std::getline(std::cin, input);
-    std::vector<int> input_ids = encoder.encode(input);
-    std::string decoded = encoder.decode(input_ids);
-    std::cout << "input:" << decoded << std::endl;
+        struct opt_params generation_config;
+        generation_config.n_predict = 256;
+        generation_config.n_vocab = 32000;
+        LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
+    } else {
+        // Load model
+        std::cout << "Loading model... " << std::flush;
+        int model_id = model_config[target_model];
+        std::string m_path = model_path[model_id];
+        OPTForCausalLM model = OPTForCausalLM(m_path, get_opt_model_config(model_id));
+        std::cout << "Finished!" << std::endl;
 
-    struct opt_params generation_config;
-    generation_config.n_predict = 256;
-    std::vector<int> generated_ids = OPTGenerate(model, input_ids, generation_config, &encoder, true);
+        // Load encoder
+        std::string vocab_file = "./models/OPT_125m/vocab.json";
+        std::string bpe_file = "./models/OPT_125m/merges.txt";
+        Encoder encoder = get_encoder(vocab_file, bpe_file);
 
-    decoded = encoder.decode(generated_ids);
+        // Get input from the user
+        std::cout << "Please enter a line of text: ";
+        std::string input;
+        std::getline(std::cin, input);
+        std::vector<int> input_ids = encoder.encode(input);
+        std::string decoded = encoder.decode(input_ids);
+        std::cout << "input:" << decoded << std::endl;
+
+        struct opt_params generation_config;
+        generation_config.n_predict = 256;
+        std::vector<int> generated_ids = OPTGenerate(model, input_ids, generation_config, &encoder, true);
+
+        decoded = encoder.decode(generated_ids);
+    }
 };
