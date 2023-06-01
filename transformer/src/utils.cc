@@ -9,6 +9,7 @@
 #include <cstring>  // for strerror
 #include <iostream>
 
+// To be deprecated soon
 template <typename T>
 void read_to_array(const char* path, T* array, int size) {
     std::ifstream infile(path, std::ios::binary | std::ios::in);

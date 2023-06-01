@@ -57,10 +57,10 @@ void test_LayerNormQ() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/LayerNormQ_bias.bin", bias_arr, b * n);
-    read_to_array((char *)"assets/LayerNormQ_x.bin", intput_arr, b * m * n);
-    read_to_array((char *)"assets/LayerNormQ_weight.bin", weight_arr, b * n);
-    read_to_array((char *)"assets/LayerNormQ_out.bin", GToutput_arr, b * m * n);
+    bias.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_bias.bin");
+    input.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_x.bin");
+    weight.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_weight.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_out.bin");
 
     struct LayerNormQ_params op_params = {weight, bias};
 
@@ -91,10 +91,8 @@ void test_LayerNormQ_len512() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    // read_to_array((char*)"assets/LayerNormQ_bias.bin", bias_arr, b * n);
-    read_to_array((char *)"assets/tests/OPT_125m/LayerNormQ_x_len512.bin", intput_arr, b * m * n);
-    // read_to_array((char*)"assets/LayerNormQ_weight.bin", weight_arr, b * n);
-    read_to_array((char *)"assets/tests/OPT_125m/LayerNormQ_y_len512.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_x_len512.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_y_len512.bin");
 
     struct LayerNormQ_params op_params = {weight, bias};
 
@@ -126,8 +124,8 @@ void test_LayerNormQ_1_3B() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_1.3B/LayerNormQ_x.bin", intput_arr, b * m * n);
-    read_to_array((char *)"assets/tests/OPT_1.3B/LayerNormQ_out.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_1.3B/LayerNormQ_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/LayerNormQ_out.bin");
 
     struct LayerNormQ_params op_params = {weight, bias};
 
@@ -161,8 +159,8 @@ void test_LayerNorm() {
     Matrix3D<float> output(output_arr, b, m, n);
     Matrix3D<float> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/decoder/final_layer_norm_hidden_states.bin", intput_arr, b * m * n);
-    read_to_array((char *)"assets/tests/decoder/final_layer_norm_output.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_125m/decoder/final_layer_norm_hidden_states.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/decoder/final_layer_norm_output.bin");
 
     struct LayerNorm_params op_params = {weight, bias};
 
@@ -194,8 +192,8 @@ void test_LayerNorm_1_3B_len512() {
     Matrix3D<float> output(output_arr, b, m, n);
     Matrix3D<float> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_1.3B/decoder/final_layer_norm_hidden_states.bin", intput_arr, b * m * n);
-    read_to_array((char *)"assets/tests/OPT_1.3B/decoder/final_layer_norm_output.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_1.3B/decoder/final_layer_norm_hidden_states.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/decoder/final_layer_norm_output.bin");
 
     struct LayerNorm_params op_params = {weight, bias};
 
@@ -228,8 +226,8 @@ void test_W8A8B8O8LinearReLU() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_125m/W8A8B8O8LinearReLU_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/tests/OPT_125m/W8A8B8O8LinearReLU_y.bin", GToutput_arr, m * n);
+    input.load("assets/OPT/tests/ops/OPT_125m/W8A8B8O8LinearReLU_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/W8A8B8O8LinearReLU_y.bin");
 
     struct W8A8B8O8LinearReLU_params op_params = {weight, bias, alpha, beta};
 
@@ -262,8 +260,8 @@ void test_W8A8B8O8LinearReLU_1_3B() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_1.3B/W8A8B8O8LinearReLU_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/tests/OPT_1.3B/W8A8B8O8LinearReLU_y.bin", GToutput_arr, m * n);
+    input.load("assets/OPT/tests/ops/OPT_1.3B/W8A8B8O8LinearReLU_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/W8A8B8O8LinearReLU_y.bin");
 
     struct W8A8B8O8LinearReLU_params op_params = {weight, bias, alpha, beta};
 
@@ -296,8 +294,8 @@ void test_W8A8BFP32OFP32Linear() {
     Matrix3D<float> output(output_arr, b, m, n);
     Matrix3D<float> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_125m/W8A8BFP32OFP32Linear_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/tests/OPT_125m/W8A8BFP32OFP32Linear_y.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_125m/W8A8BFP32OFP32Linear_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/W8A8BFP32OFP32Linear_y.bin");
 
     struct W8A8BFP32OFP32Linear_params op_params = {weight, bias, alpha};
 
@@ -329,8 +327,8 @@ void test_W8A8BFP32OFP32Linear_1_3B() {
     Matrix3D<float> output(output_arr, b, m, n);
     Matrix3D<float> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_1.3B/W8A8BFP32OFP32Linear_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/tests/OPT_1.3B/W8A8BFP32OFP32Linear_y.bin", GToutput_arr, m * n);
+    input.load("assets/OPT/tests/ops/OPT_1.3B/W8A8BFP32OFP32Linear_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/W8A8BFP32OFP32Linear_y.bin");
 
     struct W8A8BFP32OFP32Linear_params op_params = {weight, bias, alpha};
 
@@ -364,8 +362,8 @@ void test_W8A8B8O8Linear() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_125m/W8A8B8O8Linear_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/tests/OPT_125m/W8A8B8O8Linear_y.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_125m/W8A8B8O8Linear_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/W8A8B8O8Linear_y.bin");
 
     struct W8A8B8O8Linear_params op_params = {weight, bias};
 
@@ -397,8 +395,8 @@ void test_W8A8B8O8Linear_1_3B() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/tests/OPT_1.3B/W8A8B8O8Linear_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/tests/OPT_1.3B/W8A8B8O8Linear_y.bin", GToutput_arr, m * n);
+    input.load("assets/OPT/tests/ops/OPT_1.3B/W8A8B8O8Linear_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/W8A8B8O8Linear_y.bin");
 
     struct W8A8B8O8Linear_params op_params = {weight, bias};
 
@@ -429,9 +427,9 @@ void test_BMM_S8T_S8N_F32T() {
     Matrix3D<float> output(output_arr, b, m, n);
     Matrix3D<float> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/BMM_S8T_S8N_F32T_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/BMM_S8T_S8N_F32T_weight.bin", weight_arr, b * n * k);
-    read_to_array((char *)"assets/BMM_S8T_S8N_F32T_y.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_125m/BMM_S8T_S8N_F32T_x.bin");
+    weight.load("assets/OPT/tests/ops/OPT_125m/BMM_S8T_S8N_F32T_weight.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/BMM_S8T_S8N_F32T_y.bin");
 
     struct BMM_S8T_S8N_F32T_params op_params = {alpha};
 
@@ -460,9 +458,9 @@ void test_BMM_S8T_S8N_F32T_1_3B() {
     Matrix3D<float> output(output_arr, heads, sqlen, sqlen);
     Matrix3D<float> GToutput(GToutput_arr, heads, sqlen, sqlen);
 
-    read_to_array((char *)"assets/tests/OPT_1.3B/BMM_S8T_S8N_F32T_x1.bin", intput_arr, input.length());
-    read_to_array((char *)"assets/tests/OPT_1.3B/BMM_S8T_S8N_F32T_x2.bin", weight_arr, weight.length());
-    read_to_array((char *)"assets/tests/OPT_1.3B/BMM_S8T_S8N_F32T_y.bin", GToutput_arr, GToutput.length());
+    input.load("assets/OPT/tests/ops/OPT_1.3B/BMM_S8T_S8N_F32T_x1.bin");
+    weight.load("assets/OPT/tests/ops/OPT_1.3B/BMM_S8T_S8N_F32T_x2.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/BMM_S8T_S8N_F32T_y.bin");
 
     struct BMM_S8T_S8N_F32T_params op_params = {};
 
@@ -493,9 +491,9 @@ void test_BMM_S8T_S8N_S8T() {
     Matrix3D<int8_t> output(output_arr, b, m, n);
     Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
 
-    read_to_array((char *)"assets/BMM_S8T_S8N_S8T_x.bin", intput_arr, b * m * k);
-    read_to_array((char *)"assets/BMM_S8T_S8N_S8T_weight.bin", weight_arr, b * n * k);
-    read_to_array((char *)"assets/BMM_S8T_S8N_S8T_y.bin", GToutput_arr, b * m * n);
+    input.load("assets/OPT/tests/ops/OPT_125m/BMM_S8T_S8N_S8T_x.bin");
+    weight.load("assets/OPT/tests/ops/OPT_125m/BMM_S8T_S8N_S8T_weight.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/BMM_S8T_S8N_S8T_y.bin");
 
     struct BMM_S8T_S8N_S8T_params op_params = {alpha};
 
@@ -524,9 +522,9 @@ void test_BMM_S8T_S8N_S8T_1_3B() {
     Matrix3D<int8_t> output(output_arr, heads, sqlen, c);
     Matrix3D<int8_t> GToutput(GToutput_arr, heads, sqlen, c);
 
-    read_to_array((char *)"assets/tests/OPT_1.3B/BMM_S8T_S8N_S8T_x1.bin", intput_arr, input.length());
-    read_to_array((char *)"assets/tests/OPT_1.3B/BMM_S8T_S8N_S8T_x2.bin", weight_arr, weight.length());
-    read_to_array((char *)"assets/tests/OPT_1.3B/BMM_S8T_S8N_S8T_y.bin", GToutput_arr, GToutput.length());
+    input.load("assets/OPT/tests/ops/OPT_1.3B/BMM_S8T_S8N_S8T_x1.bin");
+    weight.load("assets/OPT/tests/ops/OPT_1.3B/BMM_S8T_S8N_S8T_x2.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/BMM_S8T_S8N_S8T_y.bin");
 
     struct BMM_S8T_S8N_S8T_params op_params = {alpha};
 
@@ -549,16 +547,19 @@ void test_Embedding() {
     Matrix3D<float> output(mem_buf.get_fpbuffer(sqlen * embed_dim), 1, sqlen, embed_dim);
     Matrix3D<float> outputGT(mem_buf.get_fpbuffer(sqlen * embed_dim), 1, sqlen, embed_dim);
 
-    read_to_array((char *)"assets/input_ids.bin", input.m_data, sqlen);
-    read_to_array((char *)"assets/inputs_embeds.bin", outputGT.m_data, sqlen * embed_dim);
+    input.load("assets/OPT/tests/ops/input_ids.bin");
+    outputGT.load("assets/OPT/tests/ops/OPT_125m/inputs_embeds.bin");
 
     auto embed_tokens = Embedding(embed_dim, voc_size, padding_idx, weight);
-    load_Embedding_params(embed_tokens, "assets/decoder/embed_tokens");
+    load_Embedding_params(embed_tokens, "models/OPT_125m/decoder/embed_tokens");
 
     embed_tokens.forward(input, output);
-    assert(check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim));
+    bool success = check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim);
 
-    std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
 void test_Embedding_1_3B() {
@@ -570,16 +571,19 @@ void test_Embedding_1_3B() {
     Matrix3D<float> output(mem_buf.get_fpbuffer(sqlen * embed_dim), 1, sqlen, embed_dim);
     Matrix3D<float> outputGT(mem_buf.get_fpbuffer(sqlen * embed_dim), 1, sqlen, embed_dim);
 
-    read_to_array((char *)"assets/input_ids.bin", input.m_data, sqlen);
-    read_to_array((char *)"assets/tests/OPT_1.3B/inputs_embeds.bin", outputGT.m_data, sqlen * embed_dim);
+    input.load("assets/OPT/tests/ops/input_ids.bin");
+    outputGT.load("assets/OPT/tests/ops/OPT_1.3B/inputs_embeds.bin");
 
     auto embed_tokens = Embedding(embed_dim, voc_size, padding_idx, weight);
     load_Embedding_params(embed_tokens, "models/OPT_1.3B/decoder/embed_tokens");
 
     embed_tokens.forward(input, output);
-    assert(check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim));
+    bool success = check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim);
 
-    std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
 void test_LlamaRMSNorm() {
@@ -593,37 +597,43 @@ void test_LlamaRMSNorm() {
     Matrix3D<float> outputGT(mem_buf.get_fpbuffer(sqlen * embed_dim), 1, sqlen, embed_dim);
     Matrix3D<float> output(mem_buf.get_fpbuffer(sqlen * embed_dim), 1, sqlen, embed_dim);
 
-    hidden_states.load("assets/llama/tests/layer/RMSnorm/hidden_states.bin");
-    weight.load("assets/llama/tests/layer/RMSnorm/weight.bin");
-    outputGT.load("assets/llama/tests/layer/RMSnorm/output.bin");
+    hidden_states.load("assets/llama/tests/ops/RMSnorm/hidden_states.bin");
+    weight.load("assets/llama/tests/ops/RMSnorm/weight.bin");
+    outputGT.load("assets/llama/tests/ops/RMSnorm/output.bin");
 
     LlamaRMSNorm op(weight);
 
     op.forward(hidden_states, output);
-    assert(check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim));
+    bool success = check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim);
 
-    std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
+// TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
+void test_FPLinear() {}
+
 int main() {
-    // OPT
-    // test_LayerNormQ();
-    // test_LayerNormQ_len512();
-    // test_LayerNormQ_1_3B();
-    // test_LayerNorm();
-    // test_LayerNorm_1_3B_len512();
-    // test_W8A8B8O8LinearReLU();
-    // test_W8A8B8O8LinearReLU_1_3B();
-    // test_W8A8B8O8Linear();
-    // test_W8A8B8O8Linear_1_3B();
-    // test_W8A8BFP32OFP32Linear();
-    // test_W8A8BFP32OFP32Linear_1_3B();
-    // test_BMM_S8T_S8N_F32T();
-    // test_BMM_S8T_S8N_F32T_1_3B();
-    // test_BMM_S8T_S8N_S8T();
-    // test_BMM_S8T_S8N_S8T_1_3B();
-    // test_Embedding();
-    // test_Embedding_1_3B();
+    // from OPT
+    test_LayerNormQ();
+    test_LayerNormQ_len512();
+    test_LayerNormQ_1_3B();
+    test_LayerNorm();
+    test_LayerNorm_1_3B_len512();
+    test_W8A8B8O8LinearReLU();
+    test_W8A8B8O8LinearReLU_1_3B();
+    test_W8A8B8O8Linear();
+    test_W8A8B8O8Linear_1_3B();
+    test_W8A8BFP32OFP32Linear();
+    test_W8A8BFP32OFP32Linear_1_3B();
+    test_BMM_S8T_S8N_F32T();
+    test_BMM_S8T_S8N_F32T_1_3B();
+    test_BMM_S8T_S8N_S8T();
+    test_BMM_S8T_S8N_S8T_1_3B();
+    test_Embedding();
+    test_Embedding_1_3B();
     // LLaMa
     test_LlamaRMSNorm();
 }

@@ -90,6 +90,4 @@ void test_Fp32LlamaForCausalLM() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
-// With more layers
-
 int main() { test_Fp32LlamaForCausalLM(); }
