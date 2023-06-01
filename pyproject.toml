@@ -1,0 +1,66 @@
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+extend-exclude = "codegen/.*"
+
+[tool.isort]
+profile = "black"
+known_first_party = ["code_generator"]
+extend_skip = ["codegen"]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 120
+
+[tool.pylint]
+    [tool.pylint.master]
+    ignore-paths = ["codegen"]
+    [tool.pylint.messages_control]
+    disable = [
+        "C0103",
+        "C0114",
+        "C0115",
+        "C0116",
+        "C0123",
+        "C0209",
+        "C0330",
+        "C0301",
+        "C0302",
+        "C0411",
+        "C0415",
+        "E0401",
+        "E1121",
+        "E1123",
+        "E1101",
+        "R",
+        "W"
+    ]
+    [tool.pylint.basic]
+    good-names-rgxs = "^[_a-z][_a-z0-9]?$"  # allow 1 or 2 character names
+    [tool.pylint.format]
+    max-line-length = 120
+    max-module-lines = 5000
+    [tool.pylint.design]
+    max-args = 10
+    max-attributes = 15
+    max-parents = 10
+
+[tool.mypy]
+files = "."
+exclude ="codegen/.*"
+install_types = true
+non_interactive = true
+show_error_codes = true
+disable_error_code = [
+    "import",
+    "assignment",
+    "operator",
+    "has-type",
+    "var-annotated",
+    "operator",
+    "call-arg",
+]
+explicit_package_bases = true
+namespace_packages = true

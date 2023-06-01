@@ -33,15 +33,12 @@ struct model_config {
           padding_idx(padding_idx) {}
 };
 
-enum {
-    OPT_125M,
-    OPT_1_3B,
-    OPT_6_7B,
-};
+enum { OPT_125M, OPT_1_3B, OPT_6_7B, LLaMA_7B };
 
-const struct model_config opt_6_7B(1, 32, 32, 512, 4096, 16384, 50272, 1);
-const struct model_config opt_1_3B(1, 32, 24, 512, 2048, 8192, 50272, 1);
-const struct model_config opt_125m(1, 12, 12, 512, 768, 3072, 50272, 1);
+const struct model_config opt_6_7B(1, 32, 32, 2048, 4096, 16384, 50272, 1);
+const struct model_config opt_1_3B(1, 32, 24, 2048, 2048, 8192, 50272, 1);
+const struct model_config opt_125m(1, 12, 12, 2048, 768, 3072, 50272, 1);
+const struct model_config llama_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1);
 static struct model_config get_opt_model_config(int choise) {
     struct model_config ret;
     switch (choise) {
@@ -53,6 +50,9 @@ static struct model_config get_opt_model_config(int choise) {
             break;
         case OPT_6_7B:
             ret = opt_6_7B;
+            break;
+        case LLaMA_7B:;
+            ret = llama_7B;
             break;
         default:
             throw("Unsupported model choise.");

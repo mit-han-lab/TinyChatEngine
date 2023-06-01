@@ -61,12 +61,14 @@ class MatmulOperator {
         INT8_AVX_FAST_2x2_32UNROLL = 15,
         INT8_AVX_FAST_2x2_OMP = 16,
     };
+
     void naive_mat_mul(const struct matmul_params *params);
     void mat_mul_unrolling(const struct matmul_params *params);
     void mat_mul_reordering(const struct matmul_params *params);
     void mat_mul_tiling(const struct matmul_params *params);
     void mat_mul_multithreading(const struct matmul_params *params);
     void mat_mul_transpose(const struct matmul_params *params);
+    void mat_mul_transposed(const struct matmul_params *params);
     void mat_mul_transposed_fastover_column(const struct matmul_params *params);
     void mat_mul_transpose_simd(const struct matmul_params *params);
     void mat_mul_fast(const struct matmul_params *params);

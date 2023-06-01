@@ -236,6 +236,20 @@ void MatmulOperator::mat_mul_transpose(const struct matmul_params *params) {
         }
 }
 
+void MatmulOperator::mat_mul_transposed(const struct matmul_params *params) {
+    int i, j, k;
+
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+    float *data_A = A->data_ptr, *data_B = B->data_ptr, *data_C = C->data_ptr;
+
+    for (i = 0; i < C->row; i++)
+        for (j = 0; j < C->column; j++) {
+            float acc = 0;
+            for (k = 0; k < A->column; k++) acc += data_A[i * A->column + k] * data_B[j * B->column + k];
+            data_C[i * C->column + j] = acc;
+        }
+}
+
 void *mat_mul_transposed_fastover_column_func(void *args) {
     int i, j, k;
     struct thread_args *mat_args = (struct thread_args *)args;

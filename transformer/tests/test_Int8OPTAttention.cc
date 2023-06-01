@@ -103,11 +103,11 @@ void test_Int8OPTAttention() {
     read_to_array("assets/tests/OPT_125m/Int8OPTAttention_value_states.bin", value_statesGT.m_data,
                   b * sqlen * embed_dim);
 
-    bool sucess =
+    bool success =
         check_two_exact_equal(value_statesGT.m_data, output.past_key_value.second.m_data, b * sqlen * embed_dim);
-    sucess &= check_two_exact_equal(key_statesGT.m_data, output.past_key_value.first.m_data, b * sqlen * embed_dim);
-    sucess &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, b * sqlen * embed_dim);
-    if (!sucess)
+    success &= check_two_exact_equal(key_statesGT.m_data, output.past_key_value.first.m_data, b * sqlen * embed_dim);
+    success &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, b * sqlen * embed_dim);
+    if (!success)
         std::cout << "Test of " << __func__ << ": Fail!" << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -178,11 +178,11 @@ void test_Int8OPTAttention_len512() {
     read_to_array("assets/tests/OPT_125m/Int8OPTAttention_value_states_len512.bin", value_statesGT.m_data,
                   b * sqlen * embed_dim);
 
-    bool sucess =
+    bool success =
         check_two_exact_equal(value_statesGT.m_data, output.past_key_value.second.m_data, b * sqlen * embed_dim);
-    sucess &= check_two_exact_equal(key_statesGT.m_data, output.past_key_value.first.m_data, b * sqlen * embed_dim);
-    sucess &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, b * sqlen * embed_dim);
-    if (!sucess)
+    success &= check_two_exact_equal(key_statesGT.m_data, output.past_key_value.first.m_data, b * sqlen * embed_dim);
+    success &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, b * sqlen * embed_dim);
+    if (!success)
         std::cout << "Test of " << __func__ << ": Fail!" << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
@@ -253,11 +253,11 @@ void test_Int8OPTAttention_1_3B_len512() {
     read_to_array("assets/tests/OPT_1.3B/Int8OPTAttention_value_states_len512.bin", value_statesGT.m_data,
                   b * sqlen * embed_dim);
 
-    bool sucess =
+    bool success =
         check_two_exact_equal(value_statesGT.m_data, output.past_key_value.second.m_data, b * sqlen * embed_dim);
-    sucess &= check_two_exact_equal(key_statesGT.m_data, output.past_key_value.first.m_data, b * sqlen * embed_dim);
-    sucess &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, b * sqlen * embed_dim, 1e-7);
-    if (!sucess)
+    success &= check_two_exact_equal(key_statesGT.m_data, output.past_key_value.first.m_data, b * sqlen * embed_dim);
+    success &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, b * sqlen * embed_dim, 1e-7);
+    if (!success)
         std::cout << "Test of " << __func__ << ": Fail!" << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;

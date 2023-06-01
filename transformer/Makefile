@@ -3,7 +3,10 @@ CXX = g++
 CXXFLAGS = -std=c++17 -mavx2 -pthread -O3
 
 # Executable and source files
-TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM profile_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate demo
+TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM
+PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_OPTForCausalLM
+APP_TARGET = demo
+TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(demo)
 
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
@@ -36,9 +39,6 @@ test_Int8OPTDecoder:
 test_OPTForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC)
 
-profile_OPTForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC)
-
 test_OPTTokenizer:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTTokenizer tests/test_OPTTokenizer.cc $(SRC)
 
@@ -48,8 +48,26 @@ test_LLaMATokenizer:
 test_OPTGenerate:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTGenerate tests/test_OPTGenerate.cc $(SRC)
 
+test_Fp32llamaAttention:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaAttention tests/test_Fp32llamaAttention.cc $(SRC)
+
+test_Fp32llamaDecoderLayer:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoderLayer tests/test_Fp32llamaDecoderLayer.cc $(SRC)
+
+test_Fp32llamaDecoder:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoder tests/test_Fp32llamaDecoder.cc $(SRC)
+
+test_Fp32LlamaForCausalLM:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC)
+
 demo:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC)
+
+profile_OPTForCausalLM:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC)
+
+profile_Fp32LlamaForCausalLM:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC)
 
 # Clean up
 clean:
