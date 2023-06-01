@@ -4,44 +4,7 @@
 #include "OPTForCausalLM.h"
 #include "operators.h"
 #include "utils.h"
-
-#define MAX_TEST_MEMORY_BUF 1024 * 1024 * 1024  // 1 GB
-static char buffer[MAX_TEST_MEMORY_BUF];
-
-class MemoryAllocator {
-   public:
-    MemoryAllocator() { this->counter = 0; }
-    float* get_fpbuffer(int size) {
-        int byte_size = size * sizeof(float);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (float*)&buffer[cur_counter];
-    }
-    int8_t* get_int8buffer(int size) {
-        int byte_size = size * sizeof(int8_t);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (int8_t*)&buffer[cur_counter];
-    }
-    int* get_intbuffer(int size) {
-        int byte_size = size * sizeof(int);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (int*)&buffer[cur_counter];
-    }
-
-   private:
-    int counter;
-};
+#include "utils_memalloc.h"
 
 void test_OPTForCausalLM() {
     const int num_heads = 12, embed_dim = 768, sqlen = 108, b = 1, hidden_dim = 3072, voc_size = 50272, padding_idx = 1,
@@ -50,7 +13,7 @@ void test_OPTForCausalLM() {
 
     // reasoning phase: 1st run
     Matrix3D<int> input_ids(mem_buf.get_intbuffer(sqlen), b, 1, sqlen);
-    read_to_array("assets/tests/OPT_125m/causallm/1st_input_ids.bin", input_ids.m_data, input_ids.length());
+    input_ids.load("assets/OPT/tests/causallm/OPT_125m/1st_input_ids.bin");
     struct OPTForCausalLM_input input_1st = {input_ids};
 
     OPTForCausalLM model = OPTForCausalLM("models/OPT_125m/", get_opt_model_config(OPT_125M));
@@ -58,7 +21,7 @@ void test_OPTForCausalLM() {
     struct OPTForCausalLM_output output_1st = model.forward(input_1st);
 
     Matrix3D<float> logits(mem_buf.get_fpbuffer(b * sqlen * voc_size), b, sqlen, voc_size);
-    read_to_array("assets/tests/OPT_125m/causallm/1st_logits.bin", logits.m_data, logits.length());
+    logits.load("assets/OPT/tests/causallm/OPT_125m/1st_logits.bin");
     // print_first_k_elelment("O", output_1st.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
     bool success = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(), 0.024);
@@ -70,13 +33,13 @@ void test_OPTForCausalLM() {
 
     // generating phase: 2nd run
     Matrix3D<int> input_ids_2nd(mem_buf.get_intbuffer(sqlen), b, 1, 1);
-    read_to_array("assets/tests/OPT_125m/causallm/2nd_input_ids.bin", input_ids_2nd.m_data, input_ids_2nd.length());
+    read_to_array("assets/OPT/tests/causallm/OPT_125m/2nd_input_ids.bin", input_ids_2nd.m_data, input_ids_2nd.length());
     struct OPTForCausalLM_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
 
     struct OPTForCausalLM_output output_2nd = model.forward(input_2nd);
 
     logits = Matrix3D<float>(mem_buf.get_fpbuffer(b * 1 * voc_size), b, 1, voc_size);
-    read_to_array("assets/tests/OPT_125m/causallm/2nd_logits.bin", logits.m_data, logits.length());
+    read_to_array("assets/OPT/tests/causallm/OPT_125m/2nd_logits.bin", logits.m_data, logits.length());
     // print_first_k_elelment("O", output_2nd.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
     success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 0.028);
@@ -116,7 +79,7 @@ void test_OPTForCausalLM_1_3B() {
 
     // reasoning phase: 1st run
     Matrix3D<int> input_ids(mem_buf.get_intbuffer(sqlen), b, 1, sqlen);
-    read_to_array("assets/tests/OPT_1.3B/causallm/1st_input_ids.bin", input_ids.m_data, input_ids.length());
+    input_ids.load("assets/OPT/tests/causallm/OPT_1.3B/1st_input_ids.bin");
     struct OPTForCausalLM_input input_1st = {input_ids};
 
     OPTForCausalLM model = OPTForCausalLM("models/OPT_1.3B", get_opt_model_config(OPT_1_3B));
@@ -126,7 +89,7 @@ void test_OPTForCausalLM_1_3B() {
     struct OPTForCausalLM_output output_1st = model.forward(input_1st);
 
     Matrix3D<float> logits(mem_buf.get_fpbuffer(b * sqlen * voc_size), b, sqlen, voc_size);
-    read_to_array("assets/tests/OPT_1.3B/causallm/1st_logits.bin", logits.m_data, logits.length());
+    logits.load("assets/OPT/tests/causallm/OPT_1.3B/1st_logits.bin");
     // print_first_k_elelment("O", output_1st.logits.m_data, 70, 50);
     // print_first_k_elelment("G", logits.m_data, 70, 50);
     success = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(),
@@ -135,8 +98,7 @@ void test_OPTForCausalLM_1_3B() {
     Matrix3D<int> arg_max(mem_buf.get_intbuffer(sqlen), 1, 1, sqlen);
     arg_max_dim2(output_1st.logits, arg_max);
     Matrix3D<int> arg_maxGT(mem_buf.get_intbuffer(sqlen), 1, 1, sqlen);
-    read_to_array("assets/tests/OPT_1.3B/causallm/1st_logits_arg_max_int8fp32.bin", arg_maxGT.m_data,
-                  arg_maxGT.length());
+    arg_maxGT.load("assets/OPT/tests/causallm/OPT_1.3B/1st_logits_arg_max_int8fp32.bin");
 
     int total_hit = 0;
     for (int i = 0; i < sqlen; i++)
@@ -150,13 +112,13 @@ void test_OPTForCausalLM_1_3B() {
 
     // generating phase: 2nd run
     Matrix3D<int> input_ids_2nd(mem_buf.get_intbuffer(sqlen), b, 1, 1);
-    read_to_array("assets/tests/OPT_1.3B/causallm/2nd_input_ids.bin", input_ids_2nd.m_data, input_ids_2nd.length());
+    input_ids_2nd.load("assets/OPT/tests/causallm/OPT_1.3B/2nd_input_ids.bin");
     struct OPTForCausalLM_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
 
     struct OPTForCausalLM_output output_2nd = model.forward(input_2nd);
 
     logits = Matrix3D<float>(mem_buf.get_fpbuffer(b * 1 * voc_size), b, 1, voc_size);
-    read_to_array("assets/tests/OPT_1.3B/causallm/2nd_logits.bin", logits.m_data, logits.length());
+    logits.load("assets/OPT/tests/causallm/OPT_1.3B/2nd_logits.bin");
     // print_first_k_elelment("O", output_2nd.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
     success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 1.67);
@@ -164,8 +126,7 @@ void test_OPTForCausalLM_1_3B() {
     Matrix3D<int> arg_max_2nd(mem_buf.get_intbuffer(sqlen), 1, 1, 1);
     arg_max_dim2(output_2nd.logits, arg_max_2nd);
     Matrix3D<int> arg_maxGT_2nd(mem_buf.get_intbuffer(sqlen), 1, 1, 1);
-    read_to_array("assets/tests/OPT_1.3B/causallm/2nd_logits_arg_max_int8fp32.bin", arg_maxGT_2nd.m_data,
-                  arg_maxGT_2nd.length());
+    arg_maxGT_2nd.load("assets/OPT/tests/causallm/OPT_1.3B/2nd_logits_arg_max_int8fp32.bin");
 
     total_hit = 0;
     for (int i = 0; i < 1; i++)
@@ -192,7 +153,7 @@ void test_OPTForCausalLM_6_7B() {
 
     // reasoning phase: 1st run
     Matrix3D<int> input_ids(mem_buf.get_intbuffer(sqlen), b, 1, sqlen);
-    read_to_array("assets/tests/OPT_6.7B/causallm/1st_input_ids.bin", input_ids.m_data, input_ids.length());
+    input_ids.load("assets/OPT/tests/causallm/OPT_6.7B/1st_input_ids.bin");
     struct OPTForCausalLM_input input_1st = {input_ids};
 
     // print_first_k_elelment("I", input_ids.m_data, 20);
@@ -203,7 +164,7 @@ void test_OPTForCausalLM_6_7B() {
     struct OPTForCausalLM_output output_1st = model.forward(input_1st);
 
     Matrix3D<float> logits(mem_buf.get_fpbuffer(b * sqlen * voc_size), b, sqlen, voc_size);
-    read_to_array("assets/tests/OPT_6.7B/causallm/1st_logits.bin", logits.m_data, logits.length());
+    logits.load("assets/OPT/tests/causallm/OPT_6.7B/1st_logits.bin");
     // print_first_k_elelment("O", output_1st.logits.m_data, 70, 50);
     // print_first_k_elelment("G", logits.m_data, 70, 50);
     // success = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(),
@@ -212,8 +173,7 @@ void test_OPTForCausalLM_6_7B() {
     Matrix3D<int> arg_max(mem_buf.get_intbuffer(sqlen), 1, 1, sqlen);
     arg_max_dim2(output_1st.logits, arg_max);
     Matrix3D<int> arg_maxGT(mem_buf.get_intbuffer(sqlen), 1, 1, sqlen);
-    read_to_array("assets/tests/OPT_6.7B/causallm/1st_logits_arg_max_int8fp32.bin", arg_maxGT.m_data,
-                  arg_maxGT.length());
+    arg_maxGT.load("assets/OPT/tests/causallm/OPT_6.7B/1st_logits_arg_max_int8fp32.bin");
 
     int total_hit = 0;
     for (int i = 0; i < sqlen; i++)
@@ -232,13 +192,13 @@ void test_OPTForCausalLM_6_7B() {
 
     // generating phase: 2nd run
     Matrix3D<int> input_ids_2nd(mem_buf.get_intbuffer(sqlen), b, 1, 1);
-    read_to_array("assets/tests/OPT_6.7B/causallm/2nd_input_ids.bin", input_ids_2nd.m_data, input_ids_2nd.length());
+    input_ids_2nd.load("assets/OPT/tests/causallm/OPT_6.7B/2nd_input_ids.bin");
     struct OPTForCausalLM_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
 
     struct OPTForCausalLM_output output_2nd = model.forward(input_2nd);
 
     logits = Matrix3D<float>(mem_buf.get_fpbuffer(b * 1 * voc_size), b, 1, voc_size);
-    read_to_array("assets/tests/OPT_6.7B/causallm/2nd_logits.bin", logits.m_data, logits.length());
+    logits.load("assets/OPT/tests/causallm/OPT_6.7B/2nd_logits.bin");
     // print_first_k_elelment("O", output_2nd.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
     success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 0.184);
@@ -246,8 +206,7 @@ void test_OPTForCausalLM_6_7B() {
     Matrix3D<int> arg_max_2nd(mem_buf.get_intbuffer(sqlen), 1, 1, 1);
     arg_max_dim2(output_2nd.logits, arg_max_2nd);
     Matrix3D<int> arg_maxGT_2nd(mem_buf.get_intbuffer(sqlen), 1, 1, 1);
-    read_to_array("assets/tests/OPT_6.7B/causallm/2nd_logits_arg_max_int8fp32.bin", arg_maxGT_2nd.m_data,
-                  arg_maxGT_2nd.length());
+    arg_maxGT_2nd.load("assets/OPT/tests/causallm/OPT_6.7B/2nd_logits_arg_max_int8fp32.bin");
 
     total_hit = 0;
     for (int i = 0; i < 1; i++)

@@ -3,44 +3,7 @@
 #include "Fp32llamaDecoder.h"
 #include "operators.h"
 #include "utils.h"
-
-#define MAX_TEST_MEMORY_BUF 1024 * 1024 * 1024  // 1 GB
-static char buffer[MAX_TEST_MEMORY_BUF];
-
-class MemoryAllocator {
-   public:
-    MemoryAllocator() { this->counter = 0; }
-    float* get_fpbuffer(int size) {
-        int byte_size = size * sizeof(float);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (float*)&buffer[cur_counter];
-    }
-    int8_t* get_int8buffer(int size) {
-        int byte_size = size * sizeof(int8_t);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (int8_t*)&buffer[cur_counter];
-    }
-    int* get_intbuffer(int size) {
-        int byte_size = size * sizeof(int);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (int*)&buffer[cur_counter];
-    }
-
-   private:
-    int counter;
-};
+#include "utils_memalloc.h"
 
 void test_Decoder() {
     const struct model_config llama7B = llama_7B;
@@ -52,7 +15,7 @@ void test_Decoder() {
     input_ids.load("assets/llama/tests/decoder/1st_input_ids.bin");
     struct Fp32llamaDecoder_input input_1st = {input_ids};
 
-    Fp32llamaDecoder decoder = Fp32llamaDecoder("assets/llama/tests/decoder/", llama7B);
+    Fp32llamaDecoder decoder = Fp32llamaDecoder("models/LLaMA_7B/decoder/", llama7B);
 
     struct Fp32llamaDecoder_output output_1st = decoder.forward(input_1st);
 

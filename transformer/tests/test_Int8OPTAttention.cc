@@ -1,44 +1,7 @@
 #include "Int8OPTAttention.h"
 #include "operators.h"
 #include "utils.h"
-
-#define MAX_TEST_MEMORY_BUF 1024 * 1024 * 1024  // 1 GB
-static char buffer[MAX_TEST_MEMORY_BUF];
-
-class MemoryAllocator {
-   public:
-    MemoryAllocator() { this->counter = 0; }
-    float* get_fpbuffer(int size) {
-        int byte_size = size * sizeof(float);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (float*)&buffer[cur_counter];
-    }
-    int8_t* get_int8buffer(int size) {
-        int byte_size = size * sizeof(int8_t);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (int8_t*)&buffer[cur_counter];
-    }
-    int* get_intbuffer(int size) {
-        int byte_size = size * sizeof(int);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (int*)&buffer[cur_counter];
-    }
-
-   private:
-    int counter;
-};
+#include "utils_memalloc.h"
 
 void test_Int8OPTAttention() {
     const int num_heads = 12, embed_dim = 768, sqlen = 108, b = 1;
@@ -83,25 +46,21 @@ void test_Int8OPTAttention() {
                                              qk_bmm_op, pv_bmm_op, k_proj_op, v_proj_op, q_proj_op, out_proj_op);
 
     Matrix3D<int8_t> hidden_states(mem_buf.get_int8buffer(embed_dim * sqlen), b, sqlen, embed_dim);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_hidden_states.bin", hidden_states.m_data,
-                  b * sqlen * embed_dim);
+    hidden_states.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_hidden_states.bin");
     // print_first_k_elelment("hidden_states", hidden_states.m_data, 10);
     Matrix3D<float> attention_mask(mem_buf.get_fpbuffer(sqlen * sqlen), 1, sqlen, sqlen);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_attention_mask.bin", attention_mask.m_data,
-                  b * sqlen * embed_dim);
+    attention_mask.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_attention_mask.bin");
     struct Int8OPTAttention_input input(hidden_states, attention_mask, 0);
     // print_first_k_elelment("input.hidden_states.m_data", input.hidden_states.m_data, 10);
 
     struct Int8OPTAttention_output output = attn.forward(input);
 
     Matrix3D<float> attn_outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_attn_output.bin", attn_outputGT.m_data,
-                  b * sqlen * embed_dim);
+    attn_outputGT.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_attn_output.bin");
     Matrix3D<int8_t> key_statesGT(mem_buf.get_int8buffer(sqlen * embed_dim), num_heads, sqlen, embed_dim / num_heads);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_key_states.bin", key_statesGT.m_data, b * sqlen * embed_dim);
+    key_statesGT.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_key_states.bin");
     Matrix3D<int8_t> value_statesGT(mem_buf.get_int8buffer(sqlen * embed_dim), num_heads, sqlen, embed_dim / num_heads);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_value_states.bin", value_statesGT.m_data,
-                  b * sqlen * embed_dim);
+    value_statesGT.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_value_states.bin");
 
     bool success =
         check_two_exact_equal(value_statesGT.m_data, output.past_key_value.second.m_data, b * sqlen * embed_dim);
@@ -157,26 +116,21 @@ void test_Int8OPTAttention_len512() {
                                              qk_bmm_op, pv_bmm_op, k_proj_op, v_proj_op, q_proj_op, out_proj_op);
 
     Matrix3D<int8_t> hidden_states(mem_buf.get_int8buffer(embed_dim * sqlen), b, sqlen, embed_dim);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_hidden_states_len512.bin", hidden_states.m_data,
-                  b * sqlen * embed_dim);
+    hidden_states.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_hidden_states_len512.bin");
     // print_first_k_elelment("hidden_states", hidden_states.m_data, 10);
     Matrix3D<float> attention_mask(mem_buf.get_fpbuffer(sqlen * sqlen), 1, sqlen, sqlen);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_attention_mask_len512.bin", attention_mask.m_data,
-                  b * sqlen * embed_dim);
+    attention_mask.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_attention_mask_len512.bin");
     struct Int8OPTAttention_input input(hidden_states, attention_mask, 0);
     // print_first_k_elelment("input.hidden_states.m_data", input.hidden_states.m_data, 10);
 
     struct Int8OPTAttention_output output = attn.forward(input);
 
     Matrix3D<float> attn_outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_attn_output_len512.bin", attn_outputGT.m_data,
-                  b * sqlen * embed_dim);
+    attn_outputGT.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_attn_output_len512.bin");
     Matrix3D<int8_t> key_statesGT(mem_buf.get_int8buffer(sqlen * embed_dim), num_heads, sqlen, embed_dim / num_heads);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_key_states_len512.bin", key_statesGT.m_data,
-                  b * sqlen * embed_dim);
+    key_statesGT.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_key_states_len512.bin");
     Matrix3D<int8_t> value_statesGT(mem_buf.get_int8buffer(sqlen * embed_dim), num_heads, sqlen, embed_dim / num_heads);
-    read_to_array("assets/tests/OPT_125m/Int8OPTAttention_value_states_len512.bin", value_statesGT.m_data,
-                  b * sqlen * embed_dim);
+    value_statesGT.load("assets/OPT/tests/attn/OPT_125m/Int8OPTAttention_value_states_len512.bin");
 
     bool success =
         check_two_exact_equal(value_statesGT.m_data, output.past_key_value.second.m_data, b * sqlen * embed_dim);
@@ -232,26 +186,21 @@ void test_Int8OPTAttention_1_3B_len512() {
                                              qk_bmm_op, pv_bmm_op, k_proj_op, v_proj_op, q_proj_op, out_proj_op);
 
     Matrix3D<int8_t> hidden_states(mem_buf.get_int8buffer(embed_dim * sqlen), b, sqlen, embed_dim);
-    read_to_array("assets/tests/OPT_1.3B/Int8OPTAttention_hidden_states_len512.bin", hidden_states.m_data,
-                  b * sqlen * embed_dim);
+    hidden_states.load("assets/OPT/tests/attn/OPT_1.3B/Int8OPTAttention_hidden_states_len512.bin");
     // print_first_k_elelment("hidden_states", hidden_states.m_data, 10);
     Matrix3D<float> attention_mask(mem_buf.get_fpbuffer(sqlen * sqlen), 1, sqlen, sqlen);
-    read_to_array("assets/tests/OPT_1.3B/Int8OPTAttention_attention_mask_len512.bin", attention_mask.m_data,
-                  b * sqlen * embed_dim);
+    attention_mask.load("assets/OPT/tests/attn/OPT_1.3B/Int8OPTAttention_attention_mask_len512.bin");
     struct Int8OPTAttention_input input(hidden_states, attention_mask, 0);
     // print_first_k_elelment("input.hidden_states.m_data", input.hidden_states.m_data, 10);
 
     struct Int8OPTAttention_output output = attn.forward(input);
 
     Matrix3D<float> attn_outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
-    read_to_array("assets/tests/OPT_1.3B/Int8OPTAttention_attn_output_len512.bin", attn_outputGT.m_data,
-                  b * sqlen * embed_dim);
+    attn_outputGT.load("assets/OPT/tests/attn/OPT_1.3B/Int8OPTAttention_attn_output_len512.bin");
     Matrix3D<int8_t> key_statesGT(mem_buf.get_int8buffer(sqlen * embed_dim), num_heads, sqlen, embed_dim / num_heads);
-    read_to_array("assets/tests/OPT_1.3B/Int8OPTAttention_key_states_len512.bin", key_statesGT.m_data,
-                  b * sqlen * embed_dim);
+    key_statesGT.load("assets/OPT/tests/attn/OPT_1.3B/Int8OPTAttention_key_states_len512.bin");
     Matrix3D<int8_t> value_statesGT(mem_buf.get_int8buffer(sqlen * embed_dim), num_heads, sqlen, embed_dim / num_heads);
-    read_to_array("assets/tests/OPT_1.3B/Int8OPTAttention_value_states_len512.bin", value_statesGT.m_data,
-                  b * sqlen * embed_dim);
+    value_statesGT.load("assets/OPT/tests/attn/OPT_1.3B/Int8OPTAttention_value_states_len512.bin");
 
     bool success =
         check_two_exact_equal(value_statesGT.m_data, output.past_key_value.second.m_data, b * sqlen * embed_dim);
