@@ -576,7 +576,29 @@ void test_LlamaRMSNorm() {
 }
 
 // TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
-void test_FPLinear() {}
+void test_FPLinear() {
+    const int m = 1, n = 32000, k = 4096;
+
+    MemoryAllocator mem_buf;
+
+    Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(m * k), 1, m, k);
+    Matrix3D<float> weight(mem_buf.get_fpbuffer(n * k), 1, n, k);
+    Matrix3D<float> outputGT(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    Matrix3D<float> output(mem_buf.get_fpbuffer(m * n), 1, m, n);
+
+    hidden_states.load("assets/llama/tests/ops/Linear/input.bin");
+    outputGT.load("assets/llama/tests/ops/Linear/output.bin");
+    Linear_FP op(weight, "models/LLaMA_7B/lm_head.bin");
+
+    op.forward(hidden_states, output);
+
+    bool success = check_two_equal(output.m_data, outputGT.m_data, output.length(), 1e-8);
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+}
 
 int main() {
     // from OPT
@@ -599,4 +621,5 @@ int main() {
     test_Embedding_1_3B();
     // LLaMa
     test_LlamaRMSNorm();
+    test_FPLinear();
 }
