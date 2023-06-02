@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     // load the vocab
     // TODO: Change the dependency on the vocab file in the future.
     // TODO: Remove ggml-vocab.bin, use tokenizer.model in LLaMA repo on Huggingface instead.
-    const std::string fname = "./models/LLAMA_7B/ggml-vocab.bin";
+    const std::string fname = "./models/LLaMA_7B/ggml-vocab.bin";
     // fprintf(stderr, "Reading vocab from: '%s'\n", fname.c_str());
     llama_vocab vocab = llama_init_vocab(fname.c_str());
 

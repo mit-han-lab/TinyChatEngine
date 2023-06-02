@@ -9,6 +9,10 @@ struct llama_file {
 
     llama_file(const char * fname, const char * mode) {
         fp = std::fopen(fname, mode);
+        if (!fp){
+            std::cout << "opening " << fname << " fails" << std::endl;
+            perror("Error opening file");
+        }
     }
 
     void read_raw(void * ptr, size_t size) {

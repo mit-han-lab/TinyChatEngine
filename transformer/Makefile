@@ -6,7 +6,7 @@ CXXFLAGS = -std=c++17 -mavx2 -pthread -O3
 TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM
 PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_OPTForCausalLM
 APP_TARGET = demo
-TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(demo)
+TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
