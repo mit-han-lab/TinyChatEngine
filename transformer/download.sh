@@ -6,6 +6,8 @@ files_and_checksums=(
   "https://www.dropbox.com/s/8q5cupqw00twvoa/assets.zip c0d56e49fb726d641974c0d211a22a03 assets.zip"
 )
 
+OS=`uname`
+
 # Function to download a file if it doesn't exist or if its MD5 checksum is incorrect
 download_if_needed() {
   url="$1"
