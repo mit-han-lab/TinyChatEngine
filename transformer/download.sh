@@ -30,9 +30,7 @@ download_if_needed() {
   elif [ $OS = "Linux" ]
   then
       actual_md5=$(md5sum "$target_path" | cut -d ' ' -f1)
-
-  # Check the MD5 checksum
-  actual_md5=$(md5 -q "$target_path")
+  fi
 
   if [ "$actual_md5" != "$expected_md5" ]; then
     echo "MD5 checksum for '$target_path' is incorrect. Downloading again..."
