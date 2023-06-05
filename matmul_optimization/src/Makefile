@@ -55,12 +55,13 @@ OMP_FLAGS =  -L/usr/local/opt/libomp/lib/ -lomp
 # Files
 TARGET = benchmark_run
 CUDA_SRCS = lib/matmul.cu
-CPP_SRCS = benchmark/main.cc lib/matmul_imp.cc lib/utils.cc lib/matmul_int8.cc lib/matmul_avx_int8.cc
+CPP_SRCS = benchmark/main.cc lib/matmul_imp.cc lib/utils.cc lib/matmul_int8.cc lib/matmul_avx_int8.cc lib/matmul_int4.cc
 ONEDNN_SRCS = lib/matmul_onednn.cc
 
 # Objects
 OBJS = $(CPP_SRCS:.cc=.o)
 INT8_OBJS = $(INT8_CPP_SRCS:.cc=.o)
+INT4_OBJS = $(INT4_CPP_SRCS:.cc=.o)
 ifdef CUDA_AVAILABLE
 OBJS += $(CUDA_SRCS:.cu=.o)
 endif

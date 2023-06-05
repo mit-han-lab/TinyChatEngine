@@ -6,14 +6,17 @@ struct quantization_params {
     bool per_channel = false;
     int32_t zero_point;
     int8_t q_min = -128, q_max = 127;
+    float zero_point_float;
+    float offset;
 };
 
 struct matrix {
     int row;
     int column;
     float *data_ptr;
-    int8_t *int8_data_ptr;
     int32_t *int32_data_ptr;
+    int8_t *int8_data_ptr;
+    int8_t *int4_data_ptr;
     struct quantization_params qparams;
     int length() { return row * column; }
 };
@@ -60,6 +63,7 @@ class MatmulOperator {
         INT8_AVX_FAST_2x2 = 14,
         INT8_AVX_FAST_2x2_32UNROLL = 15,
         INT8_AVX_FAST_2x2_OMP = 16,
+        INT4_BASELINE = 17,
     };
 
     void naive_mat_mul(const struct matmul_params *params);
@@ -72,8 +76,10 @@ class MatmulOperator {
     void mat_mul_transposed_fastover_column(const struct matmul_params *params);
     void mat_mul_transpose_simd(const struct matmul_params *params);
     void mat_mul_fast(const struct matmul_params *params);
+    // onednn
     void mat_mul_onednn(const struct matmul_params *params);
     void mat_mul_onednn_int8(const struct matmul_params *params);
+    // int8
     void naive_mat_mul_int8(const struct matmul_params *params);
     void mat_mul_avx_int8(const struct matmul_params *params);
     void mat_mul_avx_int8_fast(const struct matmul_params *params);
@@ -87,6 +93,9 @@ class MatmulOperator {
     void mat_mul_avx_int8_fast_2x2_32unroll_bfp32_ofp32(const struct matmul_params *params);
     void mat_mul_avx_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(const struct matmul_params *params);
     void mat_mul_avx_int8_fast_2x2_omp(const struct matmul_params *params);
+    // int4
+    void naive_mat_mul_int4(const struct matmul_params *params);
+    // cuda
     void mat_mul_cuda(const struct matmul_params *params);
     void evaluate(IMP_TYPE type, const struct matmul_params *params);
 
