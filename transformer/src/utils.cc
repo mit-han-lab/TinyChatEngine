@@ -9,11 +9,12 @@
 #include <cstring>  // for strerror
 #include <iostream>
 
+// To be deprecated soon
 template <typename T>
 void read_to_array(const char* path, T* array, int size) {
     std::ifstream infile(path, std::ios::binary | std::ios::in);
     if (infile.fail()) {
-        std::cout << "Failed to open file: " << strerror(errno) << std::endl;
+        std::cout << strerror(errno) << ": " << path << std::endl;
         throw("Expected error...");
     } else {
         infile.read(reinterpret_cast<char*>(array), size * sizeof(T));

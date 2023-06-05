@@ -4,44 +4,7 @@
 #include "Fp32LlamaForCausalLM.h"
 #include "operators.h"
 #include "utils.h"
-
-#define MAX_TEST_MEMORY_BUF 1024 * 1024 * 1024  // 1 GB
-static char buffer[MAX_TEST_MEMORY_BUF];
-
-class MemoryAllocator {
-   public:
-    MemoryAllocator() { this->counter = 0; }
-    float* get_fpbuffer(int size) {
-        int byte_size = size * sizeof(float);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (float*)&buffer[cur_counter];
-    }
-    float* get_int8buffer(int size) {
-        int byte_size = size * sizeof(float);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (float*)&buffer[cur_counter];
-    }
-    int* get_intbuffer(int size) {
-        int byte_size = size * sizeof(int);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (int*)&buffer[cur_counter];
-    }
-
-   private:
-    int counter;
-};
+#include "utils_memalloc.h"
 
 void test_Fp32LlamaForCausalLM() {
     struct model_config config = get_opt_model_config(LLaMA_7B);
@@ -65,7 +28,7 @@ void test_Fp32LlamaForCausalLM() {
     // print_first_k_elelment("G", logits.m_data, 20);
     bool success = check_two_equal(output_1st.logits.m_data, logits.m_data, logits.length(), 1e-8);
 
-    Matrix3D<float> temp_key_value(mem_buf.get_int8buffer(b * sqlen * embed_dim), num_heads, sqlen,
+    Matrix3D<float> temp_key_value(mem_buf.get_fpbuffer(b * sqlen * embed_dim), num_heads, sqlen,
                                    embed_dim / num_heads);
     Profiler::getInstance().report();
     Profiler::getInstance().reset();
@@ -89,7 +52,5 @@ void test_Fp32LlamaForCausalLM() {
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
-
-// With more layers
 
 int main() { test_Fp32LlamaForCausalLM(); }

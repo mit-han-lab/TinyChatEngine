@@ -81,7 +81,7 @@ class Matrix3D {
     void load(const char *path) {
         std::ifstream infile(path, std::ios::binary | std::ios::in);
         if (infile.fail()) {
-            std::cout << "Failed to open file: " << strerror(errno) << std::endl;
+            std::cout << strerror(errno) << ": " << path << std::endl;
             throw("Expected error...");
         } else {
             infile.read(reinterpret_cast<char *>(this->m_data), this->length() * sizeof(T));

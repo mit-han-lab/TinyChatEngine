@@ -1,26 +1,7 @@
 #include "Fp32llamaDecoderLayer.h"
 #include "operators.h"
 #include "utils.h"
-
-#define MAX_TEST_MEMORY_BUF 1024 * 1024 * 1024  // 1 GB
-static char buffer[MAX_TEST_MEMORY_BUF];
-
-class MemoryAllocator {
-   public:
-    MemoryAllocator() { this->counter = 0; }
-    float *get_fpbuffer(int size) {
-        int byte_size = size * sizeof(float);
-        if (this->counter + byte_size > MAX_TEST_MEMORY_BUF) {
-            throw("Memory allocation fails! Test case uses too much memory.");
-        }
-        int cur_counter = counter;
-        this->counter += ((byte_size + 3) / 4) * 4;
-        return (float *)&buffer[cur_counter];
-    }
-
-   private:
-    int counter;
-};
+#include "utils_memalloc.h"
 
 void test_Fp32llamaDecoderLayer() {
     const struct model_config llama7B = llama_7B;
@@ -28,7 +9,7 @@ void test_Fp32llamaDecoderLayer() {
 
     MemoryAllocator mem_buf;
 
-    Fp32llamaDecoderLayer layer = Fp32llamaDecoderLayer("assets/llama/tests/layer0", llama7B, 0);
+    Fp32llamaDecoderLayer layer = Fp32llamaDecoderLayer("models/LLaMA_7B/decoder/layer0", llama7B, 0);
 
     Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(embed_dim * sqlen), b, sqlen, embed_dim);
     hidden_states.load("assets/llama/tests/layer0/sqlen9/hidden_states.bin");
@@ -64,7 +45,7 @@ void test_Fp32llamaDecoderLayer_gen() {
 
     MemoryAllocator mem_buf;
 
-    Fp32llamaDecoderLayer layer = Fp32llamaDecoderLayer("assets/llama/tests/layer0", llama7B, 0);
+    Fp32llamaDecoderLayer layer = Fp32llamaDecoderLayer("models/LLaMA_7B/decoder/layer0", llama7B, 0);
 
     Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(embed_dim * sqlen), b, sqlen, embed_dim);
     hidden_states.load("assets/llama/tests/layer0/sqlen1/hidden_states.bin");

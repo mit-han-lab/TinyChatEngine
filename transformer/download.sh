@@ -2,9 +2,11 @@
 
 # List of files to download, their corresponding MD5 checksums, and target local paths
 files_and_checksums=(
-  "https://www.dropbox.com/s/4r4dm1hssbdlgb9/models.zip 3c5d765f76093bcff4951180cdd899f4 models.zip"
-  "https://www.dropbox.com/s/8q5cupqw00twvoa/assets.zip dce6d88f2b79046b68e9560dd42c7cc2 assets.zip"
+  "https://www.dropbox.com/s/4r4dm1hssbdlgb9/models.zip f561c734cad039e3d085790e3d751bd3 models.zip"
+  "https://www.dropbox.com/s/8q5cupqw00twvoa/assets.zip c0d56e49fb726d641974c0d211a22a03 assets.zip"
 )
+
+OS=`uname`
 
 # Function to download a file if it doesn't exist or if its MD5 checksum is incorrect
 download_if_needed() {
@@ -22,8 +24,15 @@ download_if_needed() {
     wget -q -O "$target_path" "$url"
   fi
 
-  # Check the MD5 checksum
-  actual_md5=$(md5 -q "$target_path")
+  # Use md5 on MacOS
+  if [ $OS = "Darwin" ]
+  then
+      actual_md5=$(md5 -q "$target_path")
+  # Use md5sum on Ubuntu
+  elif [ $OS = "Linux" ]
+  then
+      actual_md5=$(md5sum "$target_path" | cut -d ' ' -f1)
+  fi
 
   if [ "$actual_md5" != "$expected_md5" ]; then
     echo "MD5 checksum for '$target_path' is incorrect. Downloading again..."
