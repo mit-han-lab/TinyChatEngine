@@ -58,6 +58,7 @@ class Linear_FP_int4 {
                         acc += *x_ptr++ * deq_1;
                     }
                 }
+                output(0, i, j) = acc;
                 // process
                 // float scale = scale(i, j)
                 // float de_quantized_float = ;
