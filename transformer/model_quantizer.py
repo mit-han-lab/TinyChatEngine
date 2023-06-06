@@ -112,7 +112,7 @@ def quantize_row_q4_1(input_path, k, data_type):
     return qs, d, m, zp
 
 # Write quantized data into binary file
-def write_weight_to_file(prefix:str, qs, d, m, zp):
+def write_weight_to_file(prefix:str, qs, d, m, zp, is_lm_head=False):
     # Convert to bytes
     qs_data = qs.tobytes()
     d_data = d.tobytes()
@@ -120,14 +120,24 @@ def write_weight_to_file(prefix:str, qs, d, m, zp):
     zp_data = zp.tobytes()
     
     # Write data
-    with open(prefix + "/weight_int4.bin", "wb") as f:
-        f.write(qs_data)
-    with open(prefix + "/scaling_factor_int4.bin", "wb") as f:
-        f.write(d_data)
-    with open(prefix + "/offset_int4.bin", "wb") as f:
-        f.write(m_data)
-    with open(prefix + "/zero_point_int4.bin", "wb") as f:
-        f.write(zp_data)
+    if is_lm_head:
+        with open(prefix + "/lm_head_int4.bin", "wb") as f:
+            f.write(qs_data)
+        with open(prefix + "/scaling_factor_int4.bin", "wb") as f:
+            f.write(d_data)
+        with open(prefix + "/offset_int4.bin", "wb") as f:
+            f.write(m_data)
+        with open(prefix + "/zero_point_int4.bin", "wb") as f:
+            f.write(zp_data)
+    else:
+        with open(prefix + "/weight_int4.bin", "wb") as f:
+            f.write(qs_data)
+        with open(prefix + "/scaling_factor_int4.bin", "wb") as f:
+            f.write(d_data)
+        with open(prefix + "/offset_int4.bin", "wb") as f:
+            f.write(m_data)
+        with open(prefix + "/zero_point_int4.bin", "wb") as f:
+            f.write(zp_data)
 
     f.close()
 
@@ -177,10 +187,24 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
 
     print(f"Quantizing {model_name_size} with {method} method... (original data type: {data_type})")
 
-    # Quantize embed_positions
     model_name = model_name_size.split('_')[0]
     # OPT
     if model_name == 'OPT':
+        # Quantize lm_head
+        file_path = f"{prefix}"
+        weight_path = f"{file_path}/lm_head.bin"
+        file_size_bytes = os.path.getsize(weight_path)
+        if file_size_bytes % bytes_per_element != 0:
+            raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+        array_size = file_size_bytes // bytes_per_element
+        if method == 'Q4_0':
+            qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
+        elif method == 'Q4_1':
+            qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
+        write_weight_to_file(file_path, qs, d, m, zp, True)
+        print(f"Quantization of lm_head finished.")
+
+        # Quantize embed_positions
         file_path = f"{prefix}/decoder/embed_positions"
         weight_path = f"{file_path}/weight.bin"
         file_size_bytes = os.path.getsize(weight_path)
@@ -332,6 +356,20 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
     
     # LLaMA
     elif model_name == 'LLaMA':
+        # Quantize lm_head
+        file_path = f"{prefix}"
+        weight_path = f"{file_path}/lm_head.bin"
+        file_size_bytes = os.path.getsize(weight_path)
+        if file_size_bytes % bytes_per_element != 0:
+            raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+        array_size = file_size_bytes // bytes_per_element
+        if method == 'Q4_0':
+            qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
+        elif method == 'Q4_1':
+            qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
+        write_weight_to_file(file_path, qs, d, m, zp, True)
+        print(f"Quantization of lm_head finished.")
+
         # Quantize embed_tokens
         file_path = f"{prefix}/decoder/embed_tokens"
         weight_path = f"{file_path}/weight.bin"
@@ -561,5 +599,5 @@ def main():
     quantize_model(prefix=args.model_path, method=args.method, data_type=args.data_type)
 
 if __name__ == "__main__":
-    # main()
-    test()
+    main()
+    # test()
