@@ -2,6 +2,8 @@ import os
 import numpy as np
 import argparse
 
+STORE_FP16 = False
+
 QK4_0 = 32
 QK4_1 = 32
 
@@ -44,16 +46,21 @@ def quantize_row_q4_0(input_path, k, data_type):
     max_vals = x.max(axis=1)
     min_vals = np.zeros(nb, dtype=np.float32)
     d_vals = max_vals / -8
-    zp = convert_to_fp16(8.5)  # zero point
 
     id_vals = 1.0 / d_vals
     id_vals[d_vals == 0] = 0.0
 
-    d = convert_to_fp16(d_vals)  # scaling factors
-    m = convert_to_fp16(min_vals)  # offsets
+    if STORE_FP16:
+        d = convert_to_fp16(d_vals)  # scaling factors
+        m = convert_to_fp16(min_vals)  # offsets
+        zp = convert_to_fp16(8.5)  # zero point
+    else:
+        d = d_vals  # scaling factors
+        m = min_vals  # offsets
+        zp = np.float32(8.5)  # zero point
     qs = np.zeros((nb, qk // 2), dtype=np.uint8)
 
-    xi = ((x * id_vals[:, np.newaxis]) + zp).clip(0, 15).astype(int)
+    xi = ((x * id_vals[:, np.newaxis]) + zp).clip(0, 15).astype(np.uint8)
     xi0 = xi[:, :qk//2]
     xi1 = xi[:, qk//2:]
     qs = xi0 | (xi1 << 4)
@@ -83,16 +90,21 @@ def quantize_row_q4_1(input_path, k, data_type):
     max_vals = x.max(axis=1)
     min_vals = x.min(axis=1)
     d_vals = (max_vals - min_vals) / 15
-    zp = convert_to_fp16(0.5)  # zero point
 
     id_vals = 1.0 / d_vals
     id_vals[d_vals == 0] = 0.0
 
-    d = convert_to_fp16(d_vals)  # scaling factors
-    m = convert_to_fp16(min_vals)  # offsets
+    if STORE_FP16:
+        d = convert_to_fp16(d_vals)  # scaling factors
+        m = convert_to_fp16(min_vals)  # offsets
+        zp = convert_to_fp16(0.5)  # zero point
+    else:
+        d = d_vals  # scaling factors
+        m = min_vals  # offsets
+        zp = np.float32(0.5)  # zero point
     qs = np.zeros((nb, qk // 2), dtype=np.uint8)
 
-    xi = (((x - min_vals[:, np.newaxis]) * id_vals[:, np.newaxis]) + zp).clip(0, 15).astype(int)
+    xi = (((x - min_vals[:, np.newaxis]) * id_vals[:, np.newaxis]) + zp).clip(0, 15).astype(np.uint8)
     xi0 = xi[:, :qk//2]
     xi1 = xi[:, qk//2:]
     qs = xi0 | (xi1 << 4)
@@ -457,6 +469,84 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
 
     print(f"All the weights of {model_name_size} has been quantized with {method} method.")
 
+# Test function
+def test():
+    print("Test function starts.")
+
+    prefix = "models/LLaMA_7B"
+    method = "Q4_0"
+    data_type = "fp32"
+    
+        # Check model name
+    model_name_size = prefix.split('/')[-1]
+    if model_name_size not in ['OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B']:
+        raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B'.")
+
+    # Check quantization method
+    if method not in ['Q4_0', 'Q4_1']:
+        raise ValueError("Invalid quantization method. Expected 'Q4_0' or 'Q4_1'.")
+
+    # Check data type
+    if data_type == 'fp32':
+        bytes_per_element = 4
+    elif data_type == 'fp16':
+        bytes_per_element = 2
+    elif data_type == 'int8':
+        bytes_per_element = 1
+    else:
+        raise ValueError("Invalid data type. Expected 'fp32', 'fp16', or 'int8'.")
+
+    print(f"Quantizing {model_name_size} with {method} method... (original data type: {data_type})")
+
+    # Quantize down_proj in layer 0
+    file_path = f"{prefix}/decoder/layer0/down_proj"
+    weight_path = f"{file_path}/weight.bin"
+    file_size_bytes = os.path.getsize(weight_path)
+    if file_size_bytes % bytes_per_element != 0:
+        raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+    array_size = file_size_bytes // bytes_per_element
+    if method == 'Q4_0':
+        qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
+    elif method == 'Q4_1':
+        qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
+    write_weight_to_file(file_path, qs, d, m, zp)
+
+    read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
+
+    # Check weights
+    first_half_qs = np.bitwise_and(qs, 0x0F)
+    second_half_qs = np.bitwise_and(qs, 0xF0) >> 4
+    first_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0x0F)
+    second_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0xF0) >> 4
+    print(f"first_half_qs:       {first_half_qs[0:2, :16]}")
+    print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
+    print(f"second_half_qs:      {second_half_qs[0:2, :16]}")
+    print(f"second_half_read_qs: {second_half_read_qs[:32]}")
+
+    # Check scaling factors
+    if STORE_FP16:
+        read_d = np.frombuffer(read_d, dtype=np.float16)
+    else:
+        read_d = np.frombuffer(read_d, dtype=np.float32)
+    print(f"d:      {d}")
+    print(f"read_d: {read_d}")
+
+    # Check offsets
+    if STORE_FP16:
+        read_m = np.frombuffer(read_m, dtype=np.float16)
+    else:
+        read_m = np.frombuffer(read_m, dtype=np.float32)
+    print(f"m:      {m}")
+    print(f"read_m: {read_m}")
+
+    # Check zero points
+    if STORE_FP16:
+        read_zp = np.frombuffer(read_zp, dtype=np.float16)
+    else:
+        read_zp = np.frombuffer(read_zp, dtype=np.float32)
+    print(f"zp:      {zp}")
+    print(f"read_zp: {read_zp}")
+
 # Main function
 def main():
     def get_parser():
@@ -471,4 +561,5 @@ def main():
     quantize_model(prefix=args.model_path, method=args.method, data_type=args.data_type)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test()
