@@ -8,6 +8,9 @@ struct quantization_params {
     int8_t q_min = -128, q_max = 127;
     float zero_point_float;
     float offset;
+    float *scale_group;
+    float *offset_group;
+    int qk;  // Group size for quantization
 };
 
 struct matrix {

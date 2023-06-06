@@ -477,7 +477,7 @@ def test():
     method = "Q4_0"
     data_type = "fp32"
     
-        # Check model name
+    # Check model name
     model_name_size = prefix.split('/')[-1]
     if model_name_size not in ['OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B']:
         raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B'.")
@@ -496,7 +496,6 @@ def test():
     else:
         raise ValueError("Invalid data type. Expected 'fp32', 'fp16', or 'int8'.")
 
-    print(f"Quantizing {model_name_size} with {method} method... (original data type: {data_type})")
 
     # Quantize down_proj in layer 0
     file_path = f"{prefix}/decoder/layer0/down_proj"
@@ -505,6 +504,7 @@ def test():
     if file_size_bytes % bytes_per_element != 0:
         raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
     array_size = file_size_bytes // bytes_per_element
+    print(f"Quantizing '{weight_path}' with {method} method... (original data type: {data_type})")
     if method == 'Q4_0':
         qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
     elif method == 'Q4_1':
