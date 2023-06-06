@@ -1,6 +1,6 @@
 #include <chrono>
 
-#include "int4LlamaForCausalLM.h"
+#include "int4llamaForCausalLM.h"
 #include "operators.h"
 #include "utils.h"
 

@@ -1,5 +1,6 @@
 #include "int4llamaDecoderLayer.h"
 
+#include "llama_utils.h"
 #include "utils.h"
 
 // Shared memory space across all layers
@@ -10,27 +11,6 @@ static float *up_proj_arr;
 static float *down_proj_arr;
 static float *temp;
 static float *hidden_states_arr;
-
-template <typename T>
-void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
-    PROFILE_START("int4llamaDecoderLayer::add");
-    assert(c.length() == a.length() && a.length() == b.length());
-
-    for (int i = 0; i < a.length(); i++) {
-        c.m_data[i] = a.m_data[i] + b.m_data[i];
-    }
-    PROFILE_END("int4llamaDecoderLayer::add");
-}
-
-void SiLuMul(Matrix3D<float> a, Matrix3D<float> b) {
-    PROFILE_START("int4llamaDecoderLayer::MulSiLu");
-    for (int i = 0; i < a.length(); i++) {
-        float v = a.m_data[i];
-        float silu_v = v * (1.0 / (1.0 + exp(-1 * v)));
-        a.m_data[i] = silu_v * b.m_data[i];
-    }
-    PROFILE_END("int4llamaDecoderLayer::MulSiLu");
-}
 
 struct int4llamaDecoderLayer_output int4llamaDecoderLayer::forward(const struct int4llamaDecoderLayer_input &input) {
     PROFILE_START(profile_name);
