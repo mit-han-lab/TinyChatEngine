@@ -32,5 +32,5 @@ class int4LlamaForCausalLM {
     Linear_FP_int4 lm_head;
     std::string profile_name = "int4LlamaForCausalLM";
     float* logits_output;
-    int8_t* lm_head_weight;
+    uint8_t* lm_head_weight;
 };

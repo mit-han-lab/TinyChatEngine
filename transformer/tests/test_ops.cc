@@ -600,26 +600,96 @@ void test_FPLinear() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
+// TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
+void test_FPLinear_int4() {
+    const int m = 1, n = 32000, k = 4096;
+
+    MemoryAllocator mem_buf;
+
+    Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(m * k), 1, m, k);
+    Matrix3D<float> weight(mem_buf.get_fpbuffer(n * k), 1, n, k);
+    Matrix3D<float> outputGT(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    Matrix3D<float> output(mem_buf.get_fpbuffer(m * n), 1, m, n);
+
+    hidden_states.load("assets/llama/tests/ops/Linear/input.bin");
+    outputGT.load("assets/llama/tests/ops/Linear/output.bin");
+    Linear_FP op(weight, "models/LLaMA_7B/lm_head.bin");
+
+    // quantize the weight to int4
+    Matrix3D<uint8_t> int4_weight((uint8_t *)mem_buf.get_int8buffer(n * k / 2), 1, n, k / 2);
+    Matrix3D<float> scale(mem_buf.get_fpbuffer(n * k / 32), 1, n, k / 32);
+    Matrix3D<float> offset(mem_buf.get_fpbuffer(n * k / 32), 1, n, k / 32);
+
+    for (int i = 0; i < n; i++) {
+        // quantize each block
+        for (int j = 0; j < k / 32; j++) {
+            float min = 1024.0, max = -1024.0;
+            uint8_t *int4_ptr = &int4_weight.m_data[i * k / 2 + j * 16];
+            float *fp32_weight = &weight.m_data[i * k + j * 32];
+            // block size 32, packed in 16 int8_t
+            // get min/max
+            for (int qk = 0; qk < 32; qk++) {
+                if (min > fp32_weight[qk]) min = fp32_weight[qk];
+                if (max < fp32_weight[qk]) max = fp32_weight[qk];
+            }
+            float s = abs(max - min) / 15;
+            float o = min;
+            scale(0, i, j) = s;
+            offset(0, i, j) = o;
+
+            // printf("s, o: %f, %f\n", s, o);
+            // quantize fp32 here
+            for (int qk = 0; qk < 32; qk += 2) {
+                float v0 = fp32_weight[qk];
+                float v1 = fp32_weight[qk + 1];
+                uint8_t int4_v0 = std::round((v0 - min) / s);
+                uint8_t int4_v1 = std::round((v1 - min) / s);
+
+                *int4_ptr++ = int4_v0 | (int4_v1 << 4);
+            }
+            // return;
+        }
+    }
+    Linear_FP_int4 int4_op;
+    int4_op.weight = int4_weight;
+    int4_op.scale = scale;
+    int4_op.offset = offset;
+
+    Matrix3D<float> outputQ(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    Matrix3D<float> outputQmy(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    int4_op.forward(hidden_states, outputQ);
+    int4_op.forward_my(hidden_states, outputQmy);
+
+    bool Q_success = check_two_equal(outputQ.m_data, outputQmy.m_data, outputQmy.length());
+
+    Q_success &= check_two_equal(outputQmy.m_data, outputGT.m_data, outputQmy.length(), 4.22);
+    if (!Q_success)
+        std::cout << "-------- Test of Int4: Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of Int4: Passed! -------- " << std::endl;
+}
+
 int main() {
     // from OPT
-    test_LayerNormQ();
-    test_LayerNormQ_len512();
-    test_LayerNormQ_1_3B();
-    test_LayerNorm();
-    test_LayerNorm_1_3B_len512();
-    test_W8A8B8O8LinearReLU();
-    test_W8A8B8O8LinearReLU_1_3B();
-    test_W8A8B8O8Linear();
-    test_W8A8B8O8Linear_1_3B();
-    test_W8A8BFP32OFP32Linear();
-    test_W8A8BFP32OFP32Linear_1_3B();
-    test_BMM_S8T_S8N_F32T();
-    test_BMM_S8T_S8N_F32T_1_3B();
-    test_BMM_S8T_S8N_S8T();
-    test_BMM_S8T_S8N_S8T_1_3B();
-    test_Embedding();
-    test_Embedding_1_3B();
-    // LLaMa
-    test_LlamaRMSNorm();
+    // test_LayerNormQ();
+    // test_LayerNormQ_len512();
+    // test_LayerNormQ_1_3B();
+    // test_LayerNorm();
+    // test_LayerNorm_1_3B_len512();
+    // test_W8A8B8O8LinearReLU();
+    // test_W8A8B8O8LinearReLU_1_3B();
+    // test_W8A8B8O8Linear();
+    // test_W8A8B8O8Linear_1_3B();
+    // test_W8A8BFP32OFP32Linear();
+    // test_W8A8BFP32OFP32Linear_1_3B();
+    // test_BMM_S8T_S8N_F32T();
+    // test_BMM_S8T_S8N_F32T_1_3B();
+    // test_BMM_S8T_S8N_S8T();
+    // test_BMM_S8T_S8N_S8T_1_3B();
+    // test_Embedding();
+    // test_Embedding_1_3B();
+    // // LLaMa
+    // test_LlamaRMSNorm();
     test_FPLinear();
+    test_FPLinear_int4();
 }

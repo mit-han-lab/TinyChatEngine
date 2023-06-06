@@ -6,10 +6,10 @@
 
 int4LlamaForCausalLM::int4LlamaForCausalLM(std::string param_path, const struct model_config config) {
     allocate_aligned_memory(logits_output, config.max_sqlen * config.vocsize * sizeof(float));
-    allocate_aligned_memory(lm_head_weight, (config.embed_dim * config.vocsize * sizeof(int8_t)) / 2);
+    allocate_aligned_memory(lm_head_weight, (config.embed_dim * config.vocsize * sizeof(uint8_t)) / 2);
 
     this->decoder = int4llamaDecoder(param_path + "/decoder", config);
-    this->lm_head = Linear_FP_int4(Matrix3D<int8_t>(lm_head_weight, 1, config.vocsize, config.embed_dim / 2),
+    this->lm_head = Linear_FP_int4(Matrix3D<uint8_t>(lm_head_weight, 1, config.vocsize, config.embed_dim / 2),
                                    param_path + "/lm_head_int4/");
 }
 

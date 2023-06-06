@@ -1,3 +1,5 @@
+#include <immintrin.h>
+
 #include "common.h"
 #include "utils.h"
 
@@ -14,9 +16,54 @@ class Linear_FP {
     std::string profile_name = "Linear_FP";
 };
 
+static inline __m256i bytes_from_nibbles_32(const uint8_t *rsi) {
+    // Load 16 bytes from memory
+    __m128i tmp = _mm_loadu_si128((const __m128i *)rsi);
+
+    // Expand bytes into uint16_t values
+    __m256i bytes = _mm256_cvtepu8_epi16(tmp);
+
+    // Unpack values into individual bytes
+    const __m256i lowMask = _mm256_set1_epi8(0xF);
+    __m256i high = _mm256_andnot_si256(lowMask, bytes);
+    __m256i low = _mm256_and_si256(lowMask, bytes);
+    high = _mm256_slli_epi16(high, 4);
+    bytes = _mm256_or_si256(low, high);
+    return bytes;
+}
+
+// Dequantize a block of weight
+static void dequantize_block_q4_1(const uint8_t *int4_w, float *y, float scale, float offset) {
+    const __m256 d_v = _mm256_broadcast_ss(&scale);
+    const __m256 d_m = _mm256_broadcast_ss(&offset);
+
+    const uint8_t *pp = int4_w;
+
+    for (int l = 0; l < QK; l += 32) {
+        // Load 32x4-bit integers into 32x8-bit integers
+        __m256i vx8 = bytes_from_nibbles_32(pp + l / 2);
+
+        // Convert to 16-bit int
+        const __m256i vx16_lo = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(vx8, 0));
+        const __m256i vx16_hi = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(vx8, 1));
+
+        // Convert to 32-bit int -> float 32
+        const __m256 vf[4] = {_mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(vx16_lo, 0))),
+                              _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(vx16_lo, 1))),
+                              _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(vx16_hi, 0))),
+                              _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(vx16_hi, 1)))};
+
+        // Scale, add m and store
+        for (int j = 0; j < 4; j++) {
+            const __m256 result = _mm256_add_ps(_mm256_mul_ps(vf[j], d_v), d_m);
+            _mm256_storeu_ps(y + l + j * 8, result);
+        }
+    }
+}
+
 class Linear_FP_int4 {
    public:
-    Linear_FP_int4(Matrix3D<int8_t> weight_, std::string weight_path) : weight(weight_) {
+    Linear_FP_int4(Matrix3D<uint8_t> weight_, std::string weight_path) : weight(weight_) {
         float *scale_ptr, *offset_ptr, *zero_point_ptr;
         // length of int8_t weight = elements / 2
         // length of scales/offset/zero_point = elements / QK = weight / (QK/2)
@@ -40,18 +87,17 @@ class Linear_FP_int4 {
         assert(output.m_dim_x == 1);
         assert(output.m_dim_y == x.m_dim_y);
         assert(output.m_dim_z == weight.m_dim_y);
-        assert(x.m_dim_z == weight.m_dim_z);
+        assert(x.m_dim_z / 2 == weight.m_dim_z);
         for (i = 0; i < output.m_dim_y; i++) {
             for (j = 0; j < output.m_dim_z; j++) {
                 float acc = 0;
-                for (k = 0; k < weight.m_dim_z; k += (QK / 2)) {
+                for (k = 0; k < weight.m_dim_z; k += QK) {
                     float s = scale(0, j, k / 32);
                     float o = offset(0, j, k / 32);
-                    // float zp = zero_point(0, j, k/32);
-                    int8_t *weight_32_int4 = &weight.m_data[j * weight.m_dim_z + k / 2];
+                    uint8_t *weight_32_int4 = &weight.m_data[j * weight.m_dim_z + k / 2];
                     float *x_ptr = &x.m_data[i * x.m_dim_z + k];
                     for (int qi = 0; qi < QK / 2; qi++) {
-                        int8_t packed_int4 = weight_32_int4[qi];
+                        uint8_t packed_int4 = weight_32_int4[qi];
                         float deq_0 = (float)(packed_int4 & 0x0F) * s + o;
                         float deq_1 = (float)(packed_int4 >> 4) * s + o;
                         acc += *x_ptr++ * deq_0;
@@ -59,13 +105,38 @@ class Linear_FP_int4 {
                     }
                 }
                 output(0, i, j) = acc;
-                // process
-                // float scale = scale(i, j)
-                // float de_quantized_float = ;
             }
         }
     };
-    Matrix3D<int8_t> weight;
+    void forward_my(const Matrix3D<float> &x, Matrix3D<float> &output) {
+        int i, j, k;
+        assert(output.m_dim_x == 1);
+        assert(output.m_dim_y == x.m_dim_y);
+        assert(output.m_dim_z == weight.m_dim_y);
+        assert(x.m_dim_z / 2 == weight.m_dim_z);
+
+        float weight_block[QK];
+
+        for (i = 0; i < output.m_dim_y; i++) {
+            for (j = 0; j < output.m_dim_z; j++) {
+                float acc = 0;
+                for (k = 0; k < weight.m_dim_z; k += QK) {
+                    float s = scale(0, j, k / 32);
+                    float o = offset(0, j, k / 32);
+                    // float zp = zero_point(0, j, k/32);
+                    uint8_t *weight_32_int4 = &weight.m_data[j * weight.m_dim_z + k / 2];
+                    float *x_ptr = &x.m_data[i * x.m_dim_z + k];
+                    dequantize_block_q4_1(weight_32_int4, weight_block, s, o);
+
+                    for (int qi = 0; qi < QK; qi++) {
+                        acc += *x_ptr++ * weight_block[qi];
+                    }
+                }
+                output(0, i, j) = acc;
+            }
+        }
+    };
+    Matrix3D<uint8_t> weight;
     Matrix3D<float> scale, offset, zero_point;
 
    private:
