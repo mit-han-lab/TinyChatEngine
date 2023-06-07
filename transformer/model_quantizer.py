@@ -505,6 +505,20 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
 
             print(f"Quantization of layer {idx} finished.")
 
+        # Quantize norm
+        file_path = f"{prefix}/decoder/norm"
+        weight_path = f"{file_path}/weight.bin"
+        file_size_bytes = os.path.getsize(weight_path)
+        if file_size_bytes % bytes_per_element != 0:
+            raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+        array_size = file_size_bytes // bytes_per_element
+        if method == 'Q4_0':
+            qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
+        elif method == 'Q4_1':
+            qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
+        write_weight_to_file(file_path, qs, d, m, zp)
+        print(f"Quantization of norm finished.")
+
     print(f"All the weights of {model_name_size} has been quantized with {method} method.")
 
 # Test function
