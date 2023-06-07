@@ -248,12 +248,10 @@ class Linear_FP_int4 {
             threads_args[j].offset = offset;
             threads_args[j].x = x;
             threads_args[j].output = output;
-            pthread_create(&thread_pool[j], NULL, fast_over_column_func_v2, &threads_args[j]);
+            pthread_create(&thread_pool[j], NULL, fast_over_column_func_v1, &threads_args[j]);
         }
         // Join threads
-        for (j = 0; j < num_thread; j++) {
-            pthread_join(thread_pool[j], NULL);
-        }
+        for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
     };
     Matrix3D<uint8_t> weight;
     Matrix3D<float> scale, offset, zero_point;
