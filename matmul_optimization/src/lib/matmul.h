@@ -19,6 +19,7 @@ struct matrix {
     float *data_ptr;
     int32_t *int32_data_ptr;
     int8_t *int8_data_ptr;
+    uint8_t *uint8_data_ptr;
     int8_t *int4_data_ptr;
     struct quantization_params qparams;
     int length() { return row * column; }

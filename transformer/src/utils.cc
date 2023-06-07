@@ -191,8 +191,10 @@ void allocate_aligned_memory(T*& ptr, size_t size) {
 // Explicitly instantiate the generic template function for other types (if needed)
 template bool check_two_equal<float>(float* array, float* array2, int size);
 template void read_to_array<float>(const char* path, float* array, int size);
-template void read_to_array<int8_t>(const char* path, int8_t* array, int size);
 template void read_to_array<int32_t>(const char* path, int32_t* array, int size);
+template void read_to_array<int8_t>(const char* path, int8_t* array, int size);
+template void read_to_array<uint8_t>(const char* path, uint8_t* array, int size);
 template void allocate_aligned_memory(float*& ptr, size_t size);
-template void allocate_aligned_memory(int8_t*& ptr, size_t size);
 template void allocate_aligned_memory(int*& ptr, size_t size);
+template void allocate_aligned_memory(int8_t*& ptr, size_t size);
+template void allocate_aligned_memory(uint8_t*& ptr, size_t size);

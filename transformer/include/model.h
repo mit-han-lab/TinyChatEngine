@@ -19,6 +19,7 @@ struct model_config {
     int hidden_dim;
     int vocsize;
     int padding_idx;
+    int qk;  // group size
 
     model_config() : model_config(1, 12, 12, 512, 768, 3072, 50272, 1) {}
     model_config(int batch, int num_heads, int num_layers, int max_sqlen, int embed_dim, int hidden_dim, int vocsize,
