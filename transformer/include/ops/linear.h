@@ -61,6 +61,96 @@ static void dequantize_block_q4_1(const uint8_t *int4_w, float *y, float scale, 
     }
 }
 
+struct linear_thread_args {
+    int start_j, end_j;
+    Matrix3D<uint8_t> weight;
+    Matrix3D<float> scale, offset, x, output;
+};
+
+static void *fast_over_column_func_v2(void *args) {
+    int i, j, k;
+    auto *mat_args = (struct linear_thread_args *)args;
+    Matrix3D<uint8_t> weight = mat_args->weight;
+    Matrix3D<float> scale = mat_args->scale;
+    Matrix3D<float> offset = mat_args->offset;
+    Matrix3D<float> x = mat_args->x;
+    Matrix3D<float> output = mat_args->output;
+
+    float weight_block[QK];
+    float weight_block2[QK];
+
+    for (i = 0; i < output.m_dim_y; i++) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j += 2) {
+            __m256 acc0 = _mm256_setzero_ps();
+            __m256 acc1 = _mm256_setzero_ps();
+            for (k = 0; k < weight.m_dim_z; k += QK) {
+                float s = scale(0, j, k / 32), s1 = scale(0, j + 1, k / 32);
+                float o = offset(0, j, k / 32), o1 = offset(0, j + 1, k / 32);
+                // float zp = zero_point(0, j, k/32);
+                uint8_t *weight_32_int4 = &weight.m_data[j * weight.m_dim_z + k / 2];
+                uint8_t *weight_32_int4_2 = &weight.m_data[(j + 1) * weight.m_dim_z + k / 2];
+                __m256 *x_ptr = (__m256 *)&x.m_data[i * x.m_dim_z + k];
+                __m256 *w_ptr = (__m256 *)&weight_block;
+                __m256 *w2_ptr = (__m256 *)&weight_block2;
+                dequantize_block_q4_1(weight_32_int4, weight_block, s, o);
+                dequantize_block_q4_1(weight_32_int4_2, weight_block2, s1, o1);
+
+                // assume QK == 32 (8 x 32 float)
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr, *w_ptr++));
+                acc1 = _mm256_add_ps(acc1, _mm256_mul_ps(*x_ptr++, *w2_ptr++));
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr, *w_ptr++));
+                acc1 = _mm256_add_ps(acc1, _mm256_mul_ps(*x_ptr++, *w2_ptr++));
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr, *w_ptr++));
+                acc1 = _mm256_add_ps(acc1, _mm256_mul_ps(*x_ptr++, *w2_ptr++));
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr, *w_ptr++));
+                acc1 = _mm256_add_ps(acc1, _mm256_mul_ps(*x_ptr++, *w2_ptr++));
+            }
+            float *ptr = (float *)&acc0;
+            output(0, i, j) = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
+            ptr = (float *)&acc1;
+            output(0, i, j + 1) = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
+        }
+    }
+    return NULL;
+}
+
+static void *fast_over_column_func_v1(void *args) {
+    int i, j, k;
+    auto *mat_args = (struct linear_thread_args *)args;
+    Matrix3D<uint8_t> weight = mat_args->weight;
+    Matrix3D<float> scale = mat_args->scale;
+    Matrix3D<float> offset = mat_args->offset;
+    Matrix3D<float> x = mat_args->x;
+    Matrix3D<float> output = mat_args->output;
+
+    float weight_block[QK];
+    float weight_block2[QK];
+
+    for (i = 0; i < output.m_dim_y; i++) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j++) {
+            __m256 acc0 = _mm256_setzero_ps();
+            for (k = 0; k < weight.m_dim_z; k += QK) {
+                float s = scale(0, j, k / 32);
+                float o = offset(0, j, k / 32);
+                // float zp = zero_point(0, j, k/32);
+                uint8_t *weight_32_int4 = &weight.m_data[j * weight.m_dim_z + k / 2];
+                __m256 *x_ptr = (__m256 *)&x.m_data[i * x.m_dim_z + k];
+                __m256 *w_ptr = (__m256 *)&weight_block;
+                dequantize_block_q4_1(weight_32_int4, weight_block, s, o);
+
+                // assume QK == 32 (8 x 32 float)
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr++, *w_ptr++));
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr++, *w_ptr++));
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr++, *w_ptr++));
+                acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr++, *w_ptr++));
+            }
+            float *ptr = (float *)&acc0;
+            output(0, i, j) = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
+        }
+    }
+    return NULL;
+}
+
 class Linear_FP_int4 {
    public:
     Linear_FP_int4(Matrix3D<uint8_t> weight_, std::string weight_path) : weight(weight_) {
@@ -123,7 +213,6 @@ class Linear_FP_int4 {
                 for (k = 0; k < weight.m_dim_z; k += QK) {
                     float s = scale(0, j, k / 32);
                     float o = offset(0, j, k / 32);
-                    // float zp = zero_point(0, j, k/32);
                     uint8_t *weight_32_int4 = &weight.m_data[j * weight.m_dim_z + k / 2];
                     float *x_ptr = &x.m_data[i * x.m_dim_z + k];
                     dequantize_block_q4_1(weight_32_int4, weight_block, s, o);
@@ -134,6 +223,36 @@ class Linear_FP_int4 {
                 }
                 output(0, i, j) = acc;
             }
+        }
+    };
+
+    void forward_fast(const Matrix3D<float> &x, Matrix3D<float> &output) {
+        const int num_thread = 8;
+        int i, j, k;
+        assert(output.m_dim_x == 1);
+        assert(output.m_dim_y == x.m_dim_y);
+        assert(output.m_dim_z == weight.m_dim_y);
+        assert(x.m_dim_z / 2 == weight.m_dim_z);
+
+        assert(output.m_dim_z > num_thread);
+        assert(output.m_dim_z % (num_thread * 2) == 0);  // unroll column by 2
+        pthread_t thread_pool[num_thread];
+        struct linear_thread_args threads_args[num_thread];
+
+        // Thread creation
+        for (j = 0; j < num_thread; j++) {
+            threads_args[j].start_j = j * (output.m_dim_z / num_thread);
+            threads_args[j].end_j = (j + 1) * (output.m_dim_z / num_thread);
+            threads_args[j].weight = weight;
+            threads_args[j].scale = scale;
+            threads_args[j].offset = offset;
+            threads_args[j].x = x;
+            threads_args[j].output = output;
+            pthread_create(&thread_pool[j], NULL, fast_over_column_func_v2, &threads_args[j]);
+        }
+        // Join threads
+        for (j = 0; j < num_thread; j++) {
+            pthread_join(thread_pool[j], NULL);
         }
     };
     Matrix3D<uint8_t> weight;

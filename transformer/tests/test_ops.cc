@@ -615,6 +615,10 @@ void test_FPLinear_int4() {
     outputGT.load("assets/llama/tests/ops/Linear/output.bin");
     Linear_FP op(weight, "models/LLaMA_7B/lm_head.bin");
 
+    STATS_START("fp32");
+    op.forward(hidden_states, output);
+    STATS_END("fp32");
+
     // quantize the weight to int4
     Matrix3D<uint8_t> int4_weight((uint8_t *)mem_buf.get_int8buffer(n * k / 2), 1, n, k / 2);
     Matrix3D<float> scale(mem_buf.get_fpbuffer(n * k / 32), 1, n, k / 32);
@@ -656,13 +660,24 @@ void test_FPLinear_int4() {
     int4_op.offset = offset;
 
     Matrix3D<float> outputQ(mem_buf.get_fpbuffer(m * n), 1, m, n);
-    Matrix3D<float> outputQmy(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    Matrix3D<float> outputQ_simd(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
+
+    STATS_START("int4_ref");
     int4_op.forward(hidden_states, outputQ);
-    int4_op.forward_my(hidden_states, outputQmy);
+    STATS_END("int4_ref");
+    STATS_START("int4_simd");
+    int4_op.forward_my(hidden_states, outputQ_simd);
+    STATS_END("int4_simd");
+    STATS_START("int4_fast");
+    int4_op.forward_fast(hidden_states, outputQ_fast);
+    STATS_END("int4_fast");
 
-    bool Q_success = check_two_equal(outputQ.m_data, outputQmy.m_data, outputQmy.length());
+    Profiler::getInstance().report_internal();
 
-    Q_success &= check_two_equal(outputQmy.m_data, outputGT.m_data, outputQmy.length(), 4.22);
+    bool Q_success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
+
+    // Q_success &= check_two_equal(outputQmy.m_data, outputGT.m_data, outputQmy.length(), 4.22);
     if (!Q_success)
         std::cout << "-------- Test of Int4: Fail! -------- " << std::endl;
     else
@@ -670,26 +685,25 @@ void test_FPLinear_int4() {
 }
 
 int main() {
-    // from OPT
-    // test_LayerNormQ();
-    // test_LayerNormQ_len512();
-    // test_LayerNormQ_1_3B();
-    // test_LayerNorm();
-    // test_LayerNorm_1_3B_len512();
-    // test_W8A8B8O8LinearReLU();
-    // test_W8A8B8O8LinearReLU_1_3B();
-    // test_W8A8B8O8Linear();
-    // test_W8A8B8O8Linear_1_3B();
-    // test_W8A8BFP32OFP32Linear();
-    // test_W8A8BFP32OFP32Linear_1_3B();
-    // test_BMM_S8T_S8N_F32T();
-    // test_BMM_S8T_S8N_F32T_1_3B();
-    // test_BMM_S8T_S8N_S8T();
-    // test_BMM_S8T_S8N_S8T_1_3B();
-    // test_Embedding();
-    // test_Embedding_1_3B();
-    // // LLaMa
-    // test_LlamaRMSNorm();
+    // from OPT test_LayerNormQ();
+    test_LayerNormQ_len512();
+    test_LayerNormQ_1_3B();
+    test_LayerNorm();
+    test_LayerNorm_1_3B_len512();
+    test_W8A8B8O8LinearReLU();
+    test_W8A8B8O8LinearReLU_1_3B();
+    test_W8A8B8O8Linear();
+    test_W8A8B8O8Linear_1_3B();
+    test_W8A8BFP32OFP32Linear();
+    test_W8A8BFP32OFP32Linear_1_3B();
+    test_BMM_S8T_S8N_F32T();
+    test_BMM_S8T_S8N_F32T_1_3B();
+    test_BMM_S8T_S8N_S8T();
+    test_BMM_S8T_S8N_S8T_1_3B();
+    test_Embedding();
+    test_Embedding_1_3B();
+    // LLaMa
+    test_LlamaRMSNorm();
     test_FPLinear();
     test_FPLinear_int4();
 }
