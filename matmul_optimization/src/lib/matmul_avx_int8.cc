@@ -6,7 +6,6 @@
 #include <iostream>
 
 #include "matmul.h"
-// #include <omp.h> // currently it is bugged
 
 inline void assign_8int32(int *ptr, int &acc) {
     acc = (ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7]);
@@ -296,26 +295,6 @@ static inline void multiply_signed_int8_2x2_32epi_of(__m256i &a, __m256i &b, __m
     acc2 = _mm256_add_epi32(acc2, _mm256_add_epi32(cb_ext1, cb_ext2));
     acc3 = _mm256_add_epi32(acc3, _mm256_add_epi32(cd_ext1, cd_ext2));
 }
-// Note: This implementation could have potential overflow!
-// __m256i multiply_signed_int8(__m256i &a, __m256i &b, __m256i &a2, __m256i &b2) {
-//     // Multiply the absolute values of a_abs (unsigned 8-bit integers) and corrected_b (signed 8-bit integers)
-//     __m256i product_16x16 = _mm256_maddubs_epi16(a, b);
-//     __m256i product_16x16_2 = _mm256_maddubs_epi16(a2, b2);
-
-//     // Sign extend the 16-bit integers in vector to 32-bit integers
-//     __m256i a_ext1 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(product_16x16, 0));
-//     __m256i b_ext1 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(product_16x16_2, 0));
-//     __m256i a_ext2 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(product_16x16, 1));
-//     __m256i b_ext2 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(product_16x16_2, 1));
-
-//     // Element-wise add the 32-bit integer vectors
-//     __m256i sum1 = _mm256_add_epi32(a_ext1, b_ext1);
-//     __m256i sum2 = _mm256_add_epi32(a_ext2, b_ext2);
-
-//     __m256i sum_product_8x32 = _mm256_add_epi32(sum1, sum2);
-
-//     return sum_product_8x32;
-// }
 
 void MatmulOperator::mat_mul_avx_int8(const struct matmul_params *params) {
     int i, j, k;
@@ -1561,34 +1540,3 @@ void MatmulOperator::mat_mul_avx_int8_fast_2x2_omp(const struct matmul_params *p
 }
 
 }  // namespace matmul
-
-// void initialize_vector(int8_t A[], int size) {
-//     for (int i = 0; i < size; i++) {
-//         // A[i] = (rand() % 2) - 1;
-//         A[i] = (rand() % 254) - 127;
-//     }
-// }
-
-// int main(){
-//     int8_t A[64], B[64];
-//     initialize_vector(A, 64);
-//     initialize_vector(B, 64);
-
-//     int32_t ref_acc = 0, acc;
-//     for (int i = 0; i < 64; i++){
-//         ref_acc += A[i] * B[i];
-//     }
-
-//     __m256i aa = _mm256_loadu_si256((const __m256i_u *)A), bb = _mm256_loadu_si256((const __m256i_u *)B);
-//     __m256i aa2 = _mm256_loadu_si256((const __m256i_u *)(&A[32])), bb2 = _mm256_loadu_si256((const __m256i_u
-//     *)(&B[32]));
-
-//     __m256i acc0_8x32 = multiply_signed_int8(aa, bb, aa2, bb2);
-//     int32_t *accptr = (int32_t*)&acc0_8x32;
-//     acc = accptr[0] + accptr[1] + accptr[2] + accptr[3]+ accptr[4] + accptr[5] + accptr[6] + accptr[7];
-
-//     printf("%d, %d\n", acc, ref_acc);
-//     assert(acc == ref_acc);
-
-//     return 0;
-// }

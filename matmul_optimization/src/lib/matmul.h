@@ -1,5 +1,11 @@
 #include <stdint.h>
 #include <sys/time.h>
+
+// TODO: deprecate this
+#define MAX_TRANSPOSE_BUFFER 2048 * 2048
+#define RUNS 1
+static float transpose_tmp[MAX_TRANSPOSE_BUFFER];
+
 // Data structures
 struct quantization_params {
     float scale;
