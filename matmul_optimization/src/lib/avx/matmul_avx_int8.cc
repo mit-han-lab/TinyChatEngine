@@ -1362,45 +1362,10 @@ void *mat_mul_accelerator_int8_thread_func_2x2_32unroll_bfp32_ofp32_over_column(
             // TODO: precompute some masks to save some computation?
             int blocks = A->column / 32;
             while (blocks) {
-                // prefetch the next vars
-                // if (blocks > 1){
-                //     _mm_prefetch(aa_ptr+1, _MM_HINT_T0);
-                //     _mm_prefetch(bb_ptr+1, _MM_HINT_T0);
-                //     _mm_prefetch(bb1_ptr+1, _MM_HINT_T0);
-                //     _mm_prefetch(bb2_ptr+1, _MM_HINT_T0);
-                //     _mm_prefetch(bb3_ptr+1, _MM_HINT_T0);
-                // }
-                // compute
-                // multiply_signed_int8_32epi_2unroll(*aa_ptr++, *bb_ptr++, *bb1_ptr++, acc0_8x32, acc1_8x32);
                 multiply_signed_int8_32epi_4unroll(*aa_ptr++, *bb_ptr++, *bb1_ptr++, *bb2_ptr++, *bb3_ptr++, acc0_8x32,
                                                    acc1_8x32, acc2_8x32, acc3_8x32);
-                // multiply_signed_int8_32epi_4unroll(*aa_ptr, *bb_ptr, *bb1_ptr, *bb2_ptr, *bb3_ptr, acc0_8x32,
-                //                                    acc1_8x32, acc2_8x32, acc3_8x32);
                 blocks--;
             }
-            // __m128i *aa_ptr = (__m128i *)&data_A[i * A->column];
-            // __m128i *bb_ptr = (__m128i *)&data_B[j * B->row];
-            // __m128i *bb1_ptr = (__m128i *)&data_B[(j + 1) * B->row];
-            // __m128i *bb2_ptr = (__m128i *)&data_B[(j + 2) * B->row];
-            // __m128i *bb3_ptr = (__m128i *)&data_B[(j + 3) * B->row];
-            // // TODO: precompute some masks to save some computation?
-            // int blocks = A->column/16;
-            // while(blocks) {
-            //     // prefetch the next vars
-            //     if (blocks > 1){
-            //         _mm_prefetch(aa_ptr+1, _MM_HINT_T0);
-            //         _mm_prefetch(bb_ptr+1, _MM_HINT_T0);
-            //         _mm_prefetch(bb1_ptr+1, _MM_HINT_T0);
-            //         _mm_prefetch(bb2_ptr+1, _MM_HINT_T0);
-            //         _mm_prefetch(bb3_ptr+1, _MM_HINT_T0);
-            //     }
-            //     // compute
-            //     // multiply_signed_int8_32epi_2unroll(*aa_ptr++, *bb_ptr++, *bb1_ptr++, acc0_8x32, acc1_8x32);
-            //     multiply_signed_int8_16epi_4unroll(*aa_ptr++, *bb_ptr++, *bb1_ptr++, *bb2_ptr++, *bb3_ptr++,
-            //     acc0_8x32,
-            //                                        acc1_8x32, acc2_8x32, acc3_8x32);
-            //     blocks--;
-            // }
 
             assign_8int32((int32_t *)&acc0_8x32, acc);
             assign_8int32((int32_t *)&acc1_8x32, acc1);

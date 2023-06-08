@@ -45,8 +45,8 @@ void Linear_FP::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     params.A.row = a.m_dim_y;
     params.A.column = a.m_dim_z;
     params.A.data_ptr = a.m_data;
-    params.B.row = b.m_dim_y;
-    params.B.column = b.m_dim_z;
+    params.B.row = b.m_dim_z;     // k
+    params.B.column = b.m_dim_y;  // n
     params.B.data_ptr = b.m_data;
     params.C.row = c.m_dim_y;
     params.C.column = c.m_dim_z;
@@ -120,8 +120,8 @@ void Linear_FP_int4::forward_fast(const Matrix3D<float> &x, Matrix3D<float> &out
     params.A.row = x.m_dim_y;
     params.A.column = x.m_dim_z;
     params.A.data_ptr = x.m_data;
-    params.B.row = b.m_dim_y;
-    params.B.column = b.m_dim_z;
+    params.B.row = b.m_dim_z;     // k
+    params.B.column = b.m_dim_y;  // n
     params.B.int4_data_ptr = b.m_data;
     params.C.row = output.m_dim_y;
     params.C.column = output.m_dim_z;

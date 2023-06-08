@@ -29,8 +29,8 @@ void *mat_mul_transposed_fastover_column_func(void *args) {
         for (j = start_i; j + 1 < end_i; j += 2) {
             __m256 acc = zero256, acc1 = zero256;
             __m256 *A256 = (__m256 *)&data_A[i * A->column];
-            __m256 *B256 = (__m256 *)&data_B[j * B->column];
-            __m256 *B256_1 = (__m256 *)&data_B[(j + 1) * B->column];
+            __m256 *B256 = (__m256 *)&data_B[j * B->row];
+            __m256 *B256_1 = (__m256 *)&data_B[(j + 1) * B->row];
             for (k = 0; k < A->column; k += 8) {
                 __m256 Aik = _mm256_load_ps((const float *)A256++);
                 __m256 Bjk = _mm256_load_ps((const float *)B256++);
@@ -48,7 +48,7 @@ void *mat_mul_transposed_fastover_column_func(void *args) {
             __m256 acc = zero256;
             for (k = 0; k < A->column; k += 8) {
                 __m256 Aik = _mm256_load_ps(&data_A[i * A->column + k]);
-                __m256 Bjk = _mm256_load_ps(&data_B[j * B->column + k]);
+                __m256 Bjk = _mm256_load_ps(&data_B[j * B->row + k]);
                 acc = _mm256_add_ps(acc, _mm256_mul_ps(Aik, Bjk));
             }
             float *ptr = (float *)&acc;

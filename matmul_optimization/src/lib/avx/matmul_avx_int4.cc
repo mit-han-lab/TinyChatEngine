@@ -70,12 +70,12 @@ static void *fast_over_column_func_v2(void *args) {
         for (j = mat_args->start_j; j < mat_args->end_j; j += 2) {
             __m256 acc0 = _mm256_setzero_ps();
             __m256 acc1 = _mm256_setzero_ps();
-            for (k = 0; k < B->column; k += block_size) {
-                float s = scale[j * (B->column / 16) + k / 32], s1 = scale[(j + 1) * (B->column / 32) + k / 32];
-                float o = offset[j * (B->column / 16) + k / 32], o1 = offset[(j + 1) * (B->column / 32) + k / 32];
+            for (k = 0; k < B->row; k += block_size) {
+                float s = scale[j * (B->row / 16) + k / 32], s1 = scale[(j + 1) * (B->row / 32) + k / 32];
+                float o = offset[j * (B->row / 16) + k / 32], o1 = offset[(j + 1) * (B->row / 32) + k / 32];
                 // float zp = zero_point(0, j, k/32);
-                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->column + k / 2];
-                uint8_t *weight_32_int4_2 = &B->int4_data_ptr[(j + 1) * B->column + k / 2];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
+                uint8_t *weight_32_int4_2 = &B->int4_data_ptr[(j + 1) * B->row + k / 2];
                 __m256 *x_ptr = (__m256 *)&A->data_ptr[i * A->column + k];
                 __m256 *w_ptr = (__m256 *)&weight_block;
                 __m256 *w2_ptr = (__m256 *)&weight_block2;
@@ -115,11 +115,11 @@ static void *fast_over_column_func_v1(void *args) {
     for (i = 0; i < C->row; i++) {
         for (j = mat_args->start_j; j < mat_args->end_j; j++) {
             __m256 acc0 = _mm256_setzero_ps();
-            for (k = 0; k < B->column; k += block_size) {
-                float s = scale[j * (B->column / 16) + k / 32];  // /16:B->column is packed 4bits
-                float o = offset[j * (B->column / 16) + k / 32];
+            for (k = 0; k < B->row; k += block_size) {
+                float s = scale[j * (B->row / 16) + k / 32];  // /16:B->row is packed 4bits
+                float o = offset[j * (B->row / 16) + k / 32];
                 // float zp = zero_point(0, j, k/32);
-                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->column + k / 2];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
                 __m256 *x_ptr = (__m256 *)&A->data_ptr[i * A->column + k];
                 __m256 *w_ptr = (__m256 *)&weight_block;
                 dequantize_block_q4(weight_32_int4, weight_block, s, o, block_size);
