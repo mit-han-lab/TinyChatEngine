@@ -16,7 +16,7 @@ ifeq ($(shell uname -m),x86_64)
 	# For Intel machines with AVX
 	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
 	LIB_SRC += $(LIB_AVX_SRC)
-	CXXFLAGS += -mavx2 -D__AVX__
+	CXXFLAGS += -mavx2
 else ifeq ($(shell uname -p),arm)
 	# For ARM A-series (such as Mac M1) with NEON
 	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)

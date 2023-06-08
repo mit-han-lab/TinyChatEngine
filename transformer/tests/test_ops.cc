@@ -615,7 +615,8 @@ void test_FPLinear_int4() {
     outputGT.load("assets/llama/tests/ops/Linear/output.bin");
     Linear_FP op(weight, "models/LLaMA_7B/lm_head.bin");
 
-    STATS_START("fp32");
+    const int flops = k * m * n * 2;
+    STATS_FLOPS("fp32", flops);
     op.forward(hidden_states, output);
     STATS_END("fp32");
 
@@ -663,7 +664,6 @@ void test_FPLinear_int4() {
     Matrix3D<float> outputQ_simd(mem_buf.get_fpbuffer(m * n), 1, m, n);
     Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
 
-    const int flops = k * m * n * 2;
     STATS_FLOPS("int4_ref", flops);
     int4_op.forward(hidden_states, outputQ);
     STATS_END("int4_ref");
@@ -671,13 +671,12 @@ void test_FPLinear_int4() {
     int4_op.forward_fast(hidden_states, outputQ_fast);
     STATS_END("int4_fast");
 
-    bool Q_success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
+    bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
 
-    // Q_success &= check_two_equal(outputQmy.m_data, outputGT.m_data, outputQmy.length(), 4.22);
-    if (!Q_success)
-        std::cout << "-------- Test of Int4: Fail! -------- " << std::endl;
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
-        std::cout << "-------- Test of Int4: Passed! -------- " << std::endl;
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
 int main() {
