@@ -50,6 +50,7 @@ void W8A8BFP32OFP32Linear::forward(const Matrix3D<int8_t> &x, Matrix3D<float> &o
     params.C.column = n;
     params.C.data_ptr = output.m_data;
     params.C.qparams.zero_point = 0;
+    params.alpha = alpha;
 
     matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
 

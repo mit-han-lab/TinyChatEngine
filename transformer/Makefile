@@ -29,7 +29,7 @@ else
 	LIB_SRC += $(LIB_REF_SRC)
 endif
 
-$(info $(LIB_SRC))
+# $(info $(LIB_SRC))
 
 SRC_DIR = src
 SRC = $(wildcard src/*.cc)

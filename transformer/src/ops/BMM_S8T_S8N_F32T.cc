@@ -39,6 +39,7 @@ void BMM_S8T_S8N_F32T::forward(const Matrix3D<int8_t> &x, const Matrix3D<int8_t>
     params.opt_params.num_thread = NUM_THREAD;
     params.C.qparams.q_max = 127;
     params.C.qparams.q_min = -128;
+    params.alpha = alpha;
 
     matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
     if (m == 1 && x.m_dim_x > 1) {

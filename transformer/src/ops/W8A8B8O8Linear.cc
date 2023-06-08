@@ -52,6 +52,8 @@ void W8A8B8O8Linear::forward(const Matrix3D<int8_t> &x, Matrix3D<int8_t> &output
     params.C.column = n;
     params.C.int8_data_ptr = output.m_data;
     params.A.qparams.scale = alpha;
+    params.alpha = alpha;
+    params.beta = beta;
 
     matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
 

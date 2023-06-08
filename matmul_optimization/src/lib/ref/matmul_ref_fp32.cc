@@ -12,19 +12,19 @@ void fp32_ref_matmul(const struct matmul_params *params) {
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     float *data_A = A->data_ptr, *data_B = B->data_ptr, *data_C = C->data_ptr;
 
-    assert(A->column == B->column);
+    assert(A->column == B->row);
     assert(C->row == A->row);
-    assert(C->column == B->row);
-    int m = A->row, n = B->row, k = A->column;
+    assert(C->column == B->column);
+    int m = A->row, n = B->column, k = A->column;
 
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < n; j++) {
             float acc = 0;
-            for (int kk = 0; kk < k; k++) {
-                acc += data_A[i * A->column + kk] * data_B[j * B->row + kk];
+            for (int kk = 0; kk < k; kk++) {
+                acc += data_A[i * k + kk] * data_B[j * k + kk];
             }
             acc = acc;
-            data_C[i * C->column + j] = acc;
+            data_C[i * n + j] = acc;
         }
     }
 }
