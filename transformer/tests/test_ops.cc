@@ -663,17 +663,13 @@ void test_FPLinear_int4() {
     Matrix3D<float> outputQ_simd(mem_buf.get_fpbuffer(m * n), 1, m, n);
     Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
 
-    STATS_START("int4_ref");
+    const int flops = k * m * n * 2;
+    STATS_FLOPS("int4_ref", flops);
     int4_op.forward(hidden_states, outputQ);
     STATS_END("int4_ref");
-    STATS_START("int4_simd");
-    int4_op.forward_my(hidden_states, outputQ_simd);
-    STATS_END("int4_simd");
-    STATS_START("int4_fast");
+    STATS_FLOPS("int4_fast", flops);
     int4_op.forward_fast(hidden_states, outputQ_fast);
     STATS_END("int4_fast");
-
-    Profiler::getInstance().report_internal();
 
     bool Q_success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
 
@@ -706,4 +702,6 @@ int main() {
     test_LlamaRMSNorm();
     test_FPLinear();
     test_FPLinear_int4();
+    // Report if profiling flag is on
+    Profiler::getInstance().report();
 }

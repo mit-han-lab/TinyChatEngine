@@ -105,6 +105,7 @@ class MatmulOperator {
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda
+    void mat_mul_avx_int4_fast(const struct matmul_params *params);
     void mat_mul_cuda(const struct matmul_params *params);
     void evaluate(IMP_TYPE type, const struct matmul_params *params);
 

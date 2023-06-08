@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <xmmintrin.h>  // intel SSE intrinsic
 
-#include "matmul.h"
+#include "../matmul.h"
 
 namespace matmul {
 

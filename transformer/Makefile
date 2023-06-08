@@ -1,16 +1,33 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -mavx2 -pthread -O3
+CXXFLAGS = -std=c++17 -pthread -O3
 
 # Executable and source files
 TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4LlamaForCausalLM
-PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_Int4LlamaForCausalLM profile_OPTForCausalLM
+PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_Int4LlamaForCausalLM profile_OPTForCausalLM profile_ops
 APP_TARGET = demo
 TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/
+
+ifeq ($(shell uname -m),x86_64)
+	# For Intel machines with AVX
+	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
+	LIB_SRC += $(LIB_AVX_SRC)
+	CXXFLAGS += -mavx2
+else ifeq ($(shell uname -p),arm)
+	# For ARM A-series (such as Mac M1) with NEON
+	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	LIB_SRC += $(LIB_NEON_SRC)
+	CXXFLAGS += -march=native
+else
+	# Use paltform independent implementation
+	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
+	LIB_REF_SRC = $(wildcard $(LIB_DIR)/lib/ref/*.cc)
+	LIB_SRC += $(LIB_REF_SRC)
+endif
 
 $(info $(LIB_SRC))
 
@@ -81,8 +98,13 @@ profile_OPTForCausalLM:
 profile_Fp32LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC)
 
+<<<<<<< HEAD
 profile_Int4LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC)
+=======
+profile_ops:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/test_ops.cc $(SRC)
+>>>>>>> move avx code to the folder
 
 # Clean up
 clean:
