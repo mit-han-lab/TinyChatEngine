@@ -7,10 +7,17 @@ We currently support int8 OPT and fp32/int4 LLaMA models on Intel CPU and plan t
 - Target device: Intel CPU, Apple M-series CPU/GPU, Nvidia edge GPU
 - Target quantization schemes: w4a16 (GPU), w4a32 (CPU)
 
+## Prerequisites 
+For MacOS, install boost by
+```bash
+brew install boost
+```
+
 ## Usage
 - Example commands to run the int8 OPT demo (currently working on Intel only)
 ``` bash
 cd transformer
+git submodule update --init
 ./download.sh # This will download 125m, 1.3B, 6.7B OPT, and 7B LLaMA models
 make -j
 ./demo OPT6.7B INT8

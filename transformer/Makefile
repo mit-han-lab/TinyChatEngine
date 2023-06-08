@@ -11,6 +11,7 @@ TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/
+LIB =
 
 ifeq ($(shell uname -m),x86_64)
 	# For Intel machines with AVX
@@ -22,6 +23,8 @@ else ifeq ($(shell uname -p),arm)
 	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
 	LIB_SRC += $(LIB_NEON_SRC)
 	CXXFLAGS += -march=native
+	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
+	LIB += -L/opt/homebrew/opt/boost/lib
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
@@ -42,40 +45,40 @@ all: $(TARGET)
 
 # Linking
 test_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/test_ops.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/test_ops.cc $(SRC) $(LIB)
 
 test_Int8OPTAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTAttention tests/test_Int8OPTAttention.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTAttention tests/test_Int8OPTAttention.cc $(SRC) $(LIB)
 
 test_Int8OPTDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoderLayer tests/test_Int8OPTDecoderLayer.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoderLayer tests/test_Int8OPTDecoderLayer.cc $(SRC) $(LIB)
 
 test_Int8OPTDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoder tests/test_Int8OPTDecoder.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoder tests/test_Int8OPTDecoder.cc $(SRC) $(LIB)
 
 test_OPTForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB)
 
 test_OPTTokenizer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTTokenizer tests/test_OPTTokenizer.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTTokenizer tests/test_OPTTokenizer.cc $(SRC) $(LIB)
 
 test_LLaMATokenizer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_LLaMATokenizer tests/test_LLaMATokenizer.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_LLaMATokenizer tests/test_LLaMATokenizer.cc $(SRC) $(LIB)
 
 test_OPTGenerate:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTGenerate tests/test_OPTGenerate.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTGenerate tests/test_OPTGenerate.cc $(SRC) $(LIB)
 
 test_Fp32llamaAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaAttention tests/test_Fp32llamaAttention.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaAttention tests/test_Fp32llamaAttention.cc $(SRC) $(LIB)
 
 test_Fp32llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoderLayer tests/test_Fp32llamaDecoderLayer.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoderLayer tests/test_Fp32llamaDecoderLayer.cc $(SRC) $(LIB)
 
 test_Fp32llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoder tests/test_Fp32llamaDecoder.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoder tests/test_Fp32llamaDecoder.cc $(SRC) $(LIB)
 
 test_Fp32LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB)
 
 test_Int4llamaAttention:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/test_Int4llamaAttention.cc $(SRC)
@@ -90,21 +93,19 @@ test_Int4LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC)
 
 demo:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC) $(LIB)
 
 profile_OPTForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB)
 
 profile_Fp32LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB)
 
-<<<<<<< HEAD
 profile_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC)
-=======
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB)
+
 profile_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/test_ops.cc $(SRC)
->>>>>>> move avx code to the folder
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/test_ops.cc $(SRC) $(LIB)
 
 # Clean up
 clean:

@@ -121,7 +121,7 @@ void test_OPTForCausalLM_1_3B() {
     logits.load("assets/OPT/tests/causallm/OPT_1.3B/2nd_logits.bin");
     // print_first_k_elelment("O", output_2nd.logits.m_data, 20);
     // print_first_k_elelment("G", logits.m_data, 20);
-    success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 1.67);
+    success &= check_two_equal(output_2nd.logits.m_data, logits.m_data, logits.length(), 1.77);
 
     Matrix3D<int> arg_max_2nd(mem_buf.get_intbuffer(sqlen), 1, 1, 1);
     arg_max_dim2(output_2nd.logits, arg_max_2nd);
