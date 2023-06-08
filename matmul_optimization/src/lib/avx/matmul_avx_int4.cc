@@ -101,7 +101,6 @@ static void *fast_over_column_func_v2(void *args) {
     return NULL;
 }
 
-#include <stdio.h>
 static void *fast_over_column_func_v1(void *args) {
     int i, j, k;
     struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
@@ -124,7 +123,7 @@ static void *fast_over_column_func_v1(void *args) {
                 __m256 *w_ptr = (__m256 *)&weight_block;
                 dequantize_block_q4(weight_32_int4, weight_block, s, o, block_size);
 
-                // assume block_size == 32 (8 x 32 float)
+                // assume block_size == 32 (8 x 4 float)
                 acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr++, *w_ptr++));
                 acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr++, *w_ptr++));
                 acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(*x_ptr++, *w_ptr++));
