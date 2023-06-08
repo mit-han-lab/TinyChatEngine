@@ -32,6 +32,8 @@ void test_Fp32llamaAttention() {
     bool success = check_two_equal(value_statesGT.m_data, output.past_key_value.second.m_data, value_statesGT.length());
     success &= check_two_equal(key_statesGT.m_data, output.past_key_value.first.m_data, key_statesGT.length());
     success &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, attn_outputGT.length());
+    // print_first_k_elelment("output.attn_output", output.attn_output.m_data, 20);
+    // print_first_k_elelment("attn_outputGT", attn_outputGT.m_data, 20);
     if (!success)
         std::cout << "Test of " << __func__ << ": Fail!" << std::endl;
     else
@@ -73,6 +75,8 @@ void test_Fp32llamaAttention_gen() {
     bool success = check_two_equal(value_statesGT.m_data, output.past_key_value.second.m_data, value_statesGT.length());
     success &= check_two_equal(key_statesGT.m_data, output.past_key_value.first.m_data, key_statesGT.length());
     success &= check_two_equal(attn_outputGT.m_data, output.attn_output.m_data, attn_outputGT.length());
+    // print_first_k_elelment("output.attn_output", output.attn_output.m_data, 20);
+    // print_first_k_elelment("attn_outputGT", attn_outputGT.m_data, 20);
     if (!success)
         std::cout << "Test of " << __func__ << ": Fail!" << std::endl;
     else

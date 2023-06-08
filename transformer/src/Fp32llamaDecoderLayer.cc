@@ -1,7 +1,28 @@
 #include "Fp32llamaDecoderLayer.h"
 
-#include "llama_utils.h"
 #include "utils.h"
+
+template <typename T>
+void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
+    PROFILE_START("int4llamaDecoderLayer::add");
+    assert(c.length() == a.length() && a.length() == b.length());
+
+    for (int i = 0; i < a.length(); i++) {
+        c.m_data[i] = a.m_data[i] + b.m_data[i];
+    }
+    PROFILE_END("int4llamaDecoderLayer::add");
+}
+
+
+void SiLuMul(Matrix3D<float> a, Matrix3D<float> b) {
+    PROFILE_START("MulSiLu");
+    for (int i = 0; i < a.length(); i++) {
+        float v = a.m_data[i];
+        float silu_v = v * (1.0 / (1.0 + exp(-1 * v)));
+        a.m_data[i] = silu_v * b.m_data[i];
+    }
+    PROFILE_END("MulSiLu");
+}
 
 // Shared memory space across all layers
 static float *hidden_states_float_arr;
