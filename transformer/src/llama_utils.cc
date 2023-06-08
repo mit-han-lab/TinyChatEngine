@@ -1,3 +1,4 @@
+#include <cassert>
 #include "llama_utils.h"
 
 #include "common.h"
