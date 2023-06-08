@@ -55,8 +55,8 @@ def quantize_row_q4_0(input_path, k, data_type):
         m = convert_to_fp16(min_vals)  # offsets
         zp = convert_to_fp16(8.5)  # zero point
     else:
-        d = d_vals  # scaling factors
-        m = min_vals  # offsets
+        d = np.float32(d_vals)  # scaling factors
+        m = np.float32(min_vals)  # offsets
         zp = np.float32(8.5)  # zero point
     qs = np.zeros((nb, qk // 2), dtype=np.uint8)
 
@@ -99,8 +99,8 @@ def quantize_row_q4_1(input_path, k, data_type):
         m = convert_to_fp16(min_vals)  # offsets
         zp = convert_to_fp16(0.5)  # zero point
     else:
-        d = d_vals  # scaling factors
-        m = min_vals  # offsets
+        d = np.float32(d_vals)  # scaling factors
+        m = np.float32(min_vals)  # offsets
         zp = np.float32(0.5)  # zero point
     qs = np.zeros((nb, qk // 2), dtype=np.uint8)
 
