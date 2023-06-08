@@ -43,29 +43,20 @@ void BMM_S8T_S8N_S8T::forward(const Matrix3D<int8_t> &x, const Matrix3D<int8_t> 
     matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
 
     // process each batch
-#ifdef USE_OPT_EXP
     if (m == 1 && x.m_dim_x > 1) {
         // merge each batch
         params.A.row = x.m_dim_x;
         params.C.row = x.m_dim_x;
         // B is batched, need a new op for this!
-        matmul_op.mat_mul_avx_int8_fast_2x2_32unroll_nobias_batch(&params);
+        matmul_op.mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_batch(&params);
     } else {
         for (int bz = 0; bz < x.m_dim_x; bz++) {
-            matmul_op.mat_mul_avx_int8_fast_2x2_32unroll_nobias(&params);
+            matmul_op.mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(&params);
             params.A.int8_data_ptr += m * k;
             params.B.int8_data_ptr += k * n;
             params.C.int8_data_ptr += m * n;
         }
     }
-#else
-    for (int bz = 0; bz < x.m_dim_x; bz++) {
-        matmul_op.mat_mul_avx_int8_fast_2x2_32unroll_nobias(&params);
-        params.A.int8_data_ptr += m * k;
-        params.B.int8_data_ptr += k * n;
-        params.C.int8_data_ptr += m * n;
-    }
-#endif
 
     PROFILE_END(profile_name);
 }

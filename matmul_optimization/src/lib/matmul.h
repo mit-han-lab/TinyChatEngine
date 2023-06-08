@@ -53,27 +53,6 @@ struct thread_args {
 namespace matmul {
 class MatmulOperator {
    public:
-    enum IMP_TYPE {
-        NAIVE = 0,
-        UNROLL = 1,
-        REORDER = 2,
-        TILING = 3,
-        MULTITHREAD = 4,
-        TRANSPOSE = 5,
-        TRANSPOSE_SIMD = 6,
-        FAST = 7,
-        CUDA = 8,
-        ONEDNN_FP32 = 9,
-        INT8_BASELINE = 10,
-        ONEDNN_INT8 = 11,
-        INT8_AVX = 12,
-        INT8_AVX_FAST = 13,
-        INT8_AVX_FAST_2x2 = 14,
-        INT8_AVX_FAST_2x2_32UNROLL = 15,
-        INT8_AVX_FAST_2x2_OMP = 16,
-        INT4_BASELINE = 17,
-    };
-
     void naive_mat_mul(const struct matmul_params *params);
     void mat_mul_unrolling(const struct matmul_params *params);
     void mat_mul_reordering(const struct matmul_params *params);
@@ -81,33 +60,31 @@ class MatmulOperator {
     void mat_mul_multithreading(const struct matmul_params *params);
     void mat_mul_transpose(const struct matmul_params *params);
     void mat_mul_transposed(const struct matmul_params *params);
-    void mat_mul_transposed_fastover_column(const struct matmul_params *params);
-    void mat_mul_transpose_simd(const struct matmul_params *params);
-    void mat_mul_fast(const struct matmul_params *params);
-    // onednn
+    void mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params);
+    void mat_mul_accelerator_transpose_simd(const struct matmul_params *params);
+    void mat_mul_accelerator_fast(const struct matmul_params *params);
     void mat_mul_onednn(const struct matmul_params *params);
     void mat_mul_onednn_int8(const struct matmul_params *params);
     // int8
     void naive_mat_mul_int8(const struct matmul_params *params);
-    void mat_mul_avx_int8(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_32unroll_over_column(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_32unroll(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_32unroll_nobias(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_32unroll_nobias_batch(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_32unroll_nobias_ofp32(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_32unroll_nobias_ofp32_batch(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_32unroll_bfp32_ofp32(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(const struct matmul_params *params);
-    void mat_mul_avx_int8_fast_2x2_omp(const struct matmul_params *params);
+    void mat_mul_accelerator_int8(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_32unroll_over_column(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_32unroll(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_batch(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32_batch(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);
     // int4
+    void mat_mul_accelerator_int4_fast(const struct matmul_params *params);
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda
-    void mat_mul_avx_int4_fast(const struct matmul_params *params);
     void mat_mul_cuda(const struct matmul_params *params);
-    void evaluate(IMP_TYPE type, const struct matmul_params *params);
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);

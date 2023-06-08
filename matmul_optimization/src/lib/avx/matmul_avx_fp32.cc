@@ -1,4 +1,3 @@
-
 #include <assert.h>
 #include <immintrin.h>  // AVX intrinsic
 #include <math.h>
@@ -61,7 +60,7 @@ void *mat_mul_transposed_fastover_column_func(void *args) {
     return NULL;
 }
 
-void MatmulOperator::mat_mul_transposed_fastover_column(const struct matmul_params *params) {
+void MatmulOperator::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
     int i, j, k;
 
     int num_thread = params->opt_params.num_thread;
@@ -91,7 +90,7 @@ void MatmulOperator::mat_mul_transposed_fastover_column(const struct matmul_para
     }
 }
 
-void MatmulOperator::mat_mul_transpose_simd(const struct matmul_params *params) {
+void MatmulOperator::mat_mul_accelerator_transpose_simd(const struct matmul_params *params) {
     int i, j, k;
 
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
@@ -162,7 +161,7 @@ void *fast_thread_func(void *args) {
     return NULL;
 }
 
-void MatmulOperator::mat_mul_fast(const struct matmul_params *params) {
+void MatmulOperator::mat_mul_accelerator_fast(const struct matmul_params *params) {
     int j, num_thread = params->opt_params.num_thread;
 
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;

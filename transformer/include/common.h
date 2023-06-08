@@ -8,7 +8,6 @@
 #include "model.h"
 
 #define DEBUG false
-#define USE_OPT_EXP
 
 #define DEBUG_INS(x) \
     if (DEBUG) x

@@ -138,7 +138,7 @@ static void *fast_over_column_func_v1(void *args) {
 }
 
 namespace matmul {
-void MatmulOperator::mat_mul_avx_int4_fast(const struct matmul_params *params) {
+void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
     const int num_thread = params->opt_params.num_thread;
     int i, j, k;
     pthread_t thread_pool[num_thread];
