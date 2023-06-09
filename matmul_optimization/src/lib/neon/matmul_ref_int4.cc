@@ -8,11 +8,19 @@
 
 #include "../matmul.h"
 
-static inline void dequantize_block_q4(const uint8_t *int4_w, float *y, float scale, float offset, int block_size) {
+static void dequantize_block_q4(const uint8_t *int4_w, float *y, float scale, float offset, int block_size) {
     const float32x4_t vd = vdupq_n_f32(scale);
     const float32x4_t vm = vdupq_n_f32(offset);
 
     const uint8_t *pp = int4_w;
+
+    // for (int qi = 0; qi < block_size/2; qi++) {
+    //     uint8_t packed_int4 = int4_w[qi];
+    //     float deq_0 = (float)(packed_int4 & 0x0F) * scale + offset;
+    //     float deq_1 = (float)(packed_int4 >> 4) * scale + offset;
+    //     *y++ = deq_0;
+    //     *y++ = deq_1;
+    // }
 
     for (int l = 0; l < block_size; l += 16) {
         // Load 16x4-bit integers into 8x8-bit integers
@@ -61,6 +69,58 @@ struct int4_thread_args {
     const struct matmul_params *params;
 };
 
+static void *fast_over_column_func_v2(void *args) {
+    int i, j, k;
+    struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
+    const struct matmul_params *params = mat_args->params;
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+    const int block_size = params->block_size;
+    float *scale = params->scales, *offset = params->offset;
+
+    float weight_block[4]; // 128 bitwidth
+
+    for (i = 0; i < C->row; i++) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j++) {
+            float32x4_t acc0 = vdupq_n_f32(0.0f);
+            for (k = 0; k < B->row; k += block_size) {
+                float s = scale[j * (B->row / 16) + k / 32];  // /16:B->column is packed 4bits
+                float o = offset[j * (B->row / 16) + k / 32];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
+                float32x4_t *x_ptr = (float32x4_t *)&A->data_ptr[i * A->column + k];
+
+                float32x4_t weight_4x32, weight_4x32_2;
+                float *weight_block = (float *)&weight_4x32, *weight_block2 = (float *)&weight_4x32_2;
+                const float32x4_t vs = vdupq_n_f32(s);
+                const float32x4_t vo = vdupq_n_f32(o);
+                int qi = 0;
+                for (int l = 0; l < block_size/8; l++){
+                    uint8_t packed_int4 = weight_32_int4[qi++];
+                    weight_block[0] = (float)(packed_int4 & 0x0F);
+                    weight_block[1] = (float)(packed_int4 >> 4);
+                    packed_int4 = weight_32_int4[qi++];
+                    weight_block[2] = (float)(packed_int4 & 0x0F);
+                    weight_block[3] = (float)(packed_int4 >> 4);
+                    weight_4x32 = vmlaq_f32(vo, weight_4x32, vs);
+                    packed_int4 = weight_32_int4[qi++];
+                    weight_block2[0] = (float)(packed_int4 & 0x0F);
+                    weight_block2[1] = (float)(packed_int4 >> 4);
+                    packed_int4 = weight_32_int4[qi++];
+                    weight_block2[2] = (float)(packed_int4 & 0x0F);
+                    weight_block2[3] = (float)(packed_int4 >> 4);
+                    weight_4x32_2 = vmlaq_f32(vo, weight_4x32_2, vs);
+
+                    acc0 = vaddq_f32(vmulq_f32(*x_ptr++, weight_4x32), acc0);
+                    acc0 = vaddq_f32(vmulq_f32(*x_ptr++, weight_4x32_2), acc0);
+                }   
+            }
+            float *ptr = (float *)&acc0;
+            C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
+        }
+    }
+
+    return NULL;
+}
+
 static void *fast_over_column_func_v1(void *args) {
     int i, j, k;
     struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
@@ -78,7 +138,7 @@ static void *fast_over_column_func_v1(void *args) {
                 float s = scale[j * (B->row / 16) + k / 32];  // /16:B->column is packed 4bits
                 float o = offset[j * (B->row / 16) + k / 32];
                 uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
-                // dequantize_block_q4(weight_32_int4, weight_block, s, o, block_size);
+                dequantize_block_q4(weight_32_int4, weight_block, s, o, block_size);
                 float32x4_t *x_ptr = (float32x4_t *)&A->data_ptr[i * A->column + k];
                 float32x4_t *w_ptr = (float32x4_t *)&weight_block;
 
