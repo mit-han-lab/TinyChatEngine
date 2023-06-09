@@ -12,19 +12,9 @@ static void dequantize_block_q4(const uint8_t *int4_w, float *y, float scale, fl
     const float32x4_t vd = vdupq_n_f32(scale);
     const float32x4_t vm = vdupq_n_f32(offset);
 
-    const uint8_t *pp = int4_w;
-
-    // for (int qi = 0; qi < block_size/2; qi++) {
-    //     uint8_t packed_int4 = int4_w[qi];
-    //     float deq_0 = (float)(packed_int4 & 0x0F) * scale + offset;
-    //     float deq_1 = (float)(packed_int4 >> 4) * scale + offset;
-    //     *y++ = deq_0;
-    //     *y++ = deq_1;
-    // }
-
     for (int l = 0; l < block_size; l += 16) {
         // Load 16x4-bit integers into 8x8-bit integers
-        const uint8x8_t v8 = vld1_u8(pp + l/2);
+        const uint8x8_t v8 = vld1_u8(int4_w + l/2);
 
         // Expand 4-bit qs to 8-bit bytes
         const uint8x8_t v0 = vand_u8(v8, vdup_n_u8(0x0f));
@@ -64,10 +54,134 @@ static void dequantize_block_q4(const uint8_t *int4_w, float *y, float scale, fl
     }
 }
 
+
+static void dequantize_block_q4_unroll2(const uint8_t *int4_w, float *y, float scale, float offset, const uint8_t *int4_w_2, float *y_2, float scale_2, float offset_2, int block_size) {
+    const float32x4_t vd = vdupq_n_f32(scale);
+    const float32x4_t vd_2 = vdupq_n_f32(scale_2);
+    const float32x4_t vm = vdupq_n_f32(offset);
+    const float32x4_t vm_2 = vdupq_n_f32(offset_2);
+
+    for (int l = 0; l < block_size; l += 16) {
+        // Load 16x4-bit integers into 8x8-bit integers
+        const uint8x8_t v8 = vld1_u8(int4_w + l/2);
+        const uint8x8_t v8_2 = vld1_u8(int4_w_2 + l/2);
+
+        // Expand 4-bit qs to 8-bit bytes
+        const uint8x8_t v0 = vand_u8(v8, vdup_n_u8(0x0f));
+        const uint8x8_t v0_2 = vand_u8(v8_2, vdup_n_u8(0x0f));
+        const uint8x8_t v1 = vshr_n_u8(v8, 4);
+        const uint8x8_t v1_2 = vshr_n_u8(v8_2, 4);
+
+        // Convert to signed 8-bit integers
+        const int8x8_t vs_0 = vreinterpret_s8_u8(v0);
+        const int8x8_t vs_0_2 = vreinterpret_s8_u8(v0_2);
+        const int8x8_t vs_1 = vreinterpret_s8_u8(v1);
+        const int8x8_t vs_1_2 = vreinterpret_s8_u8(v1_2);
+
+        // Interleave and combine
+        const int8x8_t vx_0 = vzip1_s8(vs_0, vs_1);
+        const int8x8_t vx_0_2 = vzip1_s8(vs_0_2, vs_1_2);
+        const int8x8_t vx_1 = vzip2_s8(vs_0, vs_1);
+        const int8x8_t vx_1_2 = vzip2_s8(vs_0_2, vs_1_2);
+
+        const int8x16_t vq = vcombine_s8(vx_0, vx_1);
+        const int8x16_t vq_2 = vcombine_s8(vx_0_2, vx_1_2);
+
+        // convert to 2x int16x8_t
+        const int16x8_t vi_0 = vmovl_s8(vget_low_s8 (vq));
+        const int16x8_t vi_0_2 = vmovl_s8(vget_low_s8 (vq_2));
+        const int16x8_t vi_1 = vmovl_s8(vget_high_s8(vq));
+        const int16x8_t vi_1_2 = vmovl_s8(vget_high_s8(vq_2));
+
+        // convert to 4x float32x4_t
+        const float32x4_t vf_0 = vcvtq_f32_s32(vmovl_s16(vget_low_s16 (vi_0)));
+        const float32x4_t vf_0_2 = vcvtq_f32_s32(vmovl_s16(vget_low_s16 (vi_0_2)));
+        const float32x4_t vf_1 = vcvtq_f32_s32(vmovl_s16(vget_high_s16(vi_0)));
+        const float32x4_t vf_1_2 = vcvtq_f32_s32(vmovl_s16(vget_high_s16(vi_0_2)));
+        const float32x4_t vf_2 = vcvtq_f32_s32(vmovl_s16(vget_low_s16 (vi_1)));
+        const float32x4_t vf_2_2 = vcvtq_f32_s32(vmovl_s16(vget_low_s16 (vi_1_2)));
+        const float32x4_t vf_3 = vcvtq_f32_s32(vmovl_s16(vget_high_s16(vi_1)));
+        const float32x4_t vf_3_2 = vcvtq_f32_s32(vmovl_s16(vget_high_s16(vi_1_2)));
+
+        // multiply by d and add m
+        const float32x4_t r0 = vmlaq_f32(vm, vf_0, vd);
+        const float32x4_t r0_2 = vmlaq_f32(vm_2, vf_0_2, vd_2);
+        const float32x4_t r1 = vmlaq_f32(vm, vf_1, vd);
+        const float32x4_t r1_2 = vmlaq_f32(vm_2, vf_1_2, vd_2);
+        const float32x4_t r2 = vmlaq_f32(vm, vf_2, vd);
+        const float32x4_t r2_2 = vmlaq_f32(vm_2, vf_2_2, vd_2);
+        const float32x4_t r3 = vmlaq_f32(vm, vf_3, vd);
+        const float32x4_t r3_2 = vmlaq_f32(vm_2, vf_3_2, vd_2);
+
+        // Store
+        vst1q_f32(y + l + 0, r0);
+        vst1q_f32(y_2 + l + 0, r0_2);
+        vst1q_f32(y + l +  4, r1);
+        vst1q_f32(y_2 + l +  4, r1_2);
+        vst1q_f32(y + l +  8, r2);
+        vst1q_f32(y_2 + l +  8, r2_2);
+        vst1q_f32(y + l + 12, r3);
+        vst1q_f32(y_2 + l + 12, r3_2);
+    }
+}
+
 struct int4_thread_args {
     int start_j, end_j;
     const struct matmul_params *params;
 };
+
+static void *fast_over_column_func_v3(void *args) {
+    int i, j, k;
+    struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
+    const struct matmul_params *params = mat_args->params;
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+    const int block_size = params->block_size;
+    float *scale = params->scales, *offset = params->offset;
+
+    float weight_block[block_size];
+    float weight_block2[block_size];
+
+    for (i = 0; i < C->row; i++) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j+=2) {
+            float32x4_t acc0 = vdupq_n_f32(0.0f);
+            float32x4_t acc1 = vdupq_n_f32(0.0f);
+            for (k = 0; k < B->row; k += block_size) {
+                float s = scale[j * (B->row / 16) + k / 32], s1 = scale[(j + 1) * (B->row / 16) + k / 32];
+                float o = offset[j * (B->row / 16) + k / 32], o1 = offset[(j + 1) * (B->row /16) + k / 32];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2], *weight_32_int4_2 = &B->int4_data_ptr[(j+1) * B->row + k / 2];
+                dequantize_block_q4_unroll2(weight_32_int4, weight_block, s, o, weight_32_int4_2, weight_block2, s1, o1, block_size);
+                float32x4_t *x_ptr = (float32x4_t *)&A->data_ptr[i * A->column + k];
+                float32x4_t *w_ptr = (float32x4_t *)&weight_block;
+                float32x4_t *w2_ptr = (float32x4_t *)&weight_block2;
+
+                // assume block_size == 32 (8 x 4 float)
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+                acc0 = vaddq_f32(vmulq_f32(*x_ptr, *w_ptr++), acc0);
+                acc1 = vaddq_f32(vmulq_f32(*x_ptr++, *w2_ptr++), acc1);
+            }
+            float *ptr = (float *)&acc0;
+            C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
+            ptr = (float *)&acc1;
+            C->data_ptr[i * C->column + j+1] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
+        }
+    }
+
+    return NULL;
+}
 
 static void *fast_over_column_func_v2(void *args) {
     int i, j, k;
@@ -174,7 +288,7 @@ void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *p
         threads_args[j].start_j = j * (params->C.column / num_thread);
         threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
         threads_args[j].params = params;
-        pthread_create(&thread_pool[j], NULL, fast_over_column_func_v1, &threads_args[j]);
+        pthread_create(&thread_pool[j], NULL, fast_over_column_func_v3, &threads_args[j]);
     }
     // Join threads
     for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);

@@ -71,8 +71,8 @@ static void *fast_over_column_func_v2(void *args) {
             __m256 acc0 = _mm256_setzero_ps();
             __m256 acc1 = _mm256_setzero_ps();
             for (k = 0; k < B->row; k += block_size) {
-                float s = scale[j * (B->row / 16) + k / 32], s1 = scale[(j + 1) * (B->row / 32) + k / 32];
-                float o = offset[j * (B->row / 16) + k / 32], o1 = offset[(j + 1) * (B->row / 32) + k / 32];
+                float s = scale[j * (B->row / 16) + k / 32], s1 = scale[(j + 1) * (B->row / 16) + k / 32];
+                float o = offset[j * (B->row / 16) + k / 32], o1 = offset[(j + 1) * (B->row / 16) + k / 32];
                 // float zp = zero_point(0, j, k/32);
                 uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
                 uint8_t *weight_32_int4_2 = &B->int4_data_ptr[(j + 1) * B->row + k / 2];
