@@ -6,11 +6,6 @@ struct quantization_params {
     bool per_channel = false;
     int32_t zero_point;
     int8_t q_min = -128, q_max = 127;
-    float zero_point_float;
-    float offset;
-    float *scale_group;
-    float *offset_group;
-    int qk;  // Group size for quantization
 };
 
 struct matrix {
@@ -20,7 +15,7 @@ struct matrix {
     int32_t *int32_data_ptr;
     int8_t *int8_data_ptr;
     uint8_t *uint8_data_ptr;
-    int8_t *int4_data_ptr;
+    uint8_t *int4_data_ptr;
     struct quantization_params qparams;
     int length() { return row * column; }
 };
@@ -34,6 +29,9 @@ struct matmul_params {
     struct matrix A, B, C, bias;
     struct optimization_params opt_params;
     float alpha, beta;
+    // for int4
+    float *scales, *offset, *zero_point;
+    int block_size;
 };
 
 struct thread_args {
@@ -106,5 +104,6 @@ class MatmulOperator {
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);
     void CHECK_MATRICES(const struct matrix *A, const struct matrix *B, const struct matrix *C);
+    void CHECK_MATRICES_int4weight(const struct matrix *A, const struct matrix *B, const struct matrix *C);
 };
 }  // namespace matmul

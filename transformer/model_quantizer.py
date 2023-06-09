@@ -550,7 +550,7 @@ def test():
 
 
     # Quantize down_proj in layer 0
-    file_path = f"{prefix}/decoder/layer0/down_proj"
+    file_path = f"{prefix}/decoder/layer0/self_attn/q_proj"
     weight_path = f"{file_path}/weight.bin"
     file_size_bytes = os.path.getsize(weight_path)
     if file_size_bytes % bytes_per_element != 0:
@@ -566,14 +566,20 @@ def test():
     read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
 
     # Check weights
-    first_half_qs = np.bitwise_and(qs, 0x0F)
-    second_half_qs = np.bitwise_and(qs, 0xF0) >> 4
-    first_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0x0F)
-    second_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0xF0) >> 4
-    print(f"first_half_qs:       {first_half_qs[0:2, :16]}")
-    print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
-    print(f"second_half_qs:      {second_half_qs[0:2, :16]}")
-    print(f"second_half_read_qs: {second_half_read_qs[:32]}")
+    # first_half_qs = np.bitwise_and(qs, 0x0F)
+    # second_half_qs = np.bitwise_and(qs, 0xF0) >> 4
+    # first_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0x0F)
+    # second_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0xF0) >> 4
+    # print(f"first_half_qs:       {first_half_qs[0:2, :16]}")
+    # print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
+    # print(f"second_half_qs:      {second_half_qs[0:2, :16]}")
+    # print(f"second_half_read_qs: {second_half_read_qs[:32]}")
+
+    # print(f"shalen of qs:       {qs.shape}")
+    # print(f"length of first_half_qs:       {len(first_half_qs)}")
+    # print(f"length of second_half_qs:      {len(second_half_qs)}")
+    # print(f"length of first_half_read_qs:  {len(first_half_read_qs)}")
+    # print(f"length of second_half_read_qs: {len(second_half_read_qs)}")
 
     # Check scaling factors
     if STORE_FP16:
@@ -582,22 +588,24 @@ def test():
         read_d = np.frombuffer(read_d, dtype=np.float32)
     print(f"d:      {d}")
     print(f"read_d: {read_d}")
+    print(f"length of d:      {len(d)}")
 
     # Check offsets
     if STORE_FP16:
         read_m = np.frombuffer(read_m, dtype=np.float16)
     else:
         read_m = np.frombuffer(read_m, dtype=np.float32)
-    print(f"m:      {m}")
-    print(f"read_m: {read_m}")
+    # print(f"m:      {m}")
+    # print(f"read_m: {read_m}")
+    # print(f"length of m:      {len(m)}")
 
     # Check zero points
     if STORE_FP16:
         read_zp = np.frombuffer(read_zp, dtype=np.float16)
     else:
         read_zp = np.frombuffer(read_zp, dtype=np.float32)
-    print(f"zp:      {zp}")
-    print(f"read_zp: {read_zp}")
+    # print(f"zp:      {zp}")
+    # print(f"read_zp: {read_zp}")
 
 # Main function
 def main():
@@ -613,5 +621,5 @@ def main():
     quantize_model(prefix=args.model_path, method=args.method, data_type=args.data_type)
 
 if __name__ == "__main__":
-    main()
-    # test()
+    # main()
+    test()

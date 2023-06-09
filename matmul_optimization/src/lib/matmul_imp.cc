@@ -27,6 +27,12 @@ void MatmulOperator::CHECK_MATRICES(const struct matrix *A, const struct matrix 
     assert(C->row == A->row);
 }
 
+void MatmulOperator::CHECK_MATRICES_int4weight(const struct matrix *A, const struct matrix *B, const struct matrix *C) {
+    assert(A->column == B->row);
+    assert(C->column / 2 == B->column);
+    assert(C->row == A->row);
+}
+
 inline void simd_mul_fp_128(const float *a, const float *b, float *c) {
     __m128 val = _mm_mul_ps(_mm_load_ps(a), _mm_load_ps(b));
     __m128 acc = _mm_add_ps(_mm_load_ps(c), val);
