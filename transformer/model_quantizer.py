@@ -43,7 +43,10 @@ def quantize_row_q4_0(input_path, k, data_type):
     # Reshape x to be a 2D array with shape (nb, qk)
     x = x.reshape(nb, qk)
 
-    max_vals = x.max(axis=1)
+    # Get the indices of maximum absolute values along axis 1
+    idx_max_abs = np.argmax(np.abs(x), axis=1)
+    max_vals = x[np.arange(x.shape[0]), idx_max_abs]
+    #max_vals = x.max(axis=1)
     min_vals = np.zeros(nb, dtype=np.float32)
     d_vals = max_vals / -8
 
@@ -53,18 +56,18 @@ def quantize_row_q4_0(input_path, k, data_type):
     if STORE_FP16:
         d = convert_to_fp16(d_vals)  # scaling factors
         m = convert_to_fp16(min_vals)  # offsets
-        zp = convert_to_fp16(8.5)  # zero point
+        zp = convert_to_fp16(8.0)  # zero point
     else:
         d = np.float32(d_vals)  # scaling factors
         m = np.float32(min_vals)  # offsets
-        zp = np.float32(8.5)  # zero point
+        zp = np.float32([8.0])  # zero point
     qs = np.zeros((nb, qk // 2), dtype=np.uint8)
 
-    xi = ((x * id_vals[:, np.newaxis]) + zp).clip(0, 15).astype(np.uint8)
+    xi = ((x * id_vals[:, np.newaxis]) + 8.5).clip(0, 15).astype(np.uint8)
     xi0 = xi[:, :qk//2]
     xi1 = xi[:, qk//2:]
     qs = xi0 | (xi1 << 4)
-
+    
     return qs, d, m, zp
 
 # 4-bit Quantization method 1
@@ -114,35 +117,32 @@ def quantize_row_q4_1(input_path, k, data_type):
 # Write quantized data into binary file
 def write_weight_to_file(prefix:str, qs, d, m, zp, is_lm_head=False):
     # Convert to bytes
-    qs_data = qs.tobytes()
-    d_data = d.tobytes()
-    m_data = m.tobytes()
-    zp_data = zp.tobytes()
-    
+    qs_data = np.asarray(qs, dtype=np.uint8).tobytes()
+    d_data = np.asarray(d, dtype=np.float32).tobytes()
+    m_data = np.asarray(m, dtype=np.float32).tobytes()
+    zp_data = np.asarray(zp, dtype=np.float32).tobytes()
+
     # Write data
     if is_lm_head:
-        with open(prefix + "/lm_head_int4.bin", "wb") as f:
-            f.write(qs_data)
-        with open(prefix + "/scaling_factor_int4.bin", "wb") as f:
-            f.write(d_data)
-        with open(prefix + "/offset_int4.bin", "wb") as f:
-            f.write(m_data)
-        with open(prefix + "/zero_point_int4.bin", "wb") as f:
-            f.write(zp_data)
+        out_path = prefix + "/lm_head"
+        os.makedirs(out_path, exist_ok=True)
     else:
-        with open(prefix + "/weight_int4.bin", "wb") as f:
-            f.write(qs_data)
-        with open(prefix + "/scaling_factor_int4.bin", "wb") as f:
-            f.write(d_data)
-        with open(prefix + "/offset_int4.bin", "wb") as f:
-            f.write(m_data)
-        with open(prefix + "/zero_point_int4.bin", "wb") as f:
-            f.write(zp_data)
+        out_path = prefix
+
+    with open(out_path + "/weight_int4.bin", "wb") as f:
+        f.write(qs_data)
+    with open(out_path + "/scaling_factor_int4.bin", "wb") as f:
+        f.write(d_data)
+    with open(out_path + "/offset_int4.bin", "wb") as f:
+        f.write(m_data)
+    with open(out_path + "/zero_point_int4.bin", "wb") as f:
+        f.write(zp_data)
 
     f.close()
 
 # Read quantized data from binary file
 def read_weight_from_file(prefix:str):
+    print(f"Reading quantized data from {prefix}...")
     with open(prefix + "/weight_int4.bin", "rb") as f:
         qs_data = f.read()
     with open(prefix + "/scaling_factor_int4.bin", "rb") as f:
@@ -550,8 +550,8 @@ def test():
 
 
     # Quantize down_proj in layer 0
-    file_path = f"{prefix}/decoder/layer0/self_attn/q_proj"
-    weight_path = f"{file_path}/weight.bin"
+    file_path = f"{prefix}"
+    weight_path = f"{prefix}/lm_head.bin"
     file_size_bytes = os.path.getsize(weight_path)
     if file_size_bytes % bytes_per_element != 0:
         raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
@@ -561,6 +561,9 @@ def test():
         qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
     elif method == 'Q4_1':
         qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
+
+    file_path += "/lm_head"
+    
     write_weight_to_file(file_path, qs, d, m, zp)
 
     read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
@@ -581,6 +584,16 @@ def test():
     # print(f"length of first_half_read_qs:  {len(first_half_read_qs)}")
     # print(f"length of second_half_read_qs: {len(second_half_read_qs)}")
 
+    # Check weights
+    qs = np.frombuffer(qs, dtype=np.uint8)
+    qs = np.array(qs, dtype=np.int32)
+    print(f"qs:      {qs.flatten()[:32]}")
+    print(f"length of qs:      {len(qs)}")
+    read_qs = np.frombuffer(read_qs, dtype=np.uint8)
+    read_qs = np.array(read_qs, dtype=np.int32)
+    print(f"read_qs:      {read_qs[:32]}")
+    print(f"length of read_qs:      {len(read_qs)}")
+
     # Check scaling factors
     if STORE_FP16:
         read_d = np.frombuffer(read_d, dtype=np.float16)
@@ -595,17 +608,17 @@ def test():
         read_m = np.frombuffer(read_m, dtype=np.float16)
     else:
         read_m = np.frombuffer(read_m, dtype=np.float32)
-    # print(f"m:      {m}")
-    # print(f"read_m: {read_m}")
-    # print(f"length of m:      {len(m)}")
+    print(f"m:      {m}")
+    print(f"read_m: {read_m}")
+    print(f"length of m:      {len(m)}")
 
     # Check zero points
     if STORE_FP16:
         read_zp = np.frombuffer(read_zp, dtype=np.float16)
     else:
         read_zp = np.frombuffer(read_zp, dtype=np.float32)
-    # print(f"zp:      {zp}")
-    # print(f"read_zp: {read_zp}")
+    print(f"zp:      {zp}")
+    print(f"read_zp: {read_zp}")
 
 # Main function
 def main():
@@ -621,5 +634,5 @@ def main():
     quantize_model(prefix=args.model_path, method=args.method, data_type=args.data_type)
 
 if __name__ == "__main__":
-    # main()
-    test()
+    main()
+    # test()

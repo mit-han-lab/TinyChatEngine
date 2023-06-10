@@ -45,7 +45,7 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
 
     // Norm
     Matrix3D<float> norm_weight(new float[embed_dim], 1, 1, embed_dim);
-    norm_weight.load((param_path + "/norm/weight_int4.bin").c_str());
+    norm_weight.load((param_path + "/norm/weight.bin").c_str());
     this->norm = LlamaRMSNorm(norm_weight);
 
     // Load all the decoder layers

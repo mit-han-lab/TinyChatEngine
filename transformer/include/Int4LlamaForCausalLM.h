@@ -30,7 +30,9 @@ class Int4LlamaForCausalLM {
    private:
     Int4llamaDecoder decoder;
     Linear_FP_int4 lm_head;
+    //Linear_FP lm_head;
     std::string profile_name = "Int4LlamaForCausalLM";
     float* logits_output;
     uint8_t* lm_head_weight;
+    //float* lm_head_weight;
 };

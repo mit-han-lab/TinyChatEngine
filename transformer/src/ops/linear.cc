@@ -56,6 +56,7 @@ void Linear_FP::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
     op.mat_mul_transposed_fastover_column((const struct matmul_params *)&params);
+    //op.mat_mul_cuda((const struct matmul_params *)&params);
 
     PROFILE_END(profile_name);
     return;
@@ -89,7 +90,7 @@ void Linear_FP_int4::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     params.opt_params.blk_size = BLK_SIZE;
     params.opt_params.num_thread = NUM_THREAD;
     params.scales = this->scale.m_data;
-    params.offset = this->offset.m_data;
+    //params.offset = this->offset.m_data;
     params.zero_point = this->zero_point.m_data;
     params.block_size = QK;
 

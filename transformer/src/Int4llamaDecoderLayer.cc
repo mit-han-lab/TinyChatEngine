@@ -98,13 +98,13 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     float *input_layernorm_weight_ptr;
     allocate_aligned_memory(input_layernorm_weight_ptr, config.embed_dim * sizeof(float));
     Matrix3D<float> input_layernorm_weight(input_layernorm_weight_ptr, 1, 1, config.embed_dim);
-    input_layernorm_weight.load((param_path + "/input_layernorm/weight_int4.bin").c_str());
+    input_layernorm_weight.load((param_path + "/input_layernorm/weight.bin").c_str());
     this->input_layernorm = LlamaRMSNorm(input_layernorm_weight);
 
     float *post_attention_layernorm_ptr;
     allocate_aligned_memory(post_attention_layernorm_ptr, config.embed_dim * sizeof(float));
     Matrix3D<float> post_attention_layernorm_weight(post_attention_layernorm_ptr, 1, 1, config.embed_dim);
-    post_attention_layernorm_weight.load((param_path + "/post_attention_layernorm/weight_int4.bin").c_str());
+    post_attention_layernorm_weight.load((param_path + "/post_attention_layernorm/weight.bin").c_str());
     this->post_attention_layernorm = LlamaRMSNorm(post_attention_layernorm_weight);
 
     this->embed_dim = config.embed_dim;
@@ -119,9 +119,9 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     allocate_aligned_memory(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(uint8_t)) / 2);
     allocate_aligned_memory(up_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(uint8_t)) / 2);
     this->gate_proj = Linear_FP_int4(Matrix3D<uint8_t>(gate_proj_weight, 1, config.hidden_dim, config.embed_dim / 2),
-                                     (param_path + "/gate_proj/weight_int4.bin"));
+                                     (param_path + "/gate_proj"));
     this->down_proj = Linear_FP_int4(Matrix3D<uint8_t>(down_proj_weight, 1, config.embed_dim, config.hidden_dim / 2),
-                                     (param_path + "/down_proj/weight_int4.bin"));
+                                     (param_path + "/down_proj"));
     this->up_proj = Linear_FP_int4(Matrix3D<uint8_t>(up_proj_weight, 1, config.hidden_dim, config.embed_dim / 2),
-                                   (param_path + "/up_proj/weight_int4.bin"));
+                                   (param_path + "/up_proj"));
 }

@@ -28,8 +28,7 @@ void MatmulOperator::CHECK_MATRICES(const struct matrix *A, const struct matrix 
 }
 
 void MatmulOperator::CHECK_MATRICES_int4weight(const struct matrix *A, const struct matrix *B, const struct matrix *C) {
-    assert(A->column == B->row);
-    assert(C->column / 2 == B->column);
+    assert(B->row * B->column == A->column * C->column / 2);
     assert(C->row == A->row);
 }
 
@@ -307,6 +306,10 @@ void MatmulOperator::mat_mul_transposed_fastover_column(const struct matmul_para
     int num_thread = params->opt_params.num_thread;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     float *data_A = A->data_ptr, *data_B = B->data_ptr, *data_C = C->data_ptr;
+
+    std::cout << "A->row: " << A->row << "; A->column: " << A->column << std::endl;
+    std::cout << "B->row: " << B->row << "; B->column: " << B->column << std::endl;
+    std::cout << "C->row: " << C->row << "; C->column: " << C->column << std::endl;
 
     assert(A->column % 8 == 0);
 
