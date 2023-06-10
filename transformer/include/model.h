@@ -19,6 +19,7 @@ struct model_config {
     int hidden_dim;
     int vocsize;
     int padding_idx;
+    int qk;  // group size
 
     model_config() : model_config(1, 12, 12, 512, 768, 3072, 50272, 1) {}
     model_config(int batch, int num_heads, int num_layers, int max_sqlen, int embed_dim, int hidden_dim, int vocsize,
@@ -34,6 +35,7 @@ struct model_config {
 };
 
 enum { OPT_125M, OPT_1_3B, OPT_6_7B, LLaMA_7B };
+enum { FP32, INT8, INT4 };
 
 const struct model_config opt_6_7B(1, 32, 32, 2048, 4096, 16384, 50272, 1);
 const struct model_config opt_1_3B(1, 32, 24, 2048, 2048, 8192, 50272, 1);

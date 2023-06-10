@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "Fp32LlamaForCausalLM.h"
+#include "Int4LlamaForCausalLM.h"
 #include "OPTForCausalLM.h"
 #include "OPTTokenizer.h"
 #include "operators.h"
@@ -85,5 +86,8 @@ std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder* encoder = NULL,
                              bool interactive = false);
 
-std::vector<int> LLaMAGenerate(Fp32LlamaForCausalLM model, std::string text, const struct opt_params generation_config,
+std::vector<int> Fp32LLaMAGenerate(Fp32LlamaForCausalLM model, std::string text, const struct opt_params generation_config,
+                               std::string voc_path, bool interactive);
+
+std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text, const struct opt_params generation_config,
                                std::string voc_path, bool interactive);
