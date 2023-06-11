@@ -622,54 +622,20 @@ void test_FPLinear_int4() {
 
     // quantize the weight to int4
     Matrix3D<uint8_t> int4_weight((uint8_t *)mem_buf.get_int8buffer(n * k / 2), 1, n, k / 2);
-    Matrix3D<float> scale(mem_buf.get_fpbuffer(n * k / 32), 1, n, k / 32);
-    Matrix3D<float> offset(mem_buf.get_fpbuffer(n * k / 32), 1, n, k / 32);
-
-    for (int i = 0; i < n; i++) {
-        // quantize each block
-        for (int j = 0; j < k / 32; j++) {
-            float min = 1024.0, max = -1024.0;
-            uint8_t *int4_ptr = &int4_weight.m_data[i * k / 2 + j * 16];
-            float *fp32_weight = &weight.m_data[i * k + j * 32];
-            // block size 32, packed in 16 int8_t
-            // get min/max
-            for (int qk = 0; qk < 32; qk++) {
-                if (min > fp32_weight[qk]) min = fp32_weight[qk];
-                if (max < fp32_weight[qk]) max = fp32_weight[qk];
-            }
-            float s = abs(max - min) / 15;
-            float o = min;
-            scale(0, i, j) = s;
-            offset(0, i, j) = o;
-
-            // printf("s, o: %f, %f\n", s, o);
-            // quantize fp32 here
-            for (int qk = 0; qk < 32; qk += 2) {
-                float v0 = fp32_weight[qk];
-                float v1 = fp32_weight[qk + 1];
-                uint8_t int4_v0 = std::round((v0 - min) / s);
-                uint8_t int4_v1 = std::round((v1 - min) / s);
-
-                *int4_ptr++ = int4_v0 | (int4_v1 << 4);
-            }
-            // return;
-        }
-    }
-    Linear_FP_int4 int4_op;
-    int4_op.weight = int4_weight;
-    int4_op.scale = scale;
-    int4_op.offset = offset;
+    // Linear_FP_int4 int4_op;
+    Linear_FP_int4 int4_op = Linear_FP_int4(int4_weight, "models/LLaMA_7B/lm_head/");
+    ;
 
     Matrix3D<float> outputQ(mem_buf.get_fpbuffer(m * n), 1, m, n);
     Matrix3D<float> outputQ_simd(mem_buf.get_fpbuffer(m * n), 1, m, n);
     Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
 
     STATS_FLOPS("int4_ref", flops);
-    int4_op.forward(hidden_states, outputQ);
+    int4_op.forward_ref(hidden_states, outputQ);
     STATS_END("int4_ref");
-    STATS_FLOPS("int4_fast", flops);
-    int4_op.forward_fast(hidden_states, outputQ_fast);
-    STATS_END("int4_fast");
+    STATS_FLOPS("int4_fast_no_offset", flops);
+    int4_op.forward(hidden_states, outputQ_fast);
+    STATS_END("int4_fast_no_offset");
 
     bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
 

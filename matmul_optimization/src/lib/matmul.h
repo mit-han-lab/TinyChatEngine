@@ -81,6 +81,7 @@ class MatmulOperator {
     void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);
     // int4
     void mat_mul_accelerator_int4_fast(const struct matmul_params *params);
+    void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params);
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda

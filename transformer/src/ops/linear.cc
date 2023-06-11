@@ -61,7 +61,7 @@ void Linear_FP::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     return;
 }
 
-void Linear_FP_int4::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
+void Linear_FP_int4::forward_ref(const Matrix3D<float> &a, Matrix3D<float> &c) {
     Matrix3D<uint8_t> b = this->weight;
     const int m = a.m_dim_y, n = b.m_dim_y, k = a.m_dim_z, b_size = b.m_dim_x;
     const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
@@ -133,6 +133,44 @@ void Linear_FP_int4::forward_fast(const Matrix3D<float> &x, Matrix3D<float> &out
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
     op.mat_mul_accelerator_int4_fast(&params);
+
+    PROFILE_END(profile_name);
+    return;
+}
+
+void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) {
+    const int num_thread = 8;
+    Matrix3D<uint8_t> b = this->weight;
+    const int m = x.m_dim_y, n = b.m_dim_y, k = x.m_dim_z, b_size = b.m_dim_x;
+    const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
+    PROFILE_START_FLOPS(profile_name, ops);
+
+    // a: m x k   b: n x k   c: m x n
+    assert(output.m_dim_x == 1);
+    assert(output.m_dim_y == x.m_dim_y);
+    assert(output.m_dim_z == weight.m_dim_y);
+    assert(x.m_dim_z / 2 == weight.m_dim_z);
+
+    assert(output.m_dim_z > num_thread);
+    assert(output.m_dim_z % (num_thread * 2) == 0);  // unroll column by 2
+
+    struct matmul_params params;
+    params.A.row = x.m_dim_y;
+    params.A.column = x.m_dim_z;
+    params.A.data_ptr = x.m_data;
+    params.B.row = b.m_dim_z;     // k
+    params.B.column = b.m_dim_y;  // n
+    params.B.int4_data_ptr = b.m_data;
+    params.C.row = output.m_dim_y;
+    params.C.column = output.m_dim_z;
+    params.C.data_ptr = output.m_data;
+    params.opt_params.num_thread = num_thread;
+    params.scales = this->scale.m_data;
+    params.offset = this->offset.m_data;
+    params.block_size = QK;
+
+    matmul::MatmulOperator op = matmul::MatmulOperator();
+    op.mat_mul_accelerator_int4_fast_no_offset(&params);
 
     PROFILE_END(profile_name);
     return;

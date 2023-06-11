@@ -93,6 +93,7 @@ class Linear_FP_int4 {
     };
     Linear_FP_int4(){};
     void forward(const Matrix3D<float> &x, Matrix3D<float> &output);
+    void forward_ref(const Matrix3D<float> &x, Matrix3D<float> &output);
     void forward_fast(const Matrix3D<float> &x, Matrix3D<float> &output);
     Matrix3D<uint8_t> weight;
     Matrix3D<float> scale, zero_point;
