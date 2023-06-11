@@ -68,10 +68,10 @@ void Linear_FP_int4::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     PROFILE_START_FLOPS(profile_name, ops);
 
     // a: m x k   b: n x k   c: m x n
-    assert(a.m_dim_x == b.m_dim_x);  // batch dim
+    assert(a.m_dim_x == b.m_dim_x);      // batch dim
     assert(a.m_dim_z / 2 == b.m_dim_z);  // k
-    assert(a.m_dim_y == c.m_dim_y);  // m
-    assert(b.m_dim_y == c.m_dim_z);  // n
+    assert(a.m_dim_y == c.m_dim_y);      // m
+    assert(b.m_dim_y == c.m_dim_z);      // n
     // batch dim == 1 only support MM for now
     assert(a.m_dim_x == 1);
     assert(b.m_dim_x == 1);
@@ -89,7 +89,7 @@ void Linear_FP_int4::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     params.opt_params.blk_size = BLK_SIZE;
     params.opt_params.num_thread = NUM_THREAD;
     params.scales = this->scale.m_data;
-    //params.offset = this->offset.m_data;
+    params.offset = this->offset.m_data;
     params.zero_point = this->zero_point.m_data;
     params.block_size = QK;
 
