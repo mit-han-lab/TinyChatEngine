@@ -1,6 +1,7 @@
-import os
-import numpy as np
 import argparse
+import os
+
+import numpy as np
 
 STORE_FP16 = False
 
@@ -13,15 +14,18 @@ class block_q4_0:
         self.d = 0
         self.qs = np.zeros(QK4_0 // 2, dtype=np.uint8)
 
+
 class block_q4_1:
     def __init__(self):
         self.d = 0
         self.m = 0
         self.qs = np.zeros(QK4_1 // 2, dtype=np.uint8)
 
+
 # Converters
 def convert_to_fp16(val):
     return np.float16(val)
+
 
 # 4-bit Quantization method 0
 def quantize_row_q4_0(input_path, k, data_type):
@@ -29,15 +33,15 @@ def quantize_row_q4_0(input_path, k, data_type):
     assert k % qk == 0
     nb = k // qk
 
-    with open(input_path, mode='rb') as fp:
+    with open(input_path, mode="rb") as fp:
         origin_weight = fp.read()
     fp.close()
 
-    if data_type == 'fp32':
+    if data_type == "fp32":
         x = np.frombuffer(origin_weight, dtype=np.float32)
-    elif data_type == 'fp16':
+    elif data_type == "fp16":
         x = np.frombuffer(origin_weight, dtype=np.float16)
-    elif data_type == 'int8':
+    elif data_type == "int8":
         x = np.frombuffer(origin_weight, dtype=np.int8)
 
     # Reshape x to be a 2D array with shape (nb, qk)
@@ -46,7 +50,7 @@ def quantize_row_q4_0(input_path, k, data_type):
     # Get the indices of maximum absolute values along axis 1
     idx_max_abs = np.argmax(np.abs(x), axis=1)
     max_vals = x[np.arange(x.shape[0]), idx_max_abs]
-    #max_vals = x.max(axis=1)
+    # max_vals = x.max(axis=1)
     min_vals = np.zeros(nb, dtype=np.float32)
     d_vals = max_vals / -8
 
@@ -64,11 +68,15 @@ def quantize_row_q4_0(input_path, k, data_type):
     qs = np.zeros((nb, qk // 2), dtype=np.uint8)
 
     xi = ((x * id_vals[:, np.newaxis]) + 8.5).clip(0, 15).astype(np.uint8)
-    xi0 = xi[:, :qk//2]
-    xi1 = xi[:, qk//2:]
-    qs = xi0 | (xi1 << 4)
-    
+    # xi0 = xi[:, :qk//2]
+    # xi1 = xi[:, qk//2:]
+    # qs = xi0 | (xi1 << 4)
+
+    for idx in range(qk // 2):
+        qs[:, idx] = xi[:, idx * 2] | (xi[:, idx * 2 + 1] << 4)
+
     return qs, d, m, zp
+
 
 # 4-bit Quantization method 1
 def quantize_row_q4_1(input_path, k, data_type):
@@ -76,15 +84,15 @@ def quantize_row_q4_1(input_path, k, data_type):
     assert k % qk == 0
     nb = k // qk
 
-    with open(input_path, mode='rb') as fp:
+    with open(input_path, mode="rb") as fp:
         origin_weight = fp.read()
     fp.close()
 
-    if data_type == 'fp32':
+    if data_type == "fp32":
         x = np.frombuffer(origin_weight, dtype=np.float32)
-    elif data_type == 'fp16':
+    elif data_type == "fp16":
         x = np.frombuffer(origin_weight, dtype=np.float16)
-    elif data_type == 'int8':
+    elif data_type == "int8":
         x = np.frombuffer(origin_weight, dtype=np.int8)
 
     # Reshape x to be a 2D array with shape (nb, qk)
@@ -108,14 +116,18 @@ def quantize_row_q4_1(input_path, k, data_type):
     qs = np.zeros((nb, qk // 2), dtype=np.uint8)
 
     xi = (((x - min_vals[:, np.newaxis]) * id_vals[:, np.newaxis]) + zp).clip(0, 15).astype(np.uint8)
-    xi0 = xi[:, :qk//2]
-    xi1 = xi[:, qk//2:]
-    qs = xi0 | (xi1 << 4)
+    # xi0 = xi[:, :qk//2]
+    # xi1 = xi[:, qk//2:]
+    # qs = xi0 | (xi1 << 4)
+
+    for idx in range(qk // 2):
+        qs[:, idx] = xi[:, idx * 2] | (xi[:, idx * 2 + 1] << 4)
 
     return qs, d, m, zp
 
+
 # Write quantized data into binary file
-def write_weight_to_file(prefix:str, qs, d, m, zp, is_lm_head=False):
+def write_weight_to_file(prefix: str, qs, d, m, zp, is_lm_head=False):
     # Convert to bytes
     qs_data = np.asarray(qs, dtype=np.uint8).tobytes()
     d_data = np.asarray(d, dtype=np.float32).tobytes()
@@ -140,8 +152,9 @@ def write_weight_to_file(prefix:str, qs, d, m, zp, is_lm_head=False):
 
     f.close()
 
+
 # Read quantized data from binary file
-def read_weight_from_file(prefix:str):
+def read_weight_from_file(prefix: str):
     print(f"Reading quantized data from {prefix}...")
     with open(prefix + "/weight_int4.bin", "rb") as f:
         qs_data = f.read()
@@ -153,43 +166,44 @@ def read_weight_from_file(prefix:str):
         zp_data = f.read()
 
     f.close()
-    
+
     return qs_data, d_data, m_data, zp_data
 
+
 # Quantize model
-def quantize_model(prefix, method='Q4_0', data_type='fp32'):
+def quantize_model(prefix, method="Q4_0", data_type="fp32"):
     # Check model name
-    model_name_size = prefix.split('/')[-1]
-    if model_name_size == 'OPT_125m':
+    model_name_size = prefix.split("/")[-1]
+    if model_name_size == "OPT_125m":
         layer_num = 12
-    elif model_name_size == 'OPT_1.3B':
+    elif model_name_size == "OPT_1.3B":
         layer_num = 24
-    elif model_name_size == 'OPT_6.7B':
+    elif model_name_size == "OPT_6.7B":
         layer_num = 32
-    elif model_name_size == 'LLaMA_7B':
+    elif model_name_size == "LLaMA_7B":
         layer_num = 32
     else:
         raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B'.")
 
     # Check quantization method
-    if method not in ['Q4_0', 'Q4_1']:
+    if method not in ["Q4_0", "Q4_1"]:
         raise ValueError("Invalid quantization method. Expected 'Q4_0' or 'Q4_1'.")
 
     # Check data type
-    if data_type == 'fp32':
+    if data_type == "fp32":
         bytes_per_element = 4
-    elif data_type == 'fp16':
+    elif data_type == "fp16":
         bytes_per_element = 2
-    elif data_type == 'int8':
+    elif data_type == "int8":
         bytes_per_element = 1
     else:
         raise ValueError("Invalid data type. Expected 'fp32', 'fp16', or 'int8'.")
 
     print(f"Quantizing {model_name_size} with {method} method... (original data type: {data_type})")
 
-    model_name = model_name_size.split('_')[0]
+    model_name = model_name_size.split("_")[0]
     # OPT
-    if model_name == 'OPT':
+    if model_name == "OPT":
         # Quantize lm_head
         file_path = f"{prefix}"
         weight_path = f"{file_path}/lm_head.bin"
@@ -197,9 +211,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        if method == 'Q4_0':
+        if method == "Q4_0":
             qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-        elif method == 'Q4_1':
+        elif method == "Q4_1":
             qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
         write_weight_to_file(file_path, qs, d, m, zp, True)
         print(f"Quantization of lm_head finished.")
@@ -211,9 +225,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        if method == 'Q4_0':
+        if method == "Q4_0":
             qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-        elif method == 'Q4_1':
+        elif method == "Q4_1":
             qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
         write_weight_to_file(file_path, qs, d, m, zp)
         print(f"Quantization of embed_positions finished.")
@@ -225,9 +239,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        if method == 'Q4_0':
+        if method == "Q4_0":
             qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-        elif method == 'Q4_1':
+        elif method == "Q4_1":
             qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
         write_weight_to_file(file_path, qs, d, m, zp)
         print(f"Quantization of embed_tokens finished.")
@@ -239,13 +253,13 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        if method == 'Q4_0':
+        if method == "Q4_0":
             qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-        elif method == 'Q4_1':
+        elif method == "Q4_1":
             qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
         write_weight_to_file(file_path, qs, d, m, zp)
         print(f"Quantization of final_layer_norm finished.")
-        
+
         # Quantize layers
         for idx in range(layer_num):
             # Quantize fc1
@@ -255,9 +269,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -268,9 +282,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -281,9 +295,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -294,9 +308,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -307,9 +321,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -320,9 +334,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -333,9 +347,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -346,16 +360,16 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
             print(f"Quantization of layer {idx} finished.")
-    
+
     # LLaMA
-    elif model_name == 'LLaMA':
+    elif model_name == "LLaMA":
         # Quantize lm_head
         file_path = f"{prefix}"
         weight_path = f"{file_path}/lm_head.bin"
@@ -363,9 +377,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        if method == 'Q4_0':
+        if method == "Q4_0":
             qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-        elif method == 'Q4_1':
+        elif method == "Q4_1":
             qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
         write_weight_to_file(file_path, qs, d, m, zp, True)
         print(f"Quantization of lm_head finished.")
@@ -377,9 +391,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        if method == 'Q4_0':
+        if method == "Q4_0":
             qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-        elif method == 'Q4_1':
+        elif method == "Q4_1":
             qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
         write_weight_to_file(file_path, qs, d, m, zp)
         print(f"Quantization of embed_tokens finished.")
@@ -393,9 +407,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -406,9 +420,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -419,9 +433,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -432,9 +446,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -445,9 +459,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -458,9 +472,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -471,9 +485,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -484,9 +498,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -497,9 +511,9 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            if method == 'Q4_0':
+            if method == "Q4_0":
                 qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-            elif method == 'Q4_1':
+            elif method == "Q4_1":
                 qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
             write_weight_to_file(file_path, qs, d, m, zp)
 
@@ -512,14 +526,15 @@ def quantize_model(prefix, method='Q4_0', data_type='fp32'):
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        if method == 'Q4_0':
+        if method == "Q4_0":
             qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-        elif method == 'Q4_1':
+        elif method == "Q4_1":
             qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
         write_weight_to_file(file_path, qs, d, m, zp)
         print(f"Quantization of norm finished.")
 
     print(f"All the weights of {model_name_size} has been quantized with {method} method.")
+
 
 # Test function
 def test():
@@ -528,26 +543,25 @@ def test():
     prefix = "models/LLaMA_7B"
     method = "Q4_0"
     data_type = "fp32"
-    
+
     # Check model name
-    model_name_size = prefix.split('/')[-1]
-    if model_name_size not in ['OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B']:
+    model_name_size = prefix.split("/")[-1]
+    if model_name_size not in ["OPT_125m", "OPT_1.3B", "OPT_6.7B", "LLaMA_7B"]:
         raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B'.")
 
     # Check quantization method
-    if method not in ['Q4_0', 'Q4_1']:
+    if method not in ["Q4_0", "Q4_1"]:
         raise ValueError("Invalid quantization method. Expected 'Q4_0' or 'Q4_1'.")
 
     # Check data type
-    if data_type == 'fp32':
+    if data_type == "fp32":
         bytes_per_element = 4
-    elif data_type == 'fp16':
+    elif data_type == "fp16":
         bytes_per_element = 2
-    elif data_type == 'int8':
+    elif data_type == "int8":
         bytes_per_element = 1
     else:
         raise ValueError("Invalid data type. Expected 'fp32', 'fp16', or 'int8'.")
-
 
     # Quantize down_proj in layer 0
     file_path = f"{prefix}"
@@ -557,13 +571,13 @@ def test():
         raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
     array_size = file_size_bytes // bytes_per_element
     print(f"Quantizing '{weight_path}' with {method} method... (original data type: {data_type})")
-    if method == 'Q4_0':
+    if method == "Q4_0":
         qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type)
-    elif method == 'Q4_1':
+    elif method == "Q4_1":
         qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type)
 
     file_path += "/lm_head"
-    
+
     write_weight_to_file(file_path, qs, d, m, zp)
 
     read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
@@ -620,6 +634,7 @@ def test():
     print(f"zp:      {zp}")
     print(f"read_zp: {read_zp}")
 
+
 # Main function
 def main():
     def get_parser():
@@ -628,10 +643,11 @@ def main():
         parser.add_argument("--method", type=str, default="Q4_0", help="Quantization method")
         parser.add_argument("--data_type", type=str, default="fp32", help="Data type")
         return parser
-    
+
     parser = get_parser()
     args = parser.parse_args()
     quantize_model(prefix=args.model_path, method=args.method, data_type=args.data_type)
+
 
 if __name__ == "__main__":
     main()
