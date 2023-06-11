@@ -633,9 +633,9 @@ void test_FPLinear_int4() {
     STATS_FLOPS("int4_ref", flops);
     int4_op.forward_ref(hidden_states, outputQ);
     STATS_END("int4_ref");
-    STATS_FLOPS("int4_fast_no_offset", flops);
+    STATS_FLOPS("int4_fast", flops);
     int4_op.forward(hidden_states, outputQ_fast);
-    STATS_END("int4_fast_no_offset");
+    STATS_END("int4_fast");
 
     bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
 

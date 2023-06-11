@@ -82,6 +82,49 @@ static void dequantize_block_q4_zp_no_offset(const uint8_t *int4_w, float *y, fl
     }
 }
 
+// Dequantize a block of weight
+static void dequantize_block_q4_zp_no_offset_v2(const uint8_t *int4_w, float *y, float scale, int block_size) {
+    float zp = 8.0f;
+
+    const __m256 d_v = _mm256_broadcast_ss(&scale);
+    const __m256 d_zp = _mm256_broadcast_ss(&zp);
+
+    const uint8_t *pp = int4_w;
+
+    for (int l = 0; l < block_size; l += 32) {
+        // Load 32x4-bit integers into 32x8-bit integers
+        __m256i vx8 = bytes_from_nibbles_32(pp + l / 2);
+
+        // Convert to 16-bit int
+        __m128i lo_128 = _mm256_extracti128_si256(vx8, 0);
+        __m128i hi_128 = _mm256_extracti128_si256(vx8, 1);
+        const __m256i vx16_lo = _mm256_cvtepi8_epi16(lo_128);
+        const __m256i vx16_hi = _mm256_cvtepi8_epi16(hi_128);
+
+        // Convert to 32-bit int -> float 32
+        __m128i lo_128_0 = _mm256_extracti128_si256(vx16_lo, 0);
+        __m128i lo_128_1 = _mm256_extracti128_si256(vx16_lo, 1);
+        __m128i hi_128_1 = _mm256_extracti128_si256(vx16_hi, 1);
+        __m128i hi_128_0 = _mm256_extracti128_si256(vx16_hi, 0);
+        __m256i lo_256_0 = _mm256_cvtepi16_epi32(lo_128_0);
+        __m256i lo_256_1 = _mm256_cvtepi16_epi32(lo_128_1);
+        __m256i hi_256_0 = _mm256_cvtepi16_epi32(hi_128_0);
+        __m256i hi_256_1 = _mm256_cvtepi16_epi32(hi_128_1);
+        __m256 lo_fp_0 = _mm256_cvtepi32_ps(lo_256_0);
+        __m256 lo_fp_1 = _mm256_cvtepi32_ps(lo_256_1);
+        __m256 hi_fp_0 = _mm256_cvtepi32_ps(hi_256_0);
+        __m256 hi_fp_1 = _mm256_cvtepi32_ps(hi_256_1);
+        __m256 lo_zp_0 = _mm256_sub_ps(lo_fp_0, d_zp);
+        __m256 lo_zp_1 = _mm256_sub_ps(lo_fp_1, d_zp);
+        __m256 hi_zp_0 = _mm256_sub_ps(hi_fp_0, d_zp);
+        __m256 hi_zp_1 = _mm256_sub_ps(hi_fp_1, d_zp);
+        _mm256_storeu_ps(y + l + 0 * 8, _mm256_mul_ps(lo_zp_0, d_v));
+        _mm256_storeu_ps(y + l + 1 * 8, _mm256_mul_ps(lo_zp_1, d_v));
+        _mm256_storeu_ps(y + l + 2 * 8, _mm256_mul_ps(hi_zp_0, d_v));
+        _mm256_storeu_ps(y + l + 3 * 8, _mm256_mul_ps(hi_zp_1, d_v));
+    }
+}
+
 // Dequantize two block of weight
 static void dequantize_two_block_q4_zp_no_offset(const uint8_t *int4_w, float *y, float scale, const uint8_t *int4_w2,
                                                  float *y2, float scale2, int block_size) {
@@ -112,52 +155,48 @@ static void dequantize_two_block_q4_zp_no_offset(const uint8_t *int4_w, float *y
 
         // Convert to 32-bit int -> float 32
         __m128i lo_128_0 = _mm256_extracti128_si256(vx16_lo, 0);
-        __m256i lo_256_0 = _mm256_cvtepi16_epi32(lo_128_0);
-        __m256 lo_fp_0 = _mm256_cvtepi32_ps(lo_256_0);
-        __m256 lo_zp_0 = _mm256_sub_ps(lo_fp_0, d_zp);
-        _mm256_storeu_ps(y + l + 0 * 8, _mm256_mul_ps(lo_zp_0, d_v));
-
         __m128i lo_128_1 = _mm256_extracti128_si256(vx16_lo, 1);
+        __m256i lo_256_0 = _mm256_cvtepi16_epi32(lo_128_0);
         __m256i lo_256_1 = _mm256_cvtepi16_epi32(lo_128_1);
+        __m256 lo_fp_0 = _mm256_cvtepi32_ps(lo_256_0);
         __m256 lo_fp_1 = _mm256_cvtepi32_ps(lo_256_1);
+        __m256 lo_zp_0 = _mm256_sub_ps(lo_fp_0, d_zp);
         __m256 lo_zp_1 = _mm256_sub_ps(lo_fp_1, d_zp);
+        _mm256_storeu_ps(y + l + 0 * 8, _mm256_mul_ps(lo_zp_0, d_v));
         _mm256_storeu_ps(y + l + 1 * 8, _mm256_mul_ps(lo_zp_1, d_v));
 
         __m128i hi_128_0 = _mm256_extracti128_si256(vx16_hi, 0);
-        __m256i hi_256_0 = _mm256_cvtepi16_epi32(hi_128_0);
-        __m256 hi_fp_0 = _mm256_cvtepi32_ps(hi_256_0);
-        __m256 hi_zp_0 = _mm256_sub_ps(hi_fp_0, d_zp);
-        _mm256_storeu_ps(y + l + 2 * 8, _mm256_mul_ps(hi_zp_0, d_v));
-
         __m128i hi_128_1 = _mm256_extracti128_si256(vx16_hi, 1);
+        __m256i hi_256_0 = _mm256_cvtepi16_epi32(hi_128_0);
         __m256i hi_256_1 = _mm256_cvtepi16_epi32(hi_128_1);
+        __m256 hi_fp_0 = _mm256_cvtepi32_ps(hi_256_0);
         __m256 hi_fp_1 = _mm256_cvtepi32_ps(hi_256_1);
+        __m256 hi_zp_0 = _mm256_sub_ps(hi_fp_0, d_zp);
         __m256 hi_zp_1 = _mm256_sub_ps(hi_fp_1, d_zp);
+        _mm256_storeu_ps(y + l + 2 * 8, _mm256_mul_ps(hi_zp_0, d_v));
         _mm256_storeu_ps(y + l + 3 * 8, _mm256_mul_ps(hi_zp_1, d_v));
 
         // Convert to 32-bit int -> block 2
         __m128i lo2_128_0 = _mm256_extracti128_si256(vx16_lo2, 0);
-        __m256i lo2_256_0 = _mm256_cvtepi16_epi32(lo2_128_0);
-        __m256 lo2_fp_0 = _mm256_cvtepi32_ps(lo2_256_0);
-        __m256 lo2_zp_0 = _mm256_sub_ps(lo2_fp_0, d_zp);
-        _mm256_storeu_ps(y2 + l + 0 * 8, _mm256_mul_ps(lo2_zp_0, d_v2));
-
         __m128i lo2_128_1 = _mm256_extracti128_si256(vx16_lo2, 1);
+        __m256i lo2_256_0 = _mm256_cvtepi16_epi32(lo2_128_0);
         __m256i lo2_256_1 = _mm256_cvtepi16_epi32(lo2_128_1);
+        __m256 lo2_fp_0 = _mm256_cvtepi32_ps(lo2_256_0);
         __m256 lo2_fp_1 = _mm256_cvtepi32_ps(lo2_256_1);
+        __m256 lo2_zp_0 = _mm256_sub_ps(lo2_fp_0, d_zp);
         __m256 lo2_zp_1 = _mm256_sub_ps(lo2_fp_1, d_zp);
+        _mm256_storeu_ps(y2 + l + 0 * 8, _mm256_mul_ps(lo2_zp_0, d_v2));
         _mm256_storeu_ps(y2 + l + 1 * 8, _mm256_mul_ps(lo2_zp_1, d_v2));
 
         __m128i hi2_128_0 = _mm256_extracti128_si256(vx16_hi2, 0);
-        __m256i hi2_256_0 = _mm256_cvtepi16_epi32(hi2_128_0);
-        __m256 hi2_fp_0 = _mm256_cvtepi32_ps(hi2_256_0);
-        __m256 hi2_zp_0 = _mm256_sub_ps(hi2_fp_0, d_zp);
-        _mm256_storeu_ps(y2 + l + 2 * 8, _mm256_mul_ps(hi2_zp_0, d_v2));
-
         __m128i hi2_128_1 = _mm256_extracti128_si256(vx16_hi2, 1);
+        __m256i hi2_256_0 = _mm256_cvtepi16_epi32(hi2_128_0);
         __m256i hi2_256_1 = _mm256_cvtepi16_epi32(hi2_128_1);
+        __m256 hi2_fp_0 = _mm256_cvtepi32_ps(hi2_256_0);
         __m256 hi2_fp_1 = _mm256_cvtepi32_ps(hi2_256_1);
+        __m256 hi2_zp_0 = _mm256_sub_ps(hi2_fp_0, d_zp);
         __m256 hi2_zp_1 = _mm256_sub_ps(hi2_fp_1, d_zp);
+        _mm256_storeu_ps(y2 + l + 2 * 8, _mm256_mul_ps(hi2_zp_0, d_v2));
         _mm256_storeu_ps(y2 + l + 3 * 8, _mm256_mul_ps(hi2_zp_1, d_v2));
     }
 }
@@ -268,7 +307,7 @@ static void *fast_zp_no_offset_over_column_func_v1(void *args) {
                 uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
                 __m256 *x_ptr = (__m256 *)&A->data_ptr[i * A->column + k];
                 __m256 *w_ptr = (__m256 *)&weight_block;
-                dequantize_block_q4_zp_no_offset(weight_32_int4, weight_block, s, block_size);
+                dequantize_block_q4_zp_no_offset_v2(weight_32_int4, weight_block, s, block_size);
 
                 // assume block_size == 32 (8 x 4 float)
                 acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(x_ptr[0], w_ptr[0]));
@@ -362,7 +401,7 @@ void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul
         threads_args[j].start_j = j * (params->C.column / num_thread);
         threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
         threads_args[j].params = params;
-        pthread_create(&thread_pool[j], NULL, fast_zp_no_offset_over_column_func_v2, &threads_args[j]);
+        pthread_create(&thread_pool[j], NULL, fast_zp_no_offset_over_column_func_v1, &threads_args[j]);
     }
     // Join threads
     for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
