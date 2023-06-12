@@ -22,7 +22,8 @@ else ifeq ($(shell uname -p),arm)
 	# For ARM A-series (such as Mac M1) with NEON
 	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
 	LIB_SRC += $(LIB_NEON_SRC)
-	CXXFLAGS += -march=native
+	CXX = clang++
+	CXXFLAGS += -march=native -framework Accelerate
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	LIB += -L/opt/homebrew/opt/boost/lib
 else

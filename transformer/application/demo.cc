@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
         std::string m_path = model_path[model_id];
 
         struct opt_params generation_config;
-        generation_config.n_predict = 64;
+        generation_config.n_predict = 256;
         generation_config.n_vocab = 32000;
 
         if (format_id == FP32) {
