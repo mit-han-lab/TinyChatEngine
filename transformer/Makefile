@@ -40,72 +40,89 @@ OPS =  $(wildcard src/ops/*.cc)
 SRC += $(OPS)
 SRC += $(LIB_SRC)
 
+# Check if CUDA is available
+CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
+CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu)
+TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
+LDFLAGS =
+
+ifdef CUDA_AVAILABLE
+    $(info CUDA is available)
+	CXX = /usr/local/cuda/bin/nvcc
+# Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
+	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-mavx2" -Xcompiler "-pthread" -arch=sm_86
+	SRC += $(CUDA_SRCS)
+# Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
+	INCLUDE_DIRS += -I/usr/local/cuda/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I/usr/include/python3.8
+	LDFLAGS += -L$(TORCH_DIR)/lib -ltorch -lc10 -lcudart -L/usr/local/cuda/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -lpython3.8
+endif
+
 # Default target
 all: $(TARGET)
 
 # Linking
 test_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/test_ops.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int8OPTAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTAttention tests/test_Int8OPTAttention.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTAttention tests/test_Int8OPTAttention.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int8OPTDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoderLayer tests/test_Int8OPTDecoderLayer.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoderLayer tests/test_Int8OPTDecoderLayer.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int8OPTDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoder tests/test_Int8OPTDecoder.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoder tests/test_Int8OPTDecoder.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_OPTForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_OPTTokenizer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTTokenizer tests/test_OPTTokenizer.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTTokenizer tests/test_OPTTokenizer.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_LLaMATokenizer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_LLaMATokenizer tests/test_LLaMATokenizer.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_LLaMATokenizer tests/test_LLaMATokenizer.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_OPTGenerate:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTGenerate tests/test_OPTGenerate.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTGenerate tests/test_OPTGenerate.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Fp32llamaAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaAttention tests/test_Fp32llamaAttention.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaAttention tests/test_Fp32llamaAttention.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Fp32llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoderLayer tests/test_Fp32llamaDecoderLayer.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoderLayer tests/test_Fp32llamaDecoderLayer.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Fp32llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoder tests/test_Fp32llamaDecoder.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoder tests/test_Fp32llamaDecoder.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Fp32LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int4llamaAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/test_Int4llamaAttention.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/test_Int4llamaAttention.cc $(SRC) $(LDFLAGS)
 
 test_Int4llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/test_Int4llamaDecoderLayer.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/test_Int4llamaDecoderLayer.cc $(SRC) $(LDFLAGS)
 
 test_Int4llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/test_Int4llamaDecoder.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/test_Int4llamaDecoder.cc $(SRC) $(LDFLAGS)
 
 test_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LDFLAGS)
 
 demo:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC) $(LIB) $(LDFLAGS)
 
 profile_OPTForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 profile_Fp32LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 profile_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 profile_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/test_ops.cc $(SRC) $(LIB)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
 
 # Clean up
 clean:

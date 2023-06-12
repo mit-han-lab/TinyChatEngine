@@ -1,13 +1,21 @@
-#include <cuda_runtime.h>
 #include <assert.h>
-#include "matmul.h"
 #include <sys/time.h>
 #include <stdlib.h>
 #include <cstdlib>
 #include <iostream>
 
+#include "../matmul.h"
+
+#include <cuda_runtime.h>
+#include <torch/extension.h>
+#include "gemm_cuda.h"
+#include "dequantize.cuh"
+#include <cuda_fp16.h>
+#include <c10/cuda/CUDAGuard.h>
+
 const int threadDim = 32;
 const int TILE_SIZE = threadDim;
+
 __global__ void matrixMul_blockC(float *A, float *B, float *C, int A_row, int A_column, int B_column){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -79,14 +87,14 @@ namespace matmul{
 
 		// Invoke the cuda imp.
 
-		struct timeval start, end;
-		gettimeofday(&start, NULL);
+		// struct timeval start, end;
+		// gettimeofday(&start, NULL);
 		//matrixMul_blockC<<< numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
 		matrixMultiplyShared<<< numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
 		cudaDeviceSynchronize();
-		gettimeofday(&end, NULL);
-		int us = interval_to_us(&start, &end);
-		std::cout << "cuda kernel: " << us / 1000 << " ms" << std::endl;
+		// gettimeofday(&end, NULL);
+		// int us = interval_to_us(&start, &end);
+		// std::cout << "cuda kernel: " << us / 1000 << " ms" << std::endl;
 
 		// Get the result back
 		cudaMemcpy(C->data_ptr, d_C, C->column*C->row*sizeof(float), cudaMemcpyDeviceToHost);
