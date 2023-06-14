@@ -50,32 +50,24 @@ void W8A8BFP32OFP32Linear::forward(const Matrix3D<int8_t> &x, Matrix3D<float> &o
     params.C.column = n;
     params.C.data_ptr = output.m_data;
     params.C.qparams.zero_point = 0;
+    params.alpha = alpha;
 
     matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
 
-#ifdef USE_OPT_EXP
-    // printf("W8A8BFP32OFP32Linear-m,n,k: %d, %d, %d\n", m,n,k);
     if (m == 1) {
         // let's loop over the column dim instead of row
         for (int bz = 0; bz < x.m_dim_x; bz++) {
-            matmul_op.mat_mul_avx_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(&params);
+            matmul_op.mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(&params);
             params.A.int8_data_ptr += m * k;
             params.C.data_ptr += m * n;
         }
     } else {
         for (int bz = 0; bz < x.m_dim_x; bz++) {
-            matmul_op.mat_mul_avx_int8_fast_2x2_32unroll_bfp32_ofp32(&params);
+            matmul_op.mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32(&params);
             params.A.int8_data_ptr += m * k;
             params.C.data_ptr += m * n;
         }
     }
-#else
-    for (int bz = 0; bz < x.m_dim_x; bz++) {
-        matmul_op.mat_mul_avx_int8_fast_2x2_32unroll_bfp32_ofp32(&params);
-        params.A.int8_data_ptr += m * k;
-        params.C.data_ptr += m * n;
-    }
-#endif
 
     PROFILE_END(profile_name);
 }

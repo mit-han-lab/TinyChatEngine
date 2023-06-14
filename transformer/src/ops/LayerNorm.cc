@@ -42,12 +42,6 @@ void LayerNorm::forward(const Matrix3D<float> &x, Matrix3D<float> &output) {
                 float fp_out = (((value - mean) / (std_dev)) * static_cast<float>(weight(0, 0, k))) +
                                static_cast<float>(bias(0, 0, k));
                 output(i, j, k) = static_cast<float>(fp_out);
-                // if (i == 0 && j == 0 && k == 1177){
-                //     std::cout << std::setprecision(15) << "squared_diff_sum" << squared_diff_sum;
-                //     std::cout << std::setprecision(15) << ",value:" << value << ", std_dev:" << std_dev << ",
-                //     fp_out:" << fp_out; std::cout << std::setprecision(15) << ",weight:" << weight(0, 0, k) << ",
-                //     bias:" <<  bias(0, 0, k) << std::endl;
-                // }
             }
         }
     }

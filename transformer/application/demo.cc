@@ -87,8 +87,7 @@ int main(int argc, char* argv[]) {
             std::getline(std::cin, input);
 
             Fp32LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
-        } 
-        else if (format_id == INT4) {
+        } else if (format_id == INT4) {
             Int4LlamaForCausalLM model = Int4LlamaForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
 
@@ -98,8 +97,7 @@ int main(int argc, char* argv[]) {
             std::getline(std::cin, input);
 
             Int4LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
-        }
-        else {
+        } else {
             std::cout << std::endl;
             std::cerr << "At this time, we only support FP32 and INT4 for LLaMA7B." << std::endl;
         }

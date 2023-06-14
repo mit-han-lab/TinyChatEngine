@@ -54,39 +54,25 @@ void W8A8B8O8LinearReLU::forward(const Matrix3D<int8_t> &x, Matrix3D<int8_t> &ou
     params.C.column = n;
     params.C.int8_data_ptr = output.m_data;
     params.A.qparams.scale = alpha;
+    params.alpha = alpha;
+    params.beta = beta;
 
     matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
 
-    // printf("W8A8B8O8LinearReLU-m,n,k: %d, %d, %d\n", m,n,k);
-    // // process each batch
-    // for (int bz = 0; bz < x.m_dim_x; bz++) {
-    //     matmul_op.mat_mul_avx_int8_fast_2x2_32unroll(&params);
-    //     params.A.int8_data_ptr += m * k;
-    //     params.C.int8_data_ptr += m * n;
-    // }
-#ifdef USE_OPT_EXP
-    // printf("W8A8B8O8Linear-m,n,k: %d, %d, %d\n", m,n,k);
     if (m == 1) {
         // let's loop over the column dim instead of row
         for (int bz = 0; bz < x.m_dim_x; bz++) {
-            matmul_op.mat_mul_avx_int8_fast_32unroll_over_column(&params);
+            matmul_op.mat_mul_accelerator_int8_fast_32unroll_over_column(&params);
             params.A.int8_data_ptr += m * k;
             params.C.int8_data_ptr += m * n;
         }
     } else {
         for (int bz = 0; bz < x.m_dim_x; bz++) {
-            matmul_op.mat_mul_avx_int8_fast_2x2_32unroll(&params);
+            matmul_op.mat_mul_accelerator_int8_fast_2x2_32unroll(&params);
             params.A.int8_data_ptr += m * k;
             params.C.int8_data_ptr += m * n;
         }
     }
-#else
-    for (int bz = 0; bz < x.m_dim_x; bz++) {
-        matmul_op.mat_mul_avx_int8_fast_2x2_32unroll(&params);
-        params.A.int8_data_ptr += m * k;
-        params.C.int8_data_ptr += m * n;
-    }
-#endif
 
     PROFILE_END(profile_name);
 }

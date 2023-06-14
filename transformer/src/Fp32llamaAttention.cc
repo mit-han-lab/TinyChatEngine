@@ -22,6 +22,64 @@ static float *value_states_arr;
 static float *query_states_arr;
 static float *value_states_transpose_arr;
 
+struct transpose_1_2idx_float_arg {
+    int start_idx, end_idx;
+    Matrix3D<float> input, output;
+};
+
+void *transpose_1_2idx_float_func(void *args_) {
+    struct transpose_1_2idx_float_arg *args = (struct transpose_1_2idx_float_arg *)args_;
+
+    Matrix3D<float> input = args->input;
+    Matrix3D<float> output = args->output;
+
+    for (int i = 0; i < input.m_dim_x; i++) {
+        for (int j = 0; j < input.m_dim_y; j++) {
+            for (int k = args->start_idx; k < args->end_idx; k++) {
+                output.m_data[i * output.m_dim_y * output.m_dim_z + k * output.m_dim_z + j] =
+                    input.m_data[i * input.m_dim_y * input.m_dim_z + j * input.m_dim_z + k];
+            }
+        }
+    }
+    return NULL;
+}
+
+inline void transpose_1_2idx_float_threads(Matrix3D<float> &input, Matrix3D<float> &output) {
+    PROFILE_START("Fp32llamaAttention::transpose_1_2idx_float");
+    assert(input.m_dim_x == output.m_dim_x);
+    assert(input.m_dim_y == output.m_dim_z);
+    assert(input.m_dim_z == output.m_dim_y);
+
+    if (input.m_dim_y == 1 || input.m_dim_z == 1) {
+        memcpy(output.m_data, input.m_data, input.length() * sizeof(float));
+    } else {
+        int num_thread = NUM_THREAD;
+        int loop_over_dim = input.m_dim_z;
+        if (num_thread > loop_over_dim) num_thread = loop_over_dim;
+
+        pthread_t thread_pool[NUM_THREAD];
+        struct transpose_1_2idx_float_arg threads_args[NUM_THREAD];
+
+        // Thread creation
+        for (int j = 0; j < num_thread; j++) {
+            threads_args[j].start_idx = j * (loop_over_dim / num_thread);
+            threads_args[j].input = input;
+            threads_args[j].output = output;
+            if (j == num_thread - 1)
+                threads_args[j].end_idx = loop_over_dim;
+            else
+                threads_args[j].end_idx = (j + 1) * (loop_over_dim / num_thread);
+            pthread_create(&thread_pool[j], NULL, transpose_1_2idx_float_func, &threads_args[j]);
+        }
+        // Join threads
+        for (int j = 0; j < num_thread; j++) {
+            pthread_join(thread_pool[j], NULL);
+        }
+    }
+
+    PROFILE_END("Fp32llamaAttention::transpose_1_2idx_float");
+}
+
 void Fp32llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float));
     allocate_aligned_memory(attn_output_fp_arr, config.max_sqlen * config.embed_dim * sizeof(float));
@@ -124,63 +182,7 @@ Fp32llamaAttention::Fp32llamaAttention(std::string param_path, const struct mode
     this->head_dim = config.embed_dim / config.num_heads;
 }
 
-struct transpose_1_2idx_float_arg {
-    int start_idx, end_idx;
-    Matrix3D<float> input, output;
-};
 
-void *transpose_1_2idx_float_func(void *args_) {
-    struct transpose_1_2idx_float_arg *args = (struct transpose_1_2idx_float_arg *)args_;
-
-    Matrix3D<float> input = args->input;
-    Matrix3D<float> output = args->output;
-
-    for (int i = 0; i < input.m_dim_x; i++) {
-        for (int j = 0; j < input.m_dim_y; j++) {
-            for (int k = args->start_idx; k < args->end_idx; k++) {
-                output.m_data[i * output.m_dim_y * output.m_dim_z + k * output.m_dim_z + j] =
-                    input.m_data[i * input.m_dim_y * input.m_dim_z + j * input.m_dim_z + k];
-            }
-        }
-    }
-    return NULL;
-}
-
-inline void transpose_1_2idx_float_threads(Matrix3D<float> &input, Matrix3D<float> &output) {
-    PROFILE_START("Int8OPTAttention::transpose_1_2idx_float");
-    assert(input.m_dim_x == output.m_dim_x);
-    assert(input.m_dim_y == output.m_dim_z);
-    assert(input.m_dim_z == output.m_dim_y);
-
-    if (input.m_dim_y == 1 || input.m_dim_z == 1) {
-        memcpy(output.m_data, input.m_data, input.length() * sizeof(float));
-    } else {
-        int num_thread = NUM_THREAD;
-        int loop_over_dim = input.m_dim_z;
-        if (num_thread > loop_over_dim) num_thread = loop_over_dim;
-
-        pthread_t thread_pool[NUM_THREAD];
-        struct transpose_1_2idx_float_arg threads_args[NUM_THREAD];
-
-        // Thread creation
-        for (int j = 0; j < num_thread; j++) {
-            threads_args[j].start_idx = j * (loop_over_dim / num_thread);
-            threads_args[j].input = input;
-            threads_args[j].output = output;
-            if (j == num_thread - 1)
-                threads_args[j].end_idx = loop_over_dim;
-            else
-                threads_args[j].end_idx = (j + 1) * (loop_over_dim / num_thread);
-            pthread_create(&thread_pool[j], NULL, transpose_1_2idx_float_func, &threads_args[j]);
-        }
-        // Join threads
-        for (int j = 0; j < num_thread; j++) {
-            pthread_join(thread_pool[j], NULL);
-        }
-    }
-
-    PROFILE_END("Int8OPTAttention::transpose_1_2idx_float");
-}
 
 struct Fp32llamaAttention_output Fp32llamaAttention::forward(const struct Fp32llamaAttention_input &input) {
     PROFILE_START(profile_name);
@@ -287,6 +289,8 @@ struct Fp32llamaAttention_output Fp32llamaAttention::forward(const struct Fp32ll
 
     Matrix3D<float> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
     transpose_1_2idx_float_threads(final_value_states, value_states_transpose);
+    // print_first_k_elelment("final_value_states", final_value_states.m_data, 20);
+    // print_first_k_elelment("value_states_transpose", value_states_transpose.m_data, 20);
 
     Matrix3D<float> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
     this->pv_bmm.forward(attn_probs, value_states_transpose, attn_output);

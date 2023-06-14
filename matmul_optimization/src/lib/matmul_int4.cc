@@ -24,19 +24,10 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
                 float *data_A = &A->data_ptr[i * A->column + k];
                 uint8_t *data_B = &B->int4_data_ptr[j * B->column + k / 2];
 
-                for (int qi = 0; qi < block_size / 4; qi++) {
-                    uint8_t packed_int4_0 = data_B[qi * 2];
-                    uint8_t packed_int4_1 = data_B[qi * 2 + 1];
+                for (int qi = 0; qi < block_size / 2; qi++) {
+                    uint8_t packed_int4_0 = data_B[qi];
                     float deq_0 = ((float)(packed_int4_0 & 0x0F) - z) * s;
-                    float deq_1 = ((float)(packed_int4_1 & 0x0F) - z) * s;
-                    acc += *data_A++ * deq_0;
-                    acc += *data_A++ * deq_1;
-                }
-                for (int qi = block_size / 4; qi < block_size / 2; qi++) {
-                    uint8_t packed_int4_0 = data_B[(qi - block_size / 4) * 2];
-                    uint8_t packed_int4_1 = data_B[(qi - block_size / 4) * 2 + 1];
-                    float deq_0 = ((float)(packed_int4_0 >> 4) - z) * s;
-                    float deq_1 = ((float)(packed_int4_1 >> 4) - z) * s;
+                    float deq_1 = ((float)(packed_int4_0 >> 4) - z) * s;
                     acc += *data_A++ * deq_0;
                     acc += *data_A++ * deq_1;
                 }
@@ -68,19 +59,10 @@ void MatmulOperator::naive_mat_mul_int4_with_offset(const struct matmul_params *
                 float *data_A = &A->data_ptr[i * A->column + k];
                 uint8_t *data_B = &B->int4_data_ptr[j * B->column + k / 2];
 
-                for (int qi = 0; qi < block_size / 4; qi++) {
-                    uint8_t packed_int4_0 = data_B[qi * 2];
-                    uint8_t packed_int4_1 = data_B[qi * 2 + 1];
-                    float deq_0 = ((int)(packed_int4_0 & 0x0F) - z) * s + o;
-                    float deq_1 = ((int)(packed_int4_1 & 0x0F) - z) * s + o;
-                    acc += *data_A++ * deq_0;
-                    acc += *data_A++ * deq_1;
-                }
-                for (int qi = block_size / 4; qi < block_size / 2; qi++) {
-                    uint8_t packed_int4_0 = data_B[(qi - block_size / 4) * 2];
-                    uint8_t packed_int4_1 = data_B[(qi - block_size / 4) * 2 + 1];
-                    float deq_0 = ((int)(packed_int4_0 >> 4) - z) * s + o;
-                    float deq_1 = ((int)(packed_int4_1 >> 4) - z) * s + o;
+                for (int qi = 0; qi < block_size / 2; qi++) {
+                    uint8_t packed_int4_0 = data_B[qi];
+                    float deq_0 = ((float)(packed_int4_0 & 0x0F) - z) * s + o;
+                    float deq_1 = ((float)(packed_int4_0 >> 4) - z) * s + o;
                     acc += *data_A++ * deq_0;
                     acc += *data_A++ * deq_1;
                 }
