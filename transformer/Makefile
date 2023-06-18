@@ -43,9 +43,9 @@ SRC += $(LIB_SRC)
 # Check if CUDA is available
 CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
 CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu)
-# Server GPUs (e.g., NVIDIA RTX A6000, GeForce RTX 3090)
+# General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090)
 # TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
-# Edge GPUs (e.g., NVIDIA Jetson AGX Orin, Jetson Orin Nano)
+# Edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano)
 TORCH_DIR = /home/wweichen/archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
 LDFLAGS =
 
