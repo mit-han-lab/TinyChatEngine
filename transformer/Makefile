@@ -43,18 +43,21 @@ SRC += $(LIB_SRC)
 # Check if CUDA is available
 CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
 CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu)
-TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
+# Server GPUs (e.g., NVIDIA RTX A6000, GeForce RTX 3090)
+# TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
+# Edge GPUs (e.g., NVIDIA Jetson AGX Orin, Jetson Orin Nano)
+TORCH_DIR = /home/wweichen/archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
 LDFLAGS =
 
 ifdef CUDA_AVAILABLE
     $(info CUDA is available)
 	CXX = /usr/local/cuda/bin/nvcc
-# Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-mavx2" -Xcompiler "-pthread" -arch=sm_86
+# Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
+	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread" -arch=sm_87
 	SRC += $(CUDA_SRCS)
 # Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
-	INCLUDE_DIRS += -I/usr/local/cuda/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I/usr/include/python3.8
-	LDFLAGS += -L$(TORCH_DIR)/lib -ltorch -lc10 -lcudart -L/usr/local/cuda/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -lpython3.8
+ 	INCLUDE_DIRS += -I/usr/local/cuda/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I/usr/include/python3.8
+ 	LDFLAGS += -L$(TORCH_DIR)/lib -ltorch -lc10 -lcudart -L/usr/local/cuda/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -lpython3.8
 endif
 
 # Default target

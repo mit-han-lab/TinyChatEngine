@@ -18,7 +18,7 @@
 #include <fstream>
 #include <utility>
 #include <regex>
-#include <boost/regex.hpp>
+// #include <boost/regex.hpp>
 #include <nlohmann/json.hpp>
 
 //std::vector<int> OPT_tokenize(const OPT_vocab & vocab, const std::string & text, bool add_bos);
