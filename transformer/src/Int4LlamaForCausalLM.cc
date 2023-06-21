@@ -41,6 +41,7 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct In
 
     // logits = self.lm_head(outputs[0]).contiguous()
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
+    // std::cout << "lm_head" << std::endl;
     this->lm_head.forward(decoder_output.last_hidden_state, logits);
     // print_first_k_elelment("logits_output", logits.m_data, 20);
 

@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <xmmintrin.h>  // intel SSE intrinsic
+#include <iostream>
 
 #include "../matmul.h"
 
@@ -23,6 +24,10 @@ void *mat_mul_transposed_fastover_column_func(void *args) {
     const struct matrix *C = mat_args->C;
     float *data_A = A->data_ptr, *data_B = B->data_ptr, *data_C = C->data_ptr;
     int start_i = mat_args->start_i, end_i = mat_args->end_i;
+
+    // std::cout << "mat_mul_transposed_fastover_column_func (fp32) -- A->row: " << A->row << " A->column: " << A->column 
+    //           << "; B->row: " << B->row << " B->column: " << B->column 
+    //           << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
 
     __m256 zero256 = _mm256_setzero_ps();
     for (i = 0; i < C->row; i++) {

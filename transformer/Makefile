@@ -43,21 +43,26 @@ SRC += $(LIB_SRC)
 # Check if CUDA is available
 CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
 CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu)
-# General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090)
-# TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
-# Edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano)
-TORCH_DIR = /home/wweichen/archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
+CUDNN_DIR = /home/wweichen/cudnn
+PYTHON_DIR = /home/wweichen/anaconda3/envs/TinyLLMEngine_py38
 LDFLAGS =
+ifeq ($(shell uname -m),x86_64) # General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090)
+	TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
+else ifeq ($(shell uname -m),aarch64) # Edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano)
+	TORCH_DIR = /home/wweichen/archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
+else
+	@echo CUDA is unavailable!
+endif
 
 ifdef CUDA_AVAILABLE
     $(info CUDA is available)
 	CXX = /usr/local/cuda/bin/nvcc
 # Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread" -arch=sm_87
+	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-mavx2" -Xcompiler "-pthread" -arch=sm_87 -D_GLIBCXX_USE_CXX11_ABI=1
 	SRC += $(CUDA_SRCS)
 # Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
- 	INCLUDE_DIRS += -I/usr/local/cuda/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I/usr/include/python3.8
- 	LDFLAGS += -L$(TORCH_DIR)/lib -ltorch -lc10 -lcudart -L/usr/local/cuda/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -lpython3.8
+ 	INCLUDE_DIRS += -I/usr/local/cuda/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)/include
+ 	LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_DIR)/lib -L/usr/local/cuda/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_DIR)/lib -Xlinker -rpath=/usr/local/cuda/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cuda
 endif
 
 # Default target

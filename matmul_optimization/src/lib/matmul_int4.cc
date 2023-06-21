@@ -14,6 +14,10 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
     float *data_C = C->data_ptr;
     CHECK_MATRICES_int4weight(A, B, C);
 
+    // std::cout << "naive_mat_mul_int4 -- A->row: " << A->row << " A->column: " << A->column 
+    //           << "; B->row: " << B->row << " B->column: " << B->column 
+    //           << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
+
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {
             float acc = 0;
@@ -47,6 +51,10 @@ void MatmulOperator::naive_mat_mul_int4_with_offset(const struct matmul_params *
     float *B_zp = params->zero_point;
     float *data_C = C->data_ptr;
     CHECK_MATRICES_int4weight(A, B, C);
+
+    // std::cout << "naive_mat_mul_int4_with_offset -- A->row: " << A->row << " A->column: " << A->column 
+    //           << "; B->row: " << B->row << " B->column: " << B->column 
+    //           << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
 
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {

@@ -16,6 +16,10 @@ void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *p
 
     assert(params->block_size == 32);  // support block size 32 for now
 
+    // std::cout << "mat_mul_accelerator_int4_fast -- A->row: " << A->row << " A->column: " << A->column 
+    //           << "; B->row: " << B->row << " B->column: " << B->column 
+    //           << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
+
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {
             float acc = 0;
@@ -44,6 +48,10 @@ void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul
     float *scale = params->scales, *offset = params->offset;
 
     assert(params->block_size == 32);  // support block size 32 for now
+
+    // std::cout << "mat_mul_accelerator_int4_fast_no_offset -- A->row: " << A->row << " A->column: " << A->column 
+    //           << "; B->row: " << B->row << " B->column: " << B->column 
+    //           << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
 
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {

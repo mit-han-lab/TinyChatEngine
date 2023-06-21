@@ -1,6 +1,6 @@
 #include <immintrin.h>
 #include <pthread.h>
-
+#include <iostream>
 #include <cassert>
 
 #include "../matmul.h"
@@ -296,6 +296,10 @@ static void *fast_zp_no_offset_over_column_func_v1(void *args) {
     float *scale = params->scales, *offset = params->offset;
 
     float weight_block[block_size];
+
+    // std::cout << "fast_zp_no_offset_over_column_func_v1 -- A->row: " << A->row << " A->column: " << A->column 
+    //           << "; B->row: " << B->row << " B->column: " << B->column 
+    //           << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
 
     for (i = 0; i < C->row; i++) {
         for (j = mat_args->start_j; j < mat_args->end_j; j++) {
