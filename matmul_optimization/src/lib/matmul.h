@@ -37,6 +37,7 @@ struct matmul_params {
     float alpha, beta;
     // for int4
     float *scales, *offset, *zero_point;
+    int32_t *int32_zero_point;
     int block_size;
 };
 

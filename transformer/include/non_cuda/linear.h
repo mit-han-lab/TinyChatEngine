@@ -1,6 +1,8 @@
 #include "common.h"
 #include "utils.h"
 
+#define QK 32
+
 class Linear_FP {
    public:
     Linear_FP(Matrix3D<float> weight_, std::string weight_path) : weight(weight_) {

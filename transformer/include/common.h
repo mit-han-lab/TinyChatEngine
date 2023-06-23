@@ -12,8 +12,6 @@
 #define DEBUG_INS(x) \
     if (DEBUG) x
 
-#define QK 32
-
 template <typename T>
 class Matrix3D {
    public:

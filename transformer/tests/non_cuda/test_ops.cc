@@ -2,7 +2,7 @@
 
 #include "operators.h"
 #include "utils.h"
-#include "utils_memalloc.h"
+#include "../utils_memalloc.h"
 
 void test_LayerNormQ() {
     const int b = 1, m = 108, n = 768;

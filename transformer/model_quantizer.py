@@ -160,7 +160,7 @@ def write_weight_to_file(prefix: str, qs, d, m, zp, is_lm_head=False, cuda_is_av
     # Convert to bytes
     if cuda_is_available:
         qs_data = np.asarray(qs, dtype=np.int32).tobytes()
-        d_data = np.asarray(d, dtype=np.float16).tobytes()
+        d_data = np.asarray(d, dtype=np.float32).tobytes() # Need to ne converted to fp16 in CUDA
         m_data = np.asarray(m, dtype=np.float32).tobytes() # TODO: Currently, we don't use offsets for CUDA so this is redundant
         zp_data = np.asarray(zp, dtype=np.int32).tobytes()
     else:
@@ -579,72 +579,71 @@ def quantize_model(prefix, method="Q4_0", data_type="fp32", cuda_is_available=Fa
 
 # Test function
 def test():
-    print("Test function starts.")
+    print("Test function START!")
 
-    # Assume your array is arr
-    arr = np.random.rand(5, 4)
+    prefix = "models/LLaMA_7B"
+    method = "Q4_0"
+    data_type = "fp32"
+    # cuda_is_available = torch.cuda.is_available()
 
-    # Transpose your array
-    arr_transposed = arr.transpose()
+    # Check model name
+    model_name_size = prefix.split("/")[-1]
+    if model_name_size not in ["OPT_125m", "OPT_1.3B", "OPT_6.7B", "LLaMA_7B"]:
+        raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B'.")
 
-    print(f"arr: {arr}")
-    print(f"arr_transposed: {arr_transposed}")
+    # Check quantization method
+    if method not in ["Q4_0", "Q4_1"]:
+        raise ValueError("Invalid quantization method. Expected 'Q4_0' or 'Q4_1'.")
 
-    # prefix = "models/LLaMA_7B"
-    # method = "Q4_0"
-    # data_type = "fp32"
-    # # cuda_is_available = torch.cuda.is_available()
-    # cuda_is_available = False
+    # Check data type
+    if data_type == "fp32":
+        bytes_per_element = 4
+    elif data_type == "fp16":
+        bytes_per_element = 2
+    elif data_type == "int8":
+        bytes_per_element = 1
+    else:
+        raise ValueError("Invalid data type. Expected 'fp32', 'fp16', or 'int8'.")
 
-    # # Check model name
-    # model_name_size = prefix.split("/")[-1]
-    # if model_name_size not in ["OPT_125m", "OPT_1.3B", "OPT_6.7B", "LLaMA_7B"]:
-    #     raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B'.")
+    ### Testing CPU version
+    print("Testing CPU version!")
 
-    # # Check quantization method
-    # if method not in ["Q4_0", "Q4_1"]:
-    #     raise ValueError("Invalid quantization method. Expected 'Q4_0' or 'Q4_1'.")
+    # Quantize down_proj in layer 0
+    cuda_is_available = False
+    group_size = 32
+    file_path = f"{prefix}/decoder/layer0/down_proj"
+    weight_path = f"{file_path}/weight.bin"
+    file_size_bytes = os.path.getsize(weight_path)
+    if file_size_bytes % bytes_per_element != 0:
+        raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+    array_size = file_size_bytes // bytes_per_element
+    if method == "Q4_0":
+        qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type, cuda_is_available, 11008, 4096, group_size)
+    elif method == "Q4_1":
+        qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type, cuda_is_available, 11008, 4096, group_size)
 
-    # # Check data type
-    # if data_type == "fp32":
-    #     bytes_per_element = 4
-    # elif data_type == "fp16":
-    #     bytes_per_element = 2
-    # elif data_type == "int8":
-    #     bytes_per_element = 1
-    # else:
-    #     raise ValueError("Invalid data type. Expected 'fp32', 'fp16', or 'int8'.")
-
-    # # Quantize down_proj in layer 0
-    # file_path = f"{prefix}"
-    # weight_path = f"{prefix}/lm_head.bin"
-    # file_size_bytes = os.path.getsize(weight_path)
-    # if file_size_bytes % bytes_per_element != 0:
-    #     raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
-    # array_size = file_size_bytes // bytes_per_element
-    # print(f"Quantizing '{weight_path}' with {method} method... (original data type: {data_type})")
-    # if method == "Q4_0":
-    #     qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type, cuda_is_available)
-    # elif method == "Q4_1":
-    #     qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type, cuda_is_available)
-
-    # file_path += "/lm_head"
-
-    # write_weight_to_file(file_path, qs, d, m, zp, False, cuda_is_available)
-
-    # read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
+    write_weight_to_file(file_path, qs, d, m, zp, False, cuda_is_available)
+    read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
 
     # Check weights
-    # first_half_qs = np.bitwise_and(qs, 0x0F)
-    # second_half_qs = np.bitwise_and(qs, 0xF0) >> 4
-    # first_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0x0F)
-    # second_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int8), 0xF0) >> 4
-    # print(f"first_half_qs:       {first_half_qs[0:2, :16]}")
+    first_half_qs = np.bitwise_and(qs, 0x0F)
+    second_half_qs = np.bitwise_and(qs, 0xF0) >> 4
+    first_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.uint8), 0x0F)
+    second_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.uint8), 0xF0) >> 4
+    # print(f"first_half_qs:       {first_half_qs[0:2, :16].reshape(-1)}")
     # print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
-    # print(f"second_half_qs:      {second_half_qs[0:2, :16]}")
+    if np.array_equal(first_half_qs.reshape(-1), first_half_read_qs):
+        print("first_half_qs and first_half_read_qs are equal.")
+    else:
+        raise ValueError("first_half_qs and first_half_read_qs are NOT equal.")
+    # print(f"second_half_qs:      {second_half_qs[0:2, :16].reshape(-1)}")
     # print(f"second_half_read_qs: {second_half_read_qs[:32]}")
+    if np.array_equal(second_half_qs.reshape(-1), second_half_read_qs):
+        print("second_half_qs and second_half_read_qs are equal.")
+    else:
+        raise ValueError("second_half_qs and second_half_read_qs are NOT equal.")
 
-    # print(f"shalen of qs:       {qs.shape}")
+    # print(f"shape of qs:       {qs.shape}")
     # print(f"length of first_half_qs:       {len(first_half_qs)}")
     # print(f"length of second_half_qs:      {len(second_half_qs)}")
     # print(f"length of first_half_read_qs:  {len(first_half_read_qs)}")
@@ -660,14 +659,18 @@ def test():
     # print(f"read_qs:      {read_qs[:32]}")
     # print(f"length of read_qs:      {len(read_qs)}")
 
-    # # Check scaling factors
-    # if STORE_FP16:
-    #     read_d = np.frombuffer(read_d, dtype=np.float16)
-    # else:
-    #     read_d = np.frombuffer(read_d, dtype=np.float32)
+    # Check scaling factors
+    if STORE_FP16:
+        read_d = np.frombuffer(read_d, dtype=np.float16)
+    else:
+        read_d = np.frombuffer(read_d, dtype=np.float32)
     # print(f"d:      {d}")
     # print(f"read_d: {read_d}")
     # print(f"length of d:      {len(d)}")
+    if np.array_equal(d, read_d):
+        print("d and read_d are equal.")
+    else:
+        raise ValueError("d and read_d are NOT equal.")
 
     # # Check offsets
     # if STORE_FP16:
@@ -678,13 +681,169 @@ def test():
     # print(f"read_m: {read_m}")
     # print(f"length of m:      {len(m)}")
 
-    # # Check zero points
-    # if STORE_FP16:
-    #     read_zp = np.frombuffer(read_zp, dtype=np.float16)
-    # else:
-    #     read_zp = np.frombuffer(read_zp, dtype=np.float32)
+    # Check zero points
+    if STORE_FP16:
+        read_zp = np.frombuffer(read_zp, dtype=np.float16)
+    else:
+        read_zp = np.frombuffer(read_zp, dtype=np.float32)
     # print(f"zp:      {zp}")
     # print(f"read_zp: {read_zp}")
+    if np.array_equal(zp, read_zp):
+        print("zp and read_zp are equal.\n")
+    else:
+        raise ValueError("zp and read_zp are NOT equal.")
+
+
+    ### Testing GPI version
+    print("Testing GPU version!")
+
+    # Quantize down_proj in layer 0
+    cuda_is_available = True
+    group_size = 128
+    file_path = f"{prefix}/decoder/layer0/down_proj"
+    weight_path = f"{file_path}/weight.bin"
+    file_size_bytes = os.path.getsize(weight_path)
+    if file_size_bytes % bytes_per_element != 0:
+        raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+    array_size = file_size_bytes // bytes_per_element
+    if method == "Q4_0":
+        qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type, cuda_is_available, 11008, 4096, group_size)
+    elif method == "Q4_1":
+        qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type, cuda_is_available, 11008, 4096, group_size)
+
+    write_weight_to_file(file_path, qs, d, m, zp, False, cuda_is_available)
+    read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
+
+    # Check weights
+    first_half_qs =   np.bitwise_and(qs, 0x0000000F)
+    second_half_qs =  np.bitwise_and(qs, 0x000000F0) >> 4
+    third_half_qs =   np.bitwise_and(qs, 0x00000F00) >> 8
+    fourth_half_qs =  np.bitwise_and(qs, 0x0000F000) >> 12
+    fifth_half_qs =   np.bitwise_and(qs, 0x000F0000) >> 16
+    sixth_half_qs =   np.bitwise_and(qs, 0x00F00000) >> 20
+    seventh_half_qs = np.bitwise_and(qs, 0x0F000000) >> 24
+    eighth_half_qs =  np.bitwise_and(qs, 0xF0000000) >> 28
+    first_half_read_qs =   np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x0000000F)
+    second_half_read_qs =  np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x000000F0) >> 4
+    third_half_read_qs =   np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x00000F00) >> 8
+    fourth_half_read_qs =  np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x0000F000) >> 12
+    fifth_half_read_qs =   np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x000F0000) >> 16
+    sixth_half_read_qs =   np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x00F00000) >> 20
+    seventh_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x0F000000) >> 24
+    eighth_half_read_qs =  np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0xF0000000) >> 28
+    # print(f"first_half_qs:       {first_half_qs[0:2, :16].reshape(-1)}")
+    # print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
+    if np.array_equal(first_half_qs.reshape(-1), first_half_read_qs):
+        print("first_half_qs and first_half_read_qs are equal.")
+    else:
+        raise ValueError("first_half_qs and first_half_read_qs are NOT equal.")
+    # print(f"second_half_qs:      {second_half_qs[0:2, :16].reshape(-1)}")
+    # print(f"second_half_read_qs: {second_half_read_qs[:32]}")
+    if np.array_equal(second_half_qs.reshape(-1), second_half_read_qs):
+        print("second_half_qs and second_half_read_qs are equal.")
+    else:
+        raise ValueError("second_half_qs and second_half_read_qs are NOT equal.")
+    
+    if np.array_equal(third_half_qs.reshape(-1), third_half_read_qs):
+        print("third_half_qs and third_half_read_qs are equal.")
+    else:
+        raise ValueError("third_half_qs and third_half_read_qs are NOT equal.")
+
+    if np.array_equal(fourth_half_qs.reshape(-1), fourth_half_read_qs):
+        print("fourth_half_qs and fourth_half_read_qs are equal.")
+    else:
+        raise ValueError("fourth_half_qs and fourth_half_read_qs are NOT equal.")
+    
+    if np.array_equal(fifth_half_qs.reshape(-1), fifth_half_read_qs):
+        print("fifth_half_qs and fifth_half_read_qs are equal.")
+    else:
+        raise ValueError("fifth_half_qs and fifth_half_read_qs are NOT equal.")
+
+    if np.array_equal(sixth_half_qs.reshape(-1), sixth_half_read_qs):
+        print("sixth_half_qs and sixth_half_read_qs are equal.")
+    else:
+        raise ValueError("sixth_half_qs and sixth_half_read_qs are NOT equal.")
+    
+    if np.array_equal(seventh_half_qs.reshape(-1), seventh_half_read_qs):
+        print("seventh_half_qs and seventh_half_read_qs are equal.")
+    else:
+        raise ValueError("seventh_half_qs and seventh_half_read_qs are NOT equal.")
+    
+    if np.array_equal(eighth_half_qs.reshape(-1), eighth_half_read_qs):
+        print("eighth_half_qs and eighth_half_read_qs are equal.")
+    else:
+        raise ValueError("eighth_half_qs and eighth_half_read_qs are NOT equal.")
+    
+    # Check scaling factors
+    read_d = np.frombuffer(read_d, dtype=np.float32)
+    # print(f"d: {d[0, :32]}")
+    # print(f"read_d: {read_d[:32]}")
+    # print(f"length of d:      {len(d)}")
+    # print(f"length of read_d: {len(read_d)}")
+    if np.array_equal(d.reshape(-1), read_d):
+        print("d and read_d are equal.")
+    else:
+        raise ValueError("d and read_d are NOT equal.")
+    
+    # Check zero points
+    first_half_zp =   np.bitwise_and(zp, 0x0000000F)
+    second_half_zp =  np.bitwise_and(zp, 0x000000F0) >> 4
+    third_half_zp =   np.bitwise_and(zp, 0x00000F00) >> 8
+    fourth_half_zp =  np.bitwise_and(zp, 0x0000F000) >> 12
+    fifth_half_zp =   np.bitwise_and(zp, 0x000F0000) >> 16
+    sixth_half_zp =   np.bitwise_and(zp, 0x00F00000) >> 20
+    seventh_half_zp = np.bitwise_and(zp, 0x0F000000) >> 24
+    eighth_half_zp =  np.bitwise_and(zp, 0xF0000000) >> 28
+    first_half_read_zp =   np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x0000000F)
+    second_half_read_zp =  np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x000000F0) >> 4
+    third_half_read_zp =   np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x00000F00) >> 8
+    fourth_half_read_zp =  np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x0000F000) >> 12
+    fifth_half_read_zp =   np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x000F0000) >> 16
+    sixth_half_read_zp =   np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x00F00000) >> 20
+    seventh_half_read_zp = np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x0F000000) >> 24
+    eighth_half_read_zp =  np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0xF0000000) >> 28
+
+    if np.array_equal(first_half_zp.reshape(-1), first_half_read_zp):
+        print("first_half_zp and first_half_read_zp are equal.")
+    else:
+        raise ValueError("first_half_zp and first_half_read_zp are NOT equal.")
+    
+    if np.array_equal(second_half_zp.reshape(-1), second_half_read_zp):
+        print("second_half_zp and second_half_read_zp are equal.")
+    else:
+        raise ValueError("second_half_zp and second_half_read_zp are NOT equal.")
+    
+    if np.array_equal(third_half_zp.reshape(-1), third_half_read_zp):
+        print("third_half_zp and third_half_read_zp are equal.")
+    else:
+        raise ValueError("third_half_zp and third_half_read_zp are NOT equal.")
+
+    if np.array_equal(fourth_half_zp.reshape(-1), fourth_half_read_zp):
+        print("fourth_half_zp and fourth_half_read_zp are equal.")
+    else:
+        raise ValueError("fourth_half_zp and fourth_half_read_zp are NOT equal.")
+    
+    if np.array_equal(fifth_half_zp.reshape(-1), fifth_half_read_zp):
+        print("fifth_half_zp and fifth_half_read_zp are equal.")
+    else:
+        raise ValueError("fifth_half_zp and fifth_half_read_zp are NOT equal.")
+
+    if np.array_equal(sixth_half_zp.reshape(-1), sixth_half_read_zp):
+        print("sixth_half_zp and sixth_half_read_zp are equal.")
+    else:
+        raise ValueError("sixth_half_zp and sixth_half_read_zp are NOT equal.")
+    
+    if np.array_equal(seventh_half_zp.reshape(-1), seventh_half_read_zp):
+        print("seventh_half_zp and seventh_half_read_zp are equal.")
+    else:
+        raise ValueError("seventh_half_zp and seventh_half_read_zp are NOT equal.")
+    
+    if np.array_equal(eighth_half_zp.reshape(-1), eighth_half_read_zp):
+        print("eighth_half_zp and eighth_half_read_zp are equal.\n")
+    else:
+        raise ValueError("eighth_half_zp and eighth_half_read_zp are NOT equal.")
+
+    print("Test function DONE!")
 
 
 # Main function
@@ -694,13 +853,21 @@ def main():
         parser.add_argument("--model_path", type=str, default="models/LLaMA_7B", help="Model path")
         parser.add_argument("--method", type=str, default="Q4_0", help="Quantization method")
         parser.add_argument("--data_type", type=str, default="fp32", help="Data type")
-        parser.add_argument("--group_size", type=int, default=128, help="Quantization group size")
+        parser.add_argument("--group_size", type=int, default=32, help="Quantization group size")
+        # TODO: We should remove the following line and make it detect CUDA automatically in the future.
         parser.add_argument("--cuda_is_available", type=bool, default=False, help="Quantize weights into general format or GPU format")
         return parser
 
     parser = get_parser()
     args = parser.parse_args()
+    # TODO: We should use the following line in the future (currently we set cuda_is_available manually)
     # cuda_is_available = torch.cuda.is_available()
+    # TODO: We should remove the following four lines in the future (currently we only support group_size=32 for CPUs and group_size=128 for GPUs)
+    if args.cuda_is_available:
+        args.group_size = 128
+    else:
+        args.group_size = 32
+
     print(f"Quantization START!")
     quantize_model(prefix=args.model_path, method=args.method, data_type=args.data_type, cuda_is_available=args.cuda_is_available, group_size=args.group_size)
     print(f"Quantization DONE!")

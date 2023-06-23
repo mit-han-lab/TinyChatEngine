@@ -22,6 +22,9 @@ wget https://download.pytorch.org/libtorch/cu117/libtorch-cxx11-abi-shared-with-
 unzip libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu117.zip
 
 cd ../../../..
+conda create -n TinyLLMEngine_py38 python=3.8
+conda install -c anaconda numpy
+# Install cuDNN
 ```
 
 For Nvidia edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano)
@@ -80,8 +83,9 @@ CEREC technology allows dentists to create crowns, inlays/onlays, veneers and br
 ``` bash
 cd transformer
 ./download.sh # This will download 125m, 1.3B, 6.7B OPT, and 7B LLaMA models
-python model_quantizer.py --model_path="models/LLaMA_7B" --method="Q4_0" --data_type="fp32" # Quantize LLaMA7B model from fp32 to int4 by using Q4_0 quantization method
-vim Makefile # Please modify Lines 47, 49, 56, 59, and 60 in Makefile according to your GPU architecture and Python development environment
+python model_quantizer.py --model_path="models/LLaMA_7B" --method="Q4_0" --data_type="fp32" --group_size=128 --cuda_is_available=True # Quantize LLaMA7B model from fp32 to int4 by using Q4_0 quantization method
+# Please modify Lines 39-44 in Makefile according to your GPU architecture and Python development environment
+vim Makefile 
 make -j
 ./demo LLaMA7B INT4 # or `./demo LLaMA7B FP32` to run the fp32 LLaMA demo
 Model: LLaMA7B selected

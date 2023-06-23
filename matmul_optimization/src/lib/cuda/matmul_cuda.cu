@@ -6,15 +6,18 @@
 
 #include "../matmul.h"
 
+#include <torch/torch.h>
 #include <cuda_runtime.h>
 #include <torch/extension.h>
-#include "gemm_cuda.h"
-#include "dequantize.cuh"
 #include <cuda_fp16.h>
 #include <c10/cuda/CUDAGuard.h>
+#include "gemm_cuda.h"
+#include "dequantize.cuh"
 
 const int threadDim = 32;
 const int TILE_SIZE = threadDim;
+
+static bool first_run = true;
 
 __global__ void matrixMul_blockC(float *A, float *B, float *C, int A_row, int A_column, int B_column){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -50,57 +53,6 @@ __global__ void matrixMultiplyShared(const float *A, const float *B, float *C, i
 
 	C[row * B_column + col] = value;
 }
-
-namespace matmul{
-
-	void MatmulOperator::mat_mul_cuda(const struct matmul_params *params){
-		const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
-		assert(A->column == B->row);
-		assert(C->column == B->column);
-		assert(C->row == A->row);
-
-		float *d_A;
-		float *d_B;
-		float *d_C;
-
-		// Initailize C
-		/*for (int i = 0; i < C->row; i++)
-		  for (int j = 0; j < C->column; j++)
-		  C->data_ptr[j + C->column * i] = 0;*/
-
-		// Allocate memory
-		cudaMalloc(&d_A, A->column*A->row*sizeof(float));
-		cudaMalloc(&d_B, B->column*B->row*sizeof(float));
-		cudaMalloc(&d_C, C->column*C->row*sizeof(float));
-
-		// Copy data to GPU
-		cudaMemcpy(d_A, A->data_ptr, A->column*A->row*sizeof(float), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_B, B->data_ptr, B->column*B->row*sizeof(float), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_C, C->data_ptr, C->column*C->row*sizeof(float), cudaMemcpyHostToDevice);
-
-		// Make sure we can break the input matrix into blocks
-		assert(A->column % threadDim == 0);
-		assert(A->row % threadDim == 0);
-		assert(B->column % threadDim == 0);
-		const dim3 threadsPerBlock(threadDim, threadDim);
-		const dim3 numBlocks(C->column / threadsPerBlock.x, C->row / threadsPerBlock.y);
-
-		// Invoke the cuda imp.
-
-		// struct timeval start, end;
-		// gettimeofday(&start, NULL);
-		//matrixMul_blockC<<< numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
-		matrixMultiplyShared<<< numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
-		cudaDeviceSynchronize();
-		// gettimeofday(&end, NULL);
-		// int us = interval_to_us(&start, &end);
-		// std::cout << "cuda kernel: " << us / 1000 << " ms" << std::endl;
-
-		// Get the result back
-		cudaMemcpy(C->data_ptr, d_C, C->column*C->row*sizeof(float), cudaMemcpyDeviceToHost);
-	}
-}
-
 
 
 /* AWQ Implementation */
@@ -318,21 +270,43 @@ torch::Tensor gemm_forward_cuda(
     torch::Tensor _zeros,
     int split_k_iters)
 {
+    // std::cout << "0000" << std::endl;
     int num_in_feats = _in_feats.size(0);
+    // std::cout << "num_in_feats = " << num_in_feats << std::endl;
     int num_in_channels = _in_feats.size(1);
+    // std::cout << "num_in_channels = " << num_in_channels << std::endl;
+    // std::cout << "a" << std::endl;
+    // if (first_run) {
+    //   _in_feats = _in_feats.to(torch::kCUDA);
+    //   // _kernel = _kernel.to(torch::kCUDA);
+    //   // _scaling_factors = _scaling_factors.to(torch::kCUDA);
+    //   // _zeros = _zeros.to(torch::kCUDA);
+    //   first_run = false;
+    // }
+    // _in_feats = _in_feats.to(torch::kCUDA);
+    // std::cout << "?" << std::endl;
     const at::cuda::OptionalCUDAGuard device_guard(device_of(_in_feats));
+    // std::cout << "b" << std::endl;
 
     auto options = torch::TensorOptions().dtype(_in_feats.dtype()).device(_in_feats.device());
+    // std::cout << "c" << std::endl;
     at::Tensor _out_feats = torch::empty({split_k_iters, num_in_feats, _kernel.size(1) * 8}, options);
+    // std::cout << "d" << std::endl;
     int num_out_feats = _out_feats.size(-2);
     int num_out_channels = _out_feats.size(-1);
 
+    // std::cout << "1" << std::endl;
     auto in_feats = reinterpret_cast<half*>(_in_feats.data_ptr<at::Half>());
+    // std::cout << "2" << std::endl;
     auto kernel = reinterpret_cast<int*>(_kernel.data_ptr<int>());
+    // std::cout << "3" << std::endl;
     auto out_feats = reinterpret_cast<half*>(_out_feats.data_ptr<at::Half>());
+    // std::cout << "4" << std::endl;
     auto scaling_factors = reinterpret_cast<half*>(_scaling_factors.data_ptr<at::Half>());
+    // std::cout << "5" << std::endl;
     auto zeros = reinterpret_cast<int*>(_zeros.data_ptr<int>());
 
+    // std::cout << "BBBBB" << std::endl;
 
     if (num_out_channels % 128 != 0)
         throw std::invalid_argument("OC is not multiple of cta_N = 128");
@@ -344,7 +318,97 @@ torch::Tensor gemm_forward_cuda(
     // threadIdx.x: 32
     // threadIdx.y: i_factors[2] * j_factors[2]
     dim3 threads_per_block(32, 2);
+    // std::cout << "CCCCC" << std::endl;
     gemm_forward_4bit_cuda_m16n128k32<<<num_blocks, threads_per_block>>>(
         split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
+
+    // std::cout << "DDDDD" << std::endl;
+
     return _out_feats.sum(0);
 }
+
+
+namespace matmul{
+  void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
+		const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+
+    // std::cout << "mat_mul_accelerator_int4_fast -- A->row: " << A->row << " A->column: " << A->column 
+              // << "; B->row: " << B->row << " B->column: " << B->column 
+              // << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
+    
+    torch::Tensor out_feats = gemm_forward_cuda(
+        torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
+        torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
+        torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
+        torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+        8);
+    
+    cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
+  };
+
+  void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
+		const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+
+    // std::cout << "mat_mul_accelerator_int4_fast_no_offset -- A->row: " << A->row << " A->column: " << A->column 
+              // << "; B->row: " << B->row << " B->column: " << B->column 
+              // << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
+    
+    // std::cout << "AAAAA" << std::endl;
+    auto options = torch::TensorOptions().dtype(torch::kFloat64).device(torch::kCUDA, 1);
+    torch::Tensor out_feats = gemm_forward_cuda(
+        torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
+        torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
+        torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
+        torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+        8);
+    
+    cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
+  };
+
+	void MatmulOperator::mat_mul_cuda(const struct matmul_params *params){
+		const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+		assert(A->column == B->row);
+		assert(C->column == B->column);
+		assert(C->row == A->row);
+
+		float *d_A;
+		float *d_B;
+		float *d_C;
+
+		// Initailize C
+		/*for (int i = 0; i < C->row; i++)
+		  for (int j = 0; j < C->column; j++)
+		  C->data_ptr[j + C->column * i] = 0;*/
+
+		// Allocate memory
+		cudaMalloc(&d_A, A->column*A->row*sizeof(float));
+		cudaMalloc(&d_B, B->column*B->row*sizeof(float));
+		cudaMalloc(&d_C, C->column*C->row*sizeof(float));
+
+		// Copy data to GPU
+		cudaMemcpy(d_A, A->data_ptr, A->column*A->row*sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(d_B, B->data_ptr, B->column*B->row*sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(d_C, C->data_ptr, C->column*C->row*sizeof(float), cudaMemcpyHostToDevice);
+
+		// Make sure we can break the input matrix into blocks
+		assert(A->column % threadDim == 0);
+		assert(A->row % threadDim == 0);
+		assert(B->column % threadDim == 0);
+		const dim3 threadsPerBlock(threadDim, threadDim);
+		const dim3 numBlocks(C->column / threadsPerBlock.x, C->row / threadsPerBlock.y);
+
+		// Invoke the cuda imp.
+
+		// struct timeval start, end;
+		// gettimeofday(&start, NULL);
+		//matrixMul_blockC<<< numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
+		matrixMultiplyShared<<<numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
+		cudaDeviceSynchronize();
+		// gettimeofday(&end, NULL);
+		// int us = interval_to_us(&start, &end);
+		// // std::cout << "cuda kernel: " << us / 1000 << " ms" << std::endl;
+
+		// Get the result back
+		cudaMemcpy(C->data_ptr, d_C, C->column*C->row*sizeof(float), cudaMemcpyDeviceToHost);
+	}
+}  // namespace matmul

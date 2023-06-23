@@ -12,22 +12,68 @@ LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/
 LIB =
+LDFLAGS =
+
+# Check if CUDA is available
+CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
+ifdef CUDA_AVAILABLE
+$(info CUDA is available!)
+	CUDA_HOME = /usr/local/cuda
+	CXX = $(CUDA_HOME)/bin/nvcc
+# Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
+	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-mavx2" -Xcompiler "-pthread" -arch=sm_86 -D_GLIBCXX_USE_CXX11_ABI=1
+	CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu) $(wildcard $(LIB_DIR)/lib/cuda/*.cc)
+	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cc)
+	INCLUDE_DIRS += -I./include/cuda
+	IS_CUDA = cuda
+else
+$(info CUDA is unavailable!)
+	LIB_SRC += $(wildcard src/non_cuda/*.cc)
+	INCLUDE_DIRS += -I./include/non_cuda
+	IS_CUDA = non_cuda
+endif
 
 ifeq ($(shell uname -m),x86_64)
-	# For Intel machines with AVX
-	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
-	LIB_SRC += $(LIB_AVX_SRC)
-	CXXFLAGS += -mavx2
+	ifdef CUDA_AVAILABLE
+# General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090) use LibTorch
+		PYTHON_DIR = ../../../anaconda3/envs/TinyLLMEngine_py38
+		TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
+		CUDNN_DIR = ../../../cudnn
+# Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
+		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)/include
+		LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_DIR)/lib -L$(CUDA_HOME)/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_DIR)/lib -Xlinker -rpath=$(CUDA_HOME)/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cuda
+	else
+# For Intel machines with AVX
+		LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
+		LIB_SRC += $(LIB_AVX_SRC)
+		CXXFLAGS += -mavx2
+	endif
+else ifeq ($(shell uname -m),aarch64)
+	ifdef CUDA_AVAILABLE
+# Edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano) use PyTorch for JetPack
+		PYTHON_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38
+		TORCH_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
+		CUDNN_DIR = /usr/include/aarch64-linux-gnu
+		CUDNN_LIB = /usr/lib/aarch64-linux-gnu
+# Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
+		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)
+		LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_LIB) -L$(CUDA_HOME)/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_LIB) -Xlinker -rpath=$(CUDA_HOME)/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cud
+	else
+# For ARM aarch64 platforms (such as Nvidia Jetson devices) with NEON
+		LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+		LIB_SRC += $(LIB_NEON_SRC)
+		CXXFLAGS += -march=native -framework Accelerate
+	endif
 else ifeq ($(shell uname -p),arm)
-	# For ARM A-series (such as Mac M1) with NEON
+# For ARM A-series (such as Mac M1) with NEON
 	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
 	LIB_SRC += $(LIB_NEON_SRC)
 	CXXFLAGS += -march=native -framework Accelerate
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	LIB += -L/opt/homebrew/opt/boost/lib
 else
-	# Use paltform independent implementation
-	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
+# Use paltform independent implementation
+	@echo "Device unsupported! Using the reference implementation will largely impacts the performance.
 	LIB_REF_SRC = $(wildcard $(LIB_DIR)/lib/ref/*.cc)
 	LIB_SRC += $(LIB_REF_SRC)
 endif
@@ -36,41 +82,17 @@ endif
 
 SRC_DIR = src
 SRC = $(wildcard src/*.cc)
-OPS =  $(wildcard src/ops/*.cc)
+OPS = $(wildcard src/ops/*.cc) $(wildcard src/ops/$(IS_CUDA)/*.cc) 
 SRC += $(OPS)
 SRC += $(LIB_SRC)
 
-# Check if CUDA is available
-CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
-CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu)
-CUDNN_DIR = /home/wweichen/cudnn
-PYTHON_DIR = /home/wweichen/anaconda3/envs/TinyLLMEngine_py38
-LDFLAGS =
-ifeq ($(shell uname -m),x86_64) # General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090)
-	TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
-else ifeq ($(shell uname -m),aarch64) # Edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano)
-	TORCH_DIR = /home/wweichen/archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
-else
-	@echo CUDA is unavailable!
-endif
-
-ifdef CUDA_AVAILABLE
-    $(info CUDA is available)
-	CXX = /usr/local/cuda/bin/nvcc
-# Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-mavx2" -Xcompiler "-pthread" -arch=sm_87 -D_GLIBCXX_USE_CXX11_ABI=1
-	SRC += $(CUDA_SRCS)
-# Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
- 	INCLUDE_DIRS += -I/usr/local/cuda/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)/include
- 	LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_DIR)/lib -L/usr/local/cuda/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_DIR)/lib -Xlinker -rpath=/usr/local/cuda/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cuda
-endif
 
 # Default target
 all: $(TARGET)
 
 # Linking
 test_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/$(IS_CUDA)/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int8OPTAttention:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTAttention tests/test_Int8OPTAttention.cc $(SRC) $(LIB) $(LDFLAGS)
@@ -130,7 +152,7 @@ profile_Int4LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 profile_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/$(IS_CUDA)/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
 
 # Clean up
 clean:
