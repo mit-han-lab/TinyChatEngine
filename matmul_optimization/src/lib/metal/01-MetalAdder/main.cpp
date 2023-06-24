@@ -12,7 +12,7 @@
 #include "QuartzCore/QuartzCore.hpp"
 
 #include "MetalAdder.hpp"
-#include "MetalMatmul.hpp"
+#include "MetalMatmulInt4.hpp"
 
 template <class T>
 void add_array_openmp(const T *a, const T *b, T *c, size_t length);

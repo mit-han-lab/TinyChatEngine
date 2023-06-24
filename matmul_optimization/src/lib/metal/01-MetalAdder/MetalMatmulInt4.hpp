@@ -35,4 +35,5 @@ public:
 private:
     void encodeCommand(MTL::ComputeCommandEncoder *computeEncoder);
     void generateRandomFloatData(MTL::Buffer *buffer, int length);
+    void generateRandomIn4Data(MTL::Buffer *buffer, int length);
 };

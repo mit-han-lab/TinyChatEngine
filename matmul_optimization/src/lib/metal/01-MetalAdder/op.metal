@@ -29,7 +29,6 @@ kernel void matmul(device const float* inA,
     // the for-loop is replaced with a collection of threads, each of which
     // calls this function.
 
-    const uint m = params.m;
     const uint n = params.n;
     const uint k = params.k;
 
@@ -55,7 +54,6 @@ kernel void matmulInt4(device const float* inA,
     // the for-loop is replaced with a collection of threads, each of which
     // calls this function.
 
-    const uint m = params.m;
     const uint n = params.n;
     const uint k = params.k;
 
@@ -64,9 +62,6 @@ kernel void matmulInt4(device const float* inA,
 
     float sum = 0;
     for (uint i = 0; i < k; i+=2){
-        float vA = inA[idy * k + i];
-        float vB = inB[idx * k + i];
-
         size_t weight_idx = (idx * k + i) / 2;
         uint8_t weight_packed = inB[weight_idx];
         uint8_t vl = weight_packed & 0x0F;

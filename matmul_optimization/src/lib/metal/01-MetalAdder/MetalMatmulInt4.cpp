@@ -16,7 +16,7 @@ MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MatMulParams param)
         return;
     }
 
-    auto str = NS::String::string("matmul", NS::ASCIIStringEncoding);
+    auto str = NS::String::string("matmulInt4", NS::ASCIIStringEncoding);
     MTL::Function *matmulFunction = defaultLibrary->newFunction(str);
     defaultLibrary->release();
 
@@ -120,7 +120,7 @@ void MetalMatmulInt4::generateRandomFloatData(MTL::Buffer *buffer, int length)
 
 void MetalMatmulInt4::generateRandomIn4Data(MTL::Buffer *buffer, int length)
 {
-    uint8_t *dataPtr = (float *)buffer->contents();
+    uint8_t *dataPtr = (uint8_t *)buffer->contents();
 
     for (unsigned long index = 0; index < length / 2; index++)
     {
@@ -133,7 +133,7 @@ void MetalMatmulInt4::generateRandomIn4Data(MTL::Buffer *buffer, int length)
 void MetalMatmulInt4::verifyResults()
 {
     float *a = (float *)_mBufferA->contents();
-    uint8_t *b = (float *)_mBufferB->contents();
+    uint8_t *b = (uint8_t *)_mBufferB->contents();
     float *result = (float *)_mBufferResult->contents();
 
     assert(_mParamsPtr->n % 2 == 0);
