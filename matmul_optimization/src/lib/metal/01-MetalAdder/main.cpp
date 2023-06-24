@@ -12,6 +12,7 @@
 #include "QuartzCore/QuartzCore.hpp"
 
 #include "MetalAdder.hpp"
+#include "MetalMatmul.hpp"
 
 template <class T>
 void add_array_openmp(const T *a, const T *b, T *c, size_t length);
@@ -26,13 +27,14 @@ auto unit_name = "microseconds";
 
 int main(int argc, char *argv[])
 {
+    MatMulParams params = {1, 4096, 32000};
     // Create GPU code / arrays --------------------------------------------------------
     MTL::Device *device = MTL::CreateSystemDefaultDevice();
-    MetalAdder *adder = new MetalAdder(device);
+    MetalMatmulInt4 *op = new MetalMatmulInt4(device, params);
 
     // Verify Metal code ---------------------------------------------------------------
-    adder->sendComputeCommand(); // This computes the array sum
-    adder->verifyResults();
+    op->sendComputeCommand(); // This computes the array sum
+    op->verifyResults();
 
     // Profile Metal code --------------------------------------------------------------
     int repeats = 100;
@@ -40,7 +42,7 @@ int main(int argc, char *argv[])
     for (size_t repeat = 0; repeat < repeats; repeat++)
     {
         auto start = std::chrono::high_resolution_clock::now();
-        adder->sendComputeCommand();
+        op->sendComputeCommand();
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<time_unit>(stop - start).count();
         durations[repeat] = duration;
@@ -55,57 +57,12 @@ int main(int argc, char *argv[])
     // Verify serial code --------------------------------------------------------------
     // Get buffers pointers for CPU code. Using MTL::ResourceStorageModeShared should
     // make them accessible to both GPU and CPU, perfect!
-    auto array_a = ((float *)adder->_mBufferA->contents());
-    auto array_b = ((float *)adder->_mBufferB->contents());
-    auto array_c = ((float *)adder->_mBufferResult->contents());
-
-    // Let's randomize the data again, making sure that the result buffer starts out
-    // incorrect
-    adder->prepareData();
-    add_array_serial(array_a, array_b, array_c, arrayLength);
-    adder->verifyResults();
-
-    // Profile serial code -------------------------------------------------------------
-    for (size_t repeat = 0; repeat < repeats; repeat++)
-    {
-        auto start = std::chrono::high_resolution_clock::now();
-        add_array_serial(array_a, array_b, array_c, arrayLength);
-        auto stop = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<time_unit>(stop - start).count();
-        durations[repeat] = duration;
-    }
-    statistics(durations, repeats, array_mean, array_std);
-    std::cout << "Serial code performance: " << std::endl;
-    std::cout << array_mean << unit_name << " \t +/- " << array_std << unit_name << std::endl
-              << std::endl;
-
-    size_t max_threads = 10;
-    for (size_t threads = 1; threads <= max_threads; threads++)
-    {
-
-        // Verify OpenMP code --------------------------------------------------------------
-        omp_set_num_threads(threads);
-        adder->prepareData();
-        add_array_openmp(array_a, array_b, array_c, arrayLength);
-        adder->verifyResults();
-
-        // Profile OpenMP code -------------------------------------------------------------
-        for (size_t repeat = 0; repeat < repeats; repeat++)
-        {
-            auto start = std::chrono::high_resolution_clock::now();
-            add_array_openmp(array_a, array_b, array_c, arrayLength);
-            auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<time_unit>(stop - start).count();
-            durations[repeat] = duration;
-        }
-        statistics(durations, repeats, array_mean, array_std);
-        std::cout << "OpenMP (" << omp_thread_count() << " threads) code performance: " << std::endl;
-        std::cout << array_mean << unit_name << " \t +/- " << array_std << unit_name << std::endl
-                  << std::endl;
-    }
+    auto array_a = ((float *)op->_mBufferA->contents());
+    auto array_b = ((float *)op->_mBufferB->contents());
+    auto array_c = ((float *)op->_mBufferResult->contents());
 
     delete[] durations;
-    delete adder;
+    delete op;
     device->release();
 }
 
