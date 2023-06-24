@@ -19,6 +19,7 @@ public:
     // Buffers to hold data.
     MTL::Buffer *_mBufferA;
     MTL::Buffer *_mBufferB;
+    MTL::Buffer *_mBufferScales;
     MTL::Buffer *_mBufferResult;
     MTL::Buffer *_mParams;
 

@@ -27,7 +27,7 @@ auto unit_name = "microseconds";
 
 int main(int argc, char *argv[])
 {
-    MatMulParams params = {1, 4096, 32000};
+    MatMulParams params = {1, 4096, 32000, 32};
     // Create GPU code / arrays --------------------------------------------------------
     MTL::Device *device = MTL::CreateSystemDefaultDevice();
     MetalMatmulInt4 *op = new MetalMatmulInt4(device, params);

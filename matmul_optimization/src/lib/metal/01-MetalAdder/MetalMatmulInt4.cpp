@@ -50,6 +50,7 @@ MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MatMulParams param)
     _mBufferA = _mDevice->newBuffer(param.m * param.k * sizeof(float), MTL::ResourceStorageModeShared);
     _mBufferB = _mDevice->newBuffer(((param.n * param.k) / 2) * sizeof(uint8_t), MTL::ResourceStorageModeShared);
     _mBufferResult = _mDevice->newBuffer(param.m * param.n * sizeof(float), MTL::ResourceStorageModeShared);
+    _mBufferScales = _mDevice->newBuffer(((param.n * param.k) / param.group_size) * sizeof(float), MTL::ResourceStorageModeShared);
     _mParams = _mDevice->newBuffer(sizeof(MatMulParams), MTL::ResourceStorageModeShared);
 
     _mParamsPtr = (MatMulParams*)_mParams->contents();
@@ -64,6 +65,7 @@ void MetalMatmulInt4::prepareData()
 {
     generateRandomFloatData(_mBufferA, _mParamsPtr->m * _mParamsPtr-> k);
     generateRandomIn4Data(_mBufferB, _mParamsPtr->n * _mParamsPtr-> k);
+    generateRandomFloatData(_mBufferScales, (_mParamsPtr->n * _mParamsPtr-> k) / _mParamsPtr->group_size);
 }
 
 typedef std::chrono::microseconds time_unit;
@@ -97,7 +99,8 @@ void MetalMatmulInt4::encodeCommand(MTL::ComputeCommandEncoder *computeEncoder)
     computeEncoder->setBuffer(_mBufferA, 0, 0);
     computeEncoder->setBuffer(_mBufferB, 0, 1);
     computeEncoder->setBuffer(_mBufferResult, 0, 2);
-    computeEncoder->setBuffer(_mParams, 0, 3);
+    computeEncoder->setBuffer(_mBufferScales, 0, 3);
+    computeEncoder->setBuffer(_mParams, 0, 4);
 
     MTL::Size gridSize = MTL::Size::Make(_mParamsPtr->n, _mParamsPtr->m, 1);
 
@@ -135,22 +138,26 @@ void MetalMatmulInt4::verifyResults()
     float *a = (float *)_mBufferA->contents();
     uint8_t *b = (uint8_t *)_mBufferB->contents();
     float *result = (float *)_mBufferResult->contents();
+    float *scales = (float *)_mBufferScales->contents();
 
     assert(_mParamsPtr->n % 2 == 0);
     for (size_t i = 0; i < _mParamsPtr->m; i++){
         for (size_t j = 0; j < _mParamsPtr->n; j++){
             float sum = 0;
-            for (size_t k = 0; k < _mParamsPtr->k; k+=2){
-                size_t weight_idx = (j * _mParamsPtr->k + k) / 2;
-                uint8_t weight_packed = b[weight_idx];
-                uint8_t vl = b[weight_idx] & 0x0F;
-                uint8_t vh = b[weight_idx] >> 4;
+            for (size_t k = 0; k < _mParamsPtr->k; k+=_mParamsPtr->group_size){
+                float scale = scales[(j * _mParamsPtr->k + k) / _mParamsPtr->group_size];
+                for (size_t kk = 0; kk < _mParamsPtr->group_size; kk+=2){
+                    size_t weight_idx = (j * _mParamsPtr->k + k + kk) / 2;
+                    uint8_t weight_packed = b[weight_idx];
+                    int8_t vl = (b[weight_idx] & 0x0F) - 8;
+                    int8_t vh = (b[weight_idx] >> 4) - 8;
 
-                sum += a[i * _mParamsPtr->k + k] * vl;
-                sum += a[i * _mParamsPtr->k + k + 1] * vh;
+                    sum += a[i * _mParamsPtr->k + k + kk] * vl * scale;
+                    sum += a[i * _mParamsPtr->k + k + kk + 1] * vh * scale;
+                }
             }
             float r = result[i * _mParamsPtr->n + j];
-            if (std::abs(sum - r) > 1e-2){
+            if (std::abs(sum - r) / std::abs(sum) > 1e-3){
                 std::cout << "Expect " << sum << " at " << i << "," << j << ", but getting " << r << std::endl;
                 throw("Result verification fails!");
             }
