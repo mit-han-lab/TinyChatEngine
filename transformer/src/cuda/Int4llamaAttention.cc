@@ -191,7 +191,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     Matrix3D<float> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
     // query_states = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads,
     // self.head_dim).transpose(1, 2)
-    std::cout << "q_proj" << std::endl;
+    // std::cout << "q_proj" << std::endl;
     this->q_proj.forward(input.hidden_states, query_states_unshape);
     Matrix3D<float> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(query_states_unshape, query_states, sqlen);
@@ -210,14 +210,14 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // key_states = self.k_proj(hidden_states).view(bsz, q_len, self.num_heads,
     // self.head_dim).transpose(1, 2)
     Matrix3D<float> key_states_unshape(key_states_unshape_arr, b, sqlen, embed_dim);
-    std::cout << "k_proj" << std::endl;
+    // std::cout << "k_proj" << std::endl;
     this->k_proj.forward(input.hidden_states, key_states_unshape);
     Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(key_states_unshape, key_states, sqlen);
     // value_states = self.v_proj(hidden_states).view(bsz, q_len, self.num_heads,
     // self.head_dim).transpose(1, 2)
     Matrix3D<float> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
-    std::cout <<  "v_proj" << std::endl;
+    // std::cout <<  "v_proj" << std::endl;
     this->v_proj.forward(input.hidden_states, value_states_unshape);
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(value_states_unshape, value_states, sqlen);
@@ -301,7 +301,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     this->unshape(attn_output, attn_output_transpose, sqlen);
 
     Matrix3D<float> attn_output_fp(attn_output_fp_arr, 1, sqlen, this->num_heads * this->head_dim);
-    std::cout << "o_proj" << std::endl;
+    // std::cout << "o_proj" << std::endl;
     this->o_proj.forward(attn_output_transpose, attn_output_fp);
     // printf("o_proj.forward, attn_output_fp.sum: %f\n", attn_output_fp.sum());
     // print_first_k_elelment("attn_output_fp", attn_output_fp.m_data, 20);

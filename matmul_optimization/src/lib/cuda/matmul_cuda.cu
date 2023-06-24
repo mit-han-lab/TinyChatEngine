@@ -285,7 +285,9 @@ torch::Tensor gemm_forward_cuda(
     // }
     // _in_feats = _in_feats.to(torch::kCUDA);
     // std::cout << "?" << std::endl;
-    const at::cuda::OptionalCUDAGuard device_guard(device_of(_in_feats));
+    
+    // const at::cuda::OptionalCUDAGuard device_guard(device_of(_in_feats));
+    
     // std::cout << "b" << std::endl;
 
     auto options = torch::TensorOptions().dtype(_in_feats.dtype()).device(_in_feats.device());
@@ -296,13 +298,14 @@ torch::Tensor gemm_forward_cuda(
     int num_out_channels = _out_feats.size(-1);
 
     // std::cout << "1" << std::endl;
-    auto in_feats = reinterpret_cast<half*>(_in_feats.data_ptr<at::Half>());
+    auto in_feats = reinterpret_cast<half*>(_in_feats.data_ptr<float>());
     // std::cout << "2" << std::endl;
+    // // std::cout << _kernel << std::endl;
     auto kernel = reinterpret_cast<int*>(_kernel.data_ptr<int>());
     // std::cout << "3" << std::endl;
-    auto out_feats = reinterpret_cast<half*>(_out_feats.data_ptr<at::Half>());
+    auto out_feats = reinterpret_cast<half*>(_out_feats.data_ptr<float>());
     // std::cout << "4" << std::endl;
-    auto scaling_factors = reinterpret_cast<half*>(_scaling_factors.data_ptr<at::Half>());
+    auto scaling_factors = reinterpret_cast<half*>(_scaling_factors.data_ptr<float>());
     // std::cout << "5" << std::endl;
     auto zeros = reinterpret_cast<int*>(_zeros.data_ptr<int>());
 
@@ -336,11 +339,25 @@ namespace matmul{
               // << "; B->row: " << B->row << " B->column: " << B->column 
               // << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
     
+    // torch::Tensor out_feats = gemm_forward_cuda(
+    //     torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
+    //     torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
+    //     torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
+    //     torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+    //     8);
+    
+    auto option_fp = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, 1);
+    auto option_int = torch::TensorOptions().dtype(torch::kInt32).device(torch::kCUDA, 1);
+    torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}, option_fp);
+    torch::Tensor _kernel = torch::from_blob(B->data_ptr, {B->row, B->column}, option_int);
+    torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / 128, B->column * 8}, option_fp);
+    torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, option_int);
+
     torch::Tensor out_feats = gemm_forward_cuda(
-        torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
-        torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
-        torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
-        torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+        _in_feats,
+        _kernel,
+        _scaling_factors,
+        _zeros,
         8);
     
     cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
@@ -354,12 +371,35 @@ namespace matmul{
               // << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
     
     // std::cout << "AAAAA" << std::endl;
-    auto options = torch::TensorOptions().dtype(torch::kFloat64).device(torch::kCUDA, 1);
+    
+    // torch::Tensor out_feats = gemm_forward_cuda(
+    //     torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
+    //     torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
+    //     torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
+    //     torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+    //     8);
+    
+    auto option_fp = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, 1);
+    auto option_int = torch::TensorOptions().dtype(torch::kInt32).device(torch::kCUDA, 1);
+    // std::cout << "jcuycu" << std::endl;
+    //torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}, option_fp);
+    torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}).to(torch::kCUDA);
+    // std::cout << "kchy" << std::endl;
+    // torch::Tensor _kernel = torch::from_blob(B->int32_data_ptr, {B->row, B->column}, option_int);
+    torch::Tensor _kernel = torch::from_blob(B->int32_data_ptr, {B->row, B->column}, torch::kInt).to(torch::kCUDA);
+    // std::cout << "qued" << std::endl;
+    // torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / 128, B->column * 8}, option_fp);
+    torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / 128, B->column * 8}).to(torch::kCUDA);
+    // std::cout << "-cud" << std::endl;
+    // torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, option_int);
+    torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt).to(torch::kCUDA);
+    // std::cout << "msadi" << std::endl;
+
     torch::Tensor out_feats = gemm_forward_cuda(
-        torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
-        torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
-        torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
-        torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+        _in_feats,
+        _kernel,
+        _scaling_factors,
+        _zeros,
         8);
     
     cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
