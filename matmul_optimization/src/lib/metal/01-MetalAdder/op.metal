@@ -63,7 +63,7 @@ kernel void matmulInt4(device const float* inA,
     const uint idy = id.y; // row index of the output
 
     float sum = 0;
-    for (uint i = 0; i < k; i+=group_size){
+    for (uint i = 0; i < k; i += group_size){
         float scale = scales[(idx * k + i) / group_size];
         for (uint j = 0; j < group_size; j+=2){
             size_t weight_idx = (idx * k + i + j) / 2;
@@ -79,5 +79,49 @@ kernel void matmulInt4(device const float* inA,
 }
 
 
+kernel void matmulInt4_SIMD_Q4Interleave(device const packed_float4* inA,
+                    device const packed_char4* inB, // column major
+                    device float* result,
+                    device const float* scales,
+                    constant MatMulParams& params,
+                    uint2 id [[thread_position_in_grid]])
+{
+    // the for-loop is replaced with a collection of threads, each of which
+    // calls this function.
 
+    const uint n = params.n;
+    const uint k = params.k;
+    const uint group_size = params.group_size;
 
+    const uint idx = id.x; // column index of the output
+    const uint idy = id.y; // row index of the output
+
+    packed_char4 lowMask = {0x0F, 0x0F, 0x0F, 0x0F};
+    packed_float4 sum4 = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    for (uint i = 0; i < k; i += group_size){
+        float scale = scales[(idx * k + i) / group_size];
+        packed_float4 scale4 = {scale, scale, scale, scale};
+        for (uint j = 0; j < group_size; j+=8){
+            // sequential: (a, b), (c, d), (e, f), (g, h): 32 bit = 4xuint8
+            // expected layout of inB: (a, e), (b, f), (c, g), (d, h)
+            // low; (a, 0), (b, 0), (c, 0), (d, 0)
+            // high: (e, 0), (f, 0), (g, 0), (h, 0)
+            size_t weight_idx = (idx * k + i + j) / 8;
+            size_t activation_idx = (idy * k + i + j) / 8;
+            packed_char4 packed_8 = inB[weight_idx];
+            packed_char4 packed_low = packed_8 & lowMask;
+            packed_char4 packed_high = (packed_8 >> 4) & lowMask;
+
+            packed_float4 inAlow = inA[activation_idx];
+            packed_float4 inAhigh = inA[activation_idx+1];
+            packed_float4 inBlow = packed_float4(packed_low) * scale4;
+            packed_float4 inBhigh = packed_float4(packed_high) * scale4;
+
+            sum4 += inAlow * inBlow;
+            sum4 += inAhigh * inBhigh;
+        }
+    }
+    float sum = sum4[0] + sum4[1] + sum4[2] + sum4[3];
+    result[idy * n + idx] = sum;
+}
