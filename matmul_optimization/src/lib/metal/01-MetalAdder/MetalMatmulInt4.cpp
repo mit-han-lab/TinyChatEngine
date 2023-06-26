@@ -110,7 +110,6 @@ void MetalMatmulInt4::generateRandomFloatData(MTL::Buffer *buffer, int length) {
 
     for (unsigned long index = 0; index < length; index++) {
         dataPtr[index] = (float)rand() / (float)(RAND_MAX);
-        // dataPtr[index] = 1;
     }
 }
 
@@ -120,8 +119,6 @@ void MetalMatmulInt4::generateRandomIn4Data(MTL::Buffer *buffer, int length) {
     for (unsigned long index = 0; index < length / 2; index++) {
         int8_t vl = (int8_t)(((float)rand() / (float)(RAND_MAX)) * 15.0f) - 8;
         int8_t vh = (int8_t)(((float)rand() / (float)(RAND_MAX)) * 15.0f) - 8;
-        // int8_t vl = 1;
-        // int8_t vh = 1;
         dataPtr[index] = vl | (vh << 4);
     }
 }

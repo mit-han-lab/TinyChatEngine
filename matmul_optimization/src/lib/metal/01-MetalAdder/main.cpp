@@ -1,18 +1,19 @@
 // Lars Gebraad, 20th of April, 2022
 //
 
-#include <iostream>
 #include <omp.h>
+
+#include <iostream>
 
 #define NS_PRIVATE_IMPLEMENTATION
 #define CA_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
 #include "Foundation/Foundation.hpp"
 #include "Metal/Metal.hpp"
-#include "QuartzCore/QuartzCore.hpp"
-
 #include "MetalAdder.hpp"
+#include "MetalMatmul.hpp"
 #include "MetalMatmulInt4.hpp"
+#include "QuartzCore/QuartzCore.hpp"
 
 template <class T>
 void add_array_openmp(const T *a, const T *b, T *c, size_t length);
@@ -25,22 +26,32 @@ void statistics(T *array, size_t length, T &array_mean, T &array_std);
 typedef std::chrono::microseconds time_unit;
 auto unit_name = "microseconds";
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     MatMulParams params = {1, 4096, 32000, 32};
     // Create GPU code / arrays --------------------------------------------------------
     MTL::Device *device = MTL::CreateSystemDefaultDevice();
     MetalMatmulInt4 *op = new MetalMatmulInt4(device, params);
+    MetalMatmulInt4 *op2 = new MetalMatmulInt4(device, params);
+    MetalMatmulInt4 *op3 = new MetalMatmulInt4(device, params);
 
     // Verify Metal code ---------------------------------------------------------------
-    op->sendComputeCommand(); // This computes the array sum
+    op->sendComputeCommand();  // This computes the array sum
     op->verifyResults();
 
+    // warm up
+    int warm_up = 10;
+    for (size_t repeat = 0; repeat < warm_up; repeat++) {
+        op->sendComputeCommand();
+    }
+
+    // mimic interleaving with other ops
+    op2->sendComputeCommand();
+    op3->sendComputeCommand();
+
     // Profile Metal code --------------------------------------------------------------
-    int repeats = 100;
+    int repeats = 1;
     auto durations = new float[repeats];
-    for (size_t repeat = 0; repeat < repeats; repeat++)
-    {
+    for (size_t repeat = 0; repeat < repeats; repeat++) {
         auto start = std::chrono::high_resolution_clock::now();
         op->sendComputeCommand();
         auto stop = std::chrono::high_resolution_clock::now();
@@ -51,8 +62,7 @@ int main(int argc, char *argv[])
     float array_std;
     statistics(durations, repeats, array_mean, array_std);
     std::cout << "Metal (GPU) code performance: " << std::endl;
-    std::cout << array_mean << unit_name << " \t +/- " << array_std << unit_name << std::endl
-              << std::endl;
+    std::cout << array_mean << unit_name << " \t +/- " << array_std << unit_name << std::endl << std::endl;
 
     // Verify serial code --------------------------------------------------------------
     // Get buffers pointers for CPU code. Using MTL::ResourceStorageModeShared should
@@ -67,51 +77,41 @@ int main(int argc, char *argv[])
 }
 
 template <class T>
-void add_array_openmp(const T *a, const T *b, T *c, size_t length)
-{
+void add_array_openmp(const T *a, const T *b, T *c, size_t length) {
     // Compute array sum a+b=c parallely using OpenMP, template function
 #pragma omp parallel for
-    for (
-        size_t i = 0; i < length; i++)
-    {
+    for (size_t i = 0; i < length; i++) {
         c[i] = a[i] + b[i];
     }
 }
 
 template <class T>
-void add_array_serial(const T *a, const T *b, T *c, size_t length)
-{
+void add_array_serial(const T *a, const T *b, T *c, size_t length) {
     // Compute array sum a+b=c serially, template function
-    for (size_t i = 0; i < length; i++)
-    {
+    for (size_t i = 0; i < length; i++) {
         c[i] = a[i] + b[i];
     }
 }
 
-int omp_thread_count()
-{
+int omp_thread_count() {
     int n = 0;
-#pragma omp parallel reduction(+ \
-                               : n)
+#pragma omp parallel reduction(+ : n)
     n += 1;
     return n;
 }
 
 template <class T>
-void statistics(T *array, size_t length, T &array_mean, T &array_std)
-{
+void statistics(T *array, size_t length, T &array_mean, T &array_std) {
     // Compute mean and standard deviation serially, template function
 
     array_mean = 0;
-    for (size_t repeat = 0; repeat < length; repeat++)
-    {
+    for (size_t repeat = 0; repeat < length; repeat++) {
         array_mean += array[repeat];
     }
     array_mean /= length;
 
     array_std = 0;
-    for (size_t repeat = 0; repeat < length; repeat++)
-    {
+    for (size_t repeat = 0; repeat < length; repeat++) {
         array_std += pow(array_mean - array[repeat], 2.0);
     }
     array_std /= length;

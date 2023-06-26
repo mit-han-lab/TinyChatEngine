@@ -108,7 +108,7 @@ kernel void matmulInt4_SIMD_Q4Interleave(device const packed_float4* inA,
             // low; (a, 0), (b, 0), (c, 0), (d, 0)
             // high: (e, 0), (f, 0), (g, 0), (h, 0)
             size_t weight_idx = (idx * k + i + j) / 8;
-            size_t activation_idx = (idy * k + i + j) / 8;
+            size_t activation_idx = (idy * k + i + j) / 4;
             packed_char4 packed_8 = inB[weight_idx];
             packed_char4 packed_low = packed_8 & lowMask;
             packed_char4 packed_high = (packed_8 >> 4) & lowMask;

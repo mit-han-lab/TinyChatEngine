@@ -1,7 +1,6 @@
-    
+#pragma once
 
-typedef struct
-{
+typedef struct {
     unsigned int m;
     unsigned int n;
     unsigned int k;
