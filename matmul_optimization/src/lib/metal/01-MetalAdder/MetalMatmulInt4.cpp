@@ -15,7 +15,7 @@ MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MatMulParams param) {
         return;
     }
 
-    auto str = NS::String::string("matmulInt4_SIMD_Q4Interleave", NS::ASCIIStringEncoding);
+    auto str = NS::String::string("matmulInt4_SIMD_Q4Interleave_unroll32", NS::ASCIIStringEncoding);
     MTL::Function *matmulFunction = defaultLibrary->newFunction(str);
     defaultLibrary->release();
 
@@ -99,7 +99,7 @@ void MetalMatmulInt4::encodeCommand(MTL::ComputeCommandEncoder *computeEncoder) 
     MTL::Size gridSize = MTL::Size::Make(_mParamsPtr->n, _mParamsPtr->m, 1);
 
     // Calculate a threadgroup size.
-    MTL::Size threadgroupSize = MTL::Size::Make(32, 1, 1);
+    MTL::Size threadgroupSize = MTL::Size::Make(16, 1, 1);
 
     // Encode the compute command.
     computeEncoder->dispatchThreads(gridSize, threadgroupSize);

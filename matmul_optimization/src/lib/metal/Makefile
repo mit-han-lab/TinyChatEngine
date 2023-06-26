@@ -18,7 +18,7 @@ benchmark: build_metallib
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o 01-MetalAdder/benchmark.x $(SRC) $(LIB) $(LDFLAGS)
 
 build_air:
-	xcrun -sdk macosx metal -c 01-MetalAdder/op.metal -o 01-MetalAdder/library.air
+	xcrun -sdk macosx metal -ffast-math -fno-fast-math -c 01-MetalAdder/op.metal -o 01-MetalAdder/library.air
 
 build_metallib: build_air
 	xcrun -sdk macosx metallib 01-MetalAdder/library.air -o 01-MetalAdder/default.metallib
