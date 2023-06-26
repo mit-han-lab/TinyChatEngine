@@ -4,10 +4,8 @@
 #include "Metal/Metal.hpp"
 #include "opParams.h"
 
-
-class MetalMatmul
-{
-public:
+class MetalMatmulInt4 {
+   public:
     MTL::Device *_mDevice;
 
     // The compute pipeline generated from the compute kernel in the .metal shader file.
@@ -19,20 +17,22 @@ public:
     // Buffers to hold data.
     MTL::Buffer *_mBufferA;
     MTL::Buffer *_mBufferB;
+    MTL::Buffer *_mBufferScales;
     MTL::Buffer *_mBufferResult;
     MTL::Buffer *_mParams;
 
     // Matmul params
     MatMulParams *_mParamsPtr;
 
-    MetalMatmul(MTL::Device *device, MatMulParams param);
-    ~MetalMatmul();
+    MetalMatmulInt4(MTL::Device *device, MatMulParams param);
+    ~MetalMatmulInt4();
 
     void prepareData();
     void sendComputeCommand();
     void verifyResults();
 
-private:
+   private:
     void encodeCommand(MTL::ComputeCommandEncoder *computeEncoder);
     void generateRandomFloatData(MTL::Buffer *buffer, int length);
+    void generateRandomIn4Data(MTL::Buffer *buffer, int length);
 };

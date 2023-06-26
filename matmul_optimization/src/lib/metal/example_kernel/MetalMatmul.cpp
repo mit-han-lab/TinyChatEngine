@@ -1,8 +1,8 @@
 #include "MetalMatmul.hpp"
+
 #include <iostream>
 
-MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param)
-{
+MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param) {
     _mDevice = device;
 
     NS::Error *error = nullptr;
@@ -10,8 +10,7 @@ MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param)
     // Load the shader files with a .metal file extension in the project
     MTL::Library *defaultLibrary = _mDevice->newDefaultLibrary();
 
-    if (defaultLibrary == nullptr)
-    {
+    if (defaultLibrary == nullptr) {
         std::cout << "Failed to find the default library." << std::endl;
         return;
     }
@@ -20,8 +19,7 @@ MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param)
     MTL::Function *matmulFunction = defaultLibrary->newFunction(str);
     defaultLibrary->release();
 
-    if (matmulFunction == nullptr)
-    {
+    if (matmulFunction == nullptr) {
         std::cout << "Failed to find the function." << std::endl;
         return;
     }
@@ -30,8 +28,7 @@ MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param)
     _mMatmulFunctionPSO = _mDevice->newComputePipelineState(matmulFunction, &error);
     matmulFunction->release();
 
-    if (_mMatmulFunctionPSO == nullptr)
-    {
+    if (_mMatmulFunctionPSO == nullptr) {
         //  If the Metal API validation is enabled, you can find out more information about what
         //  went wrong.  (Metal API validation is enabled by default when a debug build is run
         //  from Xcode)
@@ -40,8 +37,7 @@ MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param)
     }
 
     _mCommandQueue = _mDevice->newCommandQueue();
-    if (_mCommandQueue == nullptr)
-    {
+    if (_mCommandQueue == nullptr) {
         std::cout << "Failed to find the command queue." << std::endl;
         return;
     }
@@ -52,7 +48,7 @@ MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param)
     _mBufferResult = _mDevice->newBuffer(param.m * param.n * sizeof(float), MTL::ResourceStorageModeShared);
     _mParams = _mDevice->newBuffer(sizeof(MatMulParams), MTL::ResourceStorageModeShared);
 
-    _mParamsPtr = (MatMulParams*)_mParams->contents();
+    _mParamsPtr = (MatMulParams *)_mParams->contents();
     *_mParamsPtr = param;
 
     printf("%d, %d, %d\n", _mParamsPtr->m, _mParamsPtr->n, _mParamsPtr->k);
@@ -60,15 +56,13 @@ MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param)
     prepareData();
 }
 
-void MetalMatmul::prepareData()
-{
-    generateRandomFloatData(_mBufferA, _mParamsPtr->m * _mParamsPtr-> k);
-    generateRandomFloatData(_mBufferB, _mParamsPtr->n * _mParamsPtr-> k);
+void MetalMatmul::prepareData() {
+    generateRandomFloatData(_mBufferA, _mParamsPtr->m * _mParamsPtr->k);
+    generateRandomFloatData(_mBufferB, _mParamsPtr->n * _mParamsPtr->k);
 }
 
 typedef std::chrono::microseconds time_unit;
-void MetalMatmul::sendComputeCommand()
-{
+void MetalMatmul::sendComputeCommand() {
     // Create a command buffer to hold commands.
     MTL::CommandBuffer *commandBuffer = _mCommandQueue->commandBuffer();
     assert(commandBuffer != nullptr);
@@ -90,8 +84,7 @@ void MetalMatmul::sendComputeCommand()
     commandBuffer->waitUntilCompleted();
 }
 
-void MetalMatmul::encodeCommand(MTL::ComputeCommandEncoder *computeEncoder)
-{
+void MetalMatmul::encodeCommand(MTL::ComputeCommandEncoder *computeEncoder) {
     // Encode the pipeline state object and its parameters.
     computeEncoder->setComputePipelineState(_mMatmulFunctionPSO);
     computeEncoder->setBuffer(_mBufferA, 0, 0);
@@ -108,30 +101,27 @@ void MetalMatmul::encodeCommand(MTL::ComputeCommandEncoder *computeEncoder)
     computeEncoder->dispatchThreads(gridSize, threadgroupSize);
 }
 
-void MetalMatmul::generateRandomFloatData(MTL::Buffer *buffer, int length)
-{
+void MetalMatmul::generateRandomFloatData(MTL::Buffer *buffer, int length) {
     float *dataPtr = (float *)buffer->contents();
 
-    for (unsigned long index = 0; index < length; index++)
-    {
+    for (unsigned long index = 0; index < length; index++) {
         dataPtr[index] = (float)rand() / (float)(RAND_MAX);
     }
 }
 
-void MetalMatmul::verifyResults()
-{
+void MetalMatmul::verifyResults() {
     float *a = (float *)_mBufferA->contents();
     float *b = (float *)_mBufferB->contents();
     float *result = (float *)_mBufferResult->contents();
 
-    for (size_t i = 0; i < _mParamsPtr->m; i++){
-        for (size_t j = 0; j < _mParamsPtr->n; j++){
+    for (size_t i = 0; i < _mParamsPtr->m; i++) {
+        for (size_t j = 0; j < _mParamsPtr->n; j++) {
             float sum = 0;
-            for (size_t k = 0; k < _mParamsPtr->k; k++){
+            for (size_t k = 0; k < _mParamsPtr->k; k++) {
                 sum += a[i * _mParamsPtr->k + k] * b[j * _mParamsPtr->k + k];
             }
             float r = result[i * _mParamsPtr->n + j];
-            if (std::abs(sum - r) > 1e-2){
+            if (std::abs(sum - r) > 1e-2) {
                 std::cout << "Expect " << sum << " at " << i << "," << j << ", but getting " << r << std::endl;
                 throw("Result verification fails!");
             }
@@ -139,8 +129,7 @@ void MetalMatmul::verifyResults()
     }
 }
 
-MetalMatmul::~MetalMatmul()
-{
+MetalMatmul::~MetalMatmul() {
     _mBufferA->release();
     _mBufferB->release();
     _mBufferResult->release();

@@ -5,7 +5,7 @@ CXXFLAGS = -std=c++17 -stdlib=libc++ -O3
 TEST_TARGET = benchmark
 TARGET = $(TEST_TARGET)
 
-SRC = 01-MetalAdder/main.cpp 01-MetalAdder/MetalMatmul.cpp 01-MetalAdder/MetalMatmulInt4.cpp
+SRC = example_kernel/main.cpp example_kernel/MetalMatmul.cpp example_kernel/MetalMatmulInt4.cpp
 INCLUDE_DIRS = -I./metal-cpp -fno-objc-arc
 LIB = -L/opt/homebrew/opt/libomp/lib -fopenmp -framework Metal -framework Foundation -framework MetalKit
 
@@ -15,14 +15,14 @@ all: $(TARGET)
 
 # Linking
 benchmark: build_metallib
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o 01-MetalAdder/benchmark.x $(SRC) $(LIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o example_kernel/benchmark.x $(SRC) $(LIB) $(LDFLAGS)
 
 build_air:
-	xcrun -sdk macosx metal -ffast-math -fno-fast-math -c 01-MetalAdder/op.metal -o 01-MetalAdder/library.air
+	xcrun -sdk macosx metal -ffast-math -fno-fast-math -c example_kernel/op.metal -o example_kernel/library.air
 
 build_metallib: build_air
-	xcrun -sdk macosx metallib 01-MetalAdder/library.air -o 01-MetalAdder/default.metallib
+	xcrun -sdk macosx metallib example_kernel/library.air -o example_kernel/default.metallib
 
 # Clean up
 clean:
-	rm -f 01-MetalAdder/benchmark.x 01-MetalAdder/library.air 01-MetalAdder/library.metallib 01-MetalAdder/default.metallib
+	rm -f example_kernel/benchmark.x example_kernel/library.air example_kernel/library.metallib example_kernel/default.metallib
