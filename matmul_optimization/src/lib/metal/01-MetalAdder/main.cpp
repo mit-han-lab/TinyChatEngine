@@ -10,7 +10,6 @@
 #define MTL_PRIVATE_IMPLEMENTATION
 #include "Foundation/Foundation.hpp"
 #include "Metal/Metal.hpp"
-#include "MetalAdder.hpp"
 #include "MetalMatmul.hpp"
 #include "MetalMatmulInt4.hpp"
 #include "QuartzCore/QuartzCore.hpp"

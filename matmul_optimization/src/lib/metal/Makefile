@@ -5,7 +5,7 @@ CXXFLAGS = -std=c++17 -stdlib=libc++ -O3
 TEST_TARGET = benchmark
 TARGET = $(TEST_TARGET)
 
-SRC = 01-MetalAdder/main.cpp 01-MetalAdder/MetalAdder.cpp 01-MetalAdder/MetalMatmul.cpp 01-MetalAdder/MetalMatmulInt4.cpp
+SRC = 01-MetalAdder/main.cpp 01-MetalAdder/MetalMatmul.cpp 01-MetalAdder/MetalMatmulInt4.cpp
 INCLUDE_DIRS = -I./metal-cpp -fno-objc-arc
 LIB = -L/opt/homebrew/opt/libomp/lib -fopenmp -framework Metal -framework Foundation -framework MetalKit
 
