@@ -1,7 +1,7 @@
 #include "common.h"
 #include "utils.h"
 
-#define QK 128
+#define QK 32
 
 class Linear_FP {
    public:

@@ -76,4 +76,3 @@ __device__ uint4 dequantize_s4_to_fp16x2(uint32_t const& source)
 
     return result;
 }
-

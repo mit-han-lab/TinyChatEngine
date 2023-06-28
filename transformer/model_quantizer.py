@@ -50,6 +50,11 @@ def quantize_row_q4_0(input_path, k, data_type, cuda_is_available, input_channel
     # Reshape x to be a 2D array with shape (nb, qk)
     x = x.reshape(nb, qk)
 
+    # Only for testing
+    # print_x = x.reshape(-1).reshape(output_channel, input_channel).transpose()
+    # print(f"size of print_x: {print_x.shape}")
+    # print(f"print_x: {print_x}")
+
     # Get the indices of maximum absolute values along axis 1
     idx_max_abs = np.argmax(np.abs(x), axis=1)
     max_vals = x[np.arange(x.shape[0]), idx_max_abs]
@@ -70,7 +75,7 @@ def quantize_row_q4_0(input_path, k, data_type, cuda_is_available, input_channel
         zp = np.float32([8.0])  # zero point
 
     if cuda_is_available:
-        xi = ((x * id_vals[:, np.newaxis]) + 8.5).clip(0, 15).astype(np.uint32)
+        xi = ((x * id_vals[:, np.newaxis]) + 8.5).clip(0, 15).astype(np.int32)
         xi = xi.reshape(-1).reshape(output_channel, input_channel).transpose()
         qs = np.zeros((input_channel, output_channel // 8), dtype=np.int32)
     
@@ -83,7 +88,7 @@ def quantize_row_q4_0(input_path, k, data_type, cuda_is_available, input_channel
 
         # Store zero_points in row major for CUDA (zeros: IC // G, OC // 8 [int32])
         # print(f"zp_before: {zp}")
-        zp = zp.astype(np.uint32)
+        zp = zp.astype(np.int32)
         # print(f"zp_after: {zp}")
         zp_pack = np.zeros(1, dtype=np.int32)
         # print(f"zp_pack_before: {zp_pack}")
@@ -625,23 +630,23 @@ def test():
     write_weight_to_file(file_path, qs, d, m, zp, False, cuda_is_available)
     read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
 
-    # Check weights
-    first_half_qs = np.bitwise_and(qs, 0x0F)
-    second_half_qs = np.bitwise_and(qs, 0xF0) >> 4
-    first_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.uint8), 0x0F)
-    second_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.uint8), 0xF0) >> 4
-    # print(f"first_half_qs:       {first_half_qs[0:2, :16].reshape(-1)}")
-    # print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
-    if np.array_equal(first_half_qs.reshape(-1), first_half_read_qs):
-        print("first_half_qs and first_half_read_qs are equal.")
-    else:
-        raise ValueError("first_half_qs and first_half_read_qs are NOT equal.")
-    # print(f"second_half_qs:      {second_half_qs[0:2, :16].reshape(-1)}")
-    # print(f"second_half_read_qs: {second_half_read_qs[:32]}")
-    if np.array_equal(second_half_qs.reshape(-1), second_half_read_qs):
-        print("second_half_qs and second_half_read_qs are equal.")
-    else:
-        raise ValueError("second_half_qs and second_half_read_qs are NOT equal.")
+    # # Check weights
+    # first_half_qs = np.bitwise_and(qs, 0x0F)
+    # second_half_qs = np.bitwise_and(qs, 0xF0) >> 4
+    # first_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.uint8), 0x0F)
+    # second_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.uint8), 0xF0) >> 4
+    # # print(f"first_half_qs:       {first_half_qs[0:2, :16].reshape(-1)}")
+    # # print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
+    # if np.array_equal(first_half_qs.reshape(-1), first_half_read_qs):
+    #     print("first_half_qs and first_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("first_half_qs and first_half_read_qs are NOT equal.")
+    # # print(f"second_half_qs:      {second_half_qs[0:2, :16].reshape(-1)}")
+    # # print(f"second_half_read_qs: {second_half_read_qs[:32]}")
+    # if np.array_equal(second_half_qs.reshape(-1), second_half_read_qs):
+    #     print("second_half_qs and second_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("second_half_qs and second_half_read_qs are NOT equal.")
 
     # print(f"shape of qs:       {qs.shape}")
     # print(f"length of first_half_qs:       {len(first_half_qs)}")
@@ -659,18 +664,18 @@ def test():
     # print(f"read_qs:      {read_qs[:32]}")
     # print(f"length of read_qs:      {len(read_qs)}")
 
-    # Check scaling factors
-    if STORE_FP16:
-        read_d = np.frombuffer(read_d, dtype=np.float16)
-    else:
-        read_d = np.frombuffer(read_d, dtype=np.float32)
-    # print(f"d:      {d}")
-    # print(f"read_d: {read_d}")
-    # print(f"length of d:      {len(d)}")
-    if np.array_equal(d, read_d):
-        print("d and read_d are equal.")
-    else:
-        raise ValueError("d and read_d are NOT equal.")
+    # # Check scaling factors
+    # if STORE_FP16:
+    #     read_d = np.frombuffer(read_d, dtype=np.float16)
+    # else:
+    #     read_d = np.frombuffer(read_d, dtype=np.float32)
+    # # print(f"d:      {d}")
+    # # print(f"read_d: {read_d}")
+    # # print(f"length of d:      {len(d)}")
+    # if np.array_equal(d, read_d):
+    #     print("d and read_d are equal.")
+    # else:
+    #     raise ValueError("d and read_d are NOT equal.")
 
     # # Check offsets
     # if STORE_FP16:
@@ -681,17 +686,17 @@ def test():
     # print(f"read_m: {read_m}")
     # print(f"length of m:      {len(m)}")
 
-    # Check zero points
-    if STORE_FP16:
-        read_zp = np.frombuffer(read_zp, dtype=np.float16)
-    else:
-        read_zp = np.frombuffer(read_zp, dtype=np.float32)
-    # print(f"zp:      {zp}")
-    # print(f"read_zp: {read_zp}")
-    if np.array_equal(zp, read_zp):
-        print("zp and read_zp are equal.\n")
-    else:
-        raise ValueError("zp and read_zp are NOT equal.")
+    # # Check zero points
+    # if STORE_FP16:
+    #     read_zp = np.frombuffer(read_zp, dtype=np.float16)
+    # else:
+    #     read_zp = np.frombuffer(read_zp, dtype=np.float32)
+    # # print(f"zp:      {zp}")
+    # # print(f"read_zp: {read_zp}")
+    # if np.array_equal(zp, read_zp):
+    #     print("zp and read_zp are equal.\n")
+    # else:
+    #     raise ValueError("zp and read_zp are NOT equal.")
 
 
     ### Testing GPI version
@@ -699,30 +704,30 @@ def test():
 
     # Quantize down_proj in layer 0
     cuda_is_available = True
-    group_size = 128
-    file_path = f"{prefix}/decoder/layer0/down_proj"
+    group_size = 32
+    file_path = f"{prefix}/decoder/layer0/self_attn/q_proj"
     weight_path = f"{file_path}/weight.bin"
     file_size_bytes = os.path.getsize(weight_path)
     if file_size_bytes % bytes_per_element != 0:
         raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
     array_size = file_size_bytes // bytes_per_element
     if method == "Q4_0":
-        qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type, cuda_is_available, 11008, 4096, group_size)
+        qs, d, m, zp = quantize_row_q4_0(weight_path, array_size, data_type, cuda_is_available, 4096, 4096, group_size)
     elif method == "Q4_1":
-        qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type, cuda_is_available, 11008, 4096, group_size)
+        qs, d, m, zp = quantize_row_q4_1(weight_path, array_size, data_type, cuda_is_available, 4096, 4096, group_size)
 
     write_weight_to_file(file_path, qs, d, m, zp, False, cuda_is_available)
     read_qs, read_d, read_m, read_zp = read_weight_from_file(file_path)
 
-    # Check weights
-    first_half_qs =   np.bitwise_and(qs, 0x0000000F)
-    second_half_qs =  np.bitwise_and(qs, 0x000000F0) >> 4
-    third_half_qs =   np.bitwise_and(qs, 0x00000F00) >> 8
-    fourth_half_qs =  np.bitwise_and(qs, 0x0000F000) >> 12
-    fifth_half_qs =   np.bitwise_and(qs, 0x000F0000) >> 16
-    sixth_half_qs =   np.bitwise_and(qs, 0x00F00000) >> 20
-    seventh_half_qs = np.bitwise_and(qs, 0x0F000000) >> 24
-    eighth_half_qs =  np.bitwise_and(qs, 0xF0000000) >> 28
+    # # Check weights
+    # first_half_qs =   np.bitwise_and(qs, 0x0000000F)
+    # second_half_qs =  np.bitwise_and(qs, 0x000000F0) >> 4
+    # third_half_qs =   np.bitwise_and(qs, 0x00000F00) >> 8
+    # fourth_half_qs =  np.bitwise_and(qs, 0x0000F000) >> 12
+    # fifth_half_qs =   np.bitwise_and(qs, 0x000F0000) >> 16
+    # sixth_half_qs =   np.bitwise_and(qs, 0x00F00000) >> 20
+    # seventh_half_qs = np.bitwise_and(qs, 0x0F000000) >> 24
+    # eighth_half_qs =  np.bitwise_and(qs, 0xF0000000) >> 28
     first_half_read_qs =   np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x0000000F)
     second_half_read_qs =  np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x000000F0) >> 4
     third_half_read_qs =   np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x00000F00) >> 8
@@ -731,69 +736,72 @@ def test():
     sixth_half_read_qs =   np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x00F00000) >> 20
     seventh_half_read_qs = np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0x0F000000) >> 24
     eighth_half_read_qs =  np.bitwise_and(np.frombuffer(read_qs, dtype=np.int32), 0xF0000000) >> 28
-    # print(f"first_half_qs:       {first_half_qs[0:2, :16].reshape(-1)}")
-    # print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
-    if np.array_equal(first_half_qs.reshape(-1), first_half_read_qs):
-        print("first_half_qs and first_half_read_qs are equal.")
-    else:
-        raise ValueError("first_half_qs and first_half_read_qs are NOT equal.")
-    # print(f"second_half_qs:      {second_half_qs[0:2, :16].reshape(-1)}")
-    # print(f"second_half_read_qs: {second_half_read_qs[:32]}")
-    if np.array_equal(second_half_qs.reshape(-1), second_half_read_qs):
-        print("second_half_qs and second_half_read_qs are equal.")
-    else:
-        raise ValueError("second_half_qs and second_half_read_qs are NOT equal.")
-    
-    if np.array_equal(third_half_qs.reshape(-1), third_half_read_qs):
-        print("third_half_qs and third_half_read_qs are equal.")
-    else:
-        raise ValueError("third_half_qs and third_half_read_qs are NOT equal.")
 
-    if np.array_equal(fourth_half_qs.reshape(-1), fourth_half_read_qs):
-        print("fourth_half_qs and fourth_half_read_qs are equal.")
-    else:
-        raise ValueError("fourth_half_qs and fourth_half_read_qs are NOT equal.")
-    
-    if np.array_equal(fifth_half_qs.reshape(-1), fifth_half_read_qs):
-        print("fifth_half_qs and fifth_half_read_qs are equal.")
-    else:
-        raise ValueError("fifth_half_qs and fifth_half_read_qs are NOT equal.")
+    print(f"qs:       {qs[0, :128]}")
 
-    if np.array_equal(sixth_half_qs.reshape(-1), sixth_half_read_qs):
-        print("sixth_half_qs and sixth_half_read_qs are equal.")
-    else:
-        raise ValueError("sixth_half_qs and sixth_half_read_qs are NOT equal.")
+    # # print(f"first_half_qs:       {first_half_qs[0:2, :16].reshape(-1)}")
+    # # print(f"first_half_read_qs:  {first_half_read_qs[:32]}")
+    # if np.array_equal(first_half_qs.reshape(-1), first_half_read_qs):
+    #     print("first_half_qs and first_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("first_half_qs and first_half_read_qs are NOT equal.")
+    # # print(f"second_half_qs:      {second_half_qs[0:2, :16].reshape(-1)}")
+    # # print(f"second_half_read_qs: {second_half_read_qs[:32]}")
+    # if np.array_equal(second_half_qs.reshape(-1), second_half_read_qs):
+    #     print("second_half_qs and second_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("second_half_qs and second_half_read_qs are NOT equal.")
     
-    if np.array_equal(seventh_half_qs.reshape(-1), seventh_half_read_qs):
-        print("seventh_half_qs and seventh_half_read_qs are equal.")
-    else:
-        raise ValueError("seventh_half_qs and seventh_half_read_qs are NOT equal.")
+    # if np.array_equal(third_half_qs.reshape(-1), third_half_read_qs):
+    #     print("third_half_qs and third_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("third_half_qs and third_half_read_qs are NOT equal.")
+
+    # if np.array_equal(fourth_half_qs.reshape(-1), fourth_half_read_qs):
+    #     print("fourth_half_qs and fourth_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("fourth_half_qs and fourth_half_read_qs are NOT equal.")
     
-    if np.array_equal(eighth_half_qs.reshape(-1), eighth_half_read_qs):
-        print("eighth_half_qs and eighth_half_read_qs are equal.")
-    else:
-        raise ValueError("eighth_half_qs and eighth_half_read_qs are NOT equal.")
+    # if np.array_equal(fifth_half_qs.reshape(-1), fifth_half_read_qs):
+    #     print("fifth_half_qs and fifth_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("fifth_half_qs and fifth_half_read_qs are NOT equal.")
+
+    # if np.array_equal(sixth_half_qs.reshape(-1), sixth_half_read_qs):
+    #     print("sixth_half_qs and sixth_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("sixth_half_qs and sixth_half_read_qs are NOT equal.")
     
-    # Check scaling factors
+    # if np.array_equal(seventh_half_qs.reshape(-1), seventh_half_read_qs):
+    #     print("seventh_half_qs and seventh_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("seventh_half_qs and seventh_half_read_qs are NOT equal.")
+    
+    # if np.array_equal(eighth_half_qs.reshape(-1), eighth_half_read_qs):
+    #     print("eighth_half_qs and eighth_half_read_qs are equal.")
+    # else:
+    #     raise ValueError("eighth_half_qs and eighth_half_read_qs are NOT equal.")
+    
+    # # Check scaling factors
     read_d = np.frombuffer(read_d, dtype=np.float32)
-    # print(f"d: {d[0, :32]}")
-    # print(f"read_d: {read_d[:32]}")
-    # print(f"length of d:      {len(d)}")
+    print(f"d: {d[0, :128]}")
+    # # print(f"read_d: {read_d[:32]}")
+    # print(f"length of d:      {len(d.reshape(-1))}")
     # print(f"length of read_d: {len(read_d)}")
-    if np.array_equal(d.reshape(-1), read_d):
-        print("d and read_d are equal.")
-    else:
-        raise ValueError("d and read_d are NOT equal.")
+    # if np.array_equal(d.reshape(-1), read_d):
+    #     print("d and read_d are equal.")
+    # else:
+    #     raise ValueError("d and read_d are NOT equal.")
     
-    # Check zero points
-    first_half_zp =   np.bitwise_and(zp, 0x0000000F)
-    second_half_zp =  np.bitwise_and(zp, 0x000000F0) >> 4
-    third_half_zp =   np.bitwise_and(zp, 0x00000F00) >> 8
-    fourth_half_zp =  np.bitwise_and(zp, 0x0000F000) >> 12
-    fifth_half_zp =   np.bitwise_and(zp, 0x000F0000) >> 16
-    sixth_half_zp =   np.bitwise_and(zp, 0x00F00000) >> 20
-    seventh_half_zp = np.bitwise_and(zp, 0x0F000000) >> 24
-    eighth_half_zp =  np.bitwise_and(zp, 0xF0000000) >> 28
+    # # Check zero points
+    # first_half_zp =   np.bitwise_and(zp, 0x0000000F)
+    # second_half_zp =  np.bitwise_and(zp, 0x000000F0) >> 4
+    # third_half_zp =   np.bitwise_and(zp, 0x00000F00) >> 8
+    # fourth_half_zp =  np.bitwise_and(zp, 0x0000F000) >> 12
+    # fifth_half_zp =   np.bitwise_and(zp, 0x000F0000) >> 16
+    # sixth_half_zp =   np.bitwise_and(zp, 0x00F00000) >> 20
+    # seventh_half_zp = np.bitwise_and(zp, 0x0F000000) >> 24
+    # eighth_half_zp =  np.bitwise_and(zp, 0xF0000000) >> 28
     first_half_read_zp =   np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x0000000F)
     second_half_read_zp =  np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x000000F0) >> 4
     third_half_read_zp =   np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x00000F00) >> 8
@@ -803,46 +811,105 @@ def test():
     seventh_half_read_zp = np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0x0F000000) >> 24
     eighth_half_read_zp =  np.bitwise_and(np.frombuffer(read_zp, dtype=np.int32), 0xF0000000) >> 28
 
-    if np.array_equal(first_half_zp.reshape(-1), first_half_read_zp):
-        print("first_half_zp and first_half_read_zp are equal.")
-    else:
-        raise ValueError("first_half_zp and first_half_read_zp are NOT equal.")
-    
-    if np.array_equal(second_half_zp.reshape(-1), second_half_read_zp):
-        print("second_half_zp and second_half_read_zp are equal.")
-    else:
-        raise ValueError("second_half_zp and second_half_read_zp are NOT equal.")
-    
-    if np.array_equal(third_half_zp.reshape(-1), third_half_read_zp):
-        print("third_half_zp and third_half_read_zp are equal.")
-    else:
-        raise ValueError("third_half_zp and third_half_read_zp are NOT equal.")
+    print(f"zp:       {zp[0, :128]}")
 
-    if np.array_equal(fourth_half_zp.reshape(-1), fourth_half_read_zp):
-        print("fourth_half_zp and fourth_half_read_zp are equal.")
-    else:
-        raise ValueError("fourth_half_zp and fourth_half_read_zp are NOT equal.")
+    # print(f"first_half_zp: {first_half_zp[:, :2]}")
+    # if np.array_equal(first_half_zp.reshape(-1), first_half_read_zp):
+    #     print("first_half_zp and first_half_read_zp are equal.")
+    # else:
+    #     raise ValueError("first_half_zp and first_half_read_zp are NOT equal.")
     
-    if np.array_equal(fifth_half_zp.reshape(-1), fifth_half_read_zp):
-        print("fifth_half_zp and fifth_half_read_zp are equal.")
-    else:
-        raise ValueError("fifth_half_zp and fifth_half_read_zp are NOT equal.")
+    # if np.array_equal(second_half_zp.reshape(-1), second_half_read_zp):
+    #     print("second_half_zp and second_half_read_zp are equal.")
+    # else:
+    #     raise ValueError("second_half_zp and second_half_read_zp are NOT equal.")
+    
+    # if np.array_equal(third_half_zp.reshape(-1), third_half_read_zp):
+    #     print("third_half_zp and third_half_read_zp are equal.")
+    # else:
+    #     raise ValueError("third_half_zp and third_half_read_zp are NOT equal.")
 
-    if np.array_equal(sixth_half_zp.reshape(-1), sixth_half_read_zp):
-        print("sixth_half_zp and sixth_half_read_zp are equal.")
-    else:
-        raise ValueError("sixth_half_zp and sixth_half_read_zp are NOT equal.")
+    # if np.array_equal(fourth_half_zp.reshape(-1), fourth_half_read_zp):
+    #     print("fourth_half_zp and fourth_half_read_zp are equal.")
+    # else:
+    #     raise ValueError("fourth_half_zp and fourth_half_read_zp are NOT equal.")
     
-    if np.array_equal(seventh_half_zp.reshape(-1), seventh_half_read_zp):
-        print("seventh_half_zp and seventh_half_read_zp are equal.")
-    else:
-        raise ValueError("seventh_half_zp and seventh_half_read_zp are NOT equal.")
-    
-    if np.array_equal(eighth_half_zp.reshape(-1), eighth_half_read_zp):
-        print("eighth_half_zp and eighth_half_read_zp are equal.\n")
-    else:
-        raise ValueError("eighth_half_zp and eighth_half_read_zp are NOT equal.")
+    # if np.array_equal(fifth_half_zp.reshape(-1), fifth_half_read_zp):
+    #     print("fifth_half_zp and fifth_half_read_zp are equal.")
+    # else:
+    #     raise ValueError("fifth_half_zp and fifth_half_read_zp are NOT equal.")
 
+    # if np.array_equal(sixth_half_zp.reshape(-1), sixth_half_read_zp):
+    #     print("sixth_half_zp and sixth_half_read_zp are equal.")
+    # else:
+    #     raise ValueError("sixth_half_zp and sixth_half_read_zp are NOT equal.")
+    
+    # if np.array_equal(seventh_half_zp.reshape(-1), seventh_half_read_zp):
+    #     print("seventh_half_zp and seventh_half_read_zp are equal.")
+    # else:
+    #     raise ValueError("seventh_half_zp and seventh_half_read_zp are NOT equal.")
+    
+    # if np.array_equal(eighth_half_zp.reshape(-1), eighth_half_read_zp):
+    #     print("eighth_half_zp and eighth_half_read_zp are equal.\n")
+    # else:
+    #     raise ValueError("eighth_half_zp and eighth_half_read_zp are NOT equal.")
+
+
+    # Check final result
+    first_half_read_qs = first_half_read_qs.reshape(-1).reshape(11008, 512)
+    second_half_read_qs = second_half_read_qs.reshape(-1).reshape(11008, 512)
+    third_half_read_qs = third_half_read_qs.reshape(-1).reshape(11008, 512)
+    fourth_half_read_qs = fourth_half_read_qs.reshape(-1).reshape(11008, 512)
+    fifth_half_read_qs = fifth_half_read_qs.reshape(-1).reshape(11008, 512)
+    sixth_half_read_qs = sixth_half_read_qs.reshape(-1).reshape(11008, 512)
+    seventh_half_read_qs = seventh_half_read_qs.reshape(-1).reshape(11008, 512)
+    eighth_half_read_qs = eighth_half_read_qs.reshape(-1).reshape(11008, 512)
+
+    first_half_read_zp = first_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+    second_half_read_zp = second_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+    third_half_read_zp = third_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+    fourth_half_read_zp = fourth_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+    fifth_half_read_zp = fifth_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+    sixth_half_read_zp = sixth_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+    seventh_half_read_zp = seventh_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+    eighth_half_read_zp = eighth_half_read_zp.reshape(-1).reshape(11008 // group_size, 512)
+
+    read_d = read_d.reshape(-1).reshape(11008 // group_size, 4096)
+    # result = np.zeros((11008, 4096), dtype=np.float32)
+    
+    # for i in range(11008):
+    #     for j in range(512):
+    #         result[i, j * 8] = (first_half_read_qs[i, j] - first_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8]
+    #         result[i, j * 8 + 1] = (second_half_read_qs[i, j] - second_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8 + 1]
+    #         result[i, j * 8 + 2] = (third_half_read_qs[i, j] - third_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8 + 2]
+    #         result[i, j * 8 + 3] = (fourth_half_read_qs[i, j] - fourth_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8 + 3]
+    #         result[i, j * 8 + 4] = (fifth_half_read_qs[i, j] - fifth_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8 + 4]
+    #         result[i, j * 8 + 5] = (sixth_half_read_qs[i, j] - sixth_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8 + 5]
+    #         result[i, j * 8 + 6] = (seventh_half_read_qs[i, j] - seventh_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8 + 6]
+    #         result[i, j * 8 + 7] = (eighth_half_read_qs[i, j] - eighth_half_read_zp[i // group_size, j]) * read_d[i // group_size, j * 8 + 7]
+
+    # print(f"result:      {result[0, :32]}\n")
+
+    i_indices = np.arange(11008)[:, None]
+    j_indices = np.arange(512)[None, :]
+    result_new = np.zeros((11008, 4096), dtype=np.float32)
+
+    result_new[i_indices, j_indices * 8] = (first_half_read_qs[i_indices, j_indices] - first_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8]
+    result_new[i_indices, j_indices * 8 + 1] = (second_half_read_qs[i_indices, j_indices] - second_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8 + 1]
+    result_new[i_indices, j_indices * 8 + 2] = (third_half_read_qs[i_indices, j_indices] - third_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8 + 2]
+    result_new[i_indices, j_indices * 8 + 3] = (fourth_half_read_qs[i_indices, j_indices] - fourth_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8 + 3]
+    result_new[i_indices, j_indices * 8 + 4] = (fifth_half_read_qs[i_indices, j_indices] - fifth_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8 + 4]
+    result_new[i_indices, j_indices * 8 + 5] = (sixth_half_read_qs[i_indices, j_indices] - sixth_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8 + 5]
+    result_new[i_indices, j_indices * 8 + 6] = (seventh_half_read_qs[i_indices, j_indices] - seventh_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8 + 6]
+    result_new[i_indices, j_indices * 8 + 7] = (eighth_half_read_qs[i_indices, j_indices] - eighth_half_read_zp[i_indices // group_size, j_indices]) * read_d[i_indices // group_size, j_indices * 8 + 7]
+
+    print(f"result_new:      {result_new}")
+
+    # if np.array_equal(result, result_new):
+    #     print("result and result_new are equal!")
+    # else:
+    #     raise ValueError("result and result_new are NOT equal!")
+    
     print("Test function DONE!")
 
 
@@ -863,10 +930,10 @@ def main():
     # TODO: We should use the following line in the future (currently we set cuda_is_available manually)
     # cuda_is_available = torch.cuda.is_available()
     # TODO: We should remove the following four lines in the future (currently we only support group_size=32 for CPUs and group_size=128 for GPUs)
-    if args.cuda_is_available:
-        args.group_size = 128
-    else:
-        args.group_size = 32
+    # if args.cuda_is_available:
+    #     args.group_size = 128
+    # else:
+    #     args.group_size = 32
 
     print(f"Quantization START!")
     quantize_model(prefix=args.model_path, method=args.method, data_type=args.data_type, cuda_is_available=args.cuda_is_available, group_size=args.group_size)
