@@ -20,7 +20,9 @@ ifeq ($(shell uname -m),x86_64)
 	CXXFLAGS += -mavx2
 else ifeq ($(shell uname -p),arm)
 	# For ARM A-series (such as Mac M1) with NEON
-	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	# TODO: check metal and use it by default
+	# LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/metal/*.cc)
 	LIB_SRC += $(LIB_NEON_SRC)
 	CXXFLAGS += -march=native -framework Accelerate
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
