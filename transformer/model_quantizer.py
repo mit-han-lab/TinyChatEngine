@@ -21,11 +21,6 @@ class block_q4_1:
         self.qs = np.zeros(QK4_1 // 2, dtype=np.uint8)
 
 
-# Converters
-def convert_to_fp16(val):
-    return np.float16(val)
-
-
 # Write quantized data into binary file
 def write_weight_to_file(prefix: str, qs, d, m, zp, is_lm_head=False):
     # Convert to bytes
