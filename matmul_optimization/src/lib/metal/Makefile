@@ -8,7 +8,7 @@ KERNEL_SRC = $(wildcard ./src/*.cpp)
 
 SRC = $(KERNEL_SRC)
 INCLUDE_DIRS = -I./metal-cpp -I./include
-LIB = -L/opt/homebrew/opt/libomp/lib -fopenmp -framework Metal -framework Foundation -framework MetalKit
+LIB = -framework Metal -framework Foundation -framework MetalKit
 
 
 # Default target

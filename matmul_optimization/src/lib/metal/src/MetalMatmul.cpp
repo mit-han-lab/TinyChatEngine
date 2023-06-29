@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param) {
+MetalMatmul::MetalMatmul(MTL::Device *device, MetalMatMulParams param) {
     _mDevice = device;
 
     NS::Error *error = nullptr;
@@ -46,9 +46,9 @@ MetalMatmul::MetalMatmul(MTL::Device *device, MatMulParams param) {
     _mBufferA = _mDevice->newBuffer(param.m * param.k * sizeof(float), MTL::ResourceStorageModeShared);
     _mBufferB = _mDevice->newBuffer(param.n * param.k * sizeof(float), MTL::ResourceStorageModeShared);
     _mBufferResult = _mDevice->newBuffer(param.m * param.n * sizeof(float), MTL::ResourceStorageModeShared);
-    _mParams = _mDevice->newBuffer(sizeof(MatMulParams), MTL::ResourceStorageModeShared);
+    _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
 
-    _mParamsPtr = (MatMulParams *)_mParams->contents();
+    _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
     *_mParamsPtr = param;
 
     printf("%d, %d, %d\n", _mParamsPtr->m, _mParamsPtr->n, _mParamsPtr->k);

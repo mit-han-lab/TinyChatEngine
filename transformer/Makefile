@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -pthread -O3
+CXXFLAGS = -std=c++17 -stdlib=libc++ -pthread -O3
 
 # Executable and source files
 TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4LlamaForCausalLM
@@ -19,14 +19,19 @@ ifeq ($(shell uname -m),x86_64)
 	LIB_SRC += $(LIB_AVX_SRC)
 	CXXFLAGS += -mavx2
 else ifeq ($(shell uname -p),arm)
-	# For ARM A-series (such as Mac M1) with NEON
-	# TODO: check metal and use it by default
-	# LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
-	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/metal/*.cc)
-	LIB_SRC += $(LIB_NEON_SRC)
-	CXXFLAGS += -march=native -framework Accelerate
-	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
-	LIB += -L/opt/homebrew/opt/boost/lib
+	# For ARM A-series (such as Mac M1) with Metal GPU
+	LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
+	LIB_SRC += $(wildcard $(LIB_DIR)/lib/metal/*.cc)
+	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
+	LIB += -framework Metal -framework Foundation -framework MetalKit
+	TARGET += default.metallib library.air
+	CXXFLAGS += -DUSE_METAL
+	CXX = /opt/homebrew/opt/llvm/bin/clang++
+	# TODO: use NEON if Metal is not supported
+	# LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	# CXXFLAGS += -march=native -framework Accelerate
+	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
+	# LIB += -L/opt/homebrew/opt/boost/lib
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
@@ -61,6 +66,12 @@ endif
 
 # Default target
 all: $(TARGET)
+
+# Metal lib
+library.air:
+	xcrun -sdk macosx metal -ffast-math -fno-fast-math $(LIB_ACC_INC) -c $(LIB_DIR)/lib/metal/kernel/op.metal -o library.air
+default.metallib: library.air
+	xcrun -sdk macosx metallib library.air -o default.metallib
 
 # Linking
 test_ops:
@@ -100,16 +111,16 @@ test_Fp32LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int4llamaAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/test_Int4llamaAttention.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/test_Int4llamaAttention.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int4llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/test_Int4llamaDecoderLayer.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/test_Int4llamaDecoderLayer.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int4llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/test_Int4llamaDecoder.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/test_Int4llamaDecoder.cc $(SRC) $(LIB) $(LDFLAGS)
 
 test_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 demo:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC) $(LIB) $(LDFLAGS)
@@ -129,3 +140,4 @@ profile_ops:
 # Clean up
 clean:
 	rm -f $(TARGET)
+	rm -rf *.dSYM

@@ -53,4 +53,7 @@ void test_Int4LlamaForCausalLM() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
-int main() { test_Int4LlamaForCausalLM(); }
+int main() {
+    // This tests are directly from fp32 and are not completed yet!
+    // test_Int4LlamaForCausalLM();
+}

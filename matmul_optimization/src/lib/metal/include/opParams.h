@@ -5,4 +5,4 @@ typedef struct {
     unsigned int n;
     unsigned int k;
     unsigned int group_size;
-} MatMulParams;
+} MetalMatMulParams;

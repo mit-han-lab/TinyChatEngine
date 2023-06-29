@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MatMulParams param) {
+MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MetalMatMulParams param) {
     _mDevice = device;
 
     NS::Error *error = nullptr;
@@ -15,7 +15,7 @@ MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MatMulParams param) {
         return;
     }
 
-    auto str = NS::String::string("matmulInt4_SIMD_Q4Interleave_unroll32", NS::ASCIIStringEncoding);
+    auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_unroll32", NS::ASCIIStringEncoding);
     MTL::Function *matmulFunction = defaultLibrary->newFunction(str);
     defaultLibrary->release();
 
@@ -48,9 +48,9 @@ MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MatMulParams param) {
     _mBufferResult = _mDevice->newBuffer(param.m * param.n * sizeof(float), MTL::ResourceStorageModeShared);
     _mBufferScales =
         _mDevice->newBuffer(((param.n * param.k) / param.group_size) * sizeof(float), MTL::ResourceStorageModeShared);
-    _mParams = _mDevice->newBuffer(sizeof(MatMulParams), MTL::ResourceStorageModeShared);
+    _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
 
-    _mParamsPtr = (MatMulParams *)_mParams->contents();
+    _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
     *_mParamsPtr = param;
 
     printf("%d, %d, %d\n", _mParamsPtr->m, _mParamsPtr->n, _mParamsPtr->k);
@@ -176,26 +176,26 @@ void MetalMatmulInt4::verifyResults() {
                 for (size_t kk = 0; kk < _mParamsPtr->group_size; kk += 8) {
                     size_t weight_idx = (j * _mParamsPtr->k + k + kk) / 2;
                     uint8_t weight_packed = b[weight_idx];
-                    int8_t vl = (weight_packed & 0x0F);
-                    int8_t vh = (weight_packed >> 4);
+                    int8_t vl = (weight_packed & 0x0F) - 8;
+                    int8_t vh = (weight_packed >> 4) - 8;
                     sum += a[i * _mParamsPtr->k + k + kk] * vl * scale;
                     sum += a[i * _mParamsPtr->k + k + kk + 4] * vh * scale;
 
                     weight_packed = b[weight_idx + 1];
-                    vl = (weight_packed & 0x0F);
-                    vh = (weight_packed >> 4);
+                    vl = (weight_packed & 0x0F) - 8;
+                    vh = (weight_packed >> 4) - 8;
                     sum += a[i * _mParamsPtr->k + k + kk + 1] * vl * scale;
                     sum += a[i * _mParamsPtr->k + k + kk + 5] * vh * scale;
 
                     weight_packed = b[weight_idx + 2];
-                    vl = (weight_packed & 0x0F);
-                    vh = (weight_packed >> 4);
+                    vl = (weight_packed & 0x0F) - 8;
+                    vh = (weight_packed >> 4) - 8;
                     sum += a[i * _mParamsPtr->k + k + kk + 2] * vl * scale;
                     sum += a[i * _mParamsPtr->k + k + kk + 6] * vh * scale;
 
                     weight_packed = b[weight_idx + 3];
-                    vl = (weight_packed & 0x0F);
-                    vh = (weight_packed >> 4);
+                    vl = (weight_packed & 0x0F) - 8;
+                    vh = (weight_packed >> 4) - 8;
                     sum += a[i * _mParamsPtr->k + k + kk + 3] * vl * scale;
                     sum += a[i * _mParamsPtr->k + k + kk + 7] * vh * scale;
                 }

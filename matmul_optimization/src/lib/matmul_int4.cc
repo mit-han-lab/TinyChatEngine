@@ -13,7 +13,41 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
     float *B_zp = params->zero_point;
     float *data_C = C->data_ptr;
     CHECK_MATRICES_int4weight(A, B, C);
-
+#ifdef USE_METAL
+    for (i = 0; i < C->row; i++) {
+        for (j = 0; j < C->column; j++) {
+            float acc = 0;
+            for (k = 0; k < A->column; k += block_size) {
+                float s = B_sc[(j * A->column + k) / block_size];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->column + k / 2];
+                float *x_ptr = &A->data_ptr[i * A->column + k];
+                for (int qi = 0; qi < block_size / 2; qi += 4) {
+                    uint8_t packed_int4_0 = weight_32_int4[qi];
+                    uint8_t packed_int4_1 = weight_32_int4[qi + 1];
+                    uint8_t packed_int4_2 = weight_32_int4[qi + 2];
+                    uint8_t packed_int4_3 = weight_32_int4[qi + 3];
+                    float deq_0 = (float)((packed_int4_0 & 0x0F) - 8.0) * s;
+                    float deq_1 = (float)((packed_int4_1 & 0x0F) - 8.0) * s;
+                    float deq_2 = (float)((packed_int4_2 & 0x0F) - 8.0) * s;
+                    float deq_3 = (float)((packed_int4_3 & 0x0F) - 8.0) * s;
+                    float deq_4 = (float)((packed_int4_0 >> 4) - 8.0) * s;
+                    float deq_5 = (float)((packed_int4_1 >> 4) - 8.0) * s;
+                    float deq_6 = (float)((packed_int4_2 >> 4) - 8.0) * s;
+                    float deq_7 = (float)((packed_int4_3 >> 4) - 8.0) * s;
+                    acc += *x_ptr++ * deq_0;
+                    acc += *x_ptr++ * deq_1;
+                    acc += *x_ptr++ * deq_2;
+                    acc += *x_ptr++ * deq_3;
+                    acc += *x_ptr++ * deq_4;
+                    acc += *x_ptr++ * deq_5;
+                    acc += *x_ptr++ * deq_6;
+                    acc += *x_ptr++ * deq_7;
+                }
+            }
+            C->data_ptr[i * C->column + j] = acc;
+        }
+    }
+#else
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {
             float acc = 0;
@@ -36,6 +70,7 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
             data_C[i * C->column + j] = acc;
         }
     }
+#endif
 }
 
 void MatmulOperator::naive_mat_mul_int4_with_offset(const struct matmul_params *params) {

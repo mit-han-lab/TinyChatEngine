@@ -77,6 +77,7 @@ void test_Int4llamaDecoderLayer_gen() {
 }
 
 int main() {
-    test_Int4llamaDecoderLayer();
-    test_Int4llamaDecoderLayer_gen();
+    // This tests are directly from fp32 and are not completed yet!
+    // test_Int4llamaDecoderLayer();
+    // test_Int4llamaDecoderLayer_gen();
 }

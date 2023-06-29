@@ -22,9 +22,9 @@ class MetalMatmulInt4 {
     MTL::Buffer *_mParams;
 
     // Matmul params
-    MatMulParams *_mParamsPtr;
+    MetalMatMulParams *_mParamsPtr;
 
-    MetalMatmulInt4(MTL::Device *device, MatMulParams param);
+    MetalMatmulInt4(MTL::Device *device, MetalMatMulParams param);
     ~MetalMatmulInt4();
 
     void prepareData();

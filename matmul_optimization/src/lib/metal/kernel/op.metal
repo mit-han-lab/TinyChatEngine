@@ -14,7 +14,7 @@ matmulInt4_SIMD_Q4Interleave_unroll32(GPU): 1500 ms, 160 GOP/s
 kernel void matmul(device const float* inA,
                     device const float* inB, // column major
                     device float* result,
-                    constant MatMulParams& params,
+                    constant MetalMatMulParams& params,
                     uint2 id [[thread_position_in_grid]])
 {
     // the for-loop is replaced with a collection of threads, each of which
@@ -40,7 +40,7 @@ kernel void matmulInt4(device const float* inA,
                     device const uint8_t* inB, // column major
                     device float* result,
                     device const float* scales,
-                    constant MatMulParams& params,
+                    constant MetalMatMulParams& params,
                     uint2 id [[thread_position_in_grid]])
 {
     // the for-loop is replaced with a collection of threads, each of which
@@ -75,7 +75,7 @@ kernel void matmulInt4_SIMD_Q4Interleave(
                     device const packed_char4* inB, // column major
                     device float* result,
                     device const float* scales,
-                    constant MatMulParams& params,
+                    constant MetalMatMulParams& params,
                     uint2 id [[thread_position_in_grid]])
 {
     // the for-loop is replaced with a collection of threads, each of which
@@ -123,7 +123,7 @@ kernel void matmulInt4_SIMD_Q4Interleave_unroll16(
                     device const packed_char4* inB, // column major
                     device float* result,
                     device const float* scales,
-                    constant MatMulParams& params,
+                    constant MetalMatMulParams& params,
                     uint2 id [[thread_position_in_grid]])
 {
     // the for-loop is replaced with a collection of threads, each of which
@@ -180,7 +180,7 @@ kernel void matmulInt4_SIMD_Q4Interleave_unroll32(
                     device const packed_char4* inB, // column major
                     device float* result,
                     device const float* scales,
-                    constant MatMulParams& params,
+                    constant MetalMatMulParams& params,
                     uint2 id [[thread_position_in_grid]])
 {
     // the for-loop is replaced with a collection of threads, each of which
@@ -259,7 +259,7 @@ kernel void matmulUInt4_SIMD_Q4Interleave_unroll32(
                     device const packed_char4* inB, // column major
                     device float* result,
                     device const float* scales,
-                    constant MatMulParams& params,
+                    constant MetalMatMulParams& params,
                     uint2 id [[thread_position_in_grid]])
 {
     // the for-loop is replaced with a collection of threads, each of which
@@ -291,10 +291,10 @@ kernel void matmulUInt4_SIMD_Q4Interleave_unroll32(
             packed_char4 packed_8_2 = inB[weight_idx + 2];
             packed_char4 packed_8_3 = inB[weight_idx + 3];
 
-            packed_char4 packed_low_0 = packed_8_0 & lowMask;
-            packed_char4 packed_low_1 = packed_8_1 & lowMask;
-            packed_char4 packed_low_2 = packed_8_2 & lowMask;
-            packed_char4 packed_low_3 = packed_8_3 & lowMask;
+            packed_char4 packed_low_0 = (packed_8_0 & lowMask) - offsets;;
+            packed_char4 packed_low_1 = (packed_8_1 & lowMask) - offsets;;
+            packed_char4 packed_low_2 = (packed_8_2 & lowMask) - offsets;;
+            packed_char4 packed_low_3 = (packed_8_3 & lowMask) - offsets;;
 
             packed_char4 packed_high_0 = ((packed_8_0 >> 4) & lowMask) - offsets;
             packed_char4 packed_high_1 = ((packed_8_1 >> 4) & lowMask) - offsets;

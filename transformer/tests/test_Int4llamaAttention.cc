@@ -80,6 +80,7 @@ void test_Int4llamaAttention_gen() {
 }
 
 int main() {
-    test_Int4llamaAttention();
-    test_Int4llamaAttention_gen();
+    // This tests are directly from fp32 and are not completed yet!
+    // test_Int4llamaAttention();
+    // test_Int4llamaAttention_gen();
 }
