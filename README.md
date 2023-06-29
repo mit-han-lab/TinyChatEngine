@@ -46,8 +46,7 @@ make -j
 Model: LLaMA7B selected
 Data format: INT4 selected
 Loading model... Finished!
-Please enter a line of text: John went to MIT and study Computer Science.
-input:John went to MIT and study Computer Science.
+Please enter a line of text: Difference between MIT and Stanford:
 Generated:
  A perspective on the admissions process (for an engineering program)
 MIT and Stanford have long been considered to be two of the top universities in the country. Stanford is often regarded as a more liberal arts school, while MIT focuses more on its engineering program. When looking at which of these schools you want to apply to, your choice will likely come down to preference and statistics. The average GPA for an applicant to MIT is 4.01 while the same statistic for Stanford is 3.92. Both of these universities accept students with scores in a range between 580-790 on their SATs, which are both above the national average of 663.
