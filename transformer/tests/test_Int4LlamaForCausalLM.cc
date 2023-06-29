@@ -55,5 +55,5 @@ void test_Int4LlamaForCausalLM() {
 
 int main() {
     // This tests are directly from fp32 and are not completed yet!
-    // test_Int4LlamaForCausalLM();
+    test_Int4LlamaForCausalLM();
 }

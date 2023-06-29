@@ -100,13 +100,6 @@ void MetalMatmulInt4IMP::run(MetalMatMulParams param, MetalMatmulBuffers *buffer
     _mBufferB = getBufferfromPtr((void *)bufferParams->B);
     _mBufferResult = getBufferfromPtr((void *)bufferParams->C);
     _mBufferScales = getBufferfromPtr((void *)bufferParams->scales);
-    // _mBufferA = _mDevice->newBuffer(param.m * param.k * sizeof(float), MTL::ResourceStorageModeShared);
-    // _mBufferB = _mDevice->newBuffer(((param.n * param.k) / 2) * sizeof(uint8_t), MTL::ResourceStorageModeShared);
-    // _mBufferResult = _mDevice->newBuffer(param.m * param.n * sizeof(float), MTL::ResourceStorageModeShared);
-    // _mBufferScales =
-    //     _mDevice->newBuffer(((param.n * param.k) / param.group_size) * sizeof(float),
-    //     MTL::ResourceStorageModeShared);
-    // _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
 
     if (!_mBufferA || !_mBufferB || !_mBufferResult || !_mBufferScales) {
         std::cerr << "Failed to locate some buffer!" << std::endl;
@@ -114,14 +107,6 @@ void MetalMatmulInt4IMP::run(MetalMatMulParams param, MetalMatmulBuffers *buffer
     }
     // TODO: offset?
     sendComputeCommand();
-
-    // output
-    // print_first_k_elelment("C:", bufferParams->C, 10, 0);
-    // print_first_k_elelment("A:", (float*)_mBufferA->contents(), 10, 0);
-    // print_first_k_elelment("B:", (float*)_mBufferB->contents(), 10, 0);
-    // print_first_k_elelment("C:", (float*)_mBufferResult->contents(), 10, 0);
-    // print_first_k_elelment("S:", (float*)_mBufferScales->contents(), 10, 0);
-    // exit(0);
 }
 
 typedef std::chrono::microseconds time_unit;
