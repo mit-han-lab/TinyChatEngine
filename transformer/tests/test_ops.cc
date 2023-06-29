@@ -615,24 +615,31 @@ void test_FPLinear_int4() {
     outputGT.load("assets/llama/tests/ops/Linear/output.bin");
     Linear_FP op(weight, "models/LLaMA_7B/lm_head.bin");
 
-    const int flops = k * m * n * 2;
-    STATS_FLOPS("fp32", flops);
-    op.forward(hidden_states, output);
-    STATS_END("fp32");
-
     // quantize the weight to int4
     Matrix3D<uint8_t> int4_weight((uint8_t *)mem_buf.get_int8buffer(n * k / 2), 1, n, k / 2);
     // Linear_FP_int4 int4_op;
     Linear_FP_int4 int4_op = Linear_FP_int4(int4_weight, "models/LLaMA_7B/lm_head/");
-    ;
 
     Matrix3D<float> outputQ(mem_buf.get_fpbuffer(m * n), 1, m, n);
     Matrix3D<float> outputQ_simd(mem_buf.get_fpbuffer(m * n), 1, m, n);
     Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
 
+    // warm up
+    for (int i = 0; i < 10; i++) {
+        int4_op.forward(hidden_states, outputQ_fast);
+    }
+
+    Profiler::getInstance().reset();
+
+    const int flops = k * m * n * 2;
+    STATS_FLOPS("fp32", flops);
+    op.forward(hidden_states, output);
+    STATS_END("fp32");
+
     STATS_FLOPS("int4_ref", flops);
     int4_op.forward_ref(hidden_states, outputQ);
     STATS_END("int4_ref");
+
     STATS_FLOPS("int4_fast", flops);
     int4_op.forward(hidden_states, outputQ_fast);
     STATS_END("int4_fast");
@@ -646,7 +653,8 @@ void test_FPLinear_int4() {
 }
 
 int main() {
-    // from OPT test_LayerNormQ();
+    // from OPT
+    test_LayerNormQ();
     test_LayerNormQ_len512();
     test_LayerNormQ_1_3B();
     test_LayerNorm();

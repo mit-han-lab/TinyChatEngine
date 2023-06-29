@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -pthread -O3
+CXXFLAGS = -std=c++17 -stdlib=libc++ -pthread -O3
 
 # Executable and source files
 TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4LlamaForCausalLM
@@ -8,6 +8,7 @@ PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_Int4LlamaForCausalLM profi
 APP_TARGET = demo
 TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
+BUILDDIR := build/transformer
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/
@@ -19,12 +20,19 @@ ifeq ($(shell uname -m),x86_64)
 	LIB_SRC += $(LIB_AVX_SRC)
 	CXXFLAGS += -mavx2
 else ifeq ($(shell uname -p),arm)
-	# For ARM A-series (such as Mac M1) with NEON
-	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
-	LIB_SRC += $(LIB_NEON_SRC)
-	CXXFLAGS += -march=native -framework Accelerate
-	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
-	LIB += -L/opt/homebrew/opt/boost/lib
+	# For ARM A-series (such as Mac M1) with Metal GPU
+	LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
+	LIB_SRC += $(wildcard $(LIB_DIR)/lib/metal/*.cc)
+	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
+	LIB += -framework Metal -framework Foundation -framework MetalKit
+	TARGET += default.metallib library.air
+	CXXFLAGS += -DUSE_METAL
+	CXX = /opt/homebrew/opt/llvm/bin/clang++
+	# TODO: use NEON if Metal is not supported
+	# LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	# CXXFLAGS += -march=native -framework Accelerate
+	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
+	# LIB += -L/opt/homebrew/opt/boost/lib
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
@@ -60,70 +68,48 @@ endif
 # Default target
 all: $(TARGET)
 
+# Phony targets
+.PHONY: all clean
+
+# Metal lib
+library.air:
+	xcrun -sdk macosx metal -ffast-math -fno-fast-math $(LIB_ACC_INC) -c $(LIB_DIR)/lib/metal/kernel/op.metal -o library.air
+default.metallib: library.air
+	xcrun -sdk macosx metallib library.air -o default.metallib
+
+$(info $(SRC))
+OBJS = $(addprefix $(BUILDDIR)/,$(SRC:.cc=.o))
+
+# Pattern rules
+$(BUILDDIR)/%.o: %.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -c $< -o $@
+
 # Linking
-test_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
+# Rule for TEST_TARGET
+$(TEST_TARGET): %: tests/%.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $@ $^ $(LIB) $(LDFLAGS)
 
-test_Int8OPTAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTAttention tests/test_Int8OPTAttention.cc $(SRC) $(LIB) $(LDFLAGS)
+# Rule for PROFILE_TARGET
+# Here we define explicit rules for each profile target
+profile_Fp32LlamaForCausalLM: tests/test_Fp32LlamaForCausalLM.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-test_Int8OPTDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoderLayer tests/test_Int8OPTDecoderLayer.cc $(SRC) $(LIB) $(LDFLAGS)
+profile_Int4LlamaForCausalLM: tests/test_Int4LlamaForCausalLM.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-test_Int8OPTDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTDecoder tests/test_Int8OPTDecoder.cc $(SRC) $(LIB) $(LDFLAGS)
+profile_OPTForCausalLM: tests/test_OPTForCausalLM.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-test_OPTForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
+profile_ops: tests/test_ops.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-test_OPTTokenizer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTTokenizer tests/test_OPTTokenizer.cc $(SRC) $(LIB) $(LDFLAGS)
-
-test_LLaMATokenizer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_LLaMATokenizer tests/test_LLaMATokenizer.cc $(SRC) $(LIB) $(LDFLAGS)
-
-test_OPTGenerate:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_OPTGenerate tests/test_OPTGenerate.cc $(SRC) $(LIB) $(LDFLAGS)
-
-test_Fp32llamaAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaAttention tests/test_Fp32llamaAttention.cc $(SRC) $(LIB) $(LDFLAGS)
-
-test_Fp32llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoderLayer tests/test_Fp32llamaDecoderLayer.cc $(SRC) $(LIB) $(LDFLAGS)
-
-test_Fp32llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32llamaDecoder tests/test_Fp32llamaDecoder.cc $(SRC) $(LIB) $(LDFLAGS)
-
-test_Fp32LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
-
-test_Int4llamaAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/test_Int4llamaAttention.cc $(SRC) $(LDFLAGS)
-
-test_Int4llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/test_Int4llamaDecoderLayer.cc $(SRC) $(LDFLAGS)
-
-test_Int4llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/test_Int4llamaDecoder.cc $(SRC) $(LDFLAGS)
-
-test_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LDFLAGS)
-
-demo:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC) $(LIB) $(LDFLAGS)
-
-profile_OPTForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_OPTForCausalLM tests/test_OPTForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
-
-profile_Fp32LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
-
-profile_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
-
-profile_ops:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
+# Rule for APP_TARGET
+$(APP_TARGET): %: application/%.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $@ $^ $(LIB) $(LDFLAGS)
 
 # Clean up
 clean:
 	rm -f $(TARGET)
+	rm -rf *.dSYM
+	rm -rf build

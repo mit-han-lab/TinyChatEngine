@@ -177,6 +177,26 @@ void print_first_k_elelment(std::string name, const float* arr, int k, int start
     std::cout << std::endl;
 }
 
+#ifdef USE_METAL
+// If we use metal GPU, let's make all the allocated memory accesible from GPU. We will
+// 1. allocate the memory in to format of MTL::Buffer
+// 2. make a mapping (unordered_map) between MTL::Buffer and memory address
+// 3. when GPU want to access some address space, use the table to get the corresponding MTL::Buffer object
+// Befenits: not to worry about memory alignment, better performance
+#include "matmul_metal_int4_imp.h"
+
+template <typename T>
+void allocate_aligned_memory(T*& ptr, size_t size) {
+    // allocate and get the pointer
+    void* void_ptr = MetalMatmulInt4IMP::allocateSharedMem(size);
+    if (void_ptr == NULL) {
+        std::cerr << "Metal memory allocation failed." << std::endl;
+        exit(-1);
+    }
+    ptr = (T*)void_ptr;
+}
+
+#else
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size) {
     constexpr size_t alignment = 32;
@@ -187,6 +207,7 @@ void allocate_aligned_memory(T*& ptr, size_t size) {
         throw("Memory allocation failed.");
     }
 }
+#endif
 
 // Explicitly instantiate the generic template function for other types (if needed)
 template bool check_two_equal<float>(float* array, float* array2, int size);

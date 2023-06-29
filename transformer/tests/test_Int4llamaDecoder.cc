@@ -74,4 +74,7 @@ void test_Decoder() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
-int main() { test_Decoder(); }
+int main() {
+    // This tests are directly from fp32 and are not completed yet!
+    // test_Decoder();
+}
