@@ -9,6 +9,7 @@ APP_TARGET = demo
 TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
 BUILDDIR := build/transformer
+PROFILEDIR := build_profile/transformer
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/
@@ -72,18 +73,23 @@ all: $(TARGET)
 .PHONY: all clean
 
 # Metal lib
-library.air:
-	xcrun -sdk macosx metal -ffast-math -fno-fast-math $(LIB_ACC_INC) -c $(LIB_DIR)/lib/metal/kernel/op.metal -o library.air
+library.air: $(LIB_DIR)/lib/metal/kernel/op.metal
+	xcrun -sdk macosx metal -ffast-math -fno-fast-math $(LIB_ACC_INC) -c $< -o library.air
 default.metallib: library.air
 	xcrun -sdk macosx metallib library.air -o default.metallib
 
 $(info $(SRC))
 OBJS = $(addprefix $(BUILDDIR)/,$(SRC:.cc=.o))
+PROFILE_OBJS = $(addprefix $(PROFILEDIR)/,$(SRC:.cc=.o))
 
 # Pattern rules
 $(BUILDDIR)/%.o: %.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -c $< -o $@
+
+$(PROFILEDIR)/%.o: %.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -c $< -o $@
 
 # Linking
 # Rule for TEST_TARGET
@@ -92,17 +98,17 @@ $(TEST_TARGET): %: tests/%.cc $(OBJS)
 
 # Rule for PROFILE_TARGET
 # Here we define explicit rules for each profile target
-profile_Fp32LlamaForCausalLM: tests/test_Fp32LlamaForCausalLM.cc $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
+profile_Fp32LlamaForCausalLM: tests/test_Fp32LlamaForCausalLM.cc $(PROFILE_OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-profile_Int4LlamaForCausalLM: tests/test_Int4LlamaForCausalLM.cc $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
+profile_Int4LlamaForCausalLM: tests/test_Int4LlamaForCausalLM.cc $(PROFILE_OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-profile_OPTForCausalLM: tests/test_OPTForCausalLM.cc $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
+profile_OPTForCausalLM: tests/test_OPTForCausalLM.cc $(PROFILE_OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-profile_ops: tests/test_ops.cc $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o $@ $^ $(LIB) $(LDFLAGS)
+profile_ops: tests/test_ops.cc $(PROFILE_OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
 # Rule for APP_TARGET
 $(APP_TARGET): %: application/%.cc $(OBJS)
@@ -112,4 +118,5 @@ $(APP_TARGET): %: application/%.cc $(OBJS)
 clean:
 	rm -f $(TARGET)
 	rm -rf *.dSYM
-	rm -rf build
+	rm -rf $(BUILDDIR)
+	rm -rf $(PROFILEDIR)
