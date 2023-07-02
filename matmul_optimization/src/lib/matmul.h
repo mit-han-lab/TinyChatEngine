@@ -18,7 +18,7 @@ struct matrix {
     int row;
     int column;
     float *data_ptr;
-    int32_t *int32_data_ptr;
+    int *int32_data_ptr;
     int8_t *int8_data_ptr;
     uint8_t *uint8_data_ptr;
     uint8_t *int4_data_ptr;
@@ -37,7 +37,7 @@ struct matmul_params {
     float alpha, beta;
     // for int4
     float *scales, *offset, *zero_point;
-    int32_t *int32_zero_point;
+    int *int32_zero_point;
     int block_size;
 };
 

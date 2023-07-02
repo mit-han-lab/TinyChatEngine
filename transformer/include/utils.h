@@ -49,4 +49,7 @@ void print_first_k_elelment(std::string name, const float* arr, int k, int start
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
 
+template <typename T>
+void allocate_aligned_memory_gpu(T*& ptr, size_t size);
+
 #endif

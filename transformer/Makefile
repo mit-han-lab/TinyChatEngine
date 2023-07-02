@@ -21,9 +21,10 @@ $(info CUDA is available!)
 	CUDA_HOME = /usr/local/cuda
 	CXX = $(CUDA_HOME)/bin/nvcc
 # Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-mavx2" -Xcompiler "-pthread" -arch=sm_86 -D_GLIBCXX_USE_CXX11_ABI=1
+#	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread" -D_GLIBCXX_USE_CXX11_ABI=1
+	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread"
 	CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu) $(wildcard $(LIB_DIR)/lib/cuda/*.cc)
-	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cc)
+	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cc) $(wildcard src/ops/cuda/*.cu) 
 	INCLUDE_DIRS += -I./include/cuda
 	IS_CUDA = cuda
 else
@@ -42,6 +43,7 @@ ifeq ($(shell uname -m),x86_64)
 # Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
 		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)/include
 		LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_DIR)/lib -L$(CUDA_HOME)/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_DIR)/lib -Xlinker -rpath=$(CUDA_HOME)/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cuda
+		CXXFLAGS += -Xcompiler "-mavx2" -arch=sm_86
 	else
 # For Intel machines with AVX
 		LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
@@ -51,18 +53,21 @@ ifeq ($(shell uname -m),x86_64)
 else ifeq ($(shell uname -m),aarch64)
 	ifdef CUDA_AVAILABLE
 # Edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano) use PyTorch for JetPack
-		PYTHON_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38
-		TORCH_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
+#		PYTHON_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38
+#		TORCH_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
 		CUDNN_DIR = /usr/include/aarch64-linux-gnu
 		CUDNN_LIB = /usr/lib/aarch64-linux-gnu
 # Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
-		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)
-		LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_LIB) -L$(CUDA_HOME)/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_LIB) -Xlinker -rpath=$(CUDA_HOME)/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cud
+#		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)
+		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/aarch64-linux/include -I$(CUDNN_DIR)
+#		LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_LIB) -L$(CUDA_HOME)/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_LIB) -Xlinker -rpath=$(CUDA_HOME)/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_cuda -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cuda
+		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/aarch64-linux/lib -L$(CUDNN_LIB) -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/aarch64-linux/lib -Xlinker -rpath=$(CUDNN_LIB) 
+		CXXFLAGS += -arch=sm_87 --forward-unknown-to-host-compiler
 	else
 # For ARM aarch64 platforms (such as Nvidia Jetson devices) with NEON
 		LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
 		LIB_SRC += $(LIB_NEON_SRC)
-		CXXFLAGS += -march=native -framework Accelerate
+		CXXFLAGS += -march=native
 	endif
 else ifeq ($(shell uname -p),arm)
 # For ARM A-series (such as Mac M1) with NEON

@@ -91,18 +91,18 @@ inline void Int4llamaAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> 
 }
 
 Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config) {
-    int32_t *q_weight, *k_weight, *v_weight, *o_weight;
-    allocate_aligned_memory(q_weight, (config.embed_dim * config.embed_dim * sizeof(int32_t)) / 8);
-    allocate_aligned_memory(k_weight, (config.embed_dim * config.embed_dim * sizeof(int32_t)) / 8);
-    allocate_aligned_memory(v_weight, (config.embed_dim * config.embed_dim * sizeof(int32_t)) / 8);
-    allocate_aligned_memory(o_weight, (config.embed_dim * config.embed_dim * sizeof(int32_t)) / 8);
-    this->q_proj = Linear_FP_int4(Matrix3D<int32_t>(q_weight, 1, config.embed_dim / 8, config.embed_dim),
+    int *q_weight, *k_weight, *v_weight, *o_weight;
+    allocate_aligned_memory_gpu(q_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
+    allocate_aligned_memory_gpu(k_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
+    allocate_aligned_memory_gpu(v_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
+    allocate_aligned_memory_gpu(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
+    this->q_proj = Linear_FP_int4(Matrix3D<int>(q_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/q_proj");
-    this->k_proj = Linear_FP_int4(Matrix3D<int32_t>(k_weight, 1, config.embed_dim / 8, config.embed_dim),
+    this->k_proj = Linear_FP_int4(Matrix3D<int>(k_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/k_proj");
-    this->v_proj = Linear_FP_int4(Matrix3D<int32_t>(v_weight, 1, config.embed_dim / 8, config.embed_dim),
+    this->v_proj = Linear_FP_int4(Matrix3D<int>(v_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/v_proj");
-    this->o_proj = Linear_FP_int4(Matrix3D<int32_t>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
+    this->o_proj = Linear_FP_int4(Matrix3D<int>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/o_proj");
 
     float *cos_buf, *sin_buf;

@@ -63,7 +63,7 @@ void Linear_FP::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
 }
 
 void Linear_FP_int4::forward_ref(const Matrix3D<float> &a, Matrix3D<float> &c) {
-    Matrix3D<int32_t> b = this->weight;
+    Matrix3D<int> b = this->weight;
     const int m = a.m_dim_y, n = b.m_dim_y, k = a.m_dim_z, b_size = b.m_dim_x;
     const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
     PROFILE_START_FLOPS(profile_name, ops);
@@ -104,7 +104,7 @@ void Linear_FP_int4::forward_ref(const Matrix3D<float> &a, Matrix3D<float> &c) {
 
 void Linear_FP_int4::forward_fast(const Matrix3D<float> &x, Matrix3D<float> &output) {
     const int num_thread = 8;
-    Matrix3D<int32_t> b = this->weight;
+    Matrix3D<int> b = this->weight;
     const int m = x.m_dim_y, n = b.m_dim_y, k = x.m_dim_z, b_size = b.m_dim_x;
     const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
     PROFILE_START_FLOPS(profile_name, ops);
@@ -143,7 +143,7 @@ void Linear_FP_int4::forward_fast(const Matrix3D<float> &x, Matrix3D<float> &out
 
 void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) {
     const int num_thread = 8;
-    Matrix3D<int32_t> b = this->weight;
+    Matrix3D<int> b = this->weight;
     const int m = x.m_dim_y, n = b.m_dim_y, k = x.m_dim_z, b_size = b.m_dim_x;
     const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
     PROFILE_START_FLOPS(profile_name, ops);
@@ -169,7 +169,7 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
     params.C.data_ptr = output.m_data;
     params.opt_params.num_thread = num_thread;
     params.scales = this->scale.m_data;
-    params.offset = this->offset.m_data;
+    // params.offset = this->offset.m_data;  // TODO: Currently, we don't need offset
     params.int32_zero_point = this->zero_point.m_data;
     params.block_size = QK;
 

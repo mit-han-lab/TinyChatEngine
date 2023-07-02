@@ -7,27 +7,41 @@
 #include "../matmul.h"
 #include "linear.h"
 
-#include <torch/torch.h>
+// #include <torch/torch.h>
 #include <cuda_runtime.h>
-#include <torch/extension.h>
+// #include <torch/extension.h>
 #include <cuda_fp16.h>
-#include <c10/cuda/CUDAGuard.h>
+// #include <c10/cuda/CUDAGuard.h>
 #include "gemm_cuda.h"
 #include "dequantize.cuh"
 
+__global__ void float2half(float* floatArray, half* halfArray, int N) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    if (index < N) {
+        halfArray[index] = __float2half(floatArray[index]);
+    }
+}
+
+__global__ void half2float(half* halfArray, float* floatArray, int N) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    if (index < N) {
+        floatArray[index] = __half2float(halfArray[index]);
+    }
+}
+
 const int threadDim = 32;
 const int TILE_SIZE = threadDim;
-
-// static bool first_run = true;
 
 __global__ void matrixMul_blockC(float *A, float *B, float *C, int A_row, int A_column, int B_column){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
 	float acc = 0;
-	for (int k = 0; k < A_column; k++)
-		acc += A[j * A_column + k] * B[k * B_column + i];
-	C[j * B_column +i] = acc;
+  if(i < B_column && j < A_row) {
+    for (int k = 0; k < A_column; k++)
+      acc += A[j * A_column + k] * B[k * B_column + i];
+    C[j * B_column +i] = acc;
+  }
 }
 
 __global__ void matrixMultiplyShared(const float *A, const float *B, float *C, int A_row, int A_column, int B_column) {
@@ -463,28 +477,251 @@ __global__ void __launch_bounds__(64) gemm_forward_4bit_cuda_m16n64k32(int G, in
 // zeros: IC // G, OC // 8 [int32] -> cast to IC // G, OC [uint4b]
 // assume that batch_size < 16 for now
 
-torch::Tensor gemm_forward_cuda(
-  torch::Tensor _in_feats,
-  torch::Tensor _kernel,
-  torch::Tensor _scaling_factors,
-  torch::Tensor _zeros,
-  int split_k_iters)
+// torch::Tensor gemm_forward_cuda_origin(
+//   torch::Tensor _in_feats,
+//   torch::Tensor _kernel,
+//   torch::Tensor _scaling_factors,
+//   torch::Tensor _zeros,
+//   int split_k_iters)
+// {
+//   int num_in_feats = _in_feats.size(0);
+//   int num_in_channels = _in_feats.size(1);
+//   const at::cuda::OptionalCUDAGuard device_guard(device_of(_in_feats));
+
+//   auto options = torch::TensorOptions().dtype(_in_feats.dtype()).device(_in_feats.device());
+//   at::Tensor _out_feats = torch::empty({split_k_iters, num_in_feats, _kernel.size(1) * 8}, options);
+//   int num_out_feats = _out_feats.size(-2);
+//   int num_out_channels = _out_feats.size(-1);
+
+//   auto in_feats = reinterpret_cast<half*>(_in_feats.data_ptr<at::Half>());
+//   auto kernel = reinterpret_cast<int*>(_kernel.data_ptr<int>());
+//   auto out_feats = reinterpret_cast<half*>(_out_feats.data_ptr<at::Half>());
+//   auto scaling_factors = reinterpret_cast<half*>(_scaling_factors.data_ptr<at::Half>());
+//   auto zeros = reinterpret_cast<int*>(_zeros.data_ptr<int>());
+//   int group_size = num_in_channels / _scaling_factors.size(0);
+
+//   // std::cout << "_kernel: " << _kernel << std::endl;
+
+//   if (num_out_channels % 64 != 0)
+//     throw std::invalid_argument("OC is not multiple of cta_N = 64");
+//   if (num_out_channels % 8 != 0)
+//     throw std::invalid_argument("OC is not multiple of pack_num = 8");
+//   if (group_size % 32 != 0)
+//     throw std::invalid_argument("Group size should be a multiple of 32");
+//   if (num_out_channels % group_size != 0)
+//     throw std::invalid_argument("OC is not multiple of Group size");
+
+//   if (num_out_channels % 128 == 0)
+//   {
+//     int j_factors1 = num_out_channels / 128 / 1;
+//     dim3 num_blocks((num_out_feats + 16 - 1) / 16 * j_factors1 * split_k_iters);
+//     // threadIdx.x: 32
+//     // threadIdx.y: i_factors[2] * j_factors[2]
+//     dim3 threads_per_block(32, 2);
+    
+//     // std::cout << "AAA group_size: " << group_size << std::endl;
+
+//     gemm_forward_4bit_cuda_m16n128k32<<<num_blocks, threads_per_block>>>(
+//         group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
+//   }
+//   else if (num_out_channels % 64 == 0)
+//   {
+//     int j_factors1 = num_out_channels / 64 / 1;
+//     dim3 num_blocks(1 * (num_out_feats + 16 - 1) / 16 * j_factors1 * split_k_iters);
+
+//     // threadIdx.x: 32
+//     // threadIdx.y: i_factors[2] * j_factors[2]
+//     dim3 threads_per_block(32, 2);
+
+//     // std::cout << "BBB group_size: " << group_size << std::endl;
+
+//     gemm_forward_4bit_cuda_m16n64k32<<<num_blocks, threads_per_block>>>(
+//         group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
+//   }
+
+//   return _out_feats.to(torch::kFloat32).sum(0);
+// }
+
+
+// in_feats: M, IC [float16]
+// kernel: IC, OC // 8 [int32] -> cast to IC, OC [uint4b]
+// scaling_factors: IC // G, OC [float16]
+// zeros: IC // G, OC // 8 [int32] -> cast to IC // G, OC [uint4b]
+// assume that batch_size < 16 for now
+
+void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
 {
-  int num_in_feats = _in_feats.size(0);
-  int num_in_channels = _in_feats.size(1);
-  const at::cuda::OptionalCUDAGuard device_guard(device_of(_in_feats));
+	const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
 
-  auto options = torch::TensorOptions().dtype(_in_feats.dtype()).device(_in_feats.device());
-  at::Tensor _out_feats = torch::empty({split_k_iters, num_in_feats, _kernel.size(1) * 8}, options);
-  int num_out_feats = _out_feats.size(-2);
-  int num_out_channels = _out_feats.size(-1);
+  int num_in_feats = A->row;
+  int num_in_channels = A->column;
+  // const at::cuda::OptionalCUDAGuard device_guard(device_of(_in_feats));
 
-  auto in_feats = reinterpret_cast<half*>(_in_feats.data_ptr<at::Half>());
-  auto kernel = reinterpret_cast<int*>(_kernel.data_ptr<int>());
-  auto out_feats = reinterpret_cast<half*>(_out_feats.data_ptr<at::Half>());
-  auto scaling_factors = reinterpret_cast<half*>(_scaling_factors.data_ptr<at::Half>());
-  auto zeros = reinterpret_cast<int*>(_zeros.data_ptr<int>());
-  int group_size = num_in_channels / _scaling_factors.size(0);
+  // auto options = torch::TensorOptions().dtype(_in_feats.dtype()).device(_in_feats.device());
+  
+  // at::Tensor _out_feats = torch::empty({split_k_iters, num_in_feats, _kernel.size(1) * 8}, options);
+  int num_out_feats = C->row;
+  int num_out_channels = C->column;
+
+  // auto in_feats = reinterpret_cast<half*>(_in_feats.data_ptr<at::Half>());
+  // auto kernel = reinterpret_cast<int*>(_kernel.data_ptr<int>());
+  // auto out_feats = reinterpret_cast<half*>(_out_feats.data_ptr<at::Half>());
+  // auto scaling_factors = reinterpret_cast<half*>(_scaling_factors.data_ptr<at::Half>());
+  // auto zeros = reinterpret_cast<int*>(_zeros.data_ptr<int>());
+  // int group_size = num_in_channels / _scaling_factors.size(0);
+
+  // auto in_feats = (half*)A->data_ptr;
+  // auto kernel = B->int32_data_ptr;
+  // auto out_feats = (half*)C->data_ptr;
+  // auto scaling_factors = (half*)params->scales;
+  // auto zeros = params->int32_zero_point;
+  // int group_size = QK;
+
+  // half* in_feats = (half*)A->data_ptr;
+  // int* kernel = B->int32_data_ptr;
+  // half* out_feats = (half*)C->data_ptr;
+  // half* scaling_factors = (half*)params->scales;
+  // int* zeros = params->int32_zero_point;
+  int group_size = QK;
+
+  half* in_feats;
+  int* kernel;
+  half* out_feats;
+  half* scaling_factors;
+  int* zeros;
+
+  // Allocate device memory
+  int A_size = A->row * A->column;
+  // printf("A_size: %d\n", A_size);
+  // printf("A->row: %d\n", A->row);
+  // printf("A->column: %d\n", A->column);
+  int C_size = C->row * C->column;
+  // printf("C_size: %d\n", C_size);
+  // printf("C->row: %d\n", C->row);
+  // printf("C->column: %d\n", C->column);
+  int sf_size = B->row / group_size * B->column * 8;
+  // printf("sf_size: %d\n", sf_size);
+  // printf("B->row: %d\n", B->row);
+  // printf("B->column: %d\n", B->column);
+
+  cudaError_t err;
+  // printf("1111111\n");
+  err = cudaMallocManaged(&in_feats, A_size * sizeof(half));
+  // printf("2222222\n");
+  if (err != cudaSuccess) {
+    printf("Error allocating memory for in_feats: %s\n", cudaGetErrorString(err));
+  }
+  // allocate_aligned_memory_gpu(in_feats, A_size * sizeof(half));
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    printf("Error allocating memory for in_feats: %s\n", cudaGetErrorString(err));
+  }
+
+  err = cudaMallocManaged(&kernel, B->row * B->column * sizeof(int));
+  if (err != cudaSuccess) {
+    printf("Error allocating memory for kernel: %s\n", cudaGetErrorString(err));
+  }
+  // allocate_aligned_memory_gpu(kernel, B->row * B->column * sizeof(int));
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    printf("Error allocating memory for kernel: %s\n", cudaGetErrorString(err));
+  }
+
+  err = cudaMallocManaged(&out_feats, split_k_iters * C_size * sizeof(half));
+  if (err != cudaSuccess) {
+    printf("Error allocating memory for out_feats: %s\n", cudaGetErrorString(err));
+  }
+  // allocate_aligned_memory_gpu(out_feats, C_size * sizeof(half));
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+      printf("Error allocating memory for out_feats: %s\n", cudaGetErrorString(err));
+      return;
+  }
+
+  err = cudaMallocManaged(&scaling_factors, sf_size * sizeof(half));
+  if (err != cudaSuccess) {
+    printf("Error allocating memory for scaling_factors: %s\n", cudaGetErrorString(err));
+  }
+  // allocate_aligned_memory_gpu(scaling_factors, sf_size * sizeof(half));
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+      printf("Error allocating memory for scaling_factors: %s\n", cudaGetErrorString(err));
+      return;
+  }
+
+  err = cudaMallocManaged(&zeros, B->row * B->column / group_size * sizeof(int));
+  if (err != cudaSuccess) {
+    printf("Error allocating memory for zeros: %s\n", cudaGetErrorString(err));
+  }
+  // allocate_aligned_memory_gpu(zeros, B->row * B->column / group_size * sizeof(int));
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+      printf("Error allocating memory for zeros: %s\n", cudaGetErrorString(err));
+      return;
+  }
+    
+  // printf("3333333\n");
+
+  // Launch the kernel
+  int blockSize = 256;
+  int numBlocks = (A_size + blockSize - 1) / blockSize;
+  // float2half<<<numBlocks, blockSize>>>(A->data_ptr, in_feats, A_size);
+  for (int i = 0; i < A_size; i++) {
+    in_feats[i] = __float2half(A->data_ptr[i]);
+  }
+  // err = cudaGetLastError();
+  // if (err != cudaSuccess) {
+  //   printf("Error launching float2half kernel for in_feats: %s\n", cudaGetErrorString(err));
+  // }
+
+  for (int i = 0; i < B->row * B->column; i++) {
+    kernel[i] = B->int32_data_ptr[i];
+  }
+
+  for (int i = 0; i < B->row * B->column / group_size; i++) {
+    zeros[i] = params->int32_zero_point[i];
+  }
+
+  // // printf("4444444\n");
+  // // numBlocks = (C_size + blockSize - 1) / blockSize;
+  // // float2half<<<numBlocks, blockSize>>>(C->data_ptr, out_feats, C_size);
+  // for (int i = 0; i < C_size; i++) {
+  //   out_feats[i] = __float2half(C->data_ptr[i]);
+  // }
+
+  // numBlocks = (sf_size + blockSize - 1) / blockSize;
+  // float2half<<<numBlocks, blockSize>>>(params->scales, scaling_factors, sf_size);
+  for (int i = 0; i < sf_size; i++) {
+    scaling_factors[i] = __float2half(params->scales[i]);
+  }
+
+  // err = cudaGetLastError();
+  // if (err != cudaSuccess) {
+  //   printf("Error launching float2half kernel for scaling_factors: %s\n", cudaGetErrorString(err));
+  // }
+
+  cudaDeviceSynchronize();
+
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    printf("Error launching cudaDeviceSynchronize kernel: %s\n", cudaGetErrorString(err));
+  }
+
+  // printf("A->data_ptr: ");
+  // for (int i = 0; i < 32; i++) {
+  //   printf("%f ", A->data_ptr[i]);
+  // }
+  // printf("\n");
+
+  // printf("in_feats: ");
+  // for (int i = 0; i < 32; i++) {
+  //   printf("%f ", __half2float(in_feats[i]));
+  // }
+  // printf("\n");
+
+  // printf("5555555\n");
+  // // Synchronize CPU and GPU before accessing managed memory
+  // cudaDeviceSynchronize();
 
   // std::cout << "_kernel: " << _kernel << std::endl;
 
@@ -497,6 +734,7 @@ torch::Tensor gemm_forward_cuda(
   if (num_out_channels % group_size != 0)
     throw std::invalid_argument("OC is not multiple of Group size");
 
+  // printf("6666666\n");
   if (num_out_channels % 128 == 0)
   {
     int j_factors1 = num_out_channels / 128 / 1;
@@ -507,8 +745,14 @@ torch::Tensor gemm_forward_cuda(
     
     // std::cout << "AAA group_size: " << group_size << std::endl;
 
+    // printf("7777777\n");
     gemm_forward_4bit_cuda_m16n128k32<<<num_blocks, threads_per_block>>>(
         group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Error during kernel launch 1: %s\n", cudaGetErrorString(err));
+    }
+    // printf("8888888\n");
   }
   else if (num_out_channels % 64 == 0)
   {
@@ -521,49 +765,88 @@ torch::Tensor gemm_forward_cuda(
 
     // std::cout << "BBB group_size: " << group_size << std::endl;
 
+    // printf("9999999\n");
     gemm_forward_4bit_cuda_m16n64k32<<<num_blocks, threads_per_block>>>(
         group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Error during kernel launch 2: %s\n", cudaGetErrorString(err));
+    }
+    // printf("1010101010\n");
   }
 
-  return _out_feats.to(torch::kFloat32).sum(0);
-}
+  // return _out_feats.to(torch::kFloat32).sum(0);
 
+  // Synchronize CPU and GPU before accessing managed memory
+  cudaDeviceSynchronize();
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    printf("Error launching cudaDeviceSynchronize 2222 kernel: %s\n", cudaGetErrorString(err));
+  }
+
+  // printf("aaaaaaaaaaa\n");
+  // numBlocks = (A_size + blockSize - 1) / blockSize;
+  // half2float<<<numBlocks, blockSize>>>(in_feats, A->data_ptr, A_size);
+
+  // printf("bbbbbbbbbbb\n");
+  numBlocks = (C_size + blockSize - 1) / blockSize;
+  // half2float<<<numBlocks, blockSize>>>(out_feats, C->data_ptr, C_size);
+  for (int i = 0; i < C_size; i++) {
+    C->data_ptr[i] = __half2float(out_feats[i]) + __half2float(out_feats[i + C_size]) + __half2float(out_feats[i + 2 * C_size]) + __half2float(out_feats[i + 3 * C_size]) +
+      __half2float(out_feats[i + 4 * C_size]) + __half2float(out_feats[i + 5 * C_size]) + __half2float(out_feats[i + 6 * C_size]) + __half2float(out_feats[i + 7 * C_size]);
+  }
+
+  // numBlocks = (sf_size + blockSize - 1) / blockSize;
+  // half2float<<<numBlocks, blockSize>>>(scaling_factors, params->scales, sf_size);
+  // printf("ccccccccccc\n");
+  // Synchronize CPU and GPU before accessing managed memory
+  cudaDeviceSynchronize();
+
+  // Free memory
+  // printf("ddddddddddd\n");
+  cudaFree(in_feats);
+  cudaFree(kernel);
+  cudaFree(out_feats);
+  cudaFree(scaling_factors);
+  cudaFree(zeros);
+  // printf("fffffffffff\n");
+}
 
 
 namespace matmul{
   void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
-		const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+		// const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
 
-    // std::cout << "mat_mul_accelerator_int4_fast -- A->row: " << A->row << " A->column: " << A->column 
-              // << "; B->row: " << B->row << " B->column: " << B->column 
-              // << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
+    // // std::cout << "mat_mul_accelerator_int4_fast -- A->row: " << A->row << " A->column: " << A->column 
+    //           // << "; B->row: " << B->row << " B->column: " << B->column 
+    //           // << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
     
+    // // torch::Tensor out_feats = gemm_forward_cuda(
+    // //     torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
+    // //     torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
+    // //     torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
+    // //     torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+    // //     8);
+    
+    // auto option_fp = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, 1);
+    // auto option_int = torch::TensorOptions().dtype(torch::kInt32).device(torch::kCUDA, 1);
+    // torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}, option_fp);
+    // torch::Tensor _kernel = torch::from_blob(B->data_ptr, {B->row, B->column}, option_int);
+    // torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / 128, B->column * 8}, option_fp);
+    // torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, option_int);
+
     // torch::Tensor out_feats = gemm_forward_cuda(
-    //     torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kHalf),
-    //     torch::from_blob(B->data_ptr, {B->row, B->column}, torch::kInt),
-    //     torch::from_blob(params->scales, {B->row / 128, B->column * 8}, torch::kHalf),
-    //     torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, torch::kInt),
+    //     _in_feats,
+    //     _kernel,
+    //     _scaling_factors,
+    //     _zeros,
     //     8);
     
-    auto option_fp = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, 1);
-    auto option_int = torch::TensorOptions().dtype(torch::kInt32).device(torch::kCUDA, 1);
-    torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}, option_fp);
-    torch::Tensor _kernel = torch::from_blob(B->data_ptr, {B->row, B->column}, option_int);
-    torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / 128, B->column * 8}, option_fp);
-    torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, option_int);
-
-    torch::Tensor out_feats = gemm_forward_cuda(
-        _in_feats,
-        _kernel,
-        _scaling_factors,
-        _zeros,
-        8);
-    
-    cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
+    // cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
   };
 
   void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
-		const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+		// const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
 
     // std::cout << "mat_mul_accelerator_int4_fast_no_offset -- A->row: " << A->row << " A->column: " << A->column 
               // << "; B->row: " << B->row << " B->column: " << B->column 
@@ -583,10 +866,13 @@ namespace matmul{
 
     // std::cout << "jcuycu" << std::endl;
     //torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}, option_fp);
-    torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kFloat32).to(torch::kCUDA).to(torch::kHalf);
+    
+    // torch::Tensor _in_feats = torch::from_blob(A->data_ptr, {A->row, A->column}, torch::kFloat32).to(torch::kCUDA).to(torch::kHalf);
+    
     // std::cout << "kchy" << std::endl;
     // torch::Tensor _kernel = torch::from_blob(B->int32_data_ptr, {B->row, B->column}, option_int);
-    torch::Tensor _kernel = torch::from_blob(B->int32_data_ptr, {B->row, B->column}, torch::kInt32).to(torch::kCUDA);
+    
+    // torch::Tensor _kernel = torch::from_blob(B->int32_data_ptr, {B->row, B->column}, torch::kInt32).to(torch::kCUDA);
 
     // for (int i = 0; i < 128; i++) {
     //   std::cout << B->int32_data_ptr[i] << " ";
@@ -596,7 +882,8 @@ namespace matmul{
 
     // std::cout << "qued" << std::endl;
     // torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / 128, B->column * 8}, option_fp);
-    torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / QK, B->column * 8}, torch::kFloat32).to(torch::kCUDA).to(torch::kHalf);
+    
+    // torch::Tensor _scaling_factors = torch::from_blob(params->scales, {B->row / QK, B->column * 8}, torch::kFloat32).to(torch::kCUDA).to(torch::kHalf);
     
     // for (int i = 0; i < 128; i++) { 
     //   std::cout << params->scales[i] << " ";
@@ -605,7 +892,8 @@ namespace matmul{
     
     // std::cout << "-cud" << std::endl;
     // torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / 128, B->column}, option_int);
-    torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / QK, B->column}, torch::kInt32).to(torch::kCUDA);
+    
+    // torch::Tensor _zeros = torch::from_blob(params->int32_zero_point, {B->row / QK, B->column}, torch::kInt32).to(torch::kCUDA);
     
     // for (int i = 0; i < 128; i++) { 
     //   std::cout << params->int32_zero_point[i] << " ";
@@ -614,14 +902,32 @@ namespace matmul{
     
     // std::cout << "msadi" << std::endl;
 
-    torch::Tensor out_feats = gemm_forward_cuda(
-        _in_feats,
-        _kernel,
-        _scaling_factors,
-        _zeros,
-        8);
+    gemm_forward_cuda(params, 8);
     
-    cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
+    // cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
+
+
+    // // Testing (Naive implementation)
+		// const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+		// assert(A->column == B->row / QK);
+		// assert(C->column == B->column / 8);
+		// assert(C->row == A->row);
+
+		// float *d_A;
+		// float *d_B;
+		// float *d_C;
+
+		// // Allocate memory
+		// cudaMalloc(&d_A, A->column*A->row*sizeof(float));
+		// cudaMalloc(&d_B, B->column*B->row*sizeof(float));
+		// cudaMalloc(&d_C, C->column*C->row*sizeof(float));
+
+		// // Copy data to GPU
+		// cudaMemcpy(d_A, A->data_ptr, A->column*A->row*sizeof(float), cudaMemcpyHostToDevice);
+		// cudaMemcpy(d_B, B->data_ptr, B->column*B->row*sizeof(float), cudaMemcpyHostToDevice);
+		// cudaMemcpy(d_C, C->data_ptr, C->column*C->row*sizeof(float), cudaMemcpyHostToDevice);
+
+    // matrixMul_block_zp<<<numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, C->column);
   };
 
 	void MatmulOperator::mat_mul_cuda(const struct matmul_params *params){
@@ -654,13 +960,14 @@ namespace matmul{
 		assert(A->row % threadDim == 0);
 		assert(B->column % threadDim == 0);
 		const dim3 threadsPerBlock(threadDim, threadDim);
-		const dim3 numBlocks(C->column / threadsPerBlock.x, C->row / threadsPerBlock.y);
+    const dim3 numBlocks((C->column + threadDim - 1) / threadsPerBlock.x, 
+                         (C->row + threadDim - 1) / threadsPerBlock.y);  // Using ceil to cover all elements
 
 		// Invoke the cuda imp.
 
 		// struct timeval start, end;
 		// gettimeofday(&start, NULL);
-		//matrixMul_blockC<<< numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
+		// matrixMul_blockC<<< numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
 		matrixMultiplyShared<<<numBlocks, threadsPerBlock>>>(d_A, d_B, d_C, A->row, A->column, B->column);
 		cudaDeviceSynchronize();
 		// gettimeofday(&end, NULL);

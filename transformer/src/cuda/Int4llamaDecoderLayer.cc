@@ -117,14 +117,14 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
 
     this->attn = Int4llamaAttention(param_path + "/self_attn", config);
 
-    int32_t *gate_proj_weight, *down_proj_weight, *up_proj_weight;
-    allocate_aligned_memory(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int32_t)) / 8);
-    allocate_aligned_memory(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int32_t)) / 8);
-    allocate_aligned_memory(up_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int32_t)) / 8);
-    this->gate_proj = Linear_FP_int4(Matrix3D<int32_t>(gate_proj_weight, 1, config.hidden_dim / 8, config.embed_dim),
+    int *gate_proj_weight, *down_proj_weight, *up_proj_weight;
+    allocate_aligned_memory_gpu(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
+    allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8);
+    allocate_aligned_memory_gpu(up_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
+    this->gate_proj = Linear_FP_int4(Matrix3D<int>(gate_proj_weight, 1, config.hidden_dim / 8, config.embed_dim),
                                      (param_path + "/gate_proj"));
-    this->down_proj = Linear_FP_int4(Matrix3D<int32_t>(down_proj_weight, 1, config.embed_dim / 8, config.hidden_dim),
+    this->down_proj = Linear_FP_int4(Matrix3D<int>(down_proj_weight, 1, config.embed_dim / 8, config.hidden_dim),
                                      (param_path + "/down_proj"));
-    this->up_proj = Linear_FP_int4(Matrix3D<int32_t>(up_proj_weight, 1, config.hidden_dim / 8, config.embed_dim),
+    this->up_proj = Linear_FP_int4(Matrix3D<int>(up_proj_weight, 1, config.hidden_dim / 8, config.embed_dim),
                                    (param_path + "/up_proj"));
 }

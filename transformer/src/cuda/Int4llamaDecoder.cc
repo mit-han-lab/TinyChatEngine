@@ -25,10 +25,10 @@ Matrix3D<float> Int4llamaDecoder::prepare_decoder_attention_mask(int length, int
 }
 
 Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_config config) {
-    allocate_aligned_memory(attention_mask_buf, config.max_sqlen * config.max_sqlen * sizeof(float));
-    allocate_aligned_memory(pos_embeds_buf, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory(hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory_gpu(attention_mask_buf, config.max_sqlen * config.max_sqlen * sizeof(float));
+    allocate_aligned_memory_gpu(pos_embeds_buf, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory_gpu(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory_gpu(hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
 
     this->voc_size = config.vocsize;
     this->embed_dim = config.embed_dim;

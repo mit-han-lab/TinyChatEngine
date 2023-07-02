@@ -9,6 +9,18 @@
 #include <cstring>  // for strerror
 #include <iostream>
 
+#include <cuda.h>  // for CUDA_VERSION
+#include <cuda_fp16.h>  // for CUDA_VERSION
+
+#define CHECK_CUDA(call) \
+    do { \
+        cudaError_t err = call; \
+        if(err != cudaSuccess) { \
+            throw std::runtime_error(std::string("CUDA error calling \"") + #call + "\", code is " + std::to_string(err)); \
+        } \
+    } while(0)
+
+
 // To be deprecated soon
 template <typename T>
 void read_to_array(const char* path, T* array, int size) {
@@ -188,6 +200,12 @@ void allocate_aligned_memory(T*& ptr, size_t size) {
     }
 }
 
+template <typename T>
+void allocate_aligned_memory_gpu(T*& ptr, size_t size) {
+    // Allocate unified memory
+    CHECK_CUDA(cudaMallocManaged((void**)&ptr, size));
+}
+
 // Explicitly instantiate the generic template function for other types (if needed)
 template bool check_two_equal<float>(float* array, float* array2, int size);
 template void read_to_array<float>(const char* path, float* array, int size);
@@ -198,3 +216,8 @@ template void allocate_aligned_memory(float*& ptr, size_t size);
 template void allocate_aligned_memory(int*& ptr, size_t size);
 template void allocate_aligned_memory(int8_t*& ptr, size_t size);
 template void allocate_aligned_memory(uint8_t*& ptr, size_t size);
+template void allocate_aligned_memory_gpu(float*& ptr, size_t size);
+template void allocate_aligned_memory_gpu(int*& ptr, size_t size);
+template void allocate_aligned_memory_gpu(int8_t*& ptr, size_t size);
+template void allocate_aligned_memory_gpu(uint8_t*& ptr, size_t size);
+template void allocate_aligned_memory_gpu(half*& ptr, size_t size);
