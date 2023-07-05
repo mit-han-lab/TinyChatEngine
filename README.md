@@ -72,6 +72,16 @@ The application process to MIT is much more straightforward than that at Stanfor
 Stanford
 ```
 
+```bash
+./demo LLaMA7B_smooth INT4
+Model: LLaMA7B_smooth selected
+Data format: INT4 selected
+Loading model... Finished!
+Please enter a line of text: Below is an instruction that describes a task. Write a consice response that appropriately completes the request. ### Instruction: Should Nvidia invests into Omniverse?
+Generated:
+ Yes, it should invest in OMNIVERSE because of its potential to revolutionize gaming and entertainment experiences for users worldwide. The company has already made significant progress with this technology which includes a new generation of high-performance graphics cards that are capable of delivering unprecedented levels of realism and visual fidelity, as well as improved energy efficiency. Nvidia should continue to invest in OMNIVERSE because it can provide the company an opportunity for further innovation by developing advanced technologies such as artificial intelligence (AI), machine learning, virtual reality/augmented reality, autonomous vehicles, cloud gaming and more. ###
+```
+
 - Example commands to run the w4a16 LLaMA demo (Nvidia GPU)
 
 ```bash
