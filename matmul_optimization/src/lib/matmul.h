@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <sys/time.h>
+#include <cuda_fp16.h>
 
 // TODO: deprecate this
 #define MAX_TRANSPOSE_BUFFER 2048 * 2048
@@ -37,6 +38,7 @@ struct matmul_params {
     float alpha, beta;
     // for int4
     float *scales, *offset, *zero_point;
+    half *scales_fp16;
     int *int32_zero_point;
     int block_size;
 };

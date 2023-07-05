@@ -20,7 +20,7 @@
 
 assets/
 *.bin
-!ggml-vocab.bin
+!models/ggml-vocab.bin
 *.zip
 *.txt
 *.json

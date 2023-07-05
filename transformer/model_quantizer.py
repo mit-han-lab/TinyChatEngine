@@ -85,6 +85,22 @@ def quantize_row_q4_0(input_path, k, data_type, cuda_is_available, input_channel
 
         # Store scaling_factors in row major for CUDA (scaling_factors: IC // G, OC [float16])
         d = d.reshape(-1).reshape(output_channel, input_channel // qk).transpose()
+        # unreorder_d = d.reshape(-1).reshape(output_channel, input_channel // qk).transpose()
+
+        # # for j in range(0, output_channel, 8):
+        # #     d[:, j] = unreorder_d[:, j]
+        # #     d[:, j + 1] = unreorder_d[:, j + 2]
+        # #     d[:, j + 2] = unreorder_d[:, j + 4]
+        # #     d[:, j + 3] = unreorder_d[:, j + 6]
+        # #     d[:, j + 4] = unreorder_d[:, j + 1]
+        # #     d[:, j + 5] = unreorder_d[:, j + 3]
+        # #     d[:, j + 6] = unreorder_d[:, j + 5]
+        # #     d[:, j + 7] = unreorder_d[:, j + 7]
+        # indices = np.arange(output_channel)
+        # indices = (indices // 8 * 8) + np.array([0, 2, 4, 6, 1, 3, 5, 7])[indices % 8]
+        # d = unreorder_d[:, indices]
+
+        # print(f"ddddd: {d[0, :32]}")
 
         # Store zero_points in row major for CUDA (zeros: IC // G, OC // 8 [int32])
         # print(f"zp_before: {zp}")
@@ -165,8 +181,8 @@ def write_weight_to_file(prefix: str, qs, d, m, zp, is_lm_head=False, cuda_is_av
     # Convert to bytes
     if cuda_is_available:
         qs_data = np.asarray(qs, dtype=np.int32).tobytes()
-        d_data = np.asarray(d, dtype=np.float32).tobytes() # Need to ne converted to fp16 in CUDA
-        m_data = np.asarray(m, dtype=np.float32).tobytes() # TODO: Currently, we don't use offsets for CUDA so this is redundant
+        d_data = np.asarray(d, dtype=np.float16).tobytes() # Need to ne converted to fp16 in CUDA
+        m_data = np.asarray(m, dtype=np.float16).tobytes() # TODO: Currently, we don't use offsets for CUDA so this is redundant
         zp_data = np.asarray(zp, dtype=np.int32).tobytes()
     else:
         qs_data = np.asarray(qs, dtype=np.uint8).tobytes()
@@ -942,4 +958,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # test()
+    #test()

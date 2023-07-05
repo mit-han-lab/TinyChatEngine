@@ -6,9 +6,9 @@
 #include "utils.h"
 
 Int4LlamaForCausalLM::Int4LlamaForCausalLM(std::string param_path, const struct model_config config) {
-    allocate_aligned_memory(logits_output, config.max_sqlen * config.vocsize * sizeof(float));
+    allocate_aligned_memory_gpu(logits_output, config.max_sqlen * config.vocsize * sizeof(float));
     allocate_aligned_memory_gpu(lm_head_weight, (config.embed_dim * config.vocsize * sizeof(int)) / 8);
-    //allocate_aligned_memory(lm_head_weight, config.embed_dim * config.vocsize * sizeof(float));
+    //allocate_aligned_memory_gpu(lm_head_weight, config.embed_dim * config.vocsize * sizeof(float));
 
     this->decoder = Int4llamaDecoder(param_path + "/decoder", config);
     this->lm_head = Linear_FP_int4(Matrix3D<int>(lm_head_weight, 1, config.vocsize / 8, config.embed_dim),

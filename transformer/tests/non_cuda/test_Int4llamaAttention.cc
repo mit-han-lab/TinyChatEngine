@@ -1,7 +1,7 @@
 #include "Int4llamaAttention.h"
 #include "operators.h"
 #include "utils.h"
-#include "utils_memalloc.h"
+#include "../utils_memalloc.h"
 
 void test_Int4llamaAttention() {
     const struct model_config llama7B = llama_7B;

@@ -4,7 +4,7 @@
 #include "Int4LlamaForCausalLM.h"
 #include "operators.h"
 #include "utils.h"
-#include "utils_memalloc.h"
+#include "../utils_memalloc.h"
 
 void test_Int4LlamaForCausalLM() {
     struct model_config config = get_opt_model_config(LLaMA_7B);

@@ -3,7 +3,7 @@
 #include "Int4llamaDecoder.h"
 #include "operators.h"
 #include "utils.h"
-#include "utils_memalloc.h"
+#include "../utils_memalloc.h"
 
 void test_Decoder() {
     const struct model_config llama7B = llama_7B;

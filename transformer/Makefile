@@ -24,7 +24,7 @@ $(info CUDA is available!)
 #	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread" -D_GLIBCXX_USE_CXX11_ABI=1
 	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread"
 	CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu) $(wildcard $(LIB_DIR)/lib/cuda/*.cc)
-	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cc) $(wildcard src/ops/cuda/*.cu) 
+	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cu) $(wildcard src/cuda/*.cc) $(wildcard src/ops/cuda/*.cu) 
 	INCLUDE_DIRS += -I./include/cuda
 	IS_CUDA = cuda
 else
@@ -132,17 +132,41 @@ test_Fp32llamaDecoder:
 test_Fp32LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
+ifdef CUDA_AVAILABLE
 test_Int4llamaAttention:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/test_Int4llamaAttention.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/cuda/test_Int4llamaAttention.cu $(SRC) $(LDFLAGS)
+
+# TODO: Need to fix the following test to cuda version
+test_Int4llamaDecoderLayer:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/non_cuda/test_Int4llamaDecoderLayer.cc $(SRC) $(LDFLAGS)
+
+# TODO: Need to fix the following test to cuda version
+test_Int4llamaDecoder:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/non_cuda/test_Int4llamaDecoder.cc $(SRC) $(LDFLAGS)
+
+# TODO: Need to fix the following test to cuda version
+test_Int4LlamaForCausalLM:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/non_cuda/test_Int4LlamaForCausalLM.cc $(SRC) $(LDFLAGS)
+
+# TODO: Need to fix the following test to cuda version
+profile_Int4LlamaForCausalLM:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/cuda/test_Int4LlamaForCausalLM.cu $(SRC) $(LIB) $(LDFLAGS)
+else
+test_Int4llamaAttention:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/non_cuda/test_Int4llamaAttention.cc $(SRC) $(LDFLAGS)
 
 test_Int4llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/test_Int4llamaDecoderLayer.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/non_cuda/test_Int4llamaDecoderLayer.cc $(SRC) $(LDFLAGS)
 
 test_Int4llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/test_Int4llamaDecoder.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/non_cuda/test_Int4llamaDecoder.cc $(SRC) $(LDFLAGS)
 
 test_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/non_cuda/test_Int4LlamaForCausalLM.cc $(SRC) $(LDFLAGS)
+
+profile_Int4LlamaForCausalLM:
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/non_cuda/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
+endif
 
 demo:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o demo application/demo.cc $(SRC) $(LIB) $(LDFLAGS)
@@ -152,9 +176,6 @@ profile_OPTForCausalLM:
 
 profile_Fp32LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
-
-profile_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/test_Int4LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 profile_ops:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/$(IS_CUDA)/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
