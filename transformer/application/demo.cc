@@ -84,6 +84,8 @@ int main(int argc, char* argv[]) {
         struct opt_params generation_config;
         generation_config.n_predict = 256;
         generation_config.n_vocab = 32000;
+        generation_config.temp = 0.1f;
+        generation_config.repeat_penalty = 1.25f;
 
         if (format_id == FP32) {
             Fp32LlamaForCausalLM model = Fp32LlamaForCausalLM(m_path, get_opt_model_config(model_id));
