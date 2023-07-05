@@ -4,17 +4,16 @@
 #include "OPTGenerate.h"
 
 std::map<std::string, int> model_config = {
-    {"OPT125M", OPT_125M},
-    {"OPT1.3B", OPT_1_3B},
-    {"OPT6.7B", OPT_6_7B},
-    {"LLaMA7B", LLaMA_7B},
+    {"OPT125M", OPT_125M}, {"OPT1.3B", OPT_1_3B},        {"OPT6.7B", OPT_6_7B},
+    {"LLaMA7B", LLaMA_7B}, {"LLaMA7B_smooth", LLaMA_7B},
 };
 
-std::map<int, std::string> model_path = {
-    {OPT_125M, "models/OPT_125m"},
-    {OPT_1_3B, "models/OPT_1.3B"},
-    {OPT_6_7B, "models/OPT_6.7B"},
-    {LLaMA_7B, "models/LLaMA_7B"},
+std::map<std::string, std::string> model_path = {
+    {"OPT125M", "models/OPT_125m"},
+    {"OPT1.3B", "models/OPT_1.3B"},
+    {"OPT6.7B", "models/OPT_6.7B"},
+    {"LLaMA7B", "models/LLaMA_7B"},
+    {"LLaMA7B_smooth", "models/LLaMA_7B_smooth_lift"},
 };
 
 std::map<std::string, int> data_format_list = {
@@ -22,6 +21,15 @@ std::map<std::string, int> data_format_list = {
     {"INT8", INT8},
     {"INT4", INT4},
 };
+
+bool isLLaMA7B(std::string s) {
+    std::string LLaMA_prefix = "LLaMA7B";
+
+    if (s.substr(0, LLaMA_prefix.size()) == LLaMA_prefix)
+        return true;
+    else
+        return false;
+}
 
 int main(int argc, char* argv[]) {
     std::string target_model = "LLaMA7B";
@@ -65,13 +73,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (target_model == "LLaMA7B") {
+    if (isLLaMA7B(target_model)) {
         int format_id = data_format_list[target_data_format];
 
         // Load model
         std::cout << "Loading model... " << std::flush;
         int model_id = model_config[target_model];
-        std::string m_path = model_path[model_id];
+        std::string m_path = model_path[target_model];
 
         struct opt_params generation_config;
         generation_config.n_predict = 256;
@@ -105,7 +113,7 @@ int main(int argc, char* argv[]) {
         // Load model
         std::cout << "Loading model... " << std::flush;
         int model_id = model_config[target_model];
-        std::string m_path = model_path[model_id];
+        std::string m_path = model_path[target_model];
         OPTForCausalLM model = OPTForCausalLM(m_path, get_opt_model_config(model_id));
         std::cout << "Finished!" << std::endl;
 

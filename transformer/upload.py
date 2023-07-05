@@ -1,10 +1,21 @@
+"""Uploading models and asset to the dropbox storage.
+
+Example commandline:
+   python upload.py <dropbox app token>
+"""
 import argparse
 import os
 
 import dropbox
 
+files_to_upload = [
+    "assets.zip",
+    "models.zip",
+]
+
 
 def subebackups(file_path, target_path, token):
+    """Upload a file to the dropbox storage."""
     dbx = dropbox.Dropbox(token, timeout=36000)
     file_size = os.path.getsize(file_path)
     CHUNK_SIZE = 50 * 1024 * 1024
@@ -34,5 +45,8 @@ if __name__ == "__main__":
     parser.add_argument("token", help="Your Dropbox OAuth2 token.")
     args = parser.parse_args()
 
-    subebackups("assets.zip", "/MIT/transformer_assets/assets.zip", args.token)
-    subebackups("models.zip", "/MIT/transformer_assets/models.zip", args.token)
+    db_prefix = "/MIT/transformer_assets/"
+    local_prefix = "uploads"
+
+    for file in files_to_upload:
+        subebackups(file, db_prefix + file, args.token)
