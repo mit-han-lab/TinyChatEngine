@@ -1,5 +1,5 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef COMMON_CUDA_H
+#define COMMON_CUDA_H
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -7,36 +7,35 @@
 
 #include "model.h"
 
-#define DEBUG false
+#include <cuda.h>
+#include <cuda_fp16.h>
+#include <cuda_runtime.h>
 
-#define DEBUG_INS(x) \
-    if (DEBUG) x
 
 template <typename T>
-class Matrix3D {
+class Matrix3D_cuda {
    public:
-    Matrix3D(T *data, int dim_x, int dim_y, int dim_z) : m_data(data), m_dim_x(dim_x), m_dim_y(dim_y), m_dim_z(dim_z) {}
-    // Matrix3D(const Matrix3D_cuda<T>& other) : m_data(other.m_data), m_dim_x(other.m_dim_x), m_dim_y(other.m_dim_y), m_dim_z(other.m_dim_z) {}
+    Matrix3D_cuda(T *data, int dim_x, int dim_y, int dim_z) : m_data(data), m_dim_x(dim_x), m_dim_y(dim_y), m_dim_z(dim_z) {}
 
-    T &operator()(int x, int y, int z) {
-        if (x < 0 || x >= m_dim_x || y < 0 || y >= m_dim_y || z < 0 || z >= m_dim_z) {
-            printf("%d, %d, %d\n", x, y, z);
-            printf("%d, %d, %d\n", m_dim_x, m_dim_y, m_dim_z);
-            throw std::out_of_range("Matrix3D: Indices out of range.");
-        }
+    __host__ __device__ T &operator()(int x, int y, int z) {
+        // if (x < 0 || x >= m_dim_x || y < 0 || y >= m_dim_y || z < 0 || z >= m_dim_z) {
+        //     printf("%d, %d, %d\n", x, y, z);
+        //     printf("%d, %d, %d\n", m_dim_x, m_dim_y, m_dim_z);
+        //     throw std::out_of_range("Matrix3D: Indices out of range.");
+        // }
         return m_data[x * m_dim_y * m_dim_z + y * m_dim_z + z];
     }
 
-    const T &operator()(int x, int y, int z) const {
-        if (x < 0 || x >= m_dim_x || y < 0 || y >= m_dim_y || z < 0 || z >= m_dim_z) {
-            printf("%d, %d, %d\n", x, y, z);
-            printf("%d, %d, %d\n", m_dim_x, m_dim_y, m_dim_z);
-            throw std::out_of_range("Matrix3D: Indices out of range.");
-        }
+    __host__ __device__ const T &operator()(int x, int y, int z) const {
+        // if (x < 0 || x >= m_dim_x || y < 0 || y >= m_dim_y || z < 0 || z >= m_dim_z) {
+        //     printf("%d, %d, %d\n", x, y, z);
+        //     printf("%d, %d, %d\n", m_dim_x, m_dim_y, m_dim_z);
+        //     throw std::out_of_range("Matrix3D: Indices out of range.");
+        // }
         return m_data[x * m_dim_y * m_dim_z + y * m_dim_z + z];
     }
 
-    bool operator==(const Matrix3D<T> &other) const {
+    bool operator==(const Matrix3D_cuda<T> &other) const {
         if (m_dim_x != other.m_dim_x || m_dim_y != other.m_dim_y || m_dim_z != other.m_dim_z) {
             return false;
         }
@@ -92,12 +91,7 @@ class Matrix3D {
     T *m_data;
 
     // Default constructor
-    Matrix3D() { m_data = NULL; }
+    Matrix3D_cuda() { m_data = NULL; }
 };
 
-static inline void debug_info(std::string s) {
-#ifdef DEBUG
-    std::cout << s << std::endl;
-#endif
-}
 #endif

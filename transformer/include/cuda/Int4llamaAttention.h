@@ -1,6 +1,8 @@
 #include <utility>
 
 #include "common.h"
+#include "common_cuda.h"
+#include "linear_cuda.h"
 #include "operators.h"
 
 struct Int4llamaAttention_output {
@@ -38,8 +40,10 @@ class Int4llamaAttention {
    private:
     void unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen);
     void shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen);
+    // void shape_half(Matrix3D<half> unshape, Matrix3D<float> shaped, int sqlen);
     int embed_dim, num_heads, head_dim;
-    Linear_FP_int4 k_proj, v_proj, q_proj, o_proj;
+    Linear_FP_int4 k_proj, v_proj, o_proj;
+    Linear_half_int4 q_proj;
     RotaryPosEmb rotary_pos_emb;
     BMM_F32T qk_bmm, pv_bmm;
     std::string profile_name = "Int4llamaAttention";

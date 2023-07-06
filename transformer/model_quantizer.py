@@ -82,11 +82,12 @@ def quantize_row_q4_0(input_path, k, data_type, cuda_is_available, input_channel
         # Store weights in row major for CUDA (kernel: IC, OC // 8 [int32])
         for idx in range(output_channel // 8):
             qs[:, idx] = qs[:, idx] | xi[:, idx * 8] | (xi[:, idx * 8 + 1] << 4) | (xi[:, idx * 8 + 2] << 8) | (xi[:, idx * 8 + 3] << 12) | (xi[:, idx * 8 + 4] << 16) | (xi[:, idx * 8 + 5] << 20) | (xi[:, idx * 8 + 6] << 24) | (xi[:, idx * 8 + 7] << 28)
+            # qs[:, idx] = qs[:, idx] | xi[:, idx * 8] | (xi[:, idx * 8 + 1] << 8) | (xi[:, idx * 8 + 2] << 16) | (xi[:, idx * 8 + 3] << 24) | (xi[:, idx * 8 + 4] << 4) | (xi[:, idx * 8 + 5] << 12) | (xi[:, idx * 8 + 6] << 20) | (xi[:, idx * 8 + 7] << 28)
 
         # Store scaling_factors in row major for CUDA (scaling_factors: IC // G, OC [float16])
         d = d.reshape(-1).reshape(output_channel, input_channel // qk).transpose()
+        
         # unreorder_d = d.reshape(-1).reshape(output_channel, input_channel // qk).transpose()
-
         # # for j in range(0, output_channel, 8):
         # #     d[:, j] = unreorder_d[:, j]
         # #     d[:, j + 1] = unreorder_d[:, j + 2]

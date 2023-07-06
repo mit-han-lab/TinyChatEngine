@@ -19,6 +19,7 @@ struct matrix {
     int row;
     int column;
     float *data_ptr;
+    half *fp16_data_ptr;
     int *int32_data_ptr;
     int8_t *int8_data_ptr;
     uint8_t *uint8_data_ptr;
@@ -89,6 +90,7 @@ class MatmulOperator {
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda
     void mat_mul_cuda(const struct matmul_params *params);
+    void gemm_forward_cuda_half(const struct matmul_params *params, int split_k_iters);
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);
