@@ -4,9 +4,8 @@
 #include "OPTGenerate.h"
 
 std::map<std::string, int> model_config = {
-    {"OPT125M", OPT_125M}, {"OPT1.3B", OPT_1_3B},        {"OPT6.7B", OPT_6_7B},
-    {"LLaMA7B", LLaMA_7B}, {"LLaMA7B_smooth", LLaMA_7B},
-};
+    {"OPT125M", OPT_125M},        {"OPT1.3B", OPT_1_3B},     {"OPT6.7B", OPT_6_7B},           {"LLaMA7B", LLaMA_7B},
+    {"LLaMA7B_smooth", LLaMA_7B}, {"LLaMA7B_AWQ", LLaMA_7B}, {"LLaMA7B_Vicuna_AWQ", LLaMA_7B}};
 
 std::map<std::string, std::string> model_path = {
     {"OPT125M", "models/OPT_125m"},
@@ -14,6 +13,8 @@ std::map<std::string, std::string> model_path = {
     {"OPT6.7B", "models/OPT_6.7B"},
     {"LLaMA7B", "models/LLaMA_7B"},
     {"LLaMA7B_smooth", "models/LLaMA_7B_smooth_lift"},
+    {"LLaMA7B_AWQ", "models/LLaMA_7B_AWQ"},
+    {"LLaMA7B_Vicuna_AWQ", "models/LLaMA_7B_Vicuna_AWQ"},
 };
 
 std::map<std::string, int> data_format_list = {
@@ -32,8 +33,8 @@ bool isLLaMA7B(std::string s) {
 }
 
 int main(int argc, char* argv[]) {
-    std::string target_model = "LLaMA7B";
-    std::string target_data_format = "FP32";
+    std::string target_model = "LLaMA7B_Vicuna_AWQ";
+    std::string target_data_format = "INT4";
 
     if (argc == 3) {
         auto target_str = argv[1];
@@ -62,7 +63,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Data format: " << argv[2] << " selected" << std::endl;
         target_data_format = argv[2];
     } else {
-        if (target_model == "LLaMA7B") {
+        if (isLLaMA7B(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
             std::cout << "Using LLaMA's default data format: " + target_data_format << std::endl;
         } else {  // OPT
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
         std::string m_path = model_path[target_model];
 
         struct opt_params generation_config;
-        generation_config.n_predict = 256;
+        generation_config.n_predict = 512;
         generation_config.n_vocab = 32000;
         generation_config.temp = 0.1f;
         generation_config.repeat_penalty = 1.25f;
@@ -102,11 +103,16 @@ int main(int argc, char* argv[]) {
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user
+            // while(true){
             std::cout << "Please enter a line of text: ";
             std::string input;
             std::getline(std::cin, input);
+            // input = "Below is an instruction that describes a task. Write a response that appropriately completes the
+            // request. ### Instruction: " + input; input += "### Response: ";
+            input = "A chat between a human and an assistant.\n\n### Human:\n" + input + "\n### Assistant:";
 
             Int4LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
+            // }
         } else {
             std::cout << std::endl;
             std::cerr << "At this time, we only support FP32 and INT4 for LLaMA7B." << std::endl;

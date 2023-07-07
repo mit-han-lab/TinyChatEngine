@@ -570,7 +570,7 @@ std::vector<int> Fp32LLaMAGenerate(Fp32LlamaForCausalLM model, std::string text,
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
 
-        if (id == 2 || id == 1) break;  // eos and bos
+        if (id == 2) break;  // eos
         if (interactive) std::cout << llama_id_to_token(vocab, id) << std::flush;
 
         --n_remain;
@@ -617,7 +617,7 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
     std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
     while (n_remain != 0) {
-        STATS_START("Token generation");
+        if (has_past_kv) STATS_START("Token generation");
         std::vector<float> logits(generation_config.n_vocab);
 
         int sqlen = 1;
@@ -634,7 +634,6 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
         }
         past_keys = model_output.past_keys;
         past_values = model_output.past_values;
-        has_past_kv = true;
         // memcpy model_ouput.logits[-1] to logits
         memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab],
                generation_config.n_vocab * sizeof(float));
@@ -696,17 +695,22 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
             }
         }
 
+        // printf("(%d)",id);
+        if (id == 2) {
+            break;
+        }  // eos
+
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
         embd.push_back(id);
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
 
-        if (id == 2 || id == 1) break;  // eos and bos
         if (interactive) std::cout << llama_id_to_token(vocab, id) << std::flush;
 
         --n_remain;
-        STATS_END("Token generation");
+        if (has_past_kv) STATS_END("Token generation");
+        has_past_kv = true;
     }
 
     if (interactive) std::cout << std::endl;
