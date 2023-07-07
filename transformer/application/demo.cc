@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
         struct opt_params generation_config;
         generation_config.n_predict = 512;
         generation_config.n_vocab = 32000;
-        // generation_config.temp = 0.05f;
+        generation_config.temp = 0.1f;
         generation_config.repeat_penalty = 1.25f;
 
         if (format_id == FP32) {
@@ -103,17 +103,17 @@ int main(int argc, char* argv[]) {
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user
-            // while(true){
-            std::cout << "Please enter a line of text: ";
-            std::string input;
-            std::getline(std::cin, input);
-            // input = "Below is an instruction that describes a task. Write a response that appropriately completes the
-            // request. ### Instruction: " + input; input += "### Response: ";
-            input =
-                "A chat between a human and an assistant in English.\n\n### Human: " + input + "\n### Assistant: \n";
+            while (true) {
+                std::cout << "Please enter a line of text: ";
+                std::string input;
+                std::getline(std::cin, input);
+                // input = "Below is an instruction that describes a task. Write a response that appropriately completes
+                // the request. ### Instruction: " + input; input += "### Response: ";
+                input = "A chat between a human and an assistant in English.\n\n### Human: " + input +
+                        "\n### Assistant: \n";
 
-            Int4LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
-            // }
+                Int4LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
+            }
         } else {
             std::cout << std::endl;
             std::cerr << "At this time, we only support FP32 and INT4 for LLaMA7B." << std::endl;

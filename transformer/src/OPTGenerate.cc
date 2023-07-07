@@ -616,7 +616,8 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
     bool has_past_kv = false;
     std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
-    while (n_remain != 0) {
+    int break_cnt = 2;
+    while (n_remain != 0 && break_cnt) {
         if (has_past_kv) STATS_START("Token generation");
         std::vector<float> logits(generation_config.n_vocab);
 
@@ -697,10 +698,12 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
 
         // printf("(%d)",id);
         if (id == 2) {
-            break;
+            break_cnt--;
+            continue;
         }  // eos
         else if (id == 1)
             continue;
+        break_cnt = 2;
 
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
