@@ -699,6 +699,8 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
         if (id == 2) {
             break;
         }  // eos
+        else if (id == 1)
+            continue;
 
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
