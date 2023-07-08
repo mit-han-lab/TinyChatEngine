@@ -26,6 +26,7 @@ assets/
 *.json
 test_*
 !test_*.cc
+!test_*.cu
 demo
 profile_*
 !profile_*.cc
