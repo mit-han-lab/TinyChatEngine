@@ -589,7 +589,7 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
   // half* in_feats = (half*)A->data_ptr;
   int* kernel = B->int32_data_ptr;
   // half* out_feats = (half*)C->data_ptr;
-  half* scaling_factors = params->scales_fp16;
+  half* scaling_factors = params->half_scales;
   int* zeros = params->int32_zero_point;
   int group_size = QK;
 
@@ -742,13 +742,13 @@ namespace matmul{
     // half* in_feats = (half*)A->data_ptr;
     int* kernel = B->int32_data_ptr;
     // half* out_feats = (half*)C->data_ptr;
-    half* scaling_factors = params->scales_fp16;
+    half* scaling_factors = params->half_scales;
     int* zeros = params->int32_zero_point;
     int group_size = QK;
 
     half* in_feats;
     // int* kernel;
-    half* out_feats = C->fp16_data_ptr;
+    half* out_feats = C->half_data_ptr;
     // half* scaling_factors;
     // int* zeros;
 
@@ -826,6 +826,103 @@ namespace matmul{
     // cudaFree(out_feats);
     PROFILE_END("cudaFree");
   }
+
+  void MatmulOperator::gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters)
+  {
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+
+    int num_in_feats = A->row;
+    int num_in_channels = A->column;
+    int num_out_feats = C->row;
+    int num_out_channels = C->column;
+
+    half* in_feats = reinterpret_cast<half*>(A->half_data_ptr);
+    int* kernel = reinterpret_cast<int*>(B->int32_data_ptr);
+    half* out_feats = reinterpret_cast<half*>(C->half_data_ptr);
+    half* scaling_factors = reinterpret_cast<half*>(params->half_scales);
+    int* zeros = reinterpret_cast<int*>(params->int32_zero_point);
+    int group_size = QK;
+
+    // // Allocate device memory
+    // int A_size = A->row * A->column;
+    // // printf("A_size: %d\n", A_size);
+    // // printf("A->row: %d\n", A->row);
+    // // printf("A->column: %d\n", A->column);
+    // int C_size = C->row * C->column;
+    // // printf("C_size: %d\n", C_size);
+    // // printf("C->row: %d\n", C->row);
+    // // printf("C->column: %d\n", C->column);
+    // int sf_size = B->row / group_size * B->column * 8;
+    // // printf("sf_size: %d\n", sf_size);
+    // // printf("B->row: %d\n", B->row);
+    // // printf("B->column: %d\n", B->column);
+
+    // cudaError_t err;
+    // err = cudaMallocManaged(&in_feats, A_size * sizeof(half));
+    // err = cudaMallocManaged(&out_feats, split_k_iters * C_size * sizeof(half));
+
+    // Launch the kernel
+    // int blockSize = 256;
+    // int numBlocks = (A_size + blockSize - 1) / blockSize;
+
+    // PROFILE_START("float2half::in_feats");
+    // float2half<<<numBlocks, blockSize>>>(A->data_ptr, in_feats, A_size);
+    // PROFILE_END("float2half::in_feats");
+
+    if (num_out_channels % 64 != 0)
+      throw std::invalid_argument("OC is not multiple of cta_N = 64");
+    if (num_out_channels % 8 != 0)
+      throw std::invalid_argument("OC is not multiple of pack_num = 8");
+    if (group_size % 32 != 0)
+      throw std::invalid_argument("Group size should be a multiple of 32");
+    if (num_out_channels % group_size != 0)
+      throw std::invalid_argument("OC is not multiple of Group size");
+
+    PROFILE_START("gemm_forward_4bit_cuda_m16n128k32");
+    if (num_out_channels % 128 == 0)
+    {
+      int j_factors1 = num_out_channels / 128 / 1;
+      // dim3 num_blocks((num_out_feats + 16 - 1) / 16 * j_factors1 * split_k_iters);
+      dim3 num_blocks((num_out_feats + 16 - 1) / 16 * j_factors1 * split_k_iters);
+      // threadIdx.x: 32
+      // threadIdx.y: i_factors[2] * j_factors[2]
+      dim3 threads_per_block(32, 2);
+      
+      gemm_forward_4bit_cuda_m16n128k32<<<num_blocks, threads_per_block>>>(
+          group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
+    }
+    else if (num_out_channels % 64 == 0)
+    {
+      int j_factors1 = num_out_channels / 64 / 1;
+      dim3 num_blocks(1 * (num_out_feats + 16 - 1) / 16 * j_factors1 * split_k_iters);
+
+      // threadIdx.x: 32
+      // threadIdx.y: i_factors[2] * j_factors[2]
+      dim3 threads_per_block(32, 2);
+
+      gemm_forward_4bit_cuda_m16n64k32<<<num_blocks, threads_per_block>>>(
+          group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
+    }
+    PROFILE_END("gemm_forward_4bit_cuda_m16n128k32");
+
+    // cudaDeviceSynchronize();
+    // for (int i = 0; i < 100; i++) {
+    //   // out_feats[i] = __float2half(1.0);
+    //   printf("out_feats[%d]: %f\n", i, __half2float(out_feats[i]));
+    // }
+
+    // numBlocks = (C_size + blockSize - 1) / blockSize;
+    // PROFILE_START("half2float_merge_k_iters");
+    // half2float_merge_k_iters<<<numBlocks, blockSize>>>(out_feats, C->data_ptr, C_size, split_k_iters);
+    // PROFILE_END("half2float_merge_k_iters");
+
+    // Free memory
+    // PROFILE_START("cudaFree");
+    // cudaFree(in_feats);
+    // // cudaFree(out_feats);
+    // PROFILE_END("cudaFree");
+  }
+
 
   void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
 		// const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;

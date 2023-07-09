@@ -1,5 +1,5 @@
 #include "common.h"
-#include "common_cuda.h"
+#include "common.cuh"
 #include "Int4llamaAttention.h"
 #include "operators.h"
 

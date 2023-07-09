@@ -5,6 +5,55 @@
 
 namespace matmul {
 
+void MatmulOperator::naive_mat_mul_fp16_int4(const struct matmul_params *params) {
+    int i, j, k;
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+    const int block_size = params->block_size;
+    // half_float::half *B_sc = params->fp16_scales;
+    // int *B_zp = params->int32_zero_point;
+    // half_float::half *data_C = C->data_ptr;
+    CHECK_MATRICES_int4weight(A, B, C);
+
+    // std::cout << "naive_mat_mul_int4 -- A->row: " << A->row << " A->column: " << A->column 
+    //           << "; B->row: " << B->row << " B->column: " << B->column 
+    //           << "; C->row: " << C->row << " C->column: " << C->column << std::endl;
+
+    half_float::half weight;
+    for (i = 0; i < C->row; i++) {
+        for (j = 0; j < C->column; j++) {
+            half_float::half acc = (half_float::half)0.0;
+
+            for (int k = 0; k < B->row; k++) {
+                half_float::half s = params->fp16_scales[(k / block_size) * C->column + j];
+                half_float::half input = A->fp16_data_ptr[i * A->column + k];
+
+                if (j % 8 == 0)
+                    weight = ((half_float::half)(B->int32_data_ptr[k * B->column + (j / 8)] & 0x0000000F) - 8.0) * s;
+                else if (j % 8 == 1)
+                    weight = ((half_float::half)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x000000F0) >> 4) - 8.0) * s;
+                else if (j % 8 == 2)
+                    weight = ((half_float::half)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x00000F00) >> 8) - 8.0) * s;
+                else if (j % 8 == 3)
+                    weight = ((half_float::half)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x0000F000) >> 12) - 8.0) * s;
+                else if (j % 8 == 4)
+                    weight = ((half_float::half)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x000F0000) >> 16) - 8.0) * s;
+                else if (j % 8 == 5)
+                    weight = ((half_float::half)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x00F00000) >> 20) - 8.0) * s;
+                else if (j % 8 == 6)
+                    weight = ((half_float::half)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x0F000000) >> 24) - 8.0) * s;
+                else if (j % 8 == 7)
+                    weight = ((half_float::half)((B->int32_data_ptr[k * B->column + (j / 8)] & 0xF0000000) >> 28) - 8.0) * s;
+
+                acc += input * weight;
+                // printf("naive_mat_mul_fp16_int4 - s: %f, input: %f, weight: %f, acc: %f\n", static_cast<float>(s), static_cast<float>(input), static_cast<float>(weight), static_cast<float>(acc));
+            }
+
+            C->fp16_data_ptr[i * C->column + j] = acc;
+        }
+    }
+}
+
+
 void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;

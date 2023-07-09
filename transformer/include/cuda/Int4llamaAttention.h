@@ -1,8 +1,8 @@
 #include <utility>
 
 #include "common.h"
-#include "common_cuda.h"
-#include "linear_cuda.h"
+#include "common.cuh"
+#include "linear.cuh"
 #include "operators.h"
 
 struct Int4llamaAttention_output {

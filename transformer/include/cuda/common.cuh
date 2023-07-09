@@ -53,7 +53,7 @@ class Matrix3D_cuda {
         return true;
     }
 
-    int length() const { return m_dim_x * m_dim_y * m_dim_z; }
+    __host__ __device__ int length() const { return m_dim_x * m_dim_y * m_dim_z; }
     T sum() const {
         T sum = 0;
         for (int i = 0; i < this->length(); i++) {

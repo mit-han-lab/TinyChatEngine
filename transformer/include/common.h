@@ -7,6 +7,8 @@
 
 #include "model.h"
 
+#include "half.hpp"  // Third-party header
+
 #define DEBUG false
 
 #define DEBUG_INS(x) \

@@ -13,18 +13,34 @@ For MacOS, install boost by
 brew install boost
 ```
 
-For Nvidia general/server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090)
+For **TESTING** on Nvidia general/server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090)
 ```bash
-cd matmul_optimization/src/lib/cuda
-# Download LibTorch
-## Modify the url below according to your CUDA and CXX version (https://pytorch.org/get-started/locally/)
-wget https://download.pytorch.org/libtorch/cu117/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu117.zip
-unzip libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu117.zip
-
-cd ../../../..
 conda create -n TinyLLMEngine_py38 python=3.8
 conda install -c anaconda numpy
+
 # Install cuDNN
+git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
+cd TinyLLMEngine
+git checkout dev/w4a16_gpu
+
+# Install cuDNN (temporary solution)
+cp -r /home/wweichen/cudnn ../..
+
+# Preparation and compilation
+cd transformer
+./download.sh # This will download 125m, 1.3B, 6.7B OPT, and 7B LLaMA models
+python model_quantizer.py --model_path="models/LLaMA_7B" --method="Q4_0" --data_type="fp32" --group_size=32 --cuda_is_available=True # Quantize LLaMA7B model from fp32 to int4 by using Q4_0 quantization method
+make -j
+
+# Run the test
+./test_ops
+
+# Run the demo
+./demo LLaMA7B INT4 # or `./demo LLaMA7B FP32` to run the fp32 LLaMA demo
+
+# Reference of w4a16 CUDA kernel
+llm-awq-dev: https://github.com/kentang-mit/llm-awq-dev/blob/46b2213c555eb2de319f9e36adfa025b34a6cd51/awq/kernels/gemm_cuda_gen.cu#L407
+llm-awq: https://github.com/mit-han-lab/llm-awq/blob/25e92c4cc908299fd5f40c69d428d8e424f77d8e/awq/kernels/gemm_cuda_gen.cu#L208
 ```
 
 For Nvidia edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano)

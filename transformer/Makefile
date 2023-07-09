@@ -10,7 +10,7 @@ TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
-INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/
+INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/ -I./half-2.2.0/include/
 LIB =
 LDFLAGS =
 
@@ -37,12 +37,13 @@ endif
 ifeq ($(shell uname -m),x86_64)
 	ifdef CUDA_AVAILABLE
 # General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090) use LibTorch
-		PYTHON_DIR = ../../../anaconda3/envs/TinyLLMEngine_py38
-		TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
+#		PYTHON_DIR = ../../../anaconda3/envs/TinyLLMEngine_py38
+#		TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
 		CUDNN_DIR = ../../../cudnn
 # Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
-		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)/include
-		LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_DIR)/lib -L$(CUDA_HOME)/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_DIR)/lib -Xlinker -rpath=$(CUDA_HOME)/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cuda
+#		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)/include
+		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I$(CUDNN_DIR)/include
+		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L$(CUDNN_DIR)/lib -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=$(CUDNN_DIR)/lib
 		CXXFLAGS += -Xcompiler "-mavx2" -arch=sm_86
 	else
 # For Intel machines with AVX
@@ -97,7 +98,11 @@ all: $(TARGET)
 
 # Linking
 test_ops:
+ifdef CUDA_AVAILABLE
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/$(IS_CUDA)/test_ops.cu $(SRC) $(LIB) $(LDFLAGS)
+else
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_ops tests/$(IS_CUDA)/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
+endif
 
 test_Int8OPTAttention:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int8OPTAttention tests/test_Int8OPTAttention.cc $(SRC) $(LIB) $(LDFLAGS)
@@ -178,7 +183,11 @@ profile_Fp32LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Fp32LlamaForCausalLM tests/test_Fp32LlamaForCausalLM.cc $(SRC) $(LIB) $(LDFLAGS)
 
 profile_ops:
+ifdef CUDA_AVAILABLE
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/$(IS_CUDA)/test_ops.cu $(SRC) $(LIB) $(LDFLAGS)
+else
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_ops tests/$(IS_CUDA)/test_ops.cc $(SRC) $(LIB) $(LDFLAGS)
+endif
 
 # Clean up
 clean:

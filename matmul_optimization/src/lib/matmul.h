@@ -2,6 +2,8 @@
 #include <sys/time.h>
 #include <cuda_fp16.h>
 
+#include "half.hpp"  // Third-party header
+
 // TODO: deprecate this
 #define MAX_TRANSPOSE_BUFFER 2048 * 2048
 #define RUNS 1
@@ -19,7 +21,8 @@ struct matrix {
     int row;
     int column;
     float *data_ptr;
-    half *fp16_data_ptr;
+    half *half_data_ptr;
+    half_float::half *fp16_data_ptr;
     int *int32_data_ptr;
     int8_t *int8_data_ptr;
     uint8_t *uint8_data_ptr;
@@ -39,7 +42,8 @@ struct matmul_params {
     float alpha, beta;
     // for int4
     float *scales, *offset, *zero_point;
-    half *scales_fp16;
+    half *half_scales;
+    half_float::half *fp16_scales;
     int *int32_zero_point;
     int block_size;
 };
@@ -88,9 +92,11 @@ class MatmulOperator {
     void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params);
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
+    void naive_mat_mul_fp16_int4(const struct matmul_params *params);
     // cuda
     void mat_mul_cuda(const struct matmul_params *params);
     void gemm_forward_cuda_half(const struct matmul_params *params, int split_k_iters);
+    void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);

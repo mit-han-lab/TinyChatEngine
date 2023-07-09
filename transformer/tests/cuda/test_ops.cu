@@ -3,7 +3,7 @@
 #include "operators.h"
 #include "utils.h"
 #include "../utils_memalloc.h"
-#include "linear_cuda.h"
+#include "linear.cuh"
 
 void test_LayerNormQ() {
     const int b = 1, m = 108, n = 768;
@@ -602,43 +602,72 @@ void test_FPLinear() {
 }
 
 // TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
-void test_FPLinear_int4() {
+void test_FP16Linear_int4() {
     const int m = 1, n = 32000, k = 4096;
 
-    MemoryAllocator mem_buf;
+    // MemoryAllocator mem_buf;
+    // Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(m * k), 1, m, k);
+    // Matrix3D<float> weight(mem_buf.get_fpbuffer(n * k), 1, n, k);
+    // Matrix3D<float> outputGT(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    // Matrix3D<float> output(mem_buf.get_fpbuffer(m * n), 1, m, n);
 
-    Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(m * k), 1, m, k);
-    Matrix3D<float> weight(mem_buf.get_fpbuffer(n * k), 1, n, k);
-    Matrix3D<float> outputGT(mem_buf.get_fpbuffer(m * n), 1, m, n);
-    Matrix3D<float> output(mem_buf.get_fpbuffer(m * n), 1, m, n);
-
+    float *hidden_states_arr;
+    allocate_aligned_memory(hidden_states_arr, (m * k * sizeof(float)));
+    Matrix3D<float> hidden_states(hidden_states_arr, 1, m, k);
     hidden_states.load("assets/llama/tests/ops/Linear/input.bin");
-    outputGT.load("assets/llama/tests/ops/Linear/output.bin");
-    Linear_FP op(weight, "models/LLaMA_7B/lm_head.bin");
+
+    half_float::half *hidden_states_ref_arr;
+    allocate_aligned_memory(hidden_states_ref_arr, (m * k * sizeof(half_float::half)));
+    Matrix3D<half_float::half> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
+    // hidden_states_ref.load("assets/llama/tests/ops/Linear/input.bin");
+
+    half *hidden_states_cuda_arr;
+    allocate_aligned_memory_gpu(hidden_states_cuda_arr, (m * k * sizeof(half)));
+    Matrix3D_cuda<half> hidden_states_cuda(hidden_states_cuda_arr, 1, m, k);
+    // hidden_states_cuda.load("assets/llama/tests/ops/Linear/input.bin");
+
+    for(int i = 0; i < m * k; i++) {
+        hidden_states_ref_arr[i] = static_cast<half_float::half>(hidden_states_arr[i]);
+        hidden_states_cuda_arr[i] = __float2half(hidden_states_arr[i]);
+    }
 
     const int flops = k * m * n * 2;
-    STATS_FLOPS("fp32", flops);
-    op.forward(hidden_states, output);
-    STATS_END("fp32");
+    // STATS_FLOPS("fp32", flops);
+    // op.forward(hidden_states, output);
+    // STATS_END("fp32");
 
-    // quantize the weight to int4
-    Matrix3D<int32_t> int4_weight((int32_t *)mem_buf.get_intbuffer(n * k / 8), 1, n / 8, k);
-    // Linear_FP_int4 int4_op;
-    Linear_FP_int4 int4_op = Linear_FP_int4(int4_weight, "models/LLaMA_7B/lm_head/");
-    ;
+    // quantize the weight to int4 for reference
+    // Matrix3D<int32_t> int4_weight((int32_t *)mem_buf.get_intbuffer(n * k / 8), 1, n / 8, k);
+    int32_t *int4_weight_ref_arr;
+    allocate_aligned_memory(int4_weight_ref_arr, (n * k / 8 * sizeof(int32_t)));
+    Matrix3D<int32_t> int4_ref_weight(int4_weight_ref_arr, 1, n / 8, k);
+    Linear_FP16_int4_ref int4_op_ref = Linear_FP16_int4_ref(int4_ref_weight, "models/LLaMA_7B/lm_head/");
 
-    Matrix3D<float> outputQ(mem_buf.get_fpbuffer(m * n), 1, m, n);
-    Matrix3D<float> outputQ_simd(mem_buf.get_fpbuffer(m * n), 1, m, n);
-    Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    // quantize the weight to int4 
+    // Matrix3D<int32_t> int4_weight((int32_t *)mem_buf.get_intbuffer(n * k / 8), 1, n / 8, k);
+    int32_t *int4_weight_cuda_arr;
+    allocate_aligned_memory(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
+    Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n / 8, k);
+    Linear_half_int4_test int4_op_cuda = Linear_half_int4_test(int4_cuda_weight, "models/LLaMA_7B/lm_head/");
+
+    // Matrix3D<float> outputQ_ref(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    half_float::half *outputQ_ref_arr;
+    allocate_aligned_memory(outputQ_ref_arr, (m * n * sizeof(half_float::half)));
+    Matrix3D<half_float::half> outputQ_ref(outputQ_ref_arr, 1, m, n);
+    // Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    half *outputQ_cuda_arr;
+    allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
+    Matrix3D_cuda<half> outputQ_cuda(outputQ_cuda_arr, 1, m, n);
 
     STATS_FLOPS("int4_ref", flops);
-    int4_op.forward_ref(hidden_states, outputQ);
+    int4_op_ref.forward_ref(hidden_states_ref, outputQ_ref);
     STATS_END("int4_ref");
     STATS_FLOPS("int4_fast", flops);
-    int4_op.forward(hidden_states, outputQ_fast);
+    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda);
+    cudaDeviceSynchronize();
     STATS_END("int4_fast");
 
-    bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
+    bool success = check_two_equal_cpu_gpu(outputQ_ref.m_data, outputQ_cuda.m_data, outputQ_ref.length(), 1e-10);
 
     if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
@@ -667,7 +696,7 @@ int main() {
     // LLaMa
     test_LlamaRMSNorm();
     test_FPLinear();
-    test_FPLinear_int4();
+    test_FP16Linear_int4();
     // Report if profiling flag is on
     Profiler::getInstance().report();
 }

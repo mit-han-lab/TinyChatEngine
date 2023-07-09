@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "common.h"
-#include "common_cuda.h"
+#include "common.cuh"
 #include "Int4llamaDecoderLayer.h"
 #include "operators.h"
 

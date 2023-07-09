@@ -9,6 +9,11 @@
 
 #include "profiler.h"
 
+#include <cuda.h>  // for CUDA_VERSION
+#include <cuda_fp16.h>  // for CUDA_VERSION
+
+#include "half.hpp"  // Third-party header
+
 #define STATS_START(x) Profiler::getInstance().start(x)
 #define STATS_FLOPS(x, y) Profiler::getInstance().start(x, y)
 #define STATS_END(x) Profiler::getInstance().stop(x)
@@ -39,6 +44,11 @@ bool check_two_equal(int8_t* array, int8_t* array2, int size);
 bool check_two_equal(int8_t* array, int8_t* array2, int size, float error);
 
 bool check_two_equal(float* array, float* array2, int size, float error);
+
+bool check_two_equal(float* array, float* array2, int size, float error);
+
+bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error);
+
 bool check_two_exact_equal(int8_t* array, int8_t* array2, int size);
 void print_MSE_max_diff(float* a, float* a2, int size);
 

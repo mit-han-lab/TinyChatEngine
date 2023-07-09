@@ -17,7 +17,7 @@ void MatmulOperator::CHECK_MATRICES(const struct matrix *A, const struct matrix 
 }
 
 void MatmulOperator::CHECK_MATRICES_int4weight(const struct matrix *A, const struct matrix *B, const struct matrix *C) {
-    assert(B->row * B->column == A->column * C->column / 2);
+    assert(B->row * B->column == A->column * C->column / 8);
     assert(C->row == A->row);
 }
 

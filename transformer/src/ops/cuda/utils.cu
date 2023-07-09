@@ -9,9 +9,6 @@
 #include <cstring>  // for strerror
 #include <iostream>
 
-#include <cuda.h>  // for CUDA_VERSION
-#include <cuda_fp16.h>  // for CUDA_VERSION
-
 #define CHECK_CUDA(call) \
     do { \
         cudaError_t err = call; \
@@ -52,6 +49,31 @@ bool check_two_equal(float* array, float* array2, int size, float error) {
             error_info.idx = i;
             error_info.a1 = array[i];
             error_info.a2 = array2[i];
+        }
+    }
+    if ((sq_diff / size) > error) {
+        std::cout << "MSE:" << sq_diff / size << ", MAX SQ diff:" << max_sqdiff;
+        std::cout << "@:" << error_info.idx << ",a1:" << error_info.a1 << ",a2:" << error_info.a2 << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error) {
+    float sq_diff = 0;
+    float max_sqdiff = 0;
+    struct max_error_info error_info;
+
+    for (int i = 0; i < size; i++) {
+        float diff = static_cast<float>(array[i]) - __half2float(array2[i]);
+        // printf("diff: %f\n, array[i]: %f\n, array2[i]: %f\n", diff, static_cast<float>(array[i]), __half2float(array2[i]));
+
+        sq_diff += diff * diff;
+        if (diff * diff > max_sqdiff) {
+            max_sqdiff = diff * diff;
+            error_info.idx = i;
+            error_info.a1 = static_cast<float>(array[i]);
+            error_info.a2 = __half2float(array2[i]);
         }
     }
     if ((sq_diff / size) > error) {
@@ -216,6 +238,7 @@ template void allocate_aligned_memory(float*& ptr, size_t size);
 template void allocate_aligned_memory(int*& ptr, size_t size);
 template void allocate_aligned_memory(int8_t*& ptr, size_t size);
 template void allocate_aligned_memory(uint8_t*& ptr, size_t size);
+template void allocate_aligned_memory(half_float::half*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(float*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(int*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(int8_t*& ptr, size_t size);
