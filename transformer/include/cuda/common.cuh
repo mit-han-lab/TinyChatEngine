@@ -6,10 +6,11 @@
 #include <stdexcept>
 
 #include "model.h"
+#include "utils.h"
 
-#include <cuda.h>
-#include <cuda_fp16.h>
-#include <cuda_runtime.h>
+// #include <cuda.h>
+// #include <cuda_fp16.h>
+// #include <cuda_runtime.h>
 
 
 template <typename T>

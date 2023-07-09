@@ -59,7 +59,7 @@ bool check_two_equal(float* array, float* array2, int size, float error) {
     return true;
 }
 
-bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error) {
+bool check_two_equal_cpu_gpu(float16_t* array, half* array2, int size, float error) {
     float sq_diff = 0;
     float max_sqdiff = 0;
     struct max_error_info error_info;
@@ -238,7 +238,7 @@ template void allocate_aligned_memory(float*& ptr, size_t size);
 template void allocate_aligned_memory(int*& ptr, size_t size);
 template void allocate_aligned_memory(int8_t*& ptr, size_t size);
 template void allocate_aligned_memory(uint8_t*& ptr, size_t size);
-template void allocate_aligned_memory(half_float::half*& ptr, size_t size);
+template void allocate_aligned_memory(float16_t*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(float*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(int*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(int8_t*& ptr, size_t size);

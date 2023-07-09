@@ -35,6 +35,8 @@ $(info CUDA is unavailable!)
 endif
 
 ifeq ($(shell uname -m),x86_64)
+# For x86_64 using half-precision (16-bit) floating point
+#	INCLUDE_DIRS += -I./half-2.2.0/include/
 	ifdef CUDA_AVAILABLE
 # General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090) use LibTorch
 #		PYTHON_DIR = ../../../anaconda3/envs/TinyLLMEngine_py38

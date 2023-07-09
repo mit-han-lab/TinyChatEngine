@@ -1,18 +1,28 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <math.h>
-
 #include <cstdlib>
 #include <fstream>
 #include <typeinfo>
+#include <math.h>
 
 #include "profiler.h"
 
-#include <cuda.h>  // for CUDA_VERSION
-#include <cuda_fp16.h>  // for CUDA_VERSION
-
+////// TODO: Fix this
+// #if defined(__ARM_NEON)
+//     typedef __fp16 float16_t;
+// #else
 #include "half.hpp"  // Third-party header
+typedef half_float::half float16_t;
+// #endif
+
+// #if defined(__CUDACC__)
+#include <cuda.h>
+#include <cuda_fp16.h>
+#include <cuda_runtime.h>
+// #endif
+
+#define QK 32
 
 #define STATS_START(x) Profiler::getInstance().start(x)
 #define STATS_FLOPS(x, y) Profiler::getInstance().start(x, y)
@@ -47,7 +57,7 @@ bool check_two_equal(float* array, float* array2, int size, float error);
 
 bool check_two_equal(float* array, float* array2, int size, float error);
 
-bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error);
+bool check_two_equal_cpu_gpu(float16_t* array, half* array2, int size, float error);
 
 bool check_two_exact_equal(int8_t* array, int8_t* array2, int size);
 void print_MSE_max_diff(float* a, float* a2, int size);

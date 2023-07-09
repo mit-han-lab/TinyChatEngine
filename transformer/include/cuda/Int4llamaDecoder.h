@@ -2,10 +2,10 @@
 #include <string>
 #include <vector>
 
-#include "common.h"
-#include "common.cuh"
 #include "Int4llamaDecoderLayer.h"
-#include "operators.h"
+// #include "common.h"
+// #include "common.cuh"
+// #include "operators.h"
 
 struct Int4llamaDecoder_output {
     Matrix3D<float> last_hidden_state;

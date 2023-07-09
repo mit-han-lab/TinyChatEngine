@@ -1,10 +1,9 @@
 #include "common.h"
-#include "utils.h"
 
-#include <cuda.h>  // for CUDA_VERSION
-#include <cuda_fp16.h>  // for CUDA_VERSION
+// #include <cuda.h>  // for CUDA_VERSION
+// #include <cuda_fp16.h>  // for CUDA_VERSION
 
-#define QK 32
+// #define QK 32
 
 class Linear_FP {
    public:

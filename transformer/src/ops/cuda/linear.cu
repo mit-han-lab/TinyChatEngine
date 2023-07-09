@@ -3,7 +3,7 @@
 #include "linear.cuh"
 
 
-void Linear_FP16_int4_ref::forward_ref(const Matrix3D<half_float::half> &a, Matrix3D<half_float::half> &c) {
+void Linear_FP16_int4_ref::forward_ref(const Matrix3D<float16_t> &a, Matrix3D<float16_t> &c) {
     Matrix3D<int> b = this->weight;
     const int m = a.m_dim_y, n = b.m_dim_y, k = a.m_dim_z, b_size = b.m_dim_x;
     const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;

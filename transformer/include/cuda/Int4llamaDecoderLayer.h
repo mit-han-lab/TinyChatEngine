@@ -1,7 +1,7 @@
-#include "common.h"
-#include "common.cuh"
 #include "Int4llamaAttention.h"
-#include "operators.h"
+// #include "common.h"
+// #include "common.cuh"
+// #include "operators.h"
 
 struct Int4llamaDecoderLayer_output {
     Matrix3D<float> hidden_states;

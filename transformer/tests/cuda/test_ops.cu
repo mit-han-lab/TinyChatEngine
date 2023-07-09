@@ -616,9 +616,9 @@ void test_FP16Linear_int4() {
     Matrix3D<float> hidden_states(hidden_states_arr, 1, m, k);
     hidden_states.load("assets/llama/tests/ops/Linear/input.bin");
 
-    half_float::half *hidden_states_ref_arr;
-    allocate_aligned_memory(hidden_states_ref_arr, (m * k * sizeof(half_float::half)));
-    Matrix3D<half_float::half> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
+    float16_t *hidden_states_ref_arr;
+    allocate_aligned_memory(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
+    Matrix3D<float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
     // hidden_states_ref.load("assets/llama/tests/ops/Linear/input.bin");
 
     half *hidden_states_cuda_arr;
@@ -627,7 +627,7 @@ void test_FP16Linear_int4() {
     // hidden_states_cuda.load("assets/llama/tests/ops/Linear/input.bin");
 
     for(int i = 0; i < m * k; i++) {
-        hidden_states_ref_arr[i] = static_cast<half_float::half>(hidden_states_arr[i]);
+        hidden_states_ref_arr[i] = static_cast<float16_t>(hidden_states_arr[i]);
         hidden_states_cuda_arr[i] = __float2half(hidden_states_arr[i]);
     }
 
@@ -651,9 +651,9 @@ void test_FP16Linear_int4() {
     Linear_half_int4_test int4_op_cuda = Linear_half_int4_test(int4_cuda_weight, "models/LLaMA_7B/lm_head/");
 
     // Matrix3D<float> outputQ_ref(mem_buf.get_fpbuffer(m * n), 1, m, n);
-    half_float::half *outputQ_ref_arr;
-    allocate_aligned_memory(outputQ_ref_arr, (m * n * sizeof(half_float::half)));
-    Matrix3D<half_float::half> outputQ_ref(outputQ_ref_arr, 1, m, n);
+    float16_t *outputQ_ref_arr;
+    allocate_aligned_memory(outputQ_ref_arr, (m * n * sizeof(float16_t)));
+    Matrix3D<float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
     // Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
     half *outputQ_cuda_arr;
     allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));

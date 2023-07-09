@@ -1,8 +1,9 @@
 #include <stdint.h>
 #include <sys/time.h>
-#include <cuda_fp16.h>
 
-#include "half.hpp"  // Third-party header
+#include "utils.h"
+// #include <cuda_fp16.h>
+// #include "half.hpp"  // Third-party header
 
 // TODO: deprecate this
 #define MAX_TRANSPOSE_BUFFER 2048 * 2048
@@ -22,7 +23,7 @@ struct matrix {
     int column;
     float *data_ptr;
     half *half_data_ptr;
-    half_float::half *fp16_data_ptr;
+    float16_t *fp16_data_ptr;
     int *int32_data_ptr;
     int8_t *int8_data_ptr;
     uint8_t *uint8_data_ptr;
@@ -43,7 +44,7 @@ struct matmul_params {
     // for int4
     float *scales, *offset, *zero_point;
     half *half_scales;
-    half_float::half *fp16_scales;
+    float16_t *fp16_scales;
     int *int32_zero_point;
     int block_size;
 };

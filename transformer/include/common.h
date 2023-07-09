@@ -6,8 +6,9 @@
 #include <stdexcept>
 
 #include "model.h"
+#include "utils.h"
 
-#include "half.hpp"  // Third-party header
+// #include "half.hpp"  // Third-party header
 
 #define DEBUG false
 
