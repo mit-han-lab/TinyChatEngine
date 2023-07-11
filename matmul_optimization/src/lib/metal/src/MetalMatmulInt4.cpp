@@ -15,7 +15,9 @@ MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MetalMatMulParams param) {
         return;
     }
 
-    auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_unroll32", NS::ASCIIStringEncoding);
+    // auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_packed_unroll32", NS::ASCIIStringEncoding);
+    // auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_unroll32", NS::ASCIIStringEncoding);
+    auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_unroll32_exp6", NS::ASCIIStringEncoding);
     MTL::Function *matmulFunction = defaultLibrary->newFunction(str);
     defaultLibrary->release();
 
@@ -201,6 +203,7 @@ void MetalMatmulInt4::verifyResults() {
                 }
             }
             float r = result[i * _mParamsPtr->n + j];
+            printf("%.2f, ", r);
             if (std::abs(sum - r) / std::abs(sum) > 1e-3) {
                 std::cout << "Expect " << sum << " at " << i << "," << j << ", but getting " << r << std::endl;
                 throw("Result verification fails!");

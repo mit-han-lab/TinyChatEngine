@@ -130,6 +130,9 @@ void MetalMatmulInt4IMP::sendComputeCommand() {
     // Normally, you want to do other work in your app while the GPU is running,
     // but in this example, the code simply blocks until the calculation is complete.
     commandBuffer->waitUntilCompleted();
+
+    computeEncoder->release();
+    commandBuffer->release();
 }
 
 void MetalMatmulInt4IMP::encodeCommand(MTL::ComputeCommandEncoder *computeEncoder) {

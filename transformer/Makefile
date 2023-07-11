@@ -19,7 +19,7 @@ ifeq ($(shell uname -m),x86_64)
 	# For Intel machines with AVX
 	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
 	LIB_SRC += $(LIB_AVX_SRC)
-	CXXFLAGS += -mavx2
+	CXXFLAGS += -mavx2 -mfma -ffast-math
 else ifeq ($(shell uname -p),arm)
 	# For ARM A-series (such as Mac M1) with Metal GPU
 	LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
