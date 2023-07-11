@@ -52,10 +52,8 @@ def sort_array(arr):
             right.append(num)
 
     return sort_array(left) + [pivot] + sort_array(right)
-````
-
+```
 Section, Total time(us), Average time(us), Count, GOPs
 Token generation, 29143198, 282943, 103, N/A, N/A
 
-```
-```
+````
