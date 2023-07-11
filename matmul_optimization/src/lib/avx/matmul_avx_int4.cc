@@ -622,8 +622,6 @@ static void *fast_zp_no_offset_over_column_func_v4(void *args) {
             __m256 acc1 = _mm256_setzero_ps();
             for (k = 0; k < B->row * 2; k += block_size) {
                 float s = scale[j * (B->row / 16) + k / 32];  // /16:B->row is packed 4bits
-                // float o = offset[j * (B->column / 16) + k / 32];
-                // float zp = zero_point(0, j, k/32);
                 uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
                 uint8_t *weight2_32_int4 = &B->int4_data_ptr[(j + 1) * B->row + k / 2];
                 __m256 *x_ptr = (__m256 *)&A->data_ptr[i * A->column + k];
@@ -646,7 +644,7 @@ static void *fast_zp_no_offset_over_column_func_v5(void *args) {
     float *scale = params->scales, *offset = params->offset;
 
     for (i = 0; i < C->row; i++) {
-        for (j = mat_args->start_j; j < mat_args->end_j; j++) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j += 2) {
             __m256 acc0 = _mm256_setzero_ps();
             __m256 acc1 = _mm256_setzero_ps();
             for (k = 0; k < B->row * 2; k += block_size) {
@@ -660,14 +658,17 @@ static void *fast_zp_no_offset_over_column_func_v5(void *args) {
                                                               part_sum0, part_sum1);
 
                 const __m256 s_v = _mm256_broadcast_ss(&scale[j * (B->row / 16) + k / 32]);
+                const __m256 s2_v = _mm256_broadcast_ss(&scale[(j + 1) * (B->row / 16) + k / 32]);
                 part_sum0 = _mm256_mul_ps(part_sum0, s_v);
-                part_sum1 = _mm256_mul_ps(part_sum1, s_v);
+                part_sum1 = _mm256_mul_ps(part_sum1, s2_v);
 
                 acc0 = _mm256_add_ps(part_sum0, acc0);
                 acc1 = _mm256_add_ps(part_sum1, acc1);
             }
             float *ptr = (float *)&acc0;
             C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
+            ptr = (float *)&acc1;
+            C->data_ptr[i * C->column + j + 1] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
         }
     }
     return NULL;
