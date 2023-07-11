@@ -30,6 +30,7 @@ cd TinyLLMEngine/transformer
 python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q4_2 for M1/M2 MacBook
 # compile the demo program
 make -j
+# run the demo
 ./demo
 Using model: LLaMA7B_AWQ
 Using LLaMA's default data format: INT4
