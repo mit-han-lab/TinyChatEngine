@@ -646,7 +646,7 @@ void test_FP16Linear_int4() {
     // quantize the weight to int4 
     // Matrix3D<int32_t> int4_weight((int32_t *)mem_buf.get_intbuffer(n * k / 8), 1, n / 8, k);
     int32_t *int4_weight_cuda_arr;
-    allocate_aligned_memory(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
+    allocate_aligned_memory_gpu(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
     Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n / 8, k);
     Linear_half_int4_test int4_op_cuda = Linear_half_int4_test(int4_cuda_weight, "models/LLaMA_7B/lm_head/");
 
@@ -668,6 +668,102 @@ void test_FP16Linear_int4() {
     STATS_END("int4_fast");
 
     bool success = check_two_equal_cpu_gpu(outputQ_ref.m_data, outputQ_cuda.m_data, outputQ_ref.length(), 1e-10);
+    // bool success = check_two_equal(int4_op_ref.weight.m_data, int4_op_cuda.weight.m_data, int4_op_cuda.weight.length());
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+}
+
+// TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
+void test_FP16Linear_int4_mini() {
+    const int m = 1, n = 64, k = 32;
+
+    float16_t *hidden_states_ref_arr;
+    allocate_aligned_memory(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
+    Matrix3D<float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
+    half *hidden_states_cuda_arr;
+    allocate_aligned_memory_gpu(hidden_states_cuda_arr, (m * k * sizeof(half)));
+    Matrix3D_cuda<half> hidden_states_cuda(hidden_states_cuda_arr, 1, m, k);
+
+    for(int i = 0; i < m * k; i++) {
+        float v = float(i % 4) / 4;
+        hidden_states_ref_arr[i] = static_cast<float16_t>(v);
+        hidden_states_cuda_arr[i] = __float2half(v);
+    }
+
+    const int flops = k * m * n * 2;
+    int32_t *int4_weight_ref_arr;
+    allocate_aligned_memory(int4_weight_ref_arr, (n * k / 8 * sizeof(int32_t)));
+    Matrix3D<int32_t> int4_ref_weight(int4_weight_ref_arr, 1, n / 8, k);
+    Linear_FP16_int4_ref int4_op_ref;
+
+    float16_t *scale_ref_arr;
+    allocate_aligned_memory(scale_ref_arr, (n * k / 32 * sizeof(float16_t)));
+    Matrix3D<float16_t> int4_ref_scale(scale_ref_arr, 1, n / 32, k);
+
+    int *zero_ref_arr;
+    allocate_aligned_memory(zero_ref_arr, (n * k / 32 * sizeof(half)));
+    Matrix3D<int> int4_ref_zero(zero_ref_arr, 1, n / 32, k);
+    
+    int4_op_ref.weight = int4_ref_weight;
+    int4_op_ref.scale = int4_ref_scale;
+    int4_op_ref.zero_point = int4_ref_zero;
+
+    int32_t *int4_weight_cuda_arr;
+    allocate_aligned_memory_gpu(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
+    Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n / 8, k);
+    Linear_half_int4_test int4_op_cuda;
+
+    half *scale_cuda_arr;
+    allocate_aligned_memory_gpu(scale_cuda_arr, (n * k / 32 * sizeof(half)));
+    Matrix3D<half> int4_cuda_scale(scale_cuda_arr, 1, n / 32, k);
+
+    int *zero_cuda_arr;
+    allocate_aligned_memory_gpu(zero_cuda_arr, (n * k / 32 * sizeof(int)));
+    Matrix3D<int> int4_cuda_zero(zero_cuda_arr, 1, n / 32, k);
+
+    int4_op_cuda.weight = int4_cuda_weight;
+    int4_op_cuda.scale = int4_cuda_scale;
+    int4_op_cuda.zero_point = int4_cuda_zero;
+
+    for(int i = 0; i < n * k / 8; i++) {
+        const int const_w = 0x23413221;
+        int4_weight_ref_arr[i] = const_w;
+        int4_weight_cuda_arr[i] = const_w;
+    }
+    for(int i = 0; i < n * k / 32; i++) {
+        float v = float(i % 4) / 4;
+        scale_ref_arr[i] = static_cast<float16_t>(v);
+        scale_cuda_arr[i] = __float2half(v);
+    }
+    for(int i = 0; i < n * k / 32; i++) {
+        const int const_z = 0x88888888;
+        zero_ref_arr[i] = const_z;
+        zero_cuda_arr[i] = const_z;
+    }
+
+    cudaDeviceSynchronize();
+    // Matrix3D<float> outputQ_ref(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    float16_t *outputQ_ref_arr;
+    allocate_aligned_memory(outputQ_ref_arr, (m * n * sizeof(float16_t)));
+    Matrix3D<float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
+    // Matrix3D<float> outputQ_fast(mem_buf.get_fpbuffer(m * n), 1, m, n);
+    half *outputQ_cuda_arr;
+    allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
+    Matrix3D_cuda<half> outputQ_cuda(outputQ_cuda_arr, 1, m, n);
+
+    STATS_FLOPS("int4_ref", flops);
+    int4_op_ref.forward_ref(hidden_states_ref, outputQ_ref);
+    STATS_END("int4_ref");
+    STATS_FLOPS("int4_fast", flops);
+    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda);
+    cudaDeviceSynchronize();
+    STATS_END("int4_fast");
+
+    bool success = check_two_equal_cpu_gpu(outputQ_ref.m_data, outputQ_cuda.m_data, outputQ_ref.length(), 1e-10);
+    // bool success = check_two_equal(int4_op_ref.weight.m_data, int4_op_cuda.weight.m_data, int4_op_cuda.weight.length());
 
     if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
@@ -677,26 +773,27 @@ void test_FP16Linear_int4() {
 
 int main() {
     // from OPT test_LayerNormQ();
-    test_LayerNormQ_len512();
-    test_LayerNormQ_1_3B();
-    test_LayerNorm();
-    test_LayerNorm_1_3B_len512();
-    test_W8A8B8O8LinearReLU();
-    test_W8A8B8O8LinearReLU_1_3B();
-    test_W8A8B8O8Linear();
-    test_W8A8B8O8Linear_1_3B();
-    test_W8A8BFP32OFP32Linear();
-    test_W8A8BFP32OFP32Linear_1_3B();
-    test_BMM_S8T_S8N_F32T();
-    test_BMM_S8T_S8N_F32T_1_3B();
-    test_BMM_S8T_S8N_S8T();
-    test_BMM_S8T_S8N_S8T_1_3B();
-    test_Embedding();
-    test_Embedding_1_3B();
-    // LLaMa
-    test_LlamaRMSNorm();
-    test_FPLinear();
+    // test_LayerNormQ_len512();
+    // test_LayerNormQ_1_3B();
+    // test_LayerNorm();
+    // test_LayerNorm_1_3B_len512();
+    // test_W8A8B8O8LinearReLU();
+    // test_W8A8B8O8LinearReLU_1_3B();
+    // test_W8A8B8O8Linear();
+    // test_W8A8B8O8Linear_1_3B();
+    // test_W8A8BFP32OFP32Linear();
+    // test_W8A8BFP32OFP32Linear_1_3B();
+    // test_BMM_S8T_S8N_F32T();
+    // test_BMM_S8T_S8N_F32T_1_3B();
+    // test_BMM_S8T_S8N_S8T();
+    // test_BMM_S8T_S8N_S8T_1_3B();
+    // test_Embedding();
+    // test_Embedding_1_3B();
+    // // LLaMa
+    // test_LlamaRMSNorm();
+    // test_FPLinear();
     test_FP16Linear_int4();
+    test_FP16Linear_int4_mini();
     // Report if profiling flag is on
     Profiler::getInstance().report();
 }

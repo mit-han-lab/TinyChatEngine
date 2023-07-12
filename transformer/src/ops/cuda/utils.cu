@@ -63,10 +63,14 @@ bool check_two_equal_cpu_gpu(float16_t* array, half* array2, int size, float err
     float sq_diff = 0;
     float max_sqdiff = 0;
     struct max_error_info error_info;
+    bool has_nan = false;
 
     for (int i = 0; i < size; i++) {
         float diff = static_cast<float>(array[i]) - __half2float(array2[i]);
-        // printf("diff: %f\n, array[i]: %f\n, array2[i]: %f\n", diff, static_cast<float>(array[i]), __half2float(array2[i]));
+        if (i < 10)
+            printf("diff: %f, array[i]: %f, array2[i]: %f\n", diff, static_cast<float>(array[i]), __half2float(array2[i]));
+        if (std::isnan(has_nan))
+            has_nan = true;
 
         sq_diff += diff * diff;
         if (diff * diff > max_sqdiff) {
@@ -76,8 +80,8 @@ bool check_two_equal_cpu_gpu(float16_t* array, half* array2, int size, float err
             error_info.a2 = __half2float(array2[i]);
         }
     }
-    if ((sq_diff / size) > error) {
-        std::cout << "MSE:" << sq_diff / size << ", MAX SQ diff:" << max_sqdiff;
+    if ((sq_diff / size) > error || has_nan) {
+        std::cout << "MSE:" << sq_diff / size << ", MAX SQ diff:" << max_sqdiff << ", has_nan:" << has_nan;
         std::cout << "@:" << error_info.idx << ",a1:" << error_info.a1 << ",a2:" << error_info.a2 << std::endl;
         return false;
     }
@@ -178,6 +182,8 @@ bool check_two_equal<int>(int* array, int* array2, int size) {
     float sq_diff = 0;
     for (int i = 0; i < size; i++) {
         float diff = (float)array[i] - (float)array2[i];
+        if (i < 10)
+            printf("diff: %f, array[i]: %d, array2[i]: %d\n", diff, array[i], array2[i]);
         sq_diff += diff * diff;
     }
     if ((sq_diff / size) > INT_ERROR_MAX) {
