@@ -32,22 +32,16 @@ void MatmulOperator::naive_mat_mul_fp16_int4(const struct matmul_params *params)
                 if (j % 8 == 0)
                     weight = ((float16_t)(B->int32_data_ptr[k * B->column + (j / 8)] & 0x0000000F) - z) * s;
                 else if (j % 8 == 1)
-                    // weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x000000F0) >> 4) - z) * s;
                     weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x000F0000) >> 16) - z) * s;
                 else if (j % 8 == 2)
-                    // weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x00000F00) >> 8) - z) * s;
                     weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x000000F0) >> 4) - z) * s;
                 else if (j % 8 == 3)
-                    // weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x0000F000) >> 12) - z) * s;
                     weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x00F00000) >> 20) - z) * s;
                 else if (j % 8 == 4)
-                    // weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x000F0000) >> 16) - z) * s;
                     weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x00000F00) >> 8) - z) * s;
                 else if (j % 8 == 5)
-                    // weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x00F00000) >> 20) - z) * s;
                     weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x0F000000) >> 24) - z) * s;
                 else if (j % 8 == 6)
-                    // weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x0F000000) >> 24) - z) * s;
                     weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0x0000F000) >> 12) - z) * s;
                 else if (j % 8 == 7)
                     weight = ((float16_t)((B->int32_data_ptr[k * B->column + (j / 8)] & 0xF0000000) >> 28) - z) * s;
