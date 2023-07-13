@@ -95,6 +95,9 @@ class Linear_FP_int4 {
     void forward(const Matrix3D<float> &x, Matrix3D<float> &output);
     void forward_ref(const Matrix3D<float> &x, Matrix3D<float> &output);
     void forward_fast(const Matrix3D<float> &x, Matrix3D<float> &output);
+#ifdef USE_INT8_INT4_PRODUCT
+    static void initialize_memory(const int block_size);
+#endif
     Matrix3D<uint8_t> weight;
     Matrix3D<float> scale, zero_point;
     Matrix3D<float> offset;

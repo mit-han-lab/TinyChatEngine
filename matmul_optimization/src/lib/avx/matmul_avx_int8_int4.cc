@@ -143,8 +143,6 @@ static void quantize_fp_to_int8_block_size32(float *x, int size, int8_t *qx, flo
     }
 }
 
-int8_t temp_q_a[4096];
-float temp_s_a[128];
 namespace matmul {
 
 void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params) {
@@ -154,14 +152,6 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
     struct int4_thread_args threads_args[num_thread];
     assert(params->block_size == 32);                    // support block size 32 for now
     assert((params->C.column % (num_thread * 2)) == 0);  // support block size 32 for now
-
-    // allocate memory, TODO: preallocate this globally
-    int8_t *q_a = temp_q_a;
-    float *s_a = temp_s_a;
-
-    // assign params
-    params->A.int8_data_ptr = q_a;
-    params->A_scales = s_a;
 
     // quantize A
     assert((params->A.column * params->A.row) % params->block_size == 0);
@@ -185,7 +175,8 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
     //     }
     //     s_a[i / params->block_size] = s;
     // }
-    quantize_fp_to_int8_block_size32(params->A.data_ptr, params->A.column * params->A.row, q_a, s_a);
+    quantize_fp_to_int8_block_size32(params->A.data_ptr, params->A.column * params->A.row, params->A.int8_data_ptr,
+                                     params->A_scales);
 
     // Thread creation
     for (j = 0; j < num_thread; j++) {

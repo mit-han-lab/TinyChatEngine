@@ -7,6 +7,7 @@
 
 #include "model.h"
 
+#define MAX_LINEAR_LENGTH 1024 * 1024 * 16  // 16MB, TO BE REMOVED with better memory allocation!
 #define DEBUG false
 
 #define DEBUG_INS(x) \
