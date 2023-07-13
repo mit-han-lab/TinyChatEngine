@@ -34,7 +34,6 @@ def quantize_row_q4_0(input_path, k, data_type, cuda_is_available, input_channel
     assert k % qk == 0
     nb = k // qk
 
-    # print(input_path, k, input_channel, output_channel)
     assert k == input_channel * output_channel
 
     with open(input_path, mode="rb") as fp:
@@ -85,32 +84,10 @@ def quantize_row_q4_0(input_path, k, data_type, cuda_is_available, input_channel
         for idx in range(output_channel // 8):
             # qs[:, idx] = qs[:, idx] | xi[:, idx * 8] | (xi[:, idx * 8 + 1] << 4) | (xi[:, idx * 8 + 2] << 8) | (xi[:, idx * 8 + 3] << 12) \
             #  | (xi[:, idx * 8 + 4] << 16) | (xi[:, idx * 8 + 5] << 20) | (xi[:, idx * 8 + 6] << 24) | (xi[:, idx * 8 + 7] << 28)
-            # print(f"{qs[0, idx]:#x}, {xi[0, idx * 8]:#x}, {xi[0, idx * 8 + 1]:#x}, {xi[0, idx * 8 + 2]:#x}, {xi[0, idx * 8 + 3]:#x}, {xi[0, idx * 8 + 4]:#x}, {xi[0, idx * 8 + 5]:#x}, {xi[0, idx * 8 + 6]:#x}, {xi[0, idx * 8 + 7]:#x}")
             qs[:, idx] = qs[:, idx] | xi[:, idx * 8] | (xi[:, idx * 8 + 2] << 4) | (xi[:, idx * 8 + 4] << 8) | (xi[:, idx * 8 + 6] << 12) | (xi[:, idx * 8 + 1] << 16) | (xi[:, idx * 8 + 3] << 20) | (xi[:, idx * 8 + 5] << 24) | ((xi[:, idx * 8 + 7] & 0xf) << 28)
-            # print(hex(qs[0, idx] & 0xFFFFFFFF))
-            # exit(0)
 
         # Store scaling_factors in row major for CUDA (scaling_factors: IC // G, OC [float16])
         d = d.reshape(-1).reshape(output_channel, input_channel // qk).transpose()
-
-        # print(d.shape, input_channel, output_channel)
-        # d = d.reshape(-1).reshape(input_channel, output_channel // qk)
-        # print(d.shape)
-        # d_reordered = np.zeros((input_channel, output_channel // qk), dtype=np.float16)
-
-        # # order of weights is 0 2 4 6 1 3 5 7
-        # assert(output_channel % (qk * 8) == 0)
-        # for idx in range((output_channel // qk) // 8):
-        #     d_reordered[:, idx * 8] = d[:, idx * 8]
-        #     d_reordered[:, idx * 8 + 1] = d[:, idx * 8 + 2]
-        #     d_reordered[:, idx * 8 + 2] = d[:, idx * 8 + 4]
-        #     d_reordered[:, idx * 8 + 3] = d[:, idx * 8 + 6]
-        #     d_reordered[:, idx * 8 + 4] = d[:, idx * 8 + 1]
-        #     d_reordered[:, idx * 8 + 5] = d[:, idx * 8 + 3]
-        #     d_reordered[:, idx * 8 + 6] = d[:, idx * 8 + 5]
-        #     d_reordered[:, idx * 8 + 7] = d[:, idx * 8 + 7]
-        
-        # d = d_reordered
 
         # unreorder_d = d.reshape(-1).reshape(output_channel, input_channel // qk).transpose()
         # # for j in range(0, output_channel, 8):
