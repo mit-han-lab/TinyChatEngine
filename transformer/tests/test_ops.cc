@@ -644,6 +644,8 @@ void test_FPLinear_int4() {
         int4_op.forward(hidden_states, outputQ_fast);
         STATS_END("int4_fast");
     }
+    print_first_k_elelment("fast", outputQ_fast.m_data, 10);
+    print_first_k_elelment("ref", outputQ.m_data, 10);
 
     bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
 
@@ -655,26 +657,26 @@ void test_FPLinear_int4() {
 
 int main() {
     // from OPT
-    test_LayerNormQ();
-    test_LayerNormQ_len512();
-    test_LayerNormQ_1_3B();
-    test_LayerNorm();
-    test_LayerNorm_1_3B_len512();
-    test_W8A8B8O8LinearReLU();
-    test_W8A8B8O8LinearReLU_1_3B();
-    test_W8A8B8O8Linear();
-    test_W8A8B8O8Linear_1_3B();
-    test_W8A8BFP32OFP32Linear();
-    test_W8A8BFP32OFP32Linear_1_3B();
-    test_BMM_S8T_S8N_F32T();
-    test_BMM_S8T_S8N_F32T_1_3B();
-    test_BMM_S8T_S8N_S8T();
-    test_BMM_S8T_S8N_S8T_1_3B();
-    test_Embedding();
-    test_Embedding_1_3B();
-    // LLaMa
-    test_LlamaRMSNorm();
-    test_FPLinear();
+    // test_LayerNormQ();
+    // test_LayerNormQ_len512();
+    // test_LayerNormQ_1_3B();
+    // test_LayerNorm();
+    // test_LayerNorm_1_3B_len512();
+    // test_W8A8B8O8LinearReLU();
+    // test_W8A8B8O8LinearReLU_1_3B();
+    // test_W8A8B8O8Linear();
+    // test_W8A8B8O8Linear_1_3B();
+    // test_W8A8BFP32OFP32Linear();
+    // test_W8A8BFP32OFP32Linear_1_3B();
+    // test_BMM_S8T_S8N_F32T();
+    // test_BMM_S8T_S8N_F32T_1_3B();
+    // test_BMM_S8T_S8N_S8T();
+    // test_BMM_S8T_S8N_S8T_1_3B();
+    // test_Embedding();
+    // test_Embedding_1_3B();
+    // // LLaMa
+    // test_LlamaRMSNorm();
+    // test_FPLinear();
     test_FPLinear_int4();
     // Report if profiling flag is on
     Profiler::getInstance().report();

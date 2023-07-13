@@ -170,7 +170,11 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
     params.block_size = QK;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
+#ifdef USE_INT8_INT4_PRODUCT
+    op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
+#else
     op.mat_mul_accelerator_int4_fast_no_offset(&params);
+#endif
 
     PROFILE_END(profile_name);
     return;

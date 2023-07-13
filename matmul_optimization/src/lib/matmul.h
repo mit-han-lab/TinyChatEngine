@@ -38,6 +38,9 @@ struct matmul_params {
     // for int4
     float *scales, *offset, *zero_point;
     int block_size;
+    // for int8 activation
+    float *A_scales;
+    int8_t A_zero_point;
 };
 
 struct thread_args {
@@ -82,6 +85,7 @@ class MatmulOperator {
     // int4
     void mat_mul_accelerator_int4_fast(const struct matmul_params *params);
     void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params);
+    void mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda
