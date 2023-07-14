@@ -644,8 +644,6 @@ void test_FPLinear_int4() {
         int4_op.forward(hidden_states, outputQ_fast);
         STATS_END("int4_fast");
     }
-    print_first_k_elelment("fast", outputQ_fast.m_data, 10);
-    print_first_k_elelment("ref", outputQ.m_data, 10);
 
     bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
 
