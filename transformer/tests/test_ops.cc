@@ -657,26 +657,26 @@ void test_FPLinear_int4() {
 
 int main() {
     // from OPT
-    // test_LayerNormQ();
-    // test_LayerNormQ_len512();
-    // test_LayerNormQ_1_3B();
-    // test_LayerNorm();
-    // test_LayerNorm_1_3B_len512();
-    // test_W8A8B8O8LinearReLU();
-    // test_W8A8B8O8LinearReLU_1_3B();
-    // test_W8A8B8O8Linear();
-    // test_W8A8B8O8Linear_1_3B();
-    // test_W8A8BFP32OFP32Linear();
-    // test_W8A8BFP32OFP32Linear_1_3B();
-    // test_BMM_S8T_S8N_F32T();
-    // test_BMM_S8T_S8N_F32T_1_3B();
-    // test_BMM_S8T_S8N_S8T();
-    // test_BMM_S8T_S8N_S8T_1_3B();
-    // test_Embedding();
-    // test_Embedding_1_3B();
-    // // LLaMa
-    // test_LlamaRMSNorm();
-    // test_FPLinear();
+    test_LayerNormQ();
+    test_LayerNormQ_len512();
+    test_LayerNormQ_1_3B();
+    test_LayerNorm();
+    test_LayerNorm_1_3B_len512();
+    test_W8A8B8O8LinearReLU();
+    test_W8A8B8O8LinearReLU_1_3B();
+    test_W8A8B8O8Linear();
+    test_W8A8B8O8Linear_1_3B();
+    test_W8A8BFP32OFP32Linear();
+    test_W8A8BFP32OFP32Linear_1_3B();
+    test_BMM_S8T_S8N_F32T();
+    test_BMM_S8T_S8N_F32T_1_3B();
+    test_BMM_S8T_S8N_S8T();
+    test_BMM_S8T_S8N_S8T_1_3B();
+    test_Embedding();
+    test_Embedding_1_3B();
+    // LLaMa
+    test_LlamaRMSNorm();
+    test_FPLinear();
     test_FPLinear_int4();
     // Report if profiling flag is on
     Profiler::getInstance().report();

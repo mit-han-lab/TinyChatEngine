@@ -11,159 +11,52 @@ struct int4_thread_args {
     const struct matmul_params *params;
 };
 
-static inline __m256i int4_to_bytes(const uint8_t *rsi) {
-    // Load 16 bytes from memory
-    __m128i tmp = _mm_loadu_si128((const __m128i *)rsi);
-
-    // Expand bytes into uint16_t values
-    __m256i bytes = _mm256_cvtepu8_epi16(tmp);
-
-    // Unpack values into individual bytes
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    __m256i high = _mm256_andnot_si256(lowMask, bytes);
-    __m256i low = _mm256_and_si256(lowMask, bytes);
-    high = _mm256_slli_epi16(high, 4);
-    bytes = _mm256_or_si256(low, high);
-    return bytes;
-}
-
-// add int16_t pairwise and return as float vector
-static inline __m256 sum_i16_pairs_float(const __m256i x) {
-    const __m256i ones = _mm256_set1_epi16(1);
-    const __m256i summed_pairs = _mm256_madd_epi16(ones, x);
-    return _mm256_cvtepi32_ps(summed_pairs);
-}
-
-// multiply int8_t, add results pairwise twice and return as float vector
-static inline __m256 mul_sum_i8_pairs_float(const __m256i x, const __m256i y) {
-    // Get absolute values of x vectors
-    const __m256i ax = _mm256_sign_epi8(x, x);
-    // Sign the values of the y vectors
-    const __m256i sy = _mm256_sign_epi8(y, x);
-    // Perform multiplication and create 16-bit values
-    const __m256i dot = _mm256_maddubs_epi16(ax, sy);
-    return sum_i16_pairs_float(dot);
-}
-
-static inline void merge_int4_int8_dot_product(float s, float s_a, uint8_t *w_ptr, __m256i *x_ptr, __m256 &acc0) {
-    __m256 v_s = _mm256_set1_ps(s * s_a);
-
-    // load 32 x int4 = 128 bit
-    __m128i tmp = _mm_loadu_si128((const __m128i *)w_ptr);
-
-    // Expand bytes into uint16_t values
-    __m256i w_bytes = _mm256_cvtepu8_epi16(tmp);
-
-    // Unpack values into individual bytes
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    __m256i high = _mm256_andnot_si256(lowMask, w_bytes);
-    __m256i low = _mm256_and_si256(lowMask, w_bytes);
-    high = _mm256_slli_epi16(high, 4);
-    w_bytes = _mm256_or_si256(low, high);
-    const __m256i zero_point = _mm256_set1_epi8(8);
-    w_bytes = _mm256_sub_epi8(w_bytes, zero_point);
-
-    __m256i activation = *x_ptr;
-
-    // Get absolute values of x vectors
-    const __m256i ax = _mm256_sign_epi8(w_bytes, w_bytes);
-    // Sign the values of the y vectors
-    const __m256i sy = _mm256_sign_epi8(activation, w_bytes);
-    // Perform multiplication and create 16-bit values
-    const __m256i dot = _mm256_maddubs_epi16(ax, sy);
-
-    const __m256i ones = _mm256_set1_epi16(1);
-    const __m256i summed_pairs = _mm256_madd_epi16(ones, dot);
-    __m256 intermediate = _mm256_cvtepi32_ps(summed_pairs);
-
-    acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(intermediate, v_s));
-}
-
-static inline void merge_int4_int8_dot_product_unroll2(float s, float s2, float s_a, uint8_t *w_ptr, uint8_t *w2_ptr,
-                                                       __m256i *x_ptr, __m256 &acc0, __m256 &acc1) {
-    __m256 v_s = _mm256_set1_ps(s * s_a);
-    __m256 v_s2 = _mm256_set1_ps(s2 * s_a);
-
-    // load 32 x int4 = 128 bit
-    __m128i tmp = _mm_loadu_si128((const __m128i *)w_ptr);
-    __m128i tmp2 = _mm_loadu_si128((const __m128i *)w2_ptr);
-
-    // Expand bytes into uint16_t values
-    __m256i w_bytes = _mm256_cvtepu8_epi16(tmp);
-    __m256i w_bytes2 = _mm256_cvtepu8_epi16(tmp2);
-
-    // Unpack values into individual bytes
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    __m256i high = _mm256_andnot_si256(lowMask, w_bytes);
-    __m256i high2 = _mm256_andnot_si256(lowMask, w_bytes2);
-    __m256i low = _mm256_and_si256(lowMask, w_bytes);
-    __m256i low2 = _mm256_and_si256(lowMask, w_bytes2);
-    high = _mm256_slli_epi16(high, 4);
-    high2 = _mm256_slli_epi16(high2, 4);
-    w_bytes = _mm256_or_si256(low, high);
-    w_bytes2 = _mm256_or_si256(low2, high2);
-    const __m256i zero_point = _mm256_set1_epi8(8);
-    w_bytes = _mm256_sub_epi8(w_bytes, zero_point);
-    w_bytes2 = _mm256_sub_epi8(w_bytes2, zero_point);
-
-    __m256i activation = *x_ptr;
-
-    // Get absolute values of x vectors
-    const __m256i ax = _mm256_sign_epi8(w_bytes, w_bytes);
-    const __m256i ax2 = _mm256_sign_epi8(w_bytes2, w_bytes2);
-    // Sign the values of the y vectors
-    const __m256i sy = _mm256_sign_epi8(activation, w_bytes);
-    const __m256i sy2 = _mm256_sign_epi8(activation, w_bytes2);
-    // Perform multiplication and create 16-bit values
-    const __m256i dot = _mm256_maddubs_epi16(ax, sy);
-    const __m256i dot2 = _mm256_maddubs_epi16(ax2, sy2);
-
-    const __m256i ones = _mm256_set1_epi16(1);
-    const __m256i summed_pairs = _mm256_madd_epi16(ones, dot);
-    const __m256i summed_pairs2 = _mm256_madd_epi16(ones, dot2);
-    __m256 intermediate = _mm256_cvtepi32_ps(summed_pairs);
-    __m256 intermediate2 = _mm256_cvtepi32_ps(summed_pairs2);
-
-    acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(intermediate, v_s));
-    acc1 = _mm256_add_ps(acc1, _mm256_mul_ps(intermediate2, v_s2));
-}
-
 static inline void merge_int4_int8_dot_product_unroll2block(float *s, float *s_a, uint8_t *w_ptr, __m256i *x_ptr,
                                                             __m256 &acc0) {
+    // load 0 - 127 bit and 128 - 255
+    __m128i raw_w_0 = _mm_loadu_si128((const __m128i *)w_ptr);
+    __m128i raw_w_128 = _mm_loadu_si128((const __m128i *)(w_ptr + 16));
+
     __m256 v_s = _mm256_set1_ps(s[0] * s_a[0]);
     __m256 v_s2 = _mm256_set1_ps(s[1] * s_a[1]);
-
-    // load 32 x int4 = 128 bit
-    __m128i tmp = _mm_loadu_si128((const __m128i *)w_ptr);
-    __m128i tmp2 = _mm_loadu_si128((const __m128i *)(w_ptr + 16));
-
-    // Expand bytes into uint16_t values
-    __m256i w_bytes = _mm256_cvtepu8_epi16(tmp);
-    __m256i w_bytes2 = _mm256_cvtepu8_epi16(tmp2);
-
-    // Unpack values into individual bytes
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    __m256i high = _mm256_andnot_si256(lowMask, w_bytes);
-    __m256i high2 = _mm256_andnot_si256(lowMask, w_bytes2);
-    __m256i low = _mm256_and_si256(lowMask, w_bytes);
-    __m256i low2 = _mm256_and_si256(lowMask, w_bytes2);
-    high = _mm256_slli_epi16(high, 4);
-    high2 = _mm256_slli_epi16(high2, 4);
-    w_bytes = _mm256_or_si256(low, high);
-    w_bytes2 = _mm256_or_si256(low2, high2);
-    const __m256i zero_point = _mm256_set1_epi8(8);
-    w_bytes = _mm256_sub_epi8(w_bytes, zero_point);
-    w_bytes2 = _mm256_sub_epi8(w_bytes2, zero_point);
 
     __m256i activation = x_ptr[0];
     __m256i activation2 = x_ptr[1];
 
+    // Expand bytes into uint16_t values
+    __m256i w_8_16exp = _mm256_cvtepu8_epi16(raw_w_0);
+    __m256i w2_8_16exp = _mm256_cvtepu8_epi16(raw_w_128);
+
+    // Unpack values into individual bytes
+    const __m256i lowMask = _mm256_set1_epi8(0xF);
+    __m256i high = _mm256_andnot_si256(lowMask, w_8_16exp);
+    __m256i high2 = _mm256_andnot_si256(lowMask, w2_8_16exp);
+    __m256i low = _mm256_and_si256(lowMask, w_8_16exp);
+    __m256i low2 = _mm256_and_si256(lowMask, w2_8_16exp);
+    high = _mm256_slli_epi16(high, 4);
+    high2 = _mm256_slli_epi16(high2, 4);
+    __m256i w_0 = _mm256_or_si256(low, high);
+    __m256i w_128 = _mm256_or_si256(low2, high2);
+    const __m256i zero_point = _mm256_set1_epi8(8);
+    w_0 = _mm256_sub_epi8(w_0, zero_point);
+    w_128 = _mm256_sub_epi8(w_128, zero_point);
+
+    // re-ordered weights (Q4_3), this implementation does not provide much benefits
+    // __m256i raw_w = _mm256_loadu_si256((const __m256i *)w_ptr);
+    // const __m256i lowMask = _mm256_set1_epi8(0xF);
+    // __m256i w_0 = _mm256_and_si256(lowMask, raw_w);
+    // __m256i high = _mm256_andnot_si256(lowMask, raw_w);
+    // __m256i w_128 = _mm256_srli_epi16(high, 4);
+    // const __m256i zero_point = _mm256_set1_epi8(8);
+    // w_0 = _mm256_sub_epi8(w_0, zero_point);
+    // w_128 = _mm256_sub_epi8(w_128, zero_point);
+
     // Get absolute values of x vectors
-    const __m256i ax = _mm256_sign_epi8(w_bytes, w_bytes);
-    const __m256i ax2 = _mm256_sign_epi8(w_bytes2, w_bytes2);
+    const __m256i ax = _mm256_sign_epi8(w_0, w_0);
+    const __m256i ax2 = _mm256_sign_epi8(w_128, w_128);
     // Sign the values of the y vectors
-    const __m256i sy = _mm256_sign_epi8(activation, w_bytes);
-    const __m256i sy2 = _mm256_sign_epi8(activation2, w_bytes2);
+    const __m256i sy = _mm256_sign_epi8(activation, w_0);
+    const __m256i sy2 = _mm256_sign_epi8(activation2, w_128);
     // Perform multiplication and create 16-bit values
     const __m256i dot = _mm256_maddubs_epi16(ax, sy);
     const __m256i dot2 = _mm256_maddubs_epi16(ax2, sy2);
@@ -174,78 +67,98 @@ static inline void merge_int4_int8_dot_product_unroll2block(float *s, float *s_a
     __m256 intermediate = _mm256_cvtepi32_ps(summed_pairs);
     __m256 intermediate2 = _mm256_cvtepi32_ps(summed_pairs2);
 
-    acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(intermediate, v_s));
-    acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(intermediate2, v_s2));
-    // acc0 = _mm256_fmadd_ps(intermediate, v_s, acc0);
-    // acc0 = _mm256_fmadd_ps(intermediate2, v_s2, acc0);
+    acc0 = _mm256_fmadd_ps(intermediate, v_s, acc0);
+    acc0 = _mm256_fmadd_ps(intermediate2, v_s2, acc0);
 }
 
-static void *fast_int8_int4_zp_no_offset_over_column(void *args) {
-    int i, j, k;
-    struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
-    const struct matmul_params *params = mat_args->params;
-    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
-    const int block_size = params->block_size;
-    float *scale = params->scales, *offset = params->offset;
+static inline void merge_int4_int8_dot_product_unroll4block(float *s, float *s_a, uint8_t *w_ptr, __m256i *x_ptr,
+                                                            __m256 &acc0) {
+    // load 0 - 127 bit and 128 - 255
+    __m128i raw_w_0 = _mm_loadu_si128((const __m128i *)w_ptr);
+    __m128i raw_w_128 = _mm_loadu_si128((const __m128i *)(w_ptr + 16));
+    __m128i raw_w_256 = _mm_loadu_si128((const __m128i *)(w_ptr + 32));
+    __m128i raw_w_384 = _mm_loadu_si128((const __m128i *)(w_ptr + 48));
 
-    // assume using 8 for now
+    __m256 v_s = _mm256_set1_ps(s[0] * s_a[0]);
+    __m256 v_s2 = _mm256_set1_ps(s[1] * s_a[1]);
+    __m256 v_s3 = _mm256_set1_ps(s[2] * s_a[2]);
+    __m256 v_s4 = _mm256_set1_ps(s[3] * s_a[3]);
+
+    __m256i activation = x_ptr[0];
+    __m256i activation2 = x_ptr[1];
+    __m256i activation3 = x_ptr[2];
+    __m256i activation4 = x_ptr[3];
+
+    // Expand bytes into uint16_t values
+    __m256i w_8_16exp = _mm256_cvtepu8_epi16(raw_w_0);
+    __m256i w2_8_16exp = _mm256_cvtepu8_epi16(raw_w_128);
+    __m256i w3_8_16exp = _mm256_cvtepu8_epi16(raw_w_256);
+    __m256i w4_8_16exp = _mm256_cvtepu8_epi16(raw_w_384);
+
+    // Unpack values into individual bytes
+    const __m256i lowMask = _mm256_set1_epi8(0xF);
+    __m256i high = _mm256_andnot_si256(lowMask, w_8_16exp);
+    __m256i high2 = _mm256_andnot_si256(lowMask, w2_8_16exp);
+    __m256i high3 = _mm256_andnot_si256(lowMask, w3_8_16exp);
+    __m256i high4 = _mm256_andnot_si256(lowMask, w4_8_16exp);
+    __m256i low = _mm256_and_si256(lowMask, w_8_16exp);
+    __m256i low2 = _mm256_and_si256(lowMask, w2_8_16exp);
+    __m256i low3 = _mm256_and_si256(lowMask, w3_8_16exp);
+    __m256i low4 = _mm256_and_si256(lowMask, w4_8_16exp);
+    high = _mm256_slli_epi16(high, 4);
+    high2 = _mm256_slli_epi16(high2, 4);
+    high3 = _mm256_slli_epi16(high3, 4);
+    high4 = _mm256_slli_epi16(high4, 4);
+    __m256i w_0 = _mm256_or_si256(low, high);
+    __m256i w_128 = _mm256_or_si256(low2, high2);
+    __m256i w_256 = _mm256_or_si256(low3, high3);
+    __m256i w_384 = _mm256_or_si256(low4, high4);
     const __m256i zero_point = _mm256_set1_epi8(8);
-    for (i = 0; i < C->row; i++) {
-        for (j = mat_args->start_j; j < mat_args->end_j; j++) {
-            __m256 acc0 = _mm256_setzero_ps();
-            for (k = 0; k < B->row * 2; k += block_size) {
-                float s = scale[j * (B->row / 16) + k / 32];
-                float s_a = params->A_scales[(i * A->column + k) / block_size];
-                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
-                int8_t *x_ptr = &A->int8_data_ptr[i * A->column + k];
-                merge_int4_int8_dot_product(s, s_a, weight_32_int4, (__m256i *)x_ptr, acc0);
-                // __m256 v_s = _mm256_set1_ps(s * s_a);
-                // // assume block_size == 32 for now
-                // __m256i expand_weight = int4_to_bytes(weight_32_int4);
-                // __m256i *x = (__m256i *)x_ptr;
-                // expand_weight = _mm256_sub_epi8(expand_weight, zero_point);
-                // __m256 intermediate = mul_sum_i8_pairs_float(expand_weight, *x);
+    w_0 = _mm256_sub_epi8(w_0, zero_point);
+    w_128 = _mm256_sub_epi8(w_128, zero_point);
+    w_256 = _mm256_sub_epi8(w_256, zero_point);
+    w_384 = _mm256_sub_epi8(w_384, zero_point);
 
-                // acc0 = _mm256_add_ps(acc0, _mm256_mul_ps(intermediate, v_s));
-            }
-            float *ptr = (float *)&acc0;
-            C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
-        }
-    }
-    return NULL;
-}
+    // re-ordered weights (Q4_3), this implementation does not provide much benefits
+    // __m256i raw_w = _mm256_loadu_si256((const __m256i *)w_ptr);
+    // const __m256i lowMask = _mm256_set1_epi8(0xF);
+    // __m256i w_0 = _mm256_and_si256(lowMask, raw_w);
+    // __m256i high = _mm256_andnot_si256(lowMask, raw_w);
+    // __m256i w_128 = _mm256_srli_epi16(high, 4);
+    // const __m256i zero_point = _mm256_set1_epi8(8);
+    // w_0 = _mm256_sub_epi8(w_0, zero_point);
+    // w_128 = _mm256_sub_epi8(w_128, zero_point);
 
-static void *fast_int8_int4_zp_no_offset_over_column_unroll2(void *args) {
-    int i, j, k;
-    struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
-    const struct matmul_params *params = mat_args->params;
-    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
-    const int block_size = params->block_size;
-    float *scale = params->scales, *offset = params->offset;
+    // Get absolute values of x vectors
+    const __m256i ax = _mm256_sign_epi8(w_0, w_0);
+    const __m256i ax2 = _mm256_sign_epi8(w_128, w_128);
+    const __m256i ax3 = _mm256_sign_epi8(w_256, w_256);
+    const __m256i ax4 = _mm256_sign_epi8(w_384, w_384);
+    // Sign the values of the y vectors
+    const __m256i sy = _mm256_sign_epi8(activation, w_0);
+    const __m256i sy2 = _mm256_sign_epi8(activation2, w_128);
+    const __m256i sy3 = _mm256_sign_epi8(activation3, w_256);
+    const __m256i sy4 = _mm256_sign_epi8(activation4, w_384);
+    // Perform multiplication and create 16-bit values
+    const __m256i dot = _mm256_maddubs_epi16(ax, sy);
+    const __m256i dot2 = _mm256_maddubs_epi16(ax2, sy2);
+    const __m256i dot3 = _mm256_maddubs_epi16(ax3, sy3);
+    const __m256i dot4 = _mm256_maddubs_epi16(ax4, sy4);
 
-    // assume using 8 for now
-    const __m256i zero_point = _mm256_set1_epi8(8);
-    for (i = 0; i < C->row; i++) {
-        for (j = mat_args->start_j; j < mat_args->end_j; j += 2) {
-            __m256 acc0 = _mm256_setzero_ps();
-            __m256 acc1 = _mm256_setzero_ps();
-            for (k = 0; k < B->row * 2; k += block_size) {
-                float s = scale[j * (B->row / 16) + k / 32];
-                float s2 = scale[(j + 1) * (B->row / 16) + k / 32];
-                float s_a = params->A_scales[(i * A->column + k) / block_size];
-                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2];
-                uint8_t *weight2_32_int4 = &B->int4_data_ptr[(j + 1) * B->row + k / 2];
-                int8_t *x_ptr = &A->int8_data_ptr[i * A->column + k];
-                merge_int4_int8_dot_product_unroll2(s, s2, s_a, weight_32_int4, weight2_32_int4, (__m256i *)x_ptr, acc0,
-                                                    acc1);
-            }
-            float *ptr = (float *)&acc0;
-            C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
-            ptr = (float *)&acc1;
-            C->data_ptr[i * C->column + j + 1] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
-        }
-    }
-    return NULL;
+    const __m256i ones = _mm256_set1_epi16(1);
+    const __m256i summed_pairs = _mm256_madd_epi16(ones, dot);
+    const __m256i summed_pairs2 = _mm256_madd_epi16(ones, dot2);
+    const __m256i summed_pairs3 = _mm256_madd_epi16(ones, dot3);
+    const __m256i summed_pairs4 = _mm256_madd_epi16(ones, dot4);
+    __m256 intermediate = _mm256_cvtepi32_ps(summed_pairs);
+    __m256 intermediate2 = _mm256_cvtepi32_ps(summed_pairs2);
+    __m256 intermediate3 = _mm256_cvtepi32_ps(summed_pairs3);
+    __m256 intermediate4 = _mm256_cvtepi32_ps(summed_pairs4);
+
+    acc0 = _mm256_fmadd_ps(intermediate, v_s, acc0);
+    acc0 = _mm256_fmadd_ps(intermediate2, v_s2, acc0);
+    acc0 = _mm256_fmadd_ps(intermediate3, v_s3, acc0);
+    acc0 = _mm256_fmadd_ps(intermediate4, v_s4, acc0);
 }
 
 static void *fast_int8_int4_zp_no_offset_over_column_unroll2block(void *args) {
@@ -271,6 +184,37 @@ static void *fast_int8_int4_zp_no_offset_over_column_unroll2block(void *args) {
                 sa_ptr += 2;
                 w_ptr += 32;
                 x_ptr += 32 * 2;
+            }
+            float *ptr = (float *)&acc0;
+            C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
+        }
+    }
+    return NULL;
+}
+
+static void *fast_int8_int4_zp_no_offset_over_column_unroll4block(void *args) {
+    int i, j, k;
+    struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
+    const struct matmul_params *params = mat_args->params;
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+    const int block_size = params->block_size;
+    float *scale = params->scales, *offset = params->offset;
+
+    // assume using 8 for now
+    const __m256i zero_point = _mm256_set1_epi8(8);
+    for (i = 0; i < C->row; i++) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j++) {
+            __m256 acc0 = _mm256_setzero_ps();
+            float *s_ptr = &scale[j * (A->column / block_size)];
+            float *sa_ptr = &params->A_scales[(i * A->column) / block_size];
+            uint8_t *w_ptr = &B->int4_data_ptr[j * B->row];
+            int8_t *x_ptr = &A->int8_data_ptr[i * A->column];
+            for (k = 0; k < B->row / (block_size * 2); k++) {
+                merge_int4_int8_dot_product_unroll4block(s_ptr, sa_ptr, w_ptr, (__m256i *)x_ptr, acc0);
+                s_ptr += 4;
+                sa_ptr += 4;
+                w_ptr += 64;
+                x_ptr += 128;
             }
             float *ptr = (float *)&acc0;
             C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
@@ -346,7 +290,7 @@ static void quantize_fp_to_int8_block_size32(float *x, int size, int8_t *qx, flo
 namespace matmul {
 
 void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params) {
-    const int num_thread = params->opt_params.num_thread;
+    const int num_thread = 4;  // params->opt_params.num_thread;
     int i, j, k;
     pthread_t thread_pool[num_thread];
     struct int4_thread_args threads_args[num_thread];
