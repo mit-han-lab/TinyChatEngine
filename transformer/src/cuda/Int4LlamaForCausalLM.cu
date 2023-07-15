@@ -6,12 +6,12 @@
 #include "utils.h"
 
 Int4LlamaForCausalLM::Int4LlamaForCausalLM(std::string param_path, const struct model_config config) {
-    allocate_aligned_memory_gpu(logits_output, config.max_sqlen * config.vocsize * sizeof(float));
+    allocate_aligned_memory(logits_output, config.max_sqlen * config.vocsize * sizeof(float));
     allocate_aligned_memory_gpu(lm_head_weight, (config.embed_dim * config.vocsize * sizeof(int)) / 8);
-    //allocate_aligned_memory_gpu(lm_head_weight, config.embed_dim * config.vocsize * sizeof(float));
+    //allocate_aligned_memory(lm_head_weight, config.embed_dim * config.vocsize * sizeof(float));
 
     this->decoder = Int4llamaDecoder(param_path + "/decoder", config);
-    this->lm_head = Linear_FP_int4(Matrix3D<int>(lm_head_weight, 1, config.vocsize / 8, config.embed_dim),
+    this->lm_head = Linear_half_int4_ref(Matrix3D<int>(lm_head_weight, 1, config.vocsize / 8, config.embed_dim),
                                    param_path + "/lm_head");
     // this->lm_head =
     //     Linear_FP(Matrix3D<float>(lm_head_weight, 1, config.vocsize, config.embed_dim), param_path + "/lm_head.bin");
@@ -41,11 +41,13 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct In
 
     // logits = self.lm_head(outputs[0]).contiguous()
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
-    // std::cout << "lm_head" << std::endl;
     this->lm_head.forward(decoder_output.last_hidden_state, logits);
     // print_first_k_elelment("logits_output", logits.m_data, 20);
 
     struct Int4LlamaForCausalLM_output LMoutput = {logits, decoder_output.past_keys, decoder_output.past_values};
     PROFILE_END(profile_name);
+
+    // cudaFree(lm_head_weight);
+
     return LMoutput;
 }

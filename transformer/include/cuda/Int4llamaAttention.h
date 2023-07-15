@@ -1,9 +1,8 @@
 #include <utility>
 
 #include "common.h"
-#include "common.cuh"
-#include "linear.cuh"
 #include "operators.h"
+#include "linear.cuh"
 
 struct Int4llamaAttention_output {
     Matrix3D<float> attn_output;
@@ -40,65 +39,12 @@ class Int4llamaAttention {
    private:
     void unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen);
     void shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen);
-    // void shape_half(Matrix3D<half> unshape, Matrix3D<float> shaped, int sqlen);
     int embed_dim, num_heads, head_dim;
-    Linear_FP_int4 k_proj, v_proj, o_proj;
-    Linear_half_int4 q_proj;
+    Linear_half_int4_ref k_proj, v_proj, q_proj, o_proj;
+    // Linear_FP_int4 o_proj;
     RotaryPosEmb rotary_pos_emb;
     BMM_F32T qk_bmm, pv_bmm;
     std::string profile_name = "Int4llamaAttention";
+
+    int *q_weight, *k_weight, *v_weight, *o_weight;
 };
-
-
-
-
-
-
-/////// HERE
-
-// #include <utility>
-
-// #include "common.h"
-// #include "operators.h"
-
-// struct Int4llamaAttention_output {
-//     Matrix3D<float> attn_output;
-//     Matrix3D<half> attn_probs_reshaped;
-//     std::pair<Matrix3D<half>, Matrix3D<half>> past_key_value;
-// };
-// struct Int4llamaAttention_input {
-//     Matrix3D<half> hidden_states;
-//     Matrix3D<float> attention_mask;
-//     Matrix3D<half> past_key, past_value;
-//     bool has_past_key_value = false;
-//     int layer_idx;
-
-//     Int4llamaAttention_input(Matrix3D<half> hidden_states_, Matrix3D<float> attention_mask_, int layer_idx_)
-//         : hidden_states(hidden_states_), attention_mask(attention_mask_), layer_idx(layer_idx_) {}
-
-//     Int4llamaAttention_input(Matrix3D<half> hidden_states_, Matrix3D<float> attention_mask_, Matrix3D<half> past_key_,
-//                              Matrix3D<half> past_value_, bool has_past_key_value_, int layer_idx_)
-//         : hidden_states(hidden_states_),
-//           attention_mask(attention_mask_),
-//           past_key(past_key_),
-//           past_value(past_value_),
-//           has_past_key_value(has_past_key_value_),
-//           layer_idx(layer_idx_) {}
-// };
-
-// class Int4llamaAttention {
-//    public:
-//     Int4llamaAttention(std::string param_path, const struct model_config config);
-//     Int4llamaAttention() {}
-//     static void initialized_memory(const struct model_config config);
-//     struct Int4llamaAttention_output forward(const struct Int4llamaAttention_input &input);
-
-//    private:
-//     void unshape(Matrix3D<half> shaped, Matrix3D<half> unshape, int sqlen);
-//     void shape(Matrix3D<half> unshape, Matrix3D<half> shaped, int sqlen);
-//     int embed_dim, num_heads, head_dim;
-//     Linear_FP_int4 k_proj, v_proj, q_proj, o_proj;
-//     RotaryPosEmb rotary_pos_emb;
-//     BMM_F32T qk_bmm, pv_bmm;
-//     std::string profile_name = "Int4llamaAttention";
-// };

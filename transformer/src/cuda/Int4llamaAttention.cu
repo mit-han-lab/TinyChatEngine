@@ -12,7 +12,7 @@ static float ***key_states_arr_cache;
 static float ***value_states_arr_cache;
 static float *attn_output_fp_arr;
 static int *cache_num;
-static half *query_states_unshape_arr;
+static float *query_states_unshape_arr;
 static float *attn_output_arr;
 static float *attn_output_transpose_arr;
 static float *key_states_unshape_arr;
@@ -23,31 +23,31 @@ static float *query_states_arr;
 static float *value_states_transpose_arr;
 
 void Int4llamaAttention::initialized_memory(const struct model_config config) {
-    allocate_aligned_memory_gpu(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float));
-    allocate_aligned_memory_gpu(attn_output_fp_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(attn_output_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(attn_output_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(key_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(key_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(value_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(value_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(query_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(value_states_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float));
+    allocate_aligned_memory(attn_output_fp_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(attn_output_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(attn_output_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(key_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(key_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(value_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(value_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(query_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(value_states_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(float));
     cache_num = new int[config.num_layers];
     for (int i = 0; i < config.num_layers; i++) cache_num[i] = 0;
-    allocate_aligned_memory_gpu(query_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(half));
+    allocate_aligned_memory(query_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
     key_states_arr_cache = new float **[config.num_layers];
     for (int i = 0; i < config.num_layers; ++i) {
         key_states_arr_cache[i] = new float *[2];
         for (int j = 0; j < 2; ++j) {
-            allocate_aligned_memory_gpu(key_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(float));
+            allocate_aligned_memory(key_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(float));
         }
     }
     value_states_arr_cache = new float **[config.num_layers];
     for (int i = 0; i < config.num_layers; ++i) {
         value_states_arr_cache[i] = new float *[2];
         for (int j = 0; j < 2; ++j) {
-            allocate_aligned_memory_gpu(value_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(float));
+            allocate_aligned_memory(value_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(float));
         }
     }
 }
@@ -71,37 +71,6 @@ inline void Int4llamaAttention::shape(Matrix3D<float> unshape, Matrix3D<float> s
     PROFILE_END("Int4llamaAttention::shape");
 }
 
-// static void Int4llamaAttention::shape_half(Matrix3D<half> unshape, Matrix3D<float> shaped, int sqlen) {
-//     PROFILE_START("Int4llamaAttention::shape");
-//     assert(unshape.m_dim_x == 1);  // bsz == 1
-//     assert(unshape.m_dim_y == sqlen);
-//     assert(unshape.m_dim_z == this->num_heads * this->head_dim);
-//     assert(shaped.m_dim_x == this->num_heads);
-//     assert(shaped.m_dim_y == sqlen);
-//     assert(shaped.m_dim_z == this->head_dim);
-
-//     for (int i = 0; i < this->num_heads; i++) {
-//         for (int j = 0; j < sqlen; j++) {
-//             for (int k = 0; k < this->head_dim; k++) {
-//                 shaped(i, j, k) = __half2float(unshape(0, j, i * this->head_dim + k));
-//             }
-//         }
-//     }
-
-//     cudaDeviceSynchronize();
-//     PROFILE_END("Int4llamaAttention::shape");
-// }
-
-__global__ void shape_half(Matrix3D_cuda<half> unshape, Matrix3D_cuda<float> shaped, int num_heads, int sqlen, int head_dim) {
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    int j = threadIdx.y + blockIdx.y * blockDim.y;
-    int k = threadIdx.z + blockIdx.z * blockDim.z;
-    
-    if (i < num_heads && j < sqlen && k < head_dim) {
-        shaped(i, j, k) = __half2float(unshape(0, j, i * head_dim + k));
-    }
-}
-
 inline void Int4llamaAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen) {
     PROFILE_START("Int4llamaAttention::unshape");
     assert(unshape.m_dim_x == 1);  // bsz == 1
@@ -122,23 +91,22 @@ inline void Int4llamaAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> 
 }
 
 Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config) {
-    int *q_weight, *k_weight, *v_weight, *o_weight;
     allocate_aligned_memory_gpu(q_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(k_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(v_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-    this->q_proj = Linear_half_int4(Matrix3D<int>(q_weight, 1, config.embed_dim / 8, config.embed_dim),
+    this->q_proj = Linear_half_int4_ref(Matrix3D<int>(q_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/q_proj");
-    this->k_proj = Linear_FP_int4(Matrix3D<int>(k_weight, 1, config.embed_dim / 8, config.embed_dim),
+    this->k_proj = Linear_half_int4_ref(Matrix3D<int>(k_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/k_proj");
-    this->v_proj = Linear_FP_int4(Matrix3D<int>(v_weight, 1, config.embed_dim / 8, config.embed_dim),
+    this->v_proj = Linear_half_int4_ref(Matrix3D<int>(v_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/v_proj");
-    this->o_proj = Linear_FP_int4(Matrix3D<int>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
+    this->o_proj = Linear_half_int4_ref(Matrix3D<int>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/o_proj");
 
     float *cos_buf, *sin_buf;
-    allocate_aligned_memory_gpu(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
-    allocate_aligned_memory_gpu(sin_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
+    allocate_aligned_memory(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
+    allocate_aligned_memory(sin_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
     Matrix3D<float> cos(cos_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
     Matrix3D<float> sin(sin_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
 
@@ -184,7 +152,8 @@ static inline void transpose_1_2idx_float_threads(Matrix3D<float> &input, Matrix
     assert(input.m_dim_z == output.m_dim_y);
 
     if (input.m_dim_y == 1 || input.m_dim_z == 1) {
-        memcpy(output.m_data, input.m_data, input.length() * sizeof(float));
+        // memcpy(output.m_data, input.m_data, input.length() * sizeof(float));
+        cudaMemcpy(output.m_data, input.m_data, input.length() * sizeof(float), cudaMemcpyDeviceToDevice);
     } else {
         int num_thread = NUM_THREAD;
         int loop_over_dim = input.m_dim_z;
@@ -219,27 +188,11 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     const int sqlen = input.hidden_states.m_dim_y, b = input.hidden_states.m_dim_x;
     assert(b == 1);
 
-    Matrix3D_cuda<half> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
-    // query_states = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads,
-    // self.head_dim).transpose(1, 2)
-    // std::cout << "q_proj" << std::endl;
+    Matrix3D<float> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
+
     this->q_proj.forward(input.hidden_states, query_states_unshape);
-    ///// Rename
-    Matrix3D_cuda<float> query_states_temp(query_states_arr, this->num_heads, sqlen, this->head_dim);
-    // this->shape_half(query_states_unshape, query_states, sqlen);
-    // printf("this->num_heads: %d, sqlen: %d, this->head_dim: %d\n", this->num_heads, sqlen, this->head_dim);
-    // printf("query_states_temp: %d, %d, %d\n", query_states_temp.m_dim_x, query_states_temp.m_dim_y, query_states_temp.m_dim_z);
-    // printf("query_states_temp.length(): %d\n", query_states_temp.length());
-    dim3 threadsPerBlock(16, 16, 16);
-    dim3 numBlocks((this->num_heads + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                (sqlen + threadsPerBlock.y - 1) / threadsPerBlock.y,
-                (this->head_dim + threadsPerBlock.z - 1) / threadsPerBlock.z);
-    shape_half<<<numBlocks, threadsPerBlock>>>(query_states_unshape, query_states_temp, this->num_heads, sqlen, this->head_dim);
-    cudaDeviceSynchronize();
-    float* query_states_temp_arr = new float[query_states_temp.length()];
-    cudaMemcpy(query_states_temp_arr, query_states_temp.m_data, query_states_temp.length() * sizeof(float), cudaMemcpyDeviceToHost);
-    Matrix3D<float> query_states(query_states_temp_arr, this->num_heads, sqlen, this->head_dim);
-    // this->shape(query_states_unshape, query_states, sqlen);
+    Matrix3D<float> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
+    this->shape(query_states_unshape, query_states, sqlen);
 
     float *ret_value_states, *ret_key_states;
     if (cache_num[input.layer_idx] == 1) {
@@ -252,31 +205,21 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
         cache_num[input.layer_idx] = 1;
     }
 
-    // key_states = self.k_proj(hidden_states).view(bsz, q_len, self.num_heads,
-    // self.head_dim).transpose(1, 2)
+
     Matrix3D<float> key_states_unshape(key_states_unshape_arr, b, sqlen, embed_dim);
-    // std::cout << "k_proj" << std::endl;
     this->k_proj.forward(input.hidden_states, key_states_unshape);
     Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(key_states_unshape, key_states, sqlen);
-    // value_states = self.v_proj(hidden_states).view(bsz, q_len, self.num_heads,
-    // self.head_dim).transpose(1, 2)
+
     Matrix3D<float> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
-    // std::cout <<  "v_proj" << std::endl;
     this->v_proj.forward(input.hidden_states, value_states_unshape);
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(value_states_unshape, value_states, sqlen);
-    // print_first_k_elelment("query_states", query_states.m_data, 20);
-    // print_first_k_elelment("key_states", key_states.m_data, 20);
-    // print_first_k_elelment("value_states", value_states.m_data, 20);
 
-    // printf("value_sum: %f, query_sum: %f, key_sum: %f\n", value_states.sum(),
-    // query_states.sum(), key_states.sum()); apply_rotary_pos_emb
     int start_idx = 0;
     if (input.has_past_key_value) start_idx = input.past_key.m_dim_y;
     this->rotary_pos_emb.forward(query_states, key_states, start_idx, sqlen);
-    // printf("(rotary)query_sum: %f, key_sum: %f\n", query_states.sum(),
-    // key_states.sum());
+
 
     PROFILE_START(profile_name + "::cat_past_keys_values");
     int tgz = sqlen;
@@ -298,434 +241,67 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
             key_ptr += past_block;
             memcpy(key_ptr, &key_states.m_data[sq_block * i], sq_block * sizeof(float));
             key_ptr += sq_block;
+
+            // cudaMemcpy(val_ptr, &input.past_value.m_data[past_block * i], past_block * sizeof(float), cudaMemcpyHostToDevice);
+            // val_ptr += past_block;
+            // cudaMemcpy(val_ptr, &value_states.m_data[sq_block * i], sq_block * sizeof(float), cudaMemcpyDeviceToDevice);
+            // val_ptr += sq_block;
+            // cudaMemcpy(key_ptr, &input.past_key.m_data[past_block * i], past_block * sizeof(float), cudaMemcpyHostToDevice);
+            // key_ptr += past_block;
+            // cudaMemcpy(key_ptr, &key_states.m_data[sq_block * i], sq_block * sizeof(float), cudaMemcpyDeviceToDevice);
+            // key_ptr += sq_block;
         }
     } else {
         // Put the data into the buffer
         memcpy(ret_value_states, value_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float));
         memcpy(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float));
+
+        // cudaMemcpy(ret_value_states, value_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float), cudaMemcpyDeviceToDevice);
+        // cudaMemcpy(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float), cudaMemcpyDeviceToDevice);
     }
     Matrix3D<float> final_value_states(ret_value_states, this->num_heads, tgz, this->head_dim);
     Matrix3D<float> final_key_states(ret_key_states, this->num_heads, tgz, this->head_dim);
     PROFILE_END(profile_name + "::cat_past_keys_values");
-    // printf("(cat): past_key %f, past_value: %f\n", input.past_key.sum(),
-    // input.past_value.sum()); printf("(cat): final_value_states_sum %f,
-    // final_key_states: %f\n", final_value_states.sum(), final_key_states.sum());
 
     Matrix3D<float> attn_weights(attn_weights_arr, this->num_heads, sqlen, tgz);
     this->qk_bmm.forward(query_states, final_key_states, attn_weights);
-    // printf("qk_bmm.forward, attn_weights.sum: %f\n", attn_weights.sum());
-    // print_first_k_elelment("attn_weights", attn_weights.m_data, 20);
 
     // opt.py: attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len,
     // src_len) + attention_mask
     batch_Add(attn_weights, input.attention_mask, attn_weights);
-    // printf("batch_Add, attn_weights.sum: %f\n", attn_weights.sum());
+
     // Check for negative infinity, TODO: use multithread to speed up this
     for (int i = 0; i < attn_weights.length(); i++) {
         if (std::isinf(attn_weights.m_data[i])) {
             attn_weights.m_data[i] = std::numeric_limits<float>::lowest();
         }
     }
-    // print_first_k_elelment("attn_weights(mask)", attn_weights.m_data, 20);
 
     Matrix3D<float> attn_probs(attn_weights_arr, this->num_heads, sqlen, tgz);
     softmax(attn_weights, attn_probs, 2);
-    // printf("softmax, attn_probs.sum: %f\n", attn_probs.sum());
-    // print_first_k_elelment("attn_probs", attn_probs.m_data, 20);
 
     Matrix3D<float> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
-    //transpose_1_2idx_float_threads(final_value_states, value_states_transpose, NUM_THREAD);
     transpose_1_2idx_float_threads(final_value_states, value_states_transpose);
 
     Matrix3D<float> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
     this->pv_bmm.forward(attn_probs, value_states_transpose, attn_output);
-    // printf("pv_bmm.forward, attn_output.sum: %f\n", attn_output.sum());
-    // print_first_k_elelment("attn_output", attn_output.m_data, 20);
 
     Matrix3D<float> attn_output_transpose(attn_output_transpose_arr, 1, sqlen, this->num_heads * this->head_dim);
     this->unshape(attn_output, attn_output_transpose, sqlen);
 
     Matrix3D<float> attn_output_fp(attn_output_fp_arr, 1, sqlen, this->num_heads * this->head_dim);
-    // std::cout << "o_proj" << std::endl;
     this->o_proj.forward(attn_output_transpose, attn_output_fp);
-    // printf("o_proj.forward, attn_output_fp.sum: %f\n", attn_output_fp.sum());
-    // print_first_k_elelment("attn_output_fp", attn_output_fp.m_data, 20);
+
     // output assignment
     output.attn_output = attn_output_fp;
     output.past_key_value = {final_key_states, final_value_states};
 
     PROFILE_END(profile_name);
+
+    // cudaFree(q_weight);
+    // cudaFree(k_weight);
+    // cudaFree(v_weight);
+    // cudaFree(o_weight);
+
     return output;
 }
-
-
-
-
-
-
-/////////// HERE
-
-// #include "Int4llamaAttention.h"
-
-// #include <string.h>
-
-// #include <cmath>
-
-// #include "operators.h"
-// #include "utils.h"
-
-
-// static float *attn_weights_arr;
-// static half *attn_probs_fp16_arr;
-// static half ***key_states_arr_cache;
-// static half ***value_states_arr_cache;
-// static float *attn_output_fp_arr;
-// static int *cache_num;
-// static half *query_states_unshape_arr;
-// static half *attn_output_arr;
-// static half *attn_output_transpose_arr;
-// static half *key_states_unshape_arr;
-// static half *key_states_arr;
-// static half *value_states_unshape_arr;
-// static half *value_states_arr;
-// static half *query_states_arr;
-// static half *value_states_transpose_arr;
-
-// void Int4llamaAttention::initialized_memory(const struct model_config config) {
-//     allocate_aligned_memory_gpu(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float));
-//     allocate_aligned_memory_gpu(attn_probs_fp16_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(half));
-//     allocate_aligned_memory_gpu(attn_output_fp_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-//     allocate_aligned_memory_gpu(attn_output_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     allocate_aligned_memory_gpu(attn_output_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     allocate_aligned_memory_gpu(key_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     allocate_aligned_memory_gpu(key_states_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     allocate_aligned_memory_gpu(value_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     allocate_aligned_memory_gpu(value_states_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     allocate_aligned_memory_gpu(query_states_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     allocate_aligned_memory_gpu(value_states_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     cache_num = new int[config.num_layers];
-//     for (int i = 0; i < config.num_layers; i++) cache_num[i] = 0;
-//     allocate_aligned_memory_gpu(query_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(half));
-//     key_states_arr_cache = new half **[config.num_layers];
-//     for (int i = 0; i < config.num_layers; ++i) {
-//         key_states_arr_cache[i] = new half *[2];
-//         for (int j = 0; j < 2; ++j) {
-//             allocate_aligned_memory_gpu(key_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(half));
-//         }
-//     }
-//     value_states_arr_cache = new half **[config.num_layers];
-//     for (int i = 0; i < config.num_layers; ++i) {
-//         value_states_arr_cache[i] = new half *[2];
-//         for (int j = 0; j < 2; ++j) {
-//             allocate_aligned_memory_gpu(value_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(half));
-//         }
-//     }
-// }
-
-// inline void Int4llamaAttention::shape(Matrix3D<half> unshape, Matrix3D<half> shaped, int sqlen) {
-//     PROFILE_START("Int4llamaAttention::shape");
-//     assert(unshape.m_dim_x == 1);  // bsz == 1
-//     assert(unshape.m_dim_y == sqlen);
-//     assert(unshape.m_dim_z == this->num_heads * this->head_dim);
-//     assert(shaped.m_dim_x == this->num_heads);
-//     assert(shaped.m_dim_y == sqlen);
-//     assert(shaped.m_dim_z == this->head_dim);
-
-//     for (int i = 0; i < this->num_heads; i++) {
-//         for (int j = 0; j < sqlen; j++) {
-//             for (int k = 0; k < this->head_dim; k++) {
-//                 shaped(i, j, k) = unshape(0, j, i * this->head_dim + k);
-//             }
-//         }
-//     }
-//     PROFILE_END("Int4llamaAttention::shape");
-// }
-
-// inline void Int4llamaAttention::unshape(Matrix3D<half> shaped, Matrix3D<half> unshape, int sqlen) {
-//     PROFILE_START("Int4llamaAttention::unshape");
-//     assert(unshape.m_dim_x == 1);  // bsz == 1
-//     assert(unshape.m_dim_y == sqlen);
-//     assert(unshape.m_dim_z == this->num_heads * this->head_dim);
-//     assert(shaped.m_dim_x == this->num_heads);
-//     assert(shaped.m_dim_y == sqlen);
-//     assert(shaped.m_dim_z == this->head_dim);
-
-//     for (int i = 0; i < this->num_heads; i++) {
-//         for (int j = 0; j < sqlen; j++) {
-//             for (int k = 0; k < this->head_dim; k++) {
-//                 unshape(0, j, i * this->head_dim + k) = shaped(i, j, k);
-//             }
-//         }
-//     }
-//     PROFILE_END("Int4llamaAttention::unshape");
-// }
-
-// Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config) {
-//     int *q_weight, *k_weight, *v_weight, *o_weight;
-//     allocate_aligned_memory_gpu(q_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-//     allocate_aligned_memory_gpu(k_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-//     allocate_aligned_memory_gpu(v_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-//     allocate_aligned_memory_gpu(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-//     this->q_proj = Linear_FP_int4(Matrix3D<int>(q_weight, 1, config.embed_dim / 8, config.embed_dim),
-//                                   param_path + "/q_proj");
-//     this->k_proj = Linear_FP_int4(Matrix3D<int>(k_weight, 1, config.embed_dim / 8, config.embed_dim),
-//                                   param_path + "/k_proj");
-//     this->v_proj = Linear_FP_int4(Matrix3D<int>(v_weight, 1, config.embed_dim / 8, config.embed_dim),
-//                                   param_path + "/v_proj");
-//     this->o_proj = Linear_FP_int4(Matrix3D<int>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
-//                                   param_path + "/o_proj");
-
-//     float *cos_buf, *sin_buf;
-//     allocate_aligned_memory_gpu(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
-//     allocate_aligned_memory_gpu(sin_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
-//     Matrix3D<float> cos(cos_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
-//     Matrix3D<float> sin(sin_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
-
-//     this->rotary_pos_emb = RotaryPosEmb(cos, sin, param_path + "/rotary_emb");
-
-//     float qk_bmm_alpha;
-//     read_to_array((param_path + "/qk_bmm/alpha.bin").c_str(), &qk_bmm_alpha, 1);
-//     this->qk_bmm = BMM_F32T(qk_bmm_alpha);
-//     this->pv_bmm = BMM_F32T(1.0f);
-
-//     this->embed_dim = config.embed_dim;
-//     this->num_heads = config.num_heads;
-//     assert(config.embed_dim % config.num_heads == 0);
-//     this->head_dim = config.embed_dim / config.num_heads;
-// }
-
-// // struct transpose_1_2idx_float_arg {
-// //     int start_idx, end_idx;
-// //     Matrix3D<half> input, output;
-// // };
-// // static void *transpose_1_2idx_float_func(void *args_) {
-// //     struct transpose_1_2idx_float_arg *args = (struct transpose_1_2idx_float_arg *)args_;
-
-// //     Matrix3D<half> input = args->input;
-// //     Matrix3D<half> output = args->output;
-
-// //     for (int i = 0; i < input.m_dim_x; i++) {
-// //         for (int j = 0; j < input.m_dim_y; j++) {
-// //             for (int k = args->start_idx; k < args->end_idx; k++) {
-// //                 output.m_data[i * output.m_dim_y * output.m_dim_z + k * output.m_dim_z + j] =
-// //                     input.m_data[i * input.m_dim_y * input.m_dim_z + j * input.m_dim_z + k];
-// //             }
-// //         }
-// //     }
-// //     return NULL;
-// // }
-
-// // static inline void transpose_1_2idx_float_threads(Matrix3D<float> &input, Matrix3D<float> &output) {
-// //     PROFILE_START("Int8OPTAttention::transpose_1_2idx_float");
-// //     assert(input.m_dim_x == output.m_dim_x);
-// //     assert(input.m_dim_y == output.m_dim_z);
-// //     assert(input.m_dim_z == output.m_dim_y);
-
-// //     if (input.m_dim_y == 1 || input.m_dim_z == 1) {
-// //         memcpy(output.m_data, input.m_data, input.length() * sizeof(float));
-// //     } else {
-// //         int num_thread = NUM_THREAD;
-// //         int loop_over_dim = input.m_dim_z;
-// //         if (num_thread > loop_over_dim) num_thread = loop_over_dim;
-
-// //         pthread_t thread_pool[NUM_THREAD];
-// //         struct transpose_1_2idx_float_arg threads_args[NUM_THREAD];
-
-// //         // Thread creation
-// //         for (int j = 0; j < num_thread; j++) {
-// //             threads_args[j].start_idx = j * (loop_over_dim / num_thread);
-// //             threads_args[j].input = input;
-// //             threads_args[j].output = output;
-// //             if (j == num_thread - 1)
-// //                 threads_args[j].end_idx = loop_over_dim;
-// //             else
-// //                 threads_args[j].end_idx = (j + 1) * (loop_over_dim / num_thread);
-// //             pthread_create(&thread_pool[j], NULL, transpose_1_2idx_float_func, &threads_args[j]);
-// //         }
-// //         // Join threads
-// //         for (int j = 0; j < num_thread; j++) {
-// //             pthread_join(thread_pool[j], NULL);
-// //         }
-// //     }
-
-// //     PROFILE_END("Int8OPTAttention::transpose_1_2idx_float");
-// // }
-
-// // __global__ void transpose_1_2idx_float_threads(Matrix3D<half> &input, Matrix3D<half> &output) {
-// //     PROFILE_START("Int4llamaAttention::transpose_1_2idx_float_threads");
-// //     int i = blockIdx.x * blockDim.x + threadIdx.x;
-// //     int j = blockIdx.y * blockDim.y + threadIdx.y;
-// //     int k = blockIdx.z * blockDim.z + threadIdx.z;
-
-// //     if (i < input.m_dim_x && j < input.m_dim_y && k < input.m_dim_z) {
-// //         output.m_data[i * output.m_dim_y * output.m_dim_z + k * output.m_dim_z + j] =
-// //             input.m_data[i * input.m_dim_y * input.m_dim_z + j * input.m_dim_z + k];
-// //     }
-
-// //     PROFILE_END("Int4llamaAttention::transpose_1_2idx_float_threads");
-// // }
-
-// __global__ void transpose_1_2idx(Matrix3D<half> &input, Matrix3D<half> &output) {
-//     PROFILE_START("Int4llamaAttention::transpose_1_2idx");
-//     int i = blockIdx.x * blockDim.x + threadIdx.x;
-//     int j = blockIdx.y * blockDim.y + threadIdx.y;
-//     int k = blockIdx.z * blockDim.z + threadIdx.z;
-
-//     if (i < input.m_dim_x && j < input.m_dim_y && k < input.m_dim_z) {
-//         output(i, k, j) = input(i, j, k);
-//     }
-
-//     PROFILE_END("Int4llamaAttention::transpose_1_2idx");
-// }
-
-// struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4llamaAttention_input &input) {
-//     PROFILE_START(profile_name);
-//     struct Int4llamaAttention_output output;
-//     const int sqlen = input.hidden_states.m_dim_y, b = input.hidden_states.m_dim_x;
-//     assert(b == 1);
-
-//     Matrix3D<half> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
-//     // query_states = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads,
-//     // self.head_dim).transpose(1, 2)
-//     // std::cout << "q_proj" << std::endl;
-//     this->q_proj.forward(input.hidden_states, query_states_unshape);
-//     Matrix3D<half> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
-//     this->shape(query_states_unshape, query_states, sqlen);
-
-//     half *ret_value_states, *ret_key_states;
-//     if (cache_num[input.layer_idx] == 1) {
-//         ret_value_states = value_states_arr_cache[input.layer_idx][1];
-//         ret_key_states = key_states_arr_cache[input.layer_idx][1];
-//         cache_num[input.layer_idx] = 0;
-//     } else {
-//         ret_value_states = value_states_arr_cache[input.layer_idx][0];
-//         ret_key_states = key_states_arr_cache[input.layer_idx][0];
-//         cache_num[input.layer_idx] = 1;
-//     }
-
-//     // key_states = self.k_proj(hidden_states).view(bsz, q_len, self.num_heads,
-//     // self.head_dim).transpose(1, 2)
-//     Matrix3D<half> key_states_unshape(key_states_unshape_arr, b, sqlen, embed_dim);
-//     // std::cout << "k_proj" << std::endl;
-//     this->k_proj.forward(input.hidden_states, key_states_unshape);
-//     Matrix3D<half> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
-//     this->shape(key_states_unshape, key_states, sqlen);
-//     // value_states = self.v_proj(hidden_states).view(bsz, q_len, self.num_heads,
-//     // self.head_dim).transpose(1, 2)
-//     Matrix3D<half> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
-//     // std::cout <<  "v_proj" << std::endl;
-//     this->v_proj.forward(input.hidden_states, value_states_unshape);
-//     Matrix3D<half> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
-//     this->shape(value_states_unshape, value_states, sqlen);
-//     // print_first_k_elelment("query_states", query_states.m_data, 20);
-//     // print_first_k_elelment("key_states", key_states.m_data, 20);
-//     // print_first_k_elelment("value_states", value_states.m_data, 20);
-
-//     // printf("value_sum: %f, query_sum: %f, key_sum: %f\n", value_states.sum(),
-//     // query_states.sum(), key_states.sum()); apply_rotary_pos_emb
-//     int start_idx = 0;
-//     if (input.has_past_key_value) start_idx = input.past_key.m_dim_y;
-//     this->rotary_pos_emb.forward(query_states, key_states, start_idx, sqlen);
-//     // printf("(rotary)query_sum: %f, key_sum: %f\n", query_states.sum(),
-//     // key_states.sum());
-
-//     PROFILE_START(profile_name + "::cat_past_keys_values");
-//     int tgz = sqlen;
-//     if (input.has_past_key_value) {
-//         // # reuse k, v, self_attention
-//         // key_states = torch.cat([past_key_value[0], key_states], dim=2)
-//         // value_states = torch.cat([past_key_value[1], value_states], dim=2)
-//         assert(input.past_key.m_dim_z == this->head_dim);
-//         tgz += input.past_key.m_dim_y;
-//         half *val_ptr = ret_value_states, *key_ptr = ret_key_states;
-//         int past_block = input.past_key.m_dim_y * input.past_key.m_dim_z;
-//         int sq_block = sqlen * this->head_dim;
-//         for (int i = 0; i < input.past_key.m_dim_x; i++) {
-//             memcpy(val_ptr, &input.past_value.m_data[past_block * i], past_block * sizeof(half));
-//             val_ptr += past_block;
-//             memcpy(val_ptr, &value_states.m_data[sq_block * i], sq_block * sizeof(half));
-//             val_ptr += sq_block;
-//             memcpy(key_ptr, &input.past_key.m_data[past_block * i], past_block * sizeof(half));
-//             key_ptr += past_block;
-//             memcpy(key_ptr, &key_states.m_data[sq_block * i], sq_block * sizeof(half));
-//             key_ptr += sq_block;
-//         }
-//     } else {
-//         // Put the data into the buffer
-//         memcpy(ret_value_states, value_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(half));
-//         memcpy(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(half));
-//     }
-//     Matrix3D<half> final_value_states(ret_value_states, this->num_heads, tgz, this->head_dim);
-//     Matrix3D<half> final_key_states(ret_key_states, this->num_heads, tgz, this->head_dim);
-//     PROFILE_END(profile_name + "::cat_past_keys_values");
-//     // printf("(cat): past_key %f, past_value: %f\n", input.past_key.sum(),
-//     // input.past_value.sum()); printf("(cat): final_value_states_sum %f,
-//     // final_key_states: %f\n", final_value_states.sum(), final_key_states.sum());
-
-//     Matrix3D<float> attn_weights(attn_weights_arr, this->num_heads, sqlen, tgz);
-//     this->qk_bmm.forward(query_states, final_key_states, attn_weights);
-//     // printf("qk_bmm.forward, attn_weights.sum: %f\n", attn_weights.sum());
-//     // print_first_k_elelment("attn_weights", attn_weights.m_data, 20);
-
-//     // opt.py: attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len,
-//     // src_len) + attention_mask
-//     batch_Add(attn_weights, input.attention_mask, attn_weights);
-//     // printf("batch_Add, attn_weights.sum: %f\n", attn_weights.sum());
-//     // Check for negative infinity, TODO: use multithread to speed up this
-//     for (int i = 0; i < attn_weights.length(); i++) {
-//         if (std::isinf(attn_weights.m_data[i])) {
-//             attn_weights.m_data[i] = std::numeric_limits<float>::lowest();
-//         }
-//     }
-//     // print_first_k_elelment("attn_weights(mask)", attn_weights.m_data, 20);
-
-//     Matrix3D<float> attn_probs(attn_weights_arr, this->num_heads, sqlen, tgz);
-//     softmax(attn_weights, attn_probs, 2);
-//     // printf("softmax, attn_probs.sum: %f\n", attn_probs.sum());
-//     // print_first_k_elelment("attn_probs", attn_probs.m_data, 20);
-
-//     // TODO: to be fixed
-//     PROFILE_START(profile_name + "::get_attn_probs_fp16");
-//     Matrix3D<half> attn_probs_fp16(attn_probs_fp16_arr, this->num_heads, sqlen, tgz);
-//     int len = attn_probs.length();
-//     for (int i = 0; i < len; i++) attn_probs_fp16_arr[i] = static_cast<__fp16>(attn_probs.m_data[i]);
-//     PROFILE_END(profile_name + "::get_attn_probs_fp16");
-
-//     Matrix3D<half> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
-//     // transpose_1_2idx_float_threads(final_value_states, value_states_transpose);
-//     dim3 threadsPerBlock(16, 16, 16); // This can vary based on your GPU capabilities
-//     dim3 numBlocks((d_input.m_dim_x + threadsPerBlock.x - 1) / threadsPerBlock.x, 
-//                 (d_input.m_dim_y + threadsPerBlock.y - 1) / threadsPerBlock.y, 
-//                 (d_input.m_dim_z + threadsPerBlock.z - 1) / threadsPerBlock.z);
-// #ifdef USE_LLaMA_EXP
-//     transpose_1_2idx_float_threads<<<numBlocks, threadsPerBlock>>>(final_value_states, value_states_transpose);
-// #else
-//     transpose_1_2idx<<<numBlocks, threadsPerBlock>>>(final_value_states, value_states_transpose);
-// #endif
-//     cudaDeviceSynchronize();
-
-//     Matrix3D<half> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
-//     this->pv_bmm.forward(attn_probs, value_states_transpose, attn_output);
-//     // printf("pv_bmm.forward, attn_output.sum: %f\n", attn_output.sum());
-//     // print_first_k_elelment("attn_output", attn_output.m_data, 20);
-
-//     Matrix3D<half> attn_output_transpose(attn_output_transpose_arr, 1, sqlen, this->num_heads * this->head_dim);
-//     this->unshape(attn_output, attn_output_transpose, sqlen);
-
-//     Matrix3D<float> attn_output_fp(attn_output_fp_arr, 1, sqlen, this->num_heads * this->head_dim);
-//     // std::cout << "o_proj" << std::endl;
-//     this->o_proj.forward(attn_output_transpose, attn_output_fp);
-//     // printf("o_proj.forward, attn_output_fp.sum: %f\n", attn_output_fp.sum());
-//     // print_first_k_elelment("attn_output_fp", attn_output_fp.m_data, 20);
-//     // output assignment
-//     output.attn_output = attn_output_fp;
-//     output.past_key_value = {final_key_states, final_value_states};
-
-//     // __fp16 test_data = 1;
-//     // __fp16 test_data2 = 2;
-//     // __fp16 test_data3 = test_data + test_data2;
-//     // printf("test_data3: %f\n", test_data3);
-
-//     PROFILE_END(profile_name);
-//     return output;
-// }
