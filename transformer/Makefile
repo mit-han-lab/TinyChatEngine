@@ -21,19 +21,19 @@ ifeq ($(shell uname -m),x86_64)
 	LIB_SRC += $(LIB_AVX_SRC)
 	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT
 else ifeq ($(shell uname -p),arm)
-	# For ARM A-series (such as Mac M1) with Metal GPU
-	LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
-	LIB_SRC += $(wildcard $(LIB_DIR)/lib/metal/*.cc)
-	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
-	LIB += -framework Metal -framework Foundation -framework MetalKit
-	TARGET += default.metallib library.air
-	CXXFLAGS += -stdlib=libc++ -DUSE_METAL
 	CXX = /opt/homebrew/opt/llvm/bin/clang++
+	# For ARM A-series (such as Mac M1) with Metal GPU
+	# LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
+	# LIB_SRC += $(wildcard $(LIB_DIR)/lib/metal/*.cc)
+	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
+	# LIB += -framework Metal -framework Foundation -framework MetalKit
+	# TARGET += default.metallib library.air
+	# CXXFLAGS += -stdlib=libc++ -DUSE_METAL
 	# TODO: use NEON if Metal is not supported
-	# LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
-	# CXXFLAGS += -march=native -framework Accelerate
-	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
-	# LIB += -L/opt/homebrew/opt/boost/lib
+	LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	CXXFLAGS += -march=native -framework Accelerate -DUSE_INT8_INT4_PRODUCT -DQ4_4
+	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
+	LIB += -L/opt/homebrew/opt/boost/lib
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
@@ -118,5 +118,5 @@ $(APP_TARGET): %: application/%.cc $(OBJS)
 clean:
 	rm -f $(TARGET)
 	rm -rf *.dSYM
-	rm -rf $(BUILDDIR)
+	rm -rf $(BUILDDIR) $(BUILDDIR)/../matmul_optimization
 	rm -rf $(PROFILEDIR)

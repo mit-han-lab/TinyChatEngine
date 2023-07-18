@@ -229,3 +229,57 @@ def quantize_row_q4_3(input_path, k, data_type):
         qs[:, e] = xi[:, e] | (xi[:, 32 + e] << 4)
 
     return qs, d, m, zp
+
+
+def quantize_row_q4_4(input_path, k, data_type):
+    """Quantize the row to the following format.
+
+    sequential: (0, 1), (2, 3), (4, 5), (6, 7)... : 128 bit
+    expected layout of inB: (0, 16), (1, 17), (2, 18), (3, 19)...
+    low; (0, 0), (1, 0), (2, 0), (3, 0) ...
+    high: (16, 0), (17, 0), (18, 0), (19, 0) ...
+    """
+    qk = QK4_3
+    assert k % qk == 0
+    nb = k // qk
+
+    with open(input_path, mode="rb") as fp:
+        origin_weight = fp.read()
+    fp.close()
+
+    if data_type == "fp32":
+        x = np.frombuffer(origin_weight, dtype=np.float32)
+    elif data_type == "fp16":
+        x = np.frombuffer(origin_weight, dtype=np.float16)
+    elif data_type == "int8":
+        x = np.frombuffer(origin_weight, dtype=np.int8)
+
+    # Reshape x to be a 2D array with shape (nb, qk)
+    x = x.reshape(nb, qk)
+
+    # Get the indices of maximum absolute values along axis 1
+    idx_max_abs = np.argmax(np.abs(x), axis=1)
+    max_vals = x[np.arange(x.shape[0]), idx_max_abs]
+    min_vals = np.zeros(nb, dtype=np.float32)
+    d_vals = max_vals / -8
+
+    id_vals = 1.0 / d_vals
+    id_vals[d_vals == 0] = 0.0
+
+    if STORE_FP16:
+        d = _convert_to_fp16(d_vals)  # scaling factors
+        m = _convert_to_fp16(min_vals)  # offsets
+        zp = _convert_to_fp16(8.0)  # zero point
+    else:
+        d = np.float32(d_vals)  # scaling factors
+        m = np.float32(min_vals)  # offsets
+        zp = np.float32([8.0])  # zero point
+
+    qs = np.zeros((nb, qk // 2), dtype=np.uint8)
+
+    xi = ((x * id_vals[:, np.newaxis]) + 8.5).clip(0, 15).astype(np.uint8)
+
+    for e in range(16):
+        qs[:, e] = xi[:, e] | (xi[:, 16 + e] << 4)
+
+    return qs, d, m, zp
