@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user
-            std::cout << "Please enter a line of text: ";
+            std::cout << "Please enter an instruction: ";
             std::string input;
             std::getline(std::cin, input);
 
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             while (true) {
-                std::cout << "Please enter a line of text: ";
+                std::cout << "Please enter an instruction: ";
                 std::string input;
                 std::getline(std::cin, input);
                 // input = "Below is an instruction that describes a task. Write a response that appropriately completes
