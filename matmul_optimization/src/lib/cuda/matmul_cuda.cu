@@ -40,6 +40,16 @@ __global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int
         floatArray[index] = sum;
     }
 }
+// __global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int N, int split_k_iters) {
+//     int index = threadIdx.x + blockIdx.x * blockDim.x;
+//     int stride = blockDim.x * gridDim.x;
+
+//     for (int i = index; i < N * split_k_iters; i += stride) {
+//         int halfArrayIndex = i / split_k_iters;
+//         int k_iter = i % split_k_iters;
+//         atomicAdd(&floatArray[halfArrayIndex], __half2float(halfArray[halfArrayIndex + k_iter * N]));
+//     }
+// }
 
 const int threadDim = 32;
 const int TILE_SIZE = threadDim;
@@ -592,22 +602,30 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
   int C_size = C->row * C->column;
   // int sf_size = B->row / group_size * B->column * 8;
 
+  // printf("aaaaaaaaaa\n");
+
   cudaError_t err;
   err = cudaMallocManaged(&in_feats, A_size * sizeof(half));
   if (err != cudaSuccess) {
     printf("Error allocating memory for in_feats: %s\n", cudaGetErrorString(err));
     return;
   }
+  // err = cudaGetLastError();
+  // if (err != cudaSuccess) {
+  //   printf("Error launching cudaMallocManaged in_feats kernel: %s\n", cudaGetErrorString(err));
+  // }
+  // printf("bbbbbbbbbb\n");
+
   err = cudaMallocManaged(&out_feats, split_k_iters * C_size * sizeof(half));
   if (err != cudaSuccess) {
     printf("Error allocating memory for out_feats: %s\n", cudaGetErrorString(err));
     return;
   }
-
   // err = cudaGetLastError();
   // if (err != cudaSuccess) {
-  //   printf("Error launching cudaMallocManaged kernel: %s\n", cudaGetErrorString(err));
+  //   printf("Error launching cudaMallocManaged out_feats kernel: %s\n", cudaGetErrorString(err));
   // }
+  // printf("cccccccccc\n");
 
   // cudaDeviceSynchronize();
   // err = cudaGetLastError();
@@ -616,19 +634,21 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
   // }
 
   // // Launch the kernel
-  // int blockSize = 256;
-  // int numBlocks = (A_size + blockSize - 1) / blockSize;
-
   PROFILE_START("float2half::in_feats");
-  for (int i = 0; i < A_size; i++) {
-    in_feats[i] = __float2half(A->data_ptr[i]);
-  }
+  // for (int i = 0; i < A_size; i++) {
+  //   in_feats[i] = __float2half(A->data_ptr[i]);
+  // }
+
+  int blockSize = 1024;
+  int numBlocks = (A_size + blockSize - 1) / blockSize;
+  float2half<<<numBlocks, blockSize>>>(A->data_ptr, in_feats, A_size);
+  // printf("dddddddddd\n");
   PROFILE_END("float2half::in_feats");
   
   // cudaDeviceSynchronize();
   // err = cudaGetLastError();
   // if (err != cudaSuccess) {
-  //   printf("Error launching cudaDeviceSynchronize 4 kernel: %s\n", cudaGetErrorString(err));
+  //   printf("Error launching __float2half kernel: %s\n", cudaGetErrorString(err));
   // }
 
 
@@ -649,6 +669,8 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
     // threadIdx.x: 32
     // threadIdx.y: i_factors[2] * j_factors[2]
     dim3 threads_per_block(32, 2);
+
+    // printf("eeeeeeeeee\n");
     
     gemm_forward_4bit_cuda_m16n128k32<<<num_blocks, threads_per_block>>>(
         group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, out_feats);
@@ -657,6 +679,7 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
     // if (err != cudaSuccess) {
     //   printf("Error launching gemm_forward_4bit_cuda_m16n128k32 kernel: %s\n", cudaGetErrorString(err));
     // }
+    // printf("fffffffff\n");
   }
   else if (num_out_channels % 64 == 0)
   {
@@ -676,7 +699,10 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
     // }
   }
 
-  cudaDeviceSynchronize();
+  // printf("gggggggggg\n");
+  // cudaDeviceSynchronize();
+  // printf("hhhhhhhhhh\n");
+
   // err = cudaGetLastError();
   // if (err != cudaSuccess) {
   //   printf("Error launching cudaDeviceSynchronize 1 kernel: %s\n", cudaGetErrorString(err));
@@ -684,18 +710,22 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
   PROFILE_END("gemm_forward_4bit_cuda_m16n128k32");
 
   PROFILE_START("half2float_merge_k_iters");
-  for (int i = 0; i < C_size; i++) {
-    C->data_ptr[i] = 0;
-    for (int j = 0; j < split_k_iters; j++) {
-      C->data_ptr[i] += __half2float(out_feats[i + j * C_size]);
-    }
-  }
+  // for (int i = 0; i < C_size; i++) {
+  //   C->data_ptr[i] = 0;
+  //   for (int j = 0; j < split_k_iters; j++) {
+  //     C->data_ptr[i] += __half2float(out_feats[i + j * C_size]);
+  //   }
+  // }
+
+  numBlocks = (C_size + blockSize - 1) / blockSize;
+  half2float_merge_k_iters<<<numBlocks, blockSize>>>(out_feats, C->data_ptr, C_size, split_k_iters);
+  // cudaDeviceSynchronize();
+  // printf("iiiiiiiiii\n");
   PROFILE_END("half2float_merge_k_iters");
 
-  // cudaDeviceSynchronize();
   // err = cudaGetLastError();
   // if (err != cudaSuccess) {
-  //   printf("Error launching cudaDeviceSynchronize 2 kernel: %s\n", cudaGetErrorString(err));
+  //   printf("Error launching __half2float kernel: %s\n", cudaGetErrorString(err));
   // }
 
   // Free memory
@@ -706,6 +736,7 @@ void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters)
   // if (err != cudaSuccess) {
   //   printf("Error launching cudaFree kernel: %s\n", cudaGetErrorString(err));
   // }
+  // printf("jjjjjjjjjj\n");
   PROFILE_END("cudaFree");
 
 
@@ -1039,7 +1070,7 @@ namespace matmul{
     
     // std::cout << "msadi" << std::endl;
 
-    gemm_forward_cuda(params, 8);
+    gemm_forward_cuda(params, 1);
     
     // cudaMemcpy(C->data_ptr, out_feats.data_ptr(), C->column * C->row * sizeof(float), cudaMemcpyDeviceToHost);
 

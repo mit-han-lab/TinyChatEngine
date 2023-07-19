@@ -2,7 +2,9 @@
 
 #include "common.h"
 #include "operators.h"
+
 #include "linear.cuh"
+#include "operators.cuh"
 
 struct Int4llamaAttention_output {
     Matrix3D<float> attn_output;
@@ -39,11 +41,13 @@ class Int4llamaAttention {
    private:
     void unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen);
     void shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen);
-    int embed_dim, num_heads, head_dim;
+    int embed_dim, num_heads, head_dim, max_sqlen;
     Linear_half_int4_ref k_proj, v_proj, q_proj, o_proj;
     // Linear_FP_int4 o_proj;
-    RotaryPosEmb rotary_pos_emb;
-    BMM_F32T qk_bmm, pv_bmm;
+    RotaryPosEmb_half rotary_pos_emb;
+    // RotaryPosEmb rotary_pos_emb;
+    BMM_F16T qk_bmm, pv_bmm;
+    // BMM_F32T qk_bmm, pv_bmm;
     std::string profile_name = "Int4llamaAttention";
 
     int *q_weight, *k_weight, *v_weight, *o_weight;

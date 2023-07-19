@@ -3,7 +3,7 @@
 #include "operators.cuh"
 #include "utils.h"
 
-__global__ void EmbeddingKernel(Matrix3D_cuda<int> input_id, Matrix3D_cuda<float> output, float* lookup, int embed_dim) {
+__global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<float> output, float* lookup, int embed_dim) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (i < input_id.m_dim_z) {
@@ -23,7 +23,7 @@ void load_Embedding_params(Embedding_half& op, std::string prefix) {
     // read_to_array((prefix + "/weight.bin").c_str(), op.lookup.m_data, op.lookup.length());
 }
 
-void Embedding_half::forward(Matrix3D_cuda<int> input_id, Matrix3D_cuda<float> output) {
+void Embedding_half::forward(Matrix3D<int> input_id, Matrix3D<float> output) {
     PROFILE_START(profile_name);
     assert(input_id.m_dim_x == 1);
     assert(input_id.m_dim_y == 1);

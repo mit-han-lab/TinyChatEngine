@@ -1,6 +1,6 @@
 #include "operators.cuh"
 
-__global__ void batch_Add_half(const Matrix3D_cuda<float> &input, const Matrix3D_cuda<float> &input2, Matrix3D_cuda<float> &output) {
+__global__ void batch_Add_half(Matrix3D<float> input, Matrix3D<float> input2, Matrix3D<float> output) {
     // Find the maximum value in the input array
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;

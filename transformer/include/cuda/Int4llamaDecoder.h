@@ -30,14 +30,15 @@ class Int4llamaDecoder {
     Matrix3D<float> prepare_decoder_attention_mask(int length, int past_length);
     struct Int4llamaDecoder_output forward(const struct Int4llamaDecoder_input& input);
     Embedding embed_tokens;
-    LlamaRMSNorm norm;
+    LlamaRMSNorm_half norm;
+    // LlamaRMSNorm norm;
     int voc_size, embed_dim, padding_idx, hidden_dim, num_heads;
     std::vector<Int4llamaDecoderLayer> layers;
     std::string profile_name = "Int4llamaDecoder";
 
    private:
     float* attention_mask_buf;
-    float* pos_embeds_buf;
+    // float* pos_embeds_buf;
     float* last_hidden_states_buf;
     float* hidden_states_buf;
 };

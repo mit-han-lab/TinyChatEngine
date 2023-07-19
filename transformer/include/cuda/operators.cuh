@@ -9,7 +9,7 @@
 #include "../ops/cuda/Embedding.cuh"
 // #include "linear.cuh"
 
-__global__ void batch_Add_half(const Matrix3D_cuda<float> &input, const Matrix3D_cuda<float> &input2, Matrix3D_cuda<float> &output);
-__global__ void softmax(const Matrix3D_cuda<float> &input, Matrix3D_cuda<float> &output);
+__global__ void batch_Add_half(const Matrix3D<float> input, const Matrix3D<float> input2, Matrix3D<float> output);
+__global__ void softmax_half(Matrix3D<float> input, Matrix3D<float> output);
 
 #endif  // OPERATORS_H

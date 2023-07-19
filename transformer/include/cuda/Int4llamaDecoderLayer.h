@@ -20,13 +20,13 @@ struct Int4llamaDecoderLayer_input {
     Matrix3D<float> past_key, past_value;
     bool has_past_key_value = false;
 
-    Int4llamaDecoderLayer_input(Matrix3D<float> &hidden_states_, Matrix3D<float> &attention_mask_) {
+    Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_) {
         hidden_states = hidden_states_;
         attention_mask = attention_mask_;
         has_past_key_value = false;
     }
 
-    Int4llamaDecoderLayer_input(Matrix3D<float> &hidden_states_, Matrix3D<float> &attention_mask_,
+    Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_,
                                 Matrix3D<float> past_key_, Matrix3D<float> past_value_) {
         hidden_states = hidden_states_;
         attention_mask = attention_mask_;
@@ -34,6 +34,13 @@ struct Int4llamaDecoderLayer_input {
         past_value = past_value_;
         has_past_key_value = true;
     }
+
+    // Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_) 
+    //     : hidden_states(hidden_states_), attention_mask(attention_mask_), has_past_key_value(false) {}
+
+    // Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_,
+    //                             Matrix3D<float> past_key_, Matrix3D<float> past_value_)
+    //     : hidden_states(hidden_states_), attention_mask(attention_mask_), past_key(past_key_), past_value(past_value_), has_past_key_value(true) {}
 };
 
 class Int4llamaDecoderLayer {
@@ -42,7 +49,8 @@ class Int4llamaDecoderLayer {
     struct Int4llamaDecoderLayer_output forward(const struct Int4llamaDecoderLayer_input &input);
 
     int embed_dim, num_attention_heads, hidden_dim, layer_idx;
-    LlamaRMSNorm input_layernorm, post_attention_layernorm;  // from torch_int.nn
+    LlamaRMSNorm_half input_layernorm, post_attention_layernorm;
+    // LlamaRMSNorm input_layernorm, post_attention_layernorm;  // from torch_int.nn
     Linear_half_int4_ref gate_proj, down_proj, up_proj;
     Int4llamaAttention attn;
     std::string profile_name = "Int4llamaDecoderLayer";
