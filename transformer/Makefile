@@ -3,7 +3,7 @@ CXX = g++
 CXXFLAGS = -std=c++11 -pthread -Ofast
 
 # Executable and source files
-TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4LlamaForCausalLM
+TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4llamaForCausalLM
 PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_Int4LlamaForCausalLM profile_OPTForCausalLM profile_ops
 APP_TARGET = demo
 TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
@@ -101,7 +101,7 @@ $(TEST_TARGET): %: tests/%.cc $(OBJS)
 profile_Fp32LlamaForCausalLM: tests/test_Fp32LlamaForCausalLM.cc $(PROFILE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-profile_Int4LlamaForCausalLM: tests/test_Int4LlamaForCausalLM.cc $(PROFILE_OBJS)
+profile_Int4LlamaForCausalLM: tests/test_Int4llamaForCausalLM.cc $(PROFILE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
 profile_OPTForCausalLM: tests/test_OPTForCausalLM.cc $(PROFILE_OBJS)
