@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
         Encoder encoder = get_encoder(vocab_file, bpe_file);
 
         // Get input from the user
-        std::cout << "Please enter a line of text: ";
+        std::cout << "Please enter an instruction: ";
         std::string input;
         std::getline(std::cin, input);
         std::vector<int> input_ids = encoder.encode(input);

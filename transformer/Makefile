@@ -29,7 +29,7 @@ else ifeq ($(shell uname -p),arm)
 	# LIB += -framework Metal -framework Foundation -framework MetalKit
 	# TARGET += default.metallib library.air
 	# CXXFLAGS += -stdlib=libc++ -DUSE_METAL
-	# TODO: use NEON if Metal is not supported
+	# Use NEON with int8 runtime quantization is faster
 	LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
 	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQ4_4 -fPIC -march=armv8.2-a
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include

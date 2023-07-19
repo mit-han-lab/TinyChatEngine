@@ -9,6 +9,7 @@
 #include "../matmul.h"
 #include "common.h"
 
+// Most of this function is from llama.cpp
 void quantize_fp32_to_int8(float* A, int8_t* qA, float* sA, int size, int block_size) {
     assert(size % block_size == 0);
     assert(block_size == 32);
@@ -416,6 +417,7 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
         threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
         threads_args[j].params = params;
 #ifdef PACK_QK
+        // This may lead to performance degradation
         pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_packed, &threads_args[j]);
 #else
         pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_unroll128, &threads_args[j]);

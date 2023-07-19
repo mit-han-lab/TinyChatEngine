@@ -190,9 +190,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     assert(b == 1);
 
     Matrix3D<float> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
-    // query_states = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads,
-    // self.head_dim).transpose(1, 2)
-    // std::cout << "q_weight" << std::endl;
+
     this->q_proj.forward(input.hidden_states, query_states_unshape);
     Matrix3D<float> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(query_states_unshape, query_states, sqlen);
@@ -208,17 +206,12 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
         cache_num[input.layer_idx] = 1;
     }
 
-    // key_states = self.k_proj(hidden_states).view(bsz, q_len, self.num_heads,
-    // self.head_dim).transpose(1, 2)
     Matrix3D<float> key_states_unshape(key_states_unshape_arr, b, sqlen, embed_dim);
-    // std::cout << "k_weight" << std::endl;
     this->k_proj.forward(input.hidden_states, key_states_unshape);
     Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(key_states_unshape, key_states, sqlen);
-    // value_states = self.v_proj(hidden_states).view(bsz, q_len, self.num_heads,
-    // self.head_dim).transpose(1, 2)
+
     Matrix3D<float> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
-    // std::cout <<  "v_weight" << std::endl;
     this->v_proj.forward(input.hidden_states, value_states_unshape);
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(value_states_unshape, value_states, sqlen);
@@ -238,8 +231,6 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     int tgz = sqlen;
     if (input.has_past_key_value) {
         // # reuse k, v, self_attention
-        // key_states = torch.cat([past_key_value[0], key_states], dim=2)
-        // value_states = torch.cat([past_key_value[1], value_states], dim=2)
         assert(input.past_key.m_dim_z == this->head_dim);
         tgz += input.past_key.m_dim_y;
         float *val_ptr = ret_value_states, *key_ptr = ret_key_states;
@@ -272,8 +263,6 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // printf("qk_bmm.forward, attn_weights.sum: %f\n", attn_weights.sum());
     // print_first_k_elelment("attn_weights", attn_weights.m_data, 20);
 
-    // opt.py: attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len,
-    // src_len) + attention_mask
     batch_Add(attn_weights, input.attention_mask, attn_weights);
     // printf("batch_Add, attn_weights.sum: %f\n", attn_weights.sum());
     // Check for negative infinity, TODO: use multithread to speed up this
@@ -290,7 +279,6 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // print_first_k_elelment("attn_probs", attn_probs.m_data, 20);
 
     Matrix3D<float> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
-    // transpose_1_2idx_float_threads(final_value_states, value_states_transpose, NUM_THREAD);
     transpose_1_2idx_float_threads(final_value_states, value_states_transpose);
 
     Matrix3D<float> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
@@ -302,7 +290,6 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     this->unshape(attn_output, attn_output_transpose, sqlen);
 
     Matrix3D<float> attn_output_fp(attn_output_fp_arr, 1, sqlen, this->num_heads * this->head_dim);
-    // std::cout << "o_proj.forward" << std::endl;
     this->o_proj.forward(attn_output_transpose, attn_output_fp);
     // printf("o_proj.forward, attn_output_fp.sum: %f\n", attn_output_fp.sum());
     // print_first_k_elelment("attn_output_fp", attn_output_fp.m_data, 20);
