@@ -45,7 +45,7 @@ python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q
 # compile the demo program
 make -j
 # run the demo
-./demo
+./demo # demo.exe on Windows
 Using model: LLaMA7B_AWQ
 Using LLaMA's default data format: INT4
 Loading model... Finished!
