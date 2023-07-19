@@ -9,6 +9,8 @@
 #include <cstring>  // for strerror
 #include <iostream>
 
+#include "common.h"
+
 // To be deprecated soon
 template <typename T>
 void read_to_array(const char* path, T* array, int size) {
@@ -196,6 +198,7 @@ void allocate_aligned_memory(T*& ptr, size_t size) {
     ptr = (T*)void_ptr;
 }
 
+void deallocate_memory(void* ptr) { throw std::logic_error("Deallocate function not yet implemented"); }
 #else
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size) {
@@ -207,6 +210,7 @@ void allocate_aligned_memory(T*& ptr, size_t size) {
         throw("Memory allocation failed.");
     }
 }
+void deallocate_memory(void* ptr) { free(ptr); }
 #endif
 
 // Explicitly instantiate the generic template function for other types (if needed)
@@ -219,3 +223,4 @@ template void allocate_aligned_memory(float*& ptr, size_t size);
 template void allocate_aligned_memory(int*& ptr, size_t size);
 template void allocate_aligned_memory(int8_t*& ptr, size_t size);
 template void allocate_aligned_memory(uint8_t*& ptr, size_t size);
+template void allocate_aligned_memory(pack_q4_tensor*& ptr, size_t size);

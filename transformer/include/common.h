@@ -15,6 +15,16 @@
 
 #define QK 32
 
+struct pack_q4_tensor {
+    uint8_t qx[QK / 2];
+    float scale;
+};
+
+struct pack_q8_tensor {
+    int8_t qx[QK];
+    float scale;
+};
+
 template <typename T>
 class Matrix3D {
    public:

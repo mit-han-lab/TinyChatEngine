@@ -1,23 +1,24 @@
+#include <arm_neon.h>
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
 
 #include <cmath>
 #include <cstdlib>
-#include <arm_neon.h>
 
 #include "../matmul.h"
 
-
-static inline void dequantize_block_q4_unroll2_no_offset(const uint8_t *int4_w, float *y, float scale, const uint8_t *int4_w_2, float *y_2, float scale_2, int block_size) {
+static inline void dequantize_block_q4_unroll2_no_offset(const uint8_t *int4_w, float *y, float scale,
+                                                         const uint8_t *int4_w_2, float *y_2, float scale_2,
+                                                         int block_size) {
     const float32x4_t vd = vdupq_n_f32(scale);
     const float32x4_t vd_2 = vdupq_n_f32(scale_2);
     const float32x4_t zp = vdupq_n_f32(-8.0f);
 
     for (int l = 0; l < block_size; l += 16) {
         // Load 16x4-bit integers into 8x8-bit integers
-        const uint8x8_t v8 = vld1_u8(int4_w + l/2);
-        const uint8x8_t v8_2 = vld1_u8(int4_w_2 + l/2);
+        const uint8x8_t v8 = vld1_u8(int4_w + l / 2);
+        const uint8x8_t v8_2 = vld1_u8(int4_w_2 + l / 2);
 
         // Expand 4-bit qs to 8-bit bytes
         const uint8x8_t v0 = vand_u8(v8, vdup_n_u8(0x0f));
@@ -41,9 +42,9 @@ static inline void dequantize_block_q4_unroll2_no_offset(const uint8_t *int4_w, 
         const int8x16_t vq_2 = vcombine_s8(vx_0_2, vx_1_2);
 
         // convert to 2x int16x8_t
-        auto vq_low = vget_low_s8 (vq);
+        auto vq_low = vget_low_s8(vq);
         auto vq_high = vget_high_s8(vq);
-        auto vq_2_low = vget_low_s8 (vq_2);
+        auto vq_2_low = vget_low_s8(vq_2);
         auto vq_2_high = vget_high_s8(vq_2);
         const int16x8_t vi_0 = vmovl_s8(vq_low);
         const int16x8_t vi_1 = vmovl_s8(vq_high);
@@ -95,14 +96,14 @@ static inline void dequantize_block_q4_unroll2_no_offset(const uint8_t *int4_w, 
         const float32x4_t r1_2 = vmulq_f32(r1_zp2, vd_2);
         vst1q_f32(y + l + 4, r1);
         vst1q_f32(y_2 + l + 4, r1_2);
-        
+
         const float32x4_t r2_zp = vaddq_f32(vf_2, zp);
         const float32x4_t r2_zp2 = vaddq_f32(vf_2_2, zp);
         const float32x4_t r2 = vmulq_f32(r2_zp, vd);
         const float32x4_t r2_2 = vmulq_f32(r2_zp2, vd_2);
         vst1q_f32(y + l + 8, r2);
         vst1q_f32(y_2 + l + 8, r2_2);
-        
+
         const float32x4_t r3_zp = vaddq_f32(vf_3, zp);
         const float32x4_t r3_zp2 = vaddq_f32(vf_3_2, zp);
         const float32x4_t r3 = vmulq_f32(r3_zp, vd);
@@ -112,17 +113,18 @@ static inline void dequantize_block_q4_unroll2_no_offset(const uint8_t *int4_w, 
     }
 }
 
-static inline void dequantize_matmul_fused_q4_unroll2_no_offset(
-    const uint8_t *int4_w, float scale, const uint8_t *int4_w_2, float scale_2, int block_size, 
-    float32x4_t *x_ptr, float32x4_t &acc0, float32x4_t &acc1) {
+static inline void dequantize_matmul_fused_q4_unroll2_no_offset(const uint8_t *int4_w, float scale,
+                                                                const uint8_t *int4_w_2, float scale_2, int block_size,
+                                                                float32x4_t *x_ptr, float32x4_t &acc0,
+                                                                float32x4_t &acc1) {
     const float32x4_t vd = vdupq_n_f32(scale);
     const float32x4_t vd_2 = vdupq_n_f32(scale_2);
     const float32x4_t zp = vdupq_n_f32(-8.0f);
 
     for (int l = 0; l < block_size; l += 16) {
         // Load 16x4-bit integers into 8x8-bit integers
-        const uint8x8_t v8 = vld1_u8(int4_w + l/2);
-        const uint8x8_t v8_2 = vld1_u8(int4_w_2 + l/2);
+        const uint8x8_t v8 = vld1_u8(int4_w + l / 2);
+        const uint8x8_t v8_2 = vld1_u8(int4_w_2 + l / 2);
 
         // Expand 4-bit qs to 8-bit bytes
         const uint8x8_t v0 = vand_u8(v8, vdup_n_u8(0x0f));
@@ -146,9 +148,9 @@ static inline void dequantize_matmul_fused_q4_unroll2_no_offset(
         const int8x16_t vq_2 = vcombine_s8(vx_0_2, vx_1_2);
 
         // convert to 2x int16x8_t
-        auto vq_low = vget_low_s8 (vq);
+        auto vq_low = vget_low_s8(vq);
         auto vq_high = vget_high_s8(vq);
-        auto vq_2_low = vget_low_s8 (vq_2);
+        auto vq_2_low = vget_low_s8(vq_2);
         auto vq_2_high = vget_high_s8(vq_2);
         const int16x8_t vi_0 = vmovl_s8(vq_low);
         const int16x8_t vi_1 = vmovl_s8(vq_high);
@@ -200,14 +202,14 @@ static inline void dequantize_matmul_fused_q4_unroll2_no_offset(
         const float32x4_t r1_2 = vmulq_f32(r1_zp2, vd_2);
         acc0 = vaddq_f32(vmulq_f32(*x_ptr, r1), acc0);
         acc1 = vaddq_f32(vmulq_f32(*x_ptr++, r1_2), acc1);
-        
+
         const float32x4_t r2_zp = vaddq_f32(vf_2, zp);
         const float32x4_t r2_zp2 = vaddq_f32(vf_2_2, zp);
         const float32x4_t r2 = vmulq_f32(r2_zp, vd);
         const float32x4_t r2_2 = vmulq_f32(r2_zp2, vd_2);
         acc0 = vaddq_f32(vmulq_f32(*x_ptr, r2), acc0);
         acc1 = vaddq_f32(vmulq_f32(*x_ptr++, r2_2), acc1);
-        
+
         const float32x4_t r3_zp = vaddq_f32(vf_3, zp);
         const float32x4_t r3_zp2 = vaddq_f32(vf_3_2, zp);
         const float32x4_t r3 = vmulq_f32(r3_zp, vd);
@@ -217,16 +219,15 @@ static inline void dequantize_matmul_fused_q4_unroll2_no_offset(
     }
 }
 
-static void dequantize_matmul_fused_q4_no_offset_v1(
-    const uint8_t *int4_w, float scale, int block_size,
-     float32x4_t *x_ptr, float32x4_t &acc0) {
+static void dequantize_matmul_fused_q4_no_offset_v1(const uint8_t *int4_w, float scale, int block_size,
+                                                    float32x4_t *x_ptr, float32x4_t &acc0) {
     const float32x4_t vd = vdupq_n_f32(scale);
     const float32x4_t zp = vdupq_n_f32(-8.0f);
     const auto tmp = vdup_n_u8(0x0f);
 
     for (int l = 0; l < block_size; l += 16) {
         // Load 16x4-bit integers into 8x8-bit integers
-        const uint8x8_t v8 = vld1_u8(int4_w + l/2);
+        const uint8x8_t v8 = vld1_u8(int4_w + l / 2);
 
         // Expand 4-bit qs to 8-bit bytes
         const uint8x8_t v0 = vand_u8(v8, tmp);
@@ -243,7 +244,7 @@ static void dequantize_matmul_fused_q4_no_offset_v1(
         const int8x16_t vq = vcombine_s8(vx_0, vx_1);
 
         // convert to 2x int16x8_t
-        auto vq_low = vget_low_s8 (vq);
+        auto vq_low = vget_low_s8(vq);
         auto vq_high = vget_high_s8(vq);
         const int16x8_t vi_0 = vmovl_s8(vq_low);
         const int16x8_t vi_1 = vmovl_s8(vq_high);
@@ -297,13 +298,15 @@ static void *fast_zp_no_offset_over_column_func_v1(void *args) {
     float weight_block2[block_size];
 
     for (i = 0; i < C->row; i++) {
-        for (j = mat_args->start_j; j < mat_args->end_j; j+=2) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j += 2) {
             float32x4_t acc0 = vdupq_n_f32(0.0f);
             float32x4_t acc1 = vdupq_n_f32(0.0f);
             for (k = 0; k < B->row * 2; k += block_size) {
                 float s = scale[j * (B->row / 16) + k / 32], s1 = scale[(j + 1) * (B->row / 16) + k / 32];
-                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2], *weight_32_int4_2 = &B->int4_data_ptr[(j+1) * B->row + k / 2];
-                dequantize_block_q4_unroll2_no_offset(weight_32_int4, weight_block, s, weight_32_int4_2, weight_block2, s1, block_size);
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2],
+                        *weight_32_int4_2 = &B->int4_data_ptr[(j + 1) * B->row + k / 2];
+                dequantize_block_q4_unroll2_no_offset(weight_32_int4, weight_block, s, weight_32_int4_2, weight_block2,
+                                                      s1, block_size);
                 float32x4_t *x_ptr = (float32x4_t *)&A->data_ptr[i * A->column + k];
                 float32x4_t *w_ptr = (float32x4_t *)&weight_block;
                 float32x4_t *w2_ptr = (float32x4_t *)&weight_block2;
@@ -330,13 +333,12 @@ static void *fast_zp_no_offset_over_column_func_v1(void *args) {
             float *ptr = (float *)&acc0;
             C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
             ptr = (float *)&acc1;
-            C->data_ptr[i * C->column + j+1] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
+            C->data_ptr[i * C->column + j + 1] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
         }
     }
 
     return NULL;
 }
-
 
 static void *fast_zp_no_offset_over_column_func_v2(void *args) {
     int i, j, k;
@@ -351,7 +353,8 @@ static void *fast_zp_no_offset_over_column_func_v2(void *args) {
             float32x4_t acc0 = vdupq_n_f32(0.0f);
             for (k = 0; k < A->column; k += block_size) {
                 float s = scale[j * (B->row / 16) + k / 32], s1 = scale[(j + 1) * (B->row / 16) + k / 32];
-                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2], *weight_32_int4_2 = &B->int4_data_ptr[(j+1) * B->row + k / 2];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2],
+                        *weight_32_int4_2 = &B->int4_data_ptr[(j + 1) * B->row + k / 2];
                 float32x4_t *x_ptr = (float32x4_t *)&A->data_ptr[i * A->column + k];
                 dequantize_matmul_fused_q4_no_offset_v1(weight_32_int4, s, block_size, x_ptr, acc0);
             }
@@ -372,19 +375,21 @@ static void *fast_zp_no_offset_over_column_func_v3(void *args) {
     float *scale = params->scales, *offset = params->offset;
 
     for (i = 0; i < C->row; i++) {
-        for (j = mat_args->start_j; j < mat_args->end_j; j+=2) {
+        for (j = mat_args->start_j; j < mat_args->end_j; j += 2) {
             float32x4_t acc0 = vdupq_n_f32(0.0f);
             float32x4_t acc1 = vdupq_n_f32(0.0f);
             for (k = 0; k < B->row * 2; k += block_size) {
                 float s = scale[j * (B->row / 16) + k / 32], s1 = scale[(j + 1) * (B->row / 16) + k / 32];
-                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2], *weight_32_int4_2 = &B->int4_data_ptr[(j+1) * B->row + k / 2];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->row + k / 2],
+                        *weight_32_int4_2 = &B->int4_data_ptr[(j + 1) * B->row + k / 2];
                 float32x4_t *x_ptr = (float32x4_t *)&A->data_ptr[i * A->column + k];
-                dequantize_matmul_fused_q4_unroll2_no_offset(weight_32_int4, s, weight_32_int4_2, s1, block_size, x_ptr, acc0, acc1);
+                dequantize_matmul_fused_q4_unroll2_no_offset(weight_32_int4, s, weight_32_int4_2, s1, block_size, x_ptr,
+                                                             acc0, acc1);
             }
             float *ptr = (float *)&acc0;
             C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
             ptr = (float *)&acc1;
-            C->data_ptr[i * C->column + j+1] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
+            C->data_ptr[i * C->column + j + 1] = ptr[0] + ptr[1] + ptr[2] + ptr[3];
         }
     }
 
@@ -409,7 +414,6 @@ void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul
     }
     // Join threads
     for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
-
 };
 
 }  // namespace matmul

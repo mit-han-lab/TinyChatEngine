@@ -31,7 +31,7 @@ else ifeq ($(shell uname -p),arm)
 	# CXXFLAGS += -stdlib=libc++ -DUSE_METAL
 	# TODO: use NEON if Metal is not supported
 	LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
-	CXXFLAGS += -march=native -framework Accelerate -DUSE_INT8_INT4_PRODUCT -DQ4_4
+	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQ4_4 #-DPACK_QK
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	LIB += -L/opt/homebrew/opt/boost/lib
 else
@@ -118,5 +118,6 @@ $(APP_TARGET): %: application/%.cc $(OBJS)
 clean:
 	rm -f $(TARGET)
 	rm -rf *.dSYM
-	rm -rf $(BUILDDIR) $(BUILDDIR)/../matmul_optimization
+	rm -rf $(BUILDDIR)/../matmul_optimization
+	rm -rf $(BUILDDIR)
 	rm -rf $(PROFILEDIR)

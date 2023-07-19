@@ -54,4 +54,6 @@ template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
 #endif
 
+void deallocate_memory(void* ptr);
+
 #endif
