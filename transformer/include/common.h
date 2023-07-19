@@ -7,12 +7,23 @@
 
 #include "model.h"
 
+#define MAX_LINEAR_LENGTH 1024 * 1024 * 16  // 16MB, TO BE REMOVED with better memory allocation!
 #define DEBUG false
 
 #define DEBUG_INS(x) \
     if (DEBUG) x
 
 #define QK 32
+
+struct pack_q4_tensor {
+    uint8_t qx[QK / 2];
+    float scale;
+};
+
+struct pack_q8_tensor {
+    int8_t qx[QK];
+    float scale;
+};
 
 template <typename T>
 class Matrix3D {

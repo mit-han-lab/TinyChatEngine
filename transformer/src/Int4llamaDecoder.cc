@@ -64,7 +64,6 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
     PROFILE_START(profile_name);
     int sqlen = input.input_ids.m_dim_z, batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
 
-    // modeling_opt.py: inputs_embeds = self.embed_tokens(input_ids)
     float inputs_embeds_buf[sqlen * this->embed_dim];
     Matrix3D<float> inputs_embeds(inputs_embeds_buf, 1, sqlen, this->embed_dim);
     this->embed_tokens.forward(input.input_ids, inputs_embeds);
@@ -74,7 +73,6 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
         past_key_values_length = input.past_keys[0].m_dim_y;
     }
 
-    // causal_attention_mask = self._prepare_decoder_attention_mask
     Matrix3D<float> causal_attention_mask =
         this->prepare_decoder_attention_mask(sqlen + past_key_values_length, past_key_values_length);
     // print_first_k_elelment("causal_attention_mask", causal_attention_mask.m_data, 20);

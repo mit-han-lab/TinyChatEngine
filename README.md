@@ -27,7 +27,7 @@ git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
 cd TinyLLMEngine/transformer
 # download and convert the AWQ model to int4 format, this will take a while...
 ./download_model.sh LLaMA_7B_AWQ models
-python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q4_2 for M1/M2 MacBook
+python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q4_4 for M1/M2 MacBook
 # compile the demo program
 make -j
 # run the demo
@@ -35,7 +35,7 @@ make -j
 Using model: LLaMA7B_AWQ
 Using LLaMA's default data format: INT4
 Loading model... Finished!
-Please enter a line of text: Write a program to sort an integer array. # instruction
+Please enter an instruction: Write a program to sort an integer array.
 Generated:
 ```python
 def sort_array(arr):
@@ -54,6 +54,6 @@ def sort_array(arr):
     return sort_array(left) + [pivot] + sort_array(right)
 ```
 Section, Total time(us), Average time(us), Count, GOPs
-Token generation, 29143198, 282943, 103, N/A, N/A
+Token generation, 8345204, 81021, 103, N/A, N/A
 
 ````

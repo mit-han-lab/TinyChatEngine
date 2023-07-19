@@ -48,6 +48,33 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
         }
     }
 #else
+#ifdef Q4_4
+    for (i = 0; i < C->row; i++) {
+        for (j = 0; j < C->column; j++) {
+            float acc = 0;
+            for (k = 0; k < A->column; k += block_size) {
+                float s = B_sc[(j * A->column + k) / block_size];
+                uint8_t *weight_32_int4 = &B->int4_data_ptr[j * B->column + k / 2];
+                float *x_ptr = &A->data_ptr[i * A->column + k];
+                for (int qi = 0; qi < block_size / 2; qi += 16) {
+                    // sequential: (0, 1), (2, 3), (4, 5), (6, 7)... : 128 bit
+                    // expected layout of inB: (0, 16), (1, 17), (2, 18), (3, 19)...
+                    // low; (0, 0), (1, 0), (2, 0), (3, 0) ...
+                    // high: (16, 0), (17, 0), (18, 0), (19, 0) ...
+                    for (int qj = 0; qj < 16; qj++) {
+                        uint8_t packed_int4_0 = weight_32_int4[qi + qj];
+                        float deq_0 = (float)((packed_int4_0 & 0x0F) - 8.0) * s;
+                        float deq_1 = (float)((packed_int4_0 >> 4) - 8.0) * s;
+                        acc += *x_ptr * deq_0;
+                        acc += x_ptr[16] * deq_1;
+                        x_ptr++;
+                    }
+                }
+            }
+            C->data_ptr[i * C->column + j] = acc;
+        }
+    }
+#else
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {
             float acc = 0;
@@ -70,7 +97,8 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
             data_C[i * C->column + j] = acc;
         }
     }
-#endif
+#endif  // Q4_4
+#endif  // USE_METAL
 }
 
 void MatmulOperator::naive_mat_mul_int4_with_offset(const struct matmul_params *params) {

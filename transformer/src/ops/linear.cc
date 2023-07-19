@@ -138,8 +138,22 @@ void Linear_FP_int4::forward_fast(const Matrix3D<float> &x, Matrix3D<float> &out
     return;
 }
 
+#ifdef USE_INT8_INT4_PRODUCT
+static int8_t *x_int8;
+static float *x_scale;
+void Linear_FP_int4::initialize_memory(const int block_size) {
+#ifdef PACK_QK
+    allocate_aligned_memory(x_int8,
+                            (MAX_LINEAR_LENGTH) * sizeof(int8_t) + (MAX_LINEAR_LENGTH / block_size) * sizeof(float));
+#else
+    allocate_aligned_memory(x_int8, MAX_LINEAR_LENGTH * sizeof(int8_t));
+    allocate_aligned_memory(x_scale, (MAX_LINEAR_LENGTH / block_size) * sizeof(float));
+#endif  // PACK_QK
+}
+#endif  // USE_INT8_INT4_PRODUCT
+
 void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) {
-    const int num_thread = 8;
+    const int num_thread = 16;
     Matrix3D<uint8_t> b = this->weight;
     const int m = x.m_dim_y, n = b.m_dim_y, k = x.m_dim_z, b_size = b.m_dim_x;
     const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
@@ -170,7 +184,17 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
     params.block_size = QK;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
+#ifdef USE_INT8_INT4_PRODUCT
+    if (!x_int8) this->initialize_memory(params.block_size);
+    params.A.int8_data_ptr = x_int8;
+    params.A_scales = x_scale;
+#ifdef PACK_QK
+    params.B.int4_data_ptr = (uint8_t *)this->packed_weights;
+#endif
+    op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
+#else
     op.mat_mul_accelerator_int4_fast_no_offset(&params);
+#endif
 
     PROFILE_END(profile_name);
     return;

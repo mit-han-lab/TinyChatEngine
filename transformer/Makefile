@@ -1,9 +1,9 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -pthread -O3
+CXXFLAGS = -std=c++11 -pthread -Ofast
 
 # Executable and source files
-TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4LlamaForCausalLM
+TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4llamaForCausalLM
 PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_Int4LlamaForCausalLM profile_OPTForCausalLM profile_ops
 APP_TARGET = demo
 TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
@@ -19,21 +19,21 @@ ifeq ($(shell uname -m),x86_64)
 	# For Intel machines with AVX
 	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
 	LIB_SRC += $(LIB_AVX_SRC)
-	CXXFLAGS += -mavx2 -mfma -ffast-math
+	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT
 else ifeq ($(shell uname -p),arm)
-	# For ARM A-series (such as Mac M1) with Metal GPU
-	LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
-	LIB_SRC += $(wildcard $(LIB_DIR)/lib/metal/*.cc)
-	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
-	LIB += -framework Metal -framework Foundation -framework MetalKit
-	TARGET += default.metallib library.air
-	CXXFLAGS += -stdlib=libc++ -DUSE_METAL
 	CXX = /opt/homebrew/opt/llvm/bin/clang++
-	# TODO: use NEON if Metal is not supported
-	# LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
-	# CXXFLAGS += -march=native -framework Accelerate
-	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
-	# LIB += -L/opt/homebrew/opt/boost/lib
+	# For ARM A-series (such as Mac M1) with Metal GPU
+	# LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
+	# LIB_SRC += $(wildcard $(LIB_DIR)/lib/metal/*.cc)
+	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
+	# LIB += -framework Metal -framework Foundation -framework MetalKit
+	# TARGET += default.metallib library.air
+	# CXXFLAGS += -stdlib=libc++ -DUSE_METAL
+	# Use NEON with int8 runtime quantization is faster
+	LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQ4_4 -fPIC -march=armv8.2-a
+	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
+	LIB += -L/opt/homebrew/opt/boost/lib
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
@@ -101,7 +101,7 @@ $(TEST_TARGET): %: tests/%.cc $(OBJS)
 profile_Fp32LlamaForCausalLM: tests/test_Fp32LlamaForCausalLM.cc $(PROFILE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-profile_Int4LlamaForCausalLM: tests/test_Int4LlamaForCausalLM.cc $(PROFILE_OBJS)
+profile_Int4LlamaForCausalLM: tests/test_Int4llamaForCausalLM.cc $(PROFILE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
 profile_OPTForCausalLM: tests/test_OPTForCausalLM.cc $(PROFILE_OBJS)
@@ -118,5 +118,6 @@ $(APP_TARGET): %: application/%.cc $(OBJS)
 clean:
 	rm -f $(TARGET)
 	rm -rf *.dSYM
+	rm -rf $(BUILDDIR)/../matmul_optimization
 	rm -rf $(BUILDDIR)
 	rm -rf $(PROFILEDIR)
