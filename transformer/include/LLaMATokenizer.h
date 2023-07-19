@@ -1,25 +1,20 @@
 #ifndef LLaMA_TOKENIZER_H
 #define LLaMA_TOKENIZER_H
 
-#include <iostream>
+#include <cstdint>
 #include <cstdio>
-#include <string>
+#include <iostream>
 #include <map>
-#include <vector>
-#include <unordered_map>
 #include <queue>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-static int llama_token_bos() {
-    return 1;
-}
+static int llama_token_bos() { return 1; }
 
-static int llama_token_eos() {
-    return 2;
-}
+static int llama_token_eos() { return 2; }
 
-static int llama_token_nl() {
-    return 13;
-}
+static int llama_token_nl() { return 13; }
 
 struct llama_vocab {
     struct token_score {
@@ -35,7 +30,7 @@ struct llama_vocab {
  *  Tokenizer
  */
 static size_t utf8_len(char src) {
-    const size_t lookup[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4 };
+    const size_t lookup[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4};
     uint8_t highbits = static_cast<uint8_t>(src) >> 4;
 
     return lookup[highbits];
@@ -45,13 +40,13 @@ struct llama_sp_symbol {
     using index = int;
     index prev;
     index next;
-    const char * text;
+    const char* text;
     size_t n;
 };
 
 struct llama_sp_bigram {
     struct comparator {
-        bool operator()(llama_sp_bigram & l, llama_sp_bigram & r) {
+        bool operator()(llama_sp_bigram& l, llama_sp_bigram& r) {
             return (l.score < r.score) || (l.score == r.score && l.left > r.left);
         }
     };
@@ -63,14 +58,10 @@ struct llama_sp_bigram {
     size_t size;
 };
 
-llama_vocab llama_init_vocab(const char * vocab_file);
+llama_vocab llama_init_vocab(const char* vocab_file);
 
-const char * llama_id_to_token(const llama_vocab & vocab, int id);
+const char* llama_id_to_token(const llama_vocab& vocab, int id);
 
-int llama_tokenize(const llama_vocab & vocab,
-                          const char * text,
-                                 int * tokens,
-                                 int   n_max_tokens,
-                                bool   add_bos);
+int llama_tokenize(const llama_vocab& vocab, const char* text, int* tokens, int n_max_tokens, bool add_bos);
 
 #endif

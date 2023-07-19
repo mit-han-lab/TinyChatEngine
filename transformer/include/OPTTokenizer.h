@@ -1,39 +1,39 @@
 #ifndef OPT_TOKENIZER_H
 #define OPT_TOKENIZER_H
 
-#include <cstdio>
-#include <vector>
-#include <string>
-#include <queue>
-#include <cassert>
-#include <unordered_map>
-#include <random>
-#include <map>
-#include <set>
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <codecvt>
-#include <locale>
-#include <sstream>
+#include <cstdio>
 #include <fstream>
-#include <utility>
+#include <locale>
+#include <map>
+#include <queue>
+#include <random>
 #include <regex>
-#include <boost/regex.hpp>
+#include <set>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+// #include <boost/regex.hpp> // Tricky to support this in windows
 #include <nlohmann/json.hpp>
 
-//std::vector<int> OPT_tokenize(const OPT_vocab & vocab, const std::string & text, bool add_bos);
+// std::vector<int> OPT_tokenize(const OPT_vocab & vocab, const std::string & text, bool add_bos);
 
 struct pair_hash {
     template <class T1, class T2>
-    std::size_t operator () (const std::pair<T1,T2> &p) const {
+    std::size_t operator()(const std::pair<T1, T2> &p) const {
         auto h1 = std::hash<T1>{}(p.first);
-        auto h2 = std::hash<T2>{}(p.second); 
+        auto h2 = std::hash<T2>{}(p.second);
         return h1 ^ h2;
     }
 };
 
 class Encoder {
-public:
+   public:
     Encoder(std::map<std::string, int> encoder, std::vector<std::pair<std::string, std::string>> bpe_merges);
     std::unordered_map<int, std::string> bytes_to_unicode();
     std::set<std::pair<std::string, std::string>> get_pairs(std::vector<std::string> word);
@@ -41,7 +41,7 @@ public:
     std::vector<int> encode(std::string text);
     std::string decode(std::vector<int> tokens);
 
-private:
+   private:
     std::map<std::string, int> encoder;
     std::map<int, std::string> decoder;
     std::unordered_map<int, std::string> byte_encoder;

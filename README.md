@@ -10,6 +10,8 @@ We currently support int8 OPT and fp32/int4 LLaMA models on Intel and Apple M-se
 
 ## Prerequisites
 
+### MacOS
+
 For MacOS, install boost and llvm by
 
 ```bash
@@ -18,6 +20,18 @@ brew install llvm
 ```
 
 For M1/M2 users, install xcode from AppStore to enable metal compiler for GPU support.
+
+### Windows
+
+For Windows, download and install the GCC compiler with MSYS2. Follow this tutorial: https://code.visualstudio.com/docs/cpp/config-mingw for installation.
+
+- Install required dependencies with MSYS2
+
+```
+pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
+```
+
+- Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the enviroment path
 
 ## Demo with AWQ model
 
