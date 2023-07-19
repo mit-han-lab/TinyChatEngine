@@ -416,11 +416,9 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
         threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
         threads_args[j].params = params;
 #ifdef PACK_QK
-        // printf("USING PACK!\n");
         pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_packed, &threads_args[j]);
 #else
-        // printf("USING UNPACK!\n");
-        pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column, &threads_args[j]);
+        pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_unroll128, &threads_args[j]);
 #endif
     }
     // Join threads

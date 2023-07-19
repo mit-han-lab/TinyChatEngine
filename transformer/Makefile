@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -pthread -O3
+CXXFLAGS = -std=c++11 -pthread -Ofast
 
 # Executable and source files
 TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4LlamaForCausalLM
@@ -31,7 +31,7 @@ else ifeq ($(shell uname -p),arm)
 	# CXXFLAGS += -stdlib=libc++ -DUSE_METAL
 	# TODO: use NEON if Metal is not supported
 	LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
-	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQ4_4 #-DPACK_QK
+	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQ4_4 -fPIC -march=armv8.2-a
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	LIB += -L/opt/homebrew/opt/boost/lib
 else
