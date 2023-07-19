@@ -112,7 +112,11 @@ def main():
         return
 
     print("Loading model...")
-    model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
+    if args.model.endswith(".pt"):
+        model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
+        model.load_state_dict(torch.load(args.model))
+    else:
+        model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
 
     print("Start exporting the model...")
     _export_model(model, args.output)
