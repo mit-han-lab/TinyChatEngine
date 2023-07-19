@@ -27,7 +27,7 @@ git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
 cd TinyLLMEngine/transformer
 # download and convert the AWQ model to int4 format, this will take a while...
 ./download_model.sh LLaMA_7B_AWQ models
-python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q4_2 for M1/M2 MacBook
+python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q4_4 for M1/M2 MacBook
 # compile the demo program
 make -j
 # run the demo
