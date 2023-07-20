@@ -48,8 +48,8 @@ elif [ "$os" == "Linux" ]; then
     # Ubuntu uses md5sum
     checksum=$(md5sum "$file_path" | awk '{ print $1 }' 2>/dev/null)
 else
-    echo "Unsupported operating system."
-    exit 1
+    echo "Unsupported operating system $os. Using md5sum by defualt."
+    checksum=$(md5sum "$file_path" | awk '{ print $1 }' 2>/dev/null)
 fi
 
 # Compare the computed checksum with the original one

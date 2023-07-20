@@ -204,7 +204,14 @@ template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size) {
     constexpr size_t alignment = 32;
 
+#ifdef _WIN32
+    // Windows version
+    ptr = _aligned_malloc(size, alignment);
+    int ret = (ptr != NULL) ? 0 : -1;
+#else
+    // POSIX compliant OS version
     int ret = posix_memalign((void**)(&ptr), alignment, size);
+#endif
 
     if (ret != 0) {
         throw("Memory allocation failed.");
