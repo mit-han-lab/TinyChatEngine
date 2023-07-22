@@ -54,6 +54,13 @@ void test_Int4LlamaForCausalLM() {
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    // Free memory
+    cudaFree(buffer_1);
+    cudaFree(buffer_2);
+    cudaFree(buffer_3);
+    cudaFree(buffer_4);
+    cudaFree(buffer_5);
 }
 
 int main() { test_Int4LlamaForCausalLM(); }

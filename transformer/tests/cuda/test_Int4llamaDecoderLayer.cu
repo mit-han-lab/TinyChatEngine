@@ -63,6 +63,15 @@ void test_Int4llamaDecoderLayer() {
         std::cout << "Test of " << __func__ << ": Fail!" << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    // Free memory
+    cudaFree(buffer_1);
+    cudaFree(buffer_1_half);
+    cudaFree(buffer_2);
+    cudaFree(buffer_2_half);
+    cudaFree(buffer_3);
+    cudaFree(buffer_4);
+    cudaFree(buffer_5);
 }
 
 void test_Int4llamaDecoderLayer_gen() {
@@ -156,6 +165,19 @@ void test_Int4llamaDecoderLayer_gen() {
         std::cout << "Test of " << __func__ << ": Fail!" << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    // Free memory
+    cudaFree(buffer_1);
+    cudaFree(buffer_1_half);
+    cudaFree(buffer_2);
+    cudaFree(buffer_2_half);
+    cudaFree(buffer_3);
+    cudaFree(buffer_3_half);
+    cudaFree(buffer_4);
+    cudaFree(buffer_4_half);
+    cudaFree(buffer_5);
+    cudaFree(buffer_6);
+    cudaFree(buffer_7);
 }
 
 int main() {
