@@ -1,46 +1,39 @@
-#include "common.h"
 #include "Int4llamaAttention.h"
+#include "common.h"
 #include "operators.h"
 
 struct Int4llamaDecoderLayer_output {
-    Matrix3D<float> hidden_states;
-    Matrix3D<float> attentions;
-    std::pair<Matrix3D<float>, Matrix3D<float>> past_key_value;
+    Matrix3D<half> hidden_states;
+    Matrix3D<half> attentions;
+    std::pair<Matrix3D<half>, Matrix3D<half>> past_key_value;
 
-    Int4llamaDecoderLayer_output(Matrix3D<float> hidden_states_, Matrix3D<float> attentions_,
-                                 std::pair<Matrix3D<float>, Matrix3D<float>> past_key_value_) {
+    Int4llamaDecoderLayer_output(Matrix3D<half> hidden_states_, Matrix3D<half> attentions_,
+                                 std::pair<Matrix3D<half>, Matrix3D<half>> past_key_value_) {
         hidden_states = hidden_states_;
         attentions = attentions_;
         past_key_value = past_key_value_;
     };
 };
 struct Int4llamaDecoderLayer_input {
-    Matrix3D<float> hidden_states;
-    Matrix3D<float> attention_mask;
-    Matrix3D<float> past_key, past_value;
+    Matrix3D<half> hidden_states;
+    Matrix3D<half> attention_mask;
+    Matrix3D<half> past_key, past_value;
     bool has_past_key_value = false;
 
-    Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_) {
+    Int4llamaDecoderLayer_input(Matrix3D<half> hidden_states_, Matrix3D<half> attention_mask_) {
         hidden_states = hidden_states_;
         attention_mask = attention_mask_;
         has_past_key_value = false;
     }
 
-    Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_,
-                                Matrix3D<float> past_key_, Matrix3D<float> past_value_) {
+    Int4llamaDecoderLayer_input(Matrix3D<half> hidden_states_, Matrix3D<half> attention_mask_,
+                                Matrix3D<half> past_key_, Matrix3D<half> past_value_) {
         hidden_states = hidden_states_;
         attention_mask = attention_mask_;
         past_key = past_key_;
         past_value = past_value_;
         has_past_key_value = true;
     }
-
-    // Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_) 
-    //     : hidden_states(hidden_states_), attention_mask(attention_mask_), has_past_key_value(false) {}
-
-    // Int4llamaDecoderLayer_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_,
-    //                             Matrix3D<float> past_key_, Matrix3D<float> past_value_)
-    //     : hidden_states(hidden_states_), attention_mask(attention_mask_), past_key(past_key_), past_value(past_value_), has_past_key_value(true) {}
 };
 
 class Int4llamaDecoderLayer {
@@ -50,8 +43,7 @@ class Int4llamaDecoderLayer {
 
     int embed_dim, num_attention_heads, hidden_dim, layer_idx;
     LlamaRMSNorm_half input_layernorm, post_attention_layernorm;
-    // LlamaRMSNorm input_layernorm, post_attention_layernorm;  // from torch_int.nn
-    Linear_half_int4_ref gate_proj, down_proj, up_proj;
+    Linear_half_int4 gate_proj, down_proj, up_proj;
     Int4llamaAttention attn;
     std::string profile_name = "Int4llamaDecoderLayer";
 

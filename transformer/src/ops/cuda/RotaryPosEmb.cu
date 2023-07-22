@@ -1,50 +1,12 @@
-#include "operators.cuh"
 #include <cmath>
+#include "operators.cuh"
 
-// __global__ void RotaryPosEmb_half_forward(Matrix3D<float> &query, Matrix3D<float> &key, Matrix3D<float> &cos, Matrix3D<float> &sin, int start_idx, int len) {
-//   __shared__ float query_buf[4096], key_buf[4096];
-
-//   int num_heads = query.m_dim_x;
-//   int head_embed = cos.m_dim_z;
-//   // int max_sqlen = cos.m_dim_y;
-
-//   int half = head_embed / 2;
-//   int total_threads = blockDim.x * gridDim.x;
-//   int global_thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-  
-//   // Convert the 1D CUDA thread indices into 3D indices
-//   int b = global_thread_id / (head_embed * len);
-//   int i = (global_thread_id / head_embed) % len;
-//   int j = global_thread_id % head_embed;
-
-//   if (b < num_heads && i < len && j < head_embed) {
-//     if (j < half) {
-//       // query_buf[j] = -1 * query[(b * len + i) * head_embed + j + half];
-//       // key_buf[j] = -1 * key[(b * len + i) * head_embed + j + half];
-//       query_buf[j] = -1 * query(b, i, j + half);
-//       key_buf[j] = -1 * key(b, i, j + half);
-//     }
-//     else {
-//       // query_buf[j] = query[(b * len + i) * head_embed + j - half];
-//       // key_buf[j] = key[(b * len + i) * head_embed + j - half];
-//       query_buf[j] = query(b, i, j - half);
-//       key_buf[j] = key(b, i, j - half);
-//     }
-
-//     query(b, i, j) = ((query(b, i, j) * cos(0, i + start_idx, j)) +
-//                       (query_buf[j] * sin(0, i + start_idx, j)));
-//     key(b, i, j) = ((key(b, i, j) * cos(0, i + start_idx, j)) +
-//                     (key_buf[j] * sin(0, i + start_idx, j)));
-//   }
-// }
-
-__global__ void RotaryPosEmb_half_forward(Matrix3D<float> query, Matrix3D<float> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
+__global__ void RotaryPosEmb_float_forward(Matrix3D<float> query, Matrix3D<float> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
   // TODO: maybe we can use shared memory here
   float query_buf[4096], key_buf[4096];
 
   int num_heads = query.m_dim_x;
   int head_embed = cos.m_dim_z;
-  // int max_sqlen = cos.m_dim_y;
   int half = head_embed / 2;
   
   // Convert the 1D CUDA thread indices into 3D indices
@@ -53,14 +15,10 @@ __global__ void RotaryPosEmb_half_forward(Matrix3D<float> query, Matrix3D<float>
 
   if(b < num_heads && i < len) {
     for(int j = 0; j < half; j++) {
-      // query_buf[j] = -1 * query[(b * len + i) * head_embed + j + half];
-      // key_buf[j] = -1 * key[(b * len + i) * head_embed + j + half];
       query_buf[j] = -1 * query(b, i, j + half);
       key_buf[j] = -1 * key(b, i, j + half);
     }
     for(int j = half; j < head_embed; j++) {
-      // query_buf[j] = query[(b * len + i) * head_embed + j - half];
-      // key_buf[j] = key[(b * len + i) * head_embed + j - half];
       query_buf[j] = query(b, i, j - half);
       key_buf[j] = key(b, i, j - half);
     }
@@ -74,80 +32,35 @@ __global__ void RotaryPosEmb_half_forward(Matrix3D<float> query, Matrix3D<float>
   }
 }
 
+__global__ void RotaryPosEmb_half_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
+  // TODO: maybe we can use shared memory here
+  half query_buf[4096], key_buf[4096];
 
-
-// // TODO: optimize this with multithreading
-// __global__ void RotaryPosEmb_kernel(Matrix3D<float> &query, Matrix3D<float> &key, Matrix3D<float> &cos, Matrix3D<float> &sin, 
-//            int start_idx, int num_heads, int len, int head_embed) {
-//   __shared__ float query_buf[4096], key_buf[4096];
-
-//   int half = head_embed / 2;
-//   int total_threads = blockDim.x * gridDim.x;
-//   int global_thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+  int num_heads = query.m_dim_x;
+  int head_embed = cos.m_dim_z;
+  int half_pos = head_embed / 2;
   
-//   // Convert the 1D CUDA thread indices into 3D indices
-//   int b = global_thread_id / (head_embed * len);
-//   int i = (global_thread_id / head_embed) % len;
-//   int j = global_thread_id % head_embed;
+  // Convert the 1D CUDA thread indices into 3D indices
+  int b = blockIdx.x;
+  int i = threadIdx.x;
 
-//   if (b < num_heads && i < len && j < head_embed) {
-//     if (j < half) {
-//       // query_buf[j] = -1 * query[(b * len + i) * head_embed + j + half];
-//       // key_buf[j] = -1 * key[(b * len + i) * head_embed + j + half];
-//       query_buf[j] = -1 * query(b, i, j + half);
-//       key_buf[j] = -1 * key(b, i, j + half);
-//     }
-//     else {
-//       // query_buf[j] = query[(b * len + i) * head_embed + j - half];
-//       // key_buf[j] = key[(b * len + i) * head_embed + j - half];
-//       query_buf[j] = query(b, i, j - half);
-//       key_buf[j] = key(b, i, j - half);
-//     }
+  if(b < num_heads && i < len) {
+    for(int j = 0; j < half_pos; j++) {
+      query_buf[j] = __hneg(query(b, i, j + half_pos));
+      key_buf[j] = __hneg(key(b, i, j + half_pos));
+    }
 
-//     query(b, i, j) = ((query(b, i, j) * cos(0, i + start_idx, j)) +
-//                       (query_buf[j] * sin(0, i + start_idx, j)));
-//     key(b, i, j) = ((key(b, i, j) * cos(0, i + start_idx, j)) +
-//                     (key_buf[j] * sin(0, i + start_idx, j)));
-//   }
-// }
+    for(int j = half_pos; j < head_embed; j++) {
+      query_buf[j] = query(b, i, j - half_pos);
+      key_buf[j] = key(b, i, j - half_pos);
+    }
 
-// void RotaryPosEmb_half::forward(Matrix3D<float> &query, Matrix3D<float> &key,
-//                            int start_idx, int len) {
-//   PROFILE_START(profile_name);
-//   int num_heads = query.m_dim_x;
-//   int head_embed = cos.m_dim_z;
-//   int max_sqlen = cos.m_dim_y;
+    for(int j = 0; j < head_embed; j++) {
+      half cos_half = __float2half(cos(0, i + start_idx, j));
+      half sin_half = __float2half(sin(0, i + start_idx, j));
 
-//   assert(query.m_dim_z == cos.m_dim_z);
-//   assert(key.m_dim_z == cos.m_dim_z);
-//   assert(max_sqlen > len + start_idx);
-
-//   // int half = head_embed / 2;
-//   // for (int b = 0; b < num_heads; b++) {
-//   //   for (int i = 0; i < len; i++) {
-//   //     // first half
-//   //     for (int j = 0; j < half; j++) {
-//   //       q_buf[j] = -1 * query(b, i, j + half);
-//   //       k_buf[j] = -1 * key(b, i, j + half);
-//   //     }
-//   //     // second half
-//   //     for (int j = half; j < head_embed; j++) {
-//   //       q_buf[j] = query(b, i, j - half);
-//   //       k_buf[j] = key(b, i, j - half);
-//   //     }
-
-//   //     for (int j = 0; j < head_embed; j++) {
-//   //       query(b, i, j) = ((query(b, i, j) * cos(0, i + start_idx, j)) +
-//   //                         (q_buf[j] * sin(0, i + start_idx, j)));
-//   //       key(b, i, j) = ((key(b, i, j) * cos(0, i + start_idx, j)) +
-//   //                       (k_buf[j] * sin(0, i + start_idx, j)));
-//   //     }
-//   //   }
-//   // }
-
-//   dim3 block(1024);
-//   dim3 grid((num_heads * head_embed * len + block.x - 1) / block.x);
-//   RotaryPosEmb_kernel<<<grid, block>>>(query, key, cos, sin, start_idx, num_heads, len, head_embed);
-
-//   PROFILE_END(profile_name);
-// }
+      query(b, i, j) = __hadd(__hmul(query(b, i, j), cos_half), __hmul(query_buf[j], sin_half));  // TODO: check if we can optimize this by using __hfma
+      key(b, i, j) = __hadd(__hmul(key(b, i, j), cos_half), __hmul(key_buf[j], sin_half));  // TODO: check if we can optimize this by using __hfma
+    }
+  }
+}

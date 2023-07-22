@@ -41,6 +41,7 @@ struct matmul_params {
     struct matrix A, B, C, bias;
     struct optimization_params opt_params;
     float alpha, beta;
+    half half_alpha;
     // for int4
     float *scales, *offset, *zero_point;
     half *half_scales;
@@ -96,6 +97,7 @@ class MatmulOperator {
     void naive_mat_mul_fp16_int4(const struct matmul_params *params);
     // cuda
     void mat_mul_cuda(const struct matmul_params *params);
+    void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters);
     void gemm_forward_cuda_half(const struct matmul_params *params, int split_k_iters);
     void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
 

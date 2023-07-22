@@ -1,7 +1,5 @@
-#include "common.cuh"
 #include <cassert>
-
-
+#include "common.h"
 
 class Embedding_half {
    public:
@@ -17,6 +15,5 @@ class Embedding_half {
 private:
     std::string profile_name = "Embedding";
 };
-
 
 void load_Embedding_params(Embedding_half &op, std::string prefix);

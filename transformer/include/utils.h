@@ -67,6 +67,8 @@ bool check_two_equal(float* array, float* array2, int size, float error);
 
 bool check_two_equal_cpu_gpu(float16_t* array, half* array2, int size, float error);
 
+bool check_two_equal_float_half(float* array, half* array2, int size);
+
 bool check_two_exact_equal(int8_t* array, int8_t* array2, int size);
 void print_MSE_max_diff(float* a, float* a2, int size);
 
@@ -79,5 +81,9 @@ void allocate_aligned_memory(T*& ptr, size_t size);
 
 template <typename T>
 void allocate_aligned_memory_gpu(T*& ptr, size_t size);
+
+__global__ void float2half(float* floatArray, half* halfArray, int N);
+__global__ void half2float(half* halfArray, float* floatArray, int N);
+__global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int N, int split_k_iters);
 
 #endif

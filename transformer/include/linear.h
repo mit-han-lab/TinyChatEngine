@@ -1,10 +1,5 @@
 #include "common.h"
 
-// #include <cuda.h>  // for CUDA_VERSION
-// #include <cuda_fp16.h>  // for CUDA_VERSION
-
-// #define QK 32
-
 class Linear_FP {
    public:
     Linear_FP(Matrix3D<float> weight_, std::string weight_path) : weight(weight_) {

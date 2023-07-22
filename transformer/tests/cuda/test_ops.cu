@@ -552,7 +552,7 @@ void test_Embedding_1_3B() {
 
 void test_LlamaRMSNorm() {
     const struct model_config llama7B = llama_7B;
-    const int sqlen = 9, b = 1, embed_dim = llama7B.embed_dim;
+    const int sqlen = 9, embed_dim = llama7B.embed_dim;
 
     MemoryAllocator mem_buf;
 

@@ -145,15 +145,15 @@ test_Int4llamaAttention:
 
 # TODO: Need to fix the following test to cuda version
 test_Int4llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/non_cuda/test_Int4llamaDecoderLayer.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/cuda/test_Int4llamaAttention.cu $(SRC) $(LDFLAGS)
 
 # TODO: Need to fix the following test to cuda version
 test_Int4llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/non_cuda/test_Int4llamaDecoder.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/cuda/test_Int4llamaAttention.cu $(SRC) $(LDFLAGS)
 
 # TODO: Need to fix the following test to cuda version
 test_Int4LlamaForCausalLM:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/non_cuda/test_Int4LlamaForCausalLM.cc $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/cuda/test_Int4LlamaForCausalLM.cu $(SRC) $(LDFLAGS)
 
 # TODO: Need to fix the following test to cuda version
 profile_Int4LlamaForCausalLM:

@@ -17,10 +17,8 @@ __global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<float> output, 
     }
 }
 
-
 void load_Embedding_params(Embedding_half& op, std::string prefix) {
     op.lookup.load((prefix + "/weight.bin").c_str());
-    // read_to_array((prefix + "/weight.bin").c_str(), op.lookup.m_data, op.lookup.length());
 }
 
 void Embedding_half::forward(Matrix3D<int> input_id, Matrix3D<float> output) {
@@ -30,7 +28,7 @@ void Embedding_half::forward(Matrix3D<int> input_id, Matrix3D<float> output) {
     assert(input_id.m_dim_z == output.m_dim_y);
     assert(output.m_dim_z == this->embed_dim);
 
-    int threadsPerBlock = 256;
+    int threadsPerBlock = 1024;
     int blocksPerGrid = (input_id.m_dim_z + threadsPerBlock - 1) / threadsPerBlock;
     EmbeddingKernel<<<blocksPerGrid, threadsPerBlock>>>(input_id, output, this->lookup.m_data, this->embed_dim);
 

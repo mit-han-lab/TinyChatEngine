@@ -1,34 +1,44 @@
-#include "Int4llamaDecoder.h"
-
 #include <cstring>
 #include <iostream>
+#include <cfloat>
 
+#include "Int4llamaDecoder.h"
 #include "utils.h"
 
-Matrix3D<float> Int4llamaDecoder::prepare_decoder_attention_mask(int length, int past_length) {
-    PROFILE_START("Int4llamaDecoder::prepare_decoder_attention_mask");
-    assert(length - past_length > 0);
-    Matrix3D<float> causal_attention_mask(attention_mask_buf, 1, length - past_length, length);
-    float min = std::numeric_limits<float>::lowest();
-    for (int i = 0; i < length - past_length; i++) {
-        for (int j = 0; j < length; j++) {
-            if (i + past_length < j) {
-                causal_attention_mask(0, i, j) = min;
-            } else {
-                causal_attention_mask(0, i, j) = 0.0;
-            }
+__global__ void prepare_decoder_attention_mask_float(Matrix3D<float> causal_attention_mask, int length, int past_length) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if(i < length - past_length && j < length) {
+        float min = -FLT_MAX;
+        if (i + past_length < j) {
+            causal_attention_mask(0, i, j) = min;
+        } else {
+            causal_attention_mask(0, i, j) = 0.0;
         }
     }
+}
 
-    PROFILE_END("Int4llamaDecoder::prepare_decoder_attention_mask");
-    return causal_attention_mask;
+__global__ void prepare_decoder_attention_mask_half(Matrix3D<half> causal_attention_mask, int length, int past_length) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if(i < length - past_length && j < length) {
+        // half min = __float2half(-FLT_MAX);
+        half min = __float2half(-65504.0f);
+        if (i + past_length < j) {
+            causal_attention_mask(0, i, j) = min;
+        } else {
+            causal_attention_mask(0, i, j) = 0;
+        }
+    }
 }
 
 Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_config config) {
-    allocate_aligned_memory_gpu(attention_mask_buf, config.max_sqlen * config.max_sqlen * sizeof(float));
-    // allocate_aligned_memory_gpu(pos_embeds_buf, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory_gpu(attention_mask_buf, config.max_sqlen * config.max_sqlen * sizeof(half));
+    allocate_aligned_memory_gpu(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(half));
     allocate_aligned_memory_gpu(hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory_gpu(hidden_states_half_buf, config.max_sqlen * config.embed_dim * sizeof(half));
 
     this->voc_size = config.vocsize;
     this->embed_dim = config.embed_dim;
@@ -36,19 +46,11 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     this->num_heads = config.num_heads;
     this->padding_idx = config.padding_idx;
 
-    int max_sqlen = config.max_sqlen;
-
     // Embedding
     Matrix3D<float> embweight(new float[voc_size * embed_dim], 1, voc_size, embed_dim);
     this->embed_tokens = Embedding(embed_dim, voc_size, padding_idx, embweight);
     load_Embedding_params(this->embed_tokens, param_path + "/embed_tokens");
 
-    // Norm
-    //// Original code
-    // Matrix3D<float> norm_weight(new float[embed_dim], 1, 1, embed_dim);
-    // norm_weight.load((param_path + "/norm/weight.bin").c_str());
-    // this->norm = LlamaRMSNorm(norm_weight);
-    //// CUDA code
     float *norm_weight_ptr;
     allocate_aligned_memory_gpu(norm_weight_ptr, embed_dim * sizeof(float));
     Matrix3D<float> norm_weight(norm_weight_ptr, 1, 1, embed_dim);
@@ -69,24 +71,30 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
 // Int4llamaDecoder:
 struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaDecoder_input &input) {
     PROFILE_START(profile_name);
-    int sqlen = input.input_ids.m_dim_z, batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
+    int sqlen = input.input_ids.m_dim_z, past_key_values_length = 0;
+    // int batch_size = input.input_ids.m_dim_x;
 
-    //// Original code
-    // float inputs_embeds_buf[sqlen * this->embed_dim];
-    // Matrix3D<float> inputs_embeds(inputs_embeds_buf, 1, sqlen, this->embed_dim);
-    // this->embed_tokens.forward(input.input_ids, inputs_embeds);
-    // Matrix3D<float> hidden_states = inputs_embeds;
-    //// Modified code
-    Matrix3D<float> hidden_states(hidden_states_buf, 1, sqlen, this->embed_dim);
-    this->embed_tokens.forward(input.input_ids, hidden_states);
+    Matrix3D<float> hidden_states_float(hidden_states_buf, 1, sqlen, this->embed_dim);
+    this->embed_tokens.forward(input.input_ids, hidden_states_float);
+
+    // Convert from float to half
+    Matrix3D<half> hidden_states(hidden_states_half_buf, 1, sqlen, this->embed_dim);
+    int threadsPerBlock_1D = 1024;
+    int blocksPerGrid =(sqlen * this->embed_dim + threadsPerBlock_1D - 1) / threadsPerBlock_1D;
+    float2half<<<blocksPerGrid, threadsPerBlock_1D>>>(hidden_states_buf, hidden_states_half_buf, sqlen * this->embed_dim);
 
     if (input.has_past_keys_values) {
         past_key_values_length = input.past_keys[0].m_dim_y;
     }
-    Matrix3D<float> causal_attention_mask =
-        this->prepare_decoder_attention_mask(sqlen + past_key_values_length, past_key_values_length);
+    int length = sqlen + past_key_values_length;
+    int past_length = past_key_values_length;
+    Matrix3D<half> causal_attention_mask(attention_mask_buf, 1, length - past_length, length);
+    dim3 threadsPerBlock(32, 32);
+    dim3 numBlocks((length - past_length + threadsPerBlock.x - 1) / threadsPerBlock.x, 
+                   (length + threadsPerBlock.y - 1) / threadsPerBlock.y);
+    prepare_decoder_attention_mask_half<<<numBlocks, threadsPerBlock>>>(causal_attention_mask, length, past_length);
 
-    std::vector<Matrix3D<float>> past_keys, past_values;
+    std::vector<Matrix3D<half>> past_keys, past_values;
     for (int i = 0; i < this->layers.size(); i++) {
         if (!input.has_past_keys_values) {
             struct Int4llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask};
@@ -104,9 +112,8 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
         }
     }
 
-    Matrix3D<float> last_hidden_states(last_hidden_states_buf, 1, sqlen, this->embed_dim);
+    Matrix3D<half> last_hidden_states(last_hidden_states_buf, 1, sqlen, this->embed_dim);
     this->norm.forward(hidden_states, last_hidden_states);
-    // cudaDeviceSynchronize();
 
     struct Int4llamaDecoder_output output = {last_hidden_states, past_keys, past_values};
     PROFILE_END(profile_name);
