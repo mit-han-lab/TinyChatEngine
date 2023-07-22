@@ -9,7 +9,6 @@
 void test_Int4LlamaForCausalLM() {
     struct model_config config = get_opt_model_config(LLaMA_7B);
     const int num_heads = config.num_heads, embed_dim = config.embed_dim, voc_size = config.vocsize, sqlen = 9, b = 1;
-    // const int hidden_dim = config.hidden_dim, padding_idx = 1, num_layers = config.num_layers;
     MemoryAllocator mem_buf;
 
     // reasoning phase: 1st run
@@ -20,7 +19,6 @@ void test_Int4LlamaForCausalLM() {
     struct Int4LlamaForCausalLM_input input_1st = {input_ids};
 
     Int4LlamaForCausalLM model = Int4LlamaForCausalLM("models/LLaMA_7B", config);
-
     struct Int4LlamaForCausalLM_output output_1st = model.forward(input_1st);
 
     float* buffer_2;

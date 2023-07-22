@@ -143,19 +143,15 @@ ifdef CUDA_AVAILABLE
 test_Int4llamaAttention:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaAttention tests/cuda/test_Int4llamaAttention.cu $(SRC) $(LDFLAGS)
 
-# TODO: Need to fix the following test to cuda version
 test_Int4llamaDecoderLayer:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/cuda/test_Int4llamaAttention.cu $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoderLayer tests/cuda/test_Int4llamaDecoderLayer.cu $(SRC) $(LDFLAGS)
 
-# TODO: Need to fix the following test to cuda version
 test_Int4llamaDecoder:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/cuda/test_Int4llamaAttention.cu $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4llamaDecoder tests/cuda/test_Int4llamaDecoder.cu $(SRC) $(LDFLAGS)
 
-# TODO: Need to fix the following test to cuda version
 test_Int4LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o test_Int4LlamaForCausalLM tests/cuda/test_Int4LlamaForCausalLM.cu $(SRC) $(LDFLAGS)
 
-# TODO: Need to fix the following test to cuda version
 profile_Int4LlamaForCausalLM:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -D PROFILER -o profile_Int4LlamaForCausalLM tests/cuda/test_Int4LlamaForCausalLM.cu $(SRC) $(LIB) $(LDFLAGS)
 else
