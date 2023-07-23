@@ -10,14 +10,6 @@ We currently support int8 OPT and fp32/int4 LLaMA models on Intel and Apple M-se
 
 ## Prerequisites
 
-Install Packages
-
-```bash
-conda create -n TinyLLMEngine python=3.8
-conda activate TinyLLMEngine
-pip install -r requirements.txt
-```
-
 ### MacOS
 
 For MacOS, install boost and llvm by

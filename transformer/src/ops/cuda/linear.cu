@@ -260,7 +260,7 @@ void Linear_FP16_int4_ref::forward_ref(const Matrix3D<float16_t> &a, Matrix3D<fl
     return;
 }
 
-void Linear_half_int4_test::forward(const Matrix3D_cuda<half> &x, Matrix3D_cuda<half> &output) {
+void Linear_half_int4_test::forward(const Matrix3D<half> &x, Matrix3D<half> &output) {
     Matrix3D<int> b = this->weight;
     // const int m = x.m_dim_y, n = b.m_dim_y, k = x.m_dim_z, b_size = b.m_dim_x;
     // const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;

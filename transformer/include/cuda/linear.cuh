@@ -1,10 +1,4 @@
 #include "common.h"
-#include "common.cuh"
-
-// #include "half.hpp"  // Third-party header
-
-// #include <cuda.h>  // for CUDA_VERSION
-// #include <cuda_fp16.h>  // for CUDA_VERSION
 
 class Linear_FP16_int4_ref {
    public:
@@ -204,7 +198,7 @@ class Linear_half_int4_test {
         zero_point.load((weight_path + "/zero_point_int4.bin").c_str());
     };
     Linear_half_int4_test(){};
-    void forward(const Matrix3D_cuda<half> &x, Matrix3D_cuda<half> &output);
+    void forward(const Matrix3D<half> &x, Matrix3D<half> &output);
     Matrix3D<int> weight;
     Matrix3D<half> scale;
     Matrix3D<half> offset;  // TODO: Currently, we don't need offset
