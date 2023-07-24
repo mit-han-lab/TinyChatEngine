@@ -33,7 +33,7 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
     if (interactive) std::cout << "Generated: " << std::endl;
 
     bool has_past_kv = false;
-    std::vector<Matrix3D<half>> past_keys, past_values;
+    std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
     while (n_remain != 0) {
         STATS_START("Token generation");

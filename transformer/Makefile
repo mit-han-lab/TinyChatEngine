@@ -20,8 +20,6 @@ ifdef CUDA_AVAILABLE
 $(info CUDA is available!)
 	CUDA_HOME = /usr/local/cuda
 	CXX = $(CUDA_HOME)/bin/nvcc
-# Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-#	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread" -D_GLIBCXX_USE_CXX11_ABI=1
 	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread"
 	CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu) $(wildcard $(LIB_DIR)/lib/cuda/*.cc)
 	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cu) $(wildcard src/cuda/*.cc) $(wildcard src/ops/cuda/*.cu) 
@@ -39,6 +37,7 @@ ifeq ($(shell uname -m),x86_64)
 # For x86_64 machines with CUDA
 		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I/usr/include/x86_64-linux-gnu
 		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L/usr/lib/x86_64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=/usr/lib/x86_64-linux-gnu 
+# Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
 		CXXFLAGS += -Xcompiler "-mavx2" -arch=sm_86
 	else
 # For x86_64 machines with AVX
@@ -51,6 +50,7 @@ else ifeq ($(shell uname -m),aarch64)
 # For ARM aarch64 platforms with CUDA
 		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/aarch64-linux/include -I/usr/include/aarch64-linux-gnu
 		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/aarch64-linux/lib -L/usr/lib/aarch64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/aarch64-linux/lib -Xlinker -rpath=/usr/lib/aarch64-linux-gnu 
+# Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
 		CXXFLAGS += -arch=sm_87 --forward-unknown-to-host-compiler
 	else
 # For ARM aarch64 platforms with NEON
