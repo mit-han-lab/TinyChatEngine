@@ -3,6 +3,7 @@
 
 #include "operators.cuh"
 #include "utils.h"
+#include "utils.cuh"
 
 __global__ void LlamaRMSNorm_float_kernel(const Matrix3D<float> x, const Matrix3D<float> weight, Matrix3D<float> output, float eps) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;

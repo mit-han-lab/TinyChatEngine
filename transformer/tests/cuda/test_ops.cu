@@ -2,6 +2,7 @@
 
 #include "operators.h"
 #include "utils.h"
+#include "utils.cuh"
 #include "../utils_memalloc.h"
 #include "linear.cuh"
 
@@ -611,7 +612,7 @@ void test_FP16Linear_int4() {
     hidden_states.load("assets/llama/tests/ops/Linear/input.bin");
 
     float16_t *hidden_states_ref_arr;
-    allocate_aligned_memory(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
+    allocate_aligned_memory_gpu(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
     Matrix3D<float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
 
     half *hidden_states_cuda_arr;
@@ -634,7 +635,7 @@ void test_FP16Linear_int4() {
     Linear_half_int4_test int4_op_cuda = Linear_half_int4_test(int4_cuda_weight, "models/LLaMA_7B/lm_head/");
 
     float16_t *outputQ_ref_arr;
-    allocate_aligned_memory(outputQ_ref_arr, (m * n * sizeof(float16_t)));
+    allocate_aligned_memory_gpu(outputQ_ref_arr, (m * n * sizeof(float16_t)));
     Matrix3D<float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
     
     half *outputQ_cuda_arr;
@@ -663,7 +664,7 @@ void test_FP16Linear_int4_mini() {
     const int m = 1, n = 64, k = 32;
 
     float16_t *hidden_states_ref_arr;
-    allocate_aligned_memory(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
+    allocate_aligned_memory_gpu(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
     Matrix3D<float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
 
     half *hidden_states_cuda_arr;
@@ -686,7 +687,7 @@ void test_FP16Linear_int4_mini() {
     Linear_FP16_int4_ref int4_op_ref;
 
     float16_t *scale_ref_arr;
-    allocate_aligned_memory(scale_ref_arr, (n * k / 32 * sizeof(float16_t)));
+    allocate_aligned_memory_gpu(scale_ref_arr, (n * k / 32 * sizeof(float16_t)));
     Matrix3D<float16_t> int4_ref_scale(scale_ref_arr, 1, n / 32, k);
 
     int *zero_ref_arr;
@@ -738,7 +739,7 @@ void test_FP16Linear_int4_mini() {
     cudaDeviceSynchronize();
 
     float16_t *outputQ_ref_arr;
-    allocate_aligned_memory(outputQ_ref_arr, (m * n * sizeof(float16_t)));
+    allocate_aligned_memory_gpu(outputQ_ref_arr, (m * n * sizeof(float16_t)));
     Matrix3D<float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
     half *outputQ_cuda_arr;
     allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));

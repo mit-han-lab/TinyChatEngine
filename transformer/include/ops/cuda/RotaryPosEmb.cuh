@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include "utils.h"
+#include "utils.cuh"
 #include "common.h"
 
 class RotaryPosEmb_half

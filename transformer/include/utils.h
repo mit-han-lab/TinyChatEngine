@@ -8,28 +8,6 @@
 
 #include "profiler.h"
 
-// #if defined(__CUDACC__)
-#include <cuda.h>
-#include <cuda_fp16.h>
-#include <cuda_runtime.h>
-// #endif
-
-#include "half.hpp"  // Third-party header
-
-////// TODO: Fix this
-#if defined(__CUDACC__)
-    typedef half float16_t;
-#elif defined(__ARM_NEON)
-    typedef __fp16 float16_t;
-#elif defined(__x86_64__)
-    printf("x86_64 does not natively support fp16, so we use `half_float` library to support fp16 through software-based solution.\n");
-    typedef half_float::half float16_t;
-#else
-    printf("Unsupported platform (we only support CUDA, Arm, and x86_64). Using uint16_t as float16_t.\n");
-    typedef uint16_t float16_t;
-#endif
-
-
 #define QK 32
 
 #define STATS_START(x) Profiler::getInstance().start(x)
@@ -50,6 +28,11 @@
 #define ERROR_MAX 1e-9
 #define INT_ERROR_MAX 1e-5
 
+struct max_error_info {
+    int idx;
+    float a1, a2;
+};
+
 template <typename T>
 void read_to_array(const char* path, T* array, int size);
 
@@ -65,10 +48,6 @@ bool check_two_equal(float* array, float* array2, int size, float error);
 
 bool check_two_equal(float* array, float* array2, int size, float error);
 
-bool check_two_equal_cpu_gpu(float16_t* array, half* array2, int size, float error);
-
-bool check_two_equal_float_half(float* array, half* array2, int size);
-
 bool check_two_exact_equal(int8_t* array, int8_t* array2, int size);
 void print_MSE_max_diff(float* a, float* a2, int size);
 
@@ -78,12 +57,5 @@ void print_first_k_elelment(std::string name, const float* arr, int k, int start
 
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
-
-template <typename T>
-void allocate_aligned_memory_gpu(T*& ptr, size_t size);
-
-__global__ void float2half(float* floatArray, half* halfArray, int N);
-__global__ void half2float(half* halfArray, float* floatArray, int N);
-__global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int N, int split_k_iters);
 
 #endif

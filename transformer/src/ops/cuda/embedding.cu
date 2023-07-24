@@ -2,6 +2,7 @@
 
 #include "operators.cuh"
 #include "utils.h"
+#include "utils.cuh"
 
 __global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<float> output, float* lookup, int embed_dim) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;

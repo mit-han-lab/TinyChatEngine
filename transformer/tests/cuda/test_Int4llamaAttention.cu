@@ -1,6 +1,7 @@
 #include "Int4llamaAttention.h"
 #include "operators.h"
 #include "utils.h"
+#include "utils.cuh"
 #include "utils_memalloc.cuh"
 
 void test_Int4llamaAttention() {

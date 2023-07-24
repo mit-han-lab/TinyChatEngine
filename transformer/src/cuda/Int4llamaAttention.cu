@@ -5,6 +5,7 @@
 #include "Int4llamaAttention.h"
 #include "operators.h"
 #include "utils.h"
+#include "utils.cuh"
 
 static half *attn_weights_arr;
 static half *attn_output_half_arr;

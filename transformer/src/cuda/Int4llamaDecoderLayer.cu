@@ -1,5 +1,6 @@
 #include "Int4llamaDecoderLayer.h"
 #include "utils.h"
+#include "utils.cuh"
 
 // Shared memory space across all layers
 static half *hidden_states_half_arr;

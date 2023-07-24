@@ -1,5 +1,6 @@
 #include "operators.cuh"
 #include "utils.h"
+#include "utils.cuh"
 #include "lib/matmul.h"
 
 __global__ void mat_mul_transposed_cuda_float(Matrix3D<float> A, Matrix3D<float> B, Matrix3D<float> C, const float alpha) {

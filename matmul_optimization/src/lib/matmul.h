@@ -1,9 +1,23 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#include "utils.h"
-// #include <cuda_fp16.h>
-// #include "half.hpp"  // Third-party header
+#include "half.hpp"  // Third-party header
+
+////// TODO: Fix this
+#if defined(__CUDACC__)
+    #include <cuda.h>
+    #include <cuda_fp16.h>
+    #include <cuda_runtime.h>
+    typedef half float16_t;
+#elif defined(__ARM_NEON)
+    typedef __fp16 float16_t;
+#elif defined(__x86_64__)
+    printf("x86_64 does not natively support fp16, so we use `half_float` library to support fp16 through software-based solution.\n");
+    typedef half_float::half float16_t;
+#else
+    printf("Unsupported platform (we only support CUDA, Arm, and x86_64). Using uint16_t as float16_t.\n");
+    typedef uint16_t float16_t;
+#endif
 
 // TODO: deprecate this
 #define MAX_TRANSPOSE_BUFFER 2048 * 2048
@@ -22,7 +36,7 @@ struct matrix {
     int row;
     int column;
     float *data_ptr;
-    half *half_data_ptr;
+    float16_t *half_data_ptr;
     float16_t *fp16_data_ptr;
     int *int32_data_ptr;
     int8_t *int8_data_ptr;
@@ -41,10 +55,10 @@ struct matmul_params {
     struct matrix A, B, C, bias;
     struct optimization_params opt_params;
     float alpha, beta;
-    half half_alpha;
+    float16_t half_alpha;
     // for int4
     float *scales, *offset, *zero_point;
-    half *half_scales;
+    float16_t *half_scales;
     float16_t *fp16_scales;
     int *int32_zero_point;
     int block_size;

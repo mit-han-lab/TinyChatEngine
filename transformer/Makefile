@@ -25,49 +25,35 @@ $(info CUDA is available!)
 	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread"
 	CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu) $(wildcard $(LIB_DIR)/lib/cuda/*.cc)
 	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cu) $(wildcard src/cuda/*.cc) $(wildcard src/ops/cuda/*.cu) 
-	INCLUDE_DIRS += -I./include/cuda
+	INCLUDE_DIRS += -I./include/cuda -I./include/ops/cuda
 	IS_CUDA = cuda
 else
 $(info CUDA is unavailable!)
 	LIB_SRC += $(wildcard src/non_cuda/*.cc)
-	INCLUDE_DIRS += -I./include/non_cuda
+	INCLUDE_DIRS += -I./include/non_cuda -I./include/ops/non_cuda
 	IS_CUDA = non_cuda
 endif
 
 ifeq ($(shell uname -m),x86_64)
-# For x86_64 using half-precision (16-bit) floating point
-#	INCLUDE_DIRS += -I./half-2.2.0/include/
 	ifdef CUDA_AVAILABLE
-# General/Server GPUs (e.g., Nvidia RTX A6000, GeForce RTX 3090) use LibTorch
-#		PYTHON_DIR = ../../../anaconda3/envs/TinyLLMEngine_py38
-#		TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
-		CUDNN_DIR = ../../../cudnn
-# Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
-#		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)/include
-		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I$(CUDNN_DIR)/include
-		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L$(CUDNN_DIR)/lib -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=$(CUDNN_DIR)/lib
+# For x86_64 machines with CUDA
+		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I/usr/include/x86_64-linux-gnu
+		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L/usr/lib/x86_64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=/usr/lib/x86_64-linux-gnu 
 		CXXFLAGS += -Xcompiler "-mavx2" -arch=sm_86
 	else
-# For Intel machines with AVX
+# For x86_64 machines with AVX
 		LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
 		LIB_SRC += $(LIB_AVX_SRC)
 		CXXFLAGS += -mavx2
 	endif
 else ifeq ($(shell uname -m),aarch64)
 	ifdef CUDA_AVAILABLE
-# Edge GPUs (e.g., Nvidia Jetson AGX Orin, Jetson Orin Nano) use PyTorch for JetPack
-#		PYTHON_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38
-#		TORCH_DIR = ../../../archiconda3/envs/TinyLLMEngine_py38/lib/python3.8/site-packages/torch
-		CUDNN_DIR = /usr/include/aarch64-linux-gnu
-		CUDNN_LIB = /usr/lib/aarch64-linux-gnu
-# Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
-#		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I$(PYTHON_DIR)/include/python3.8 -I$(CUDNN_DIR)
-		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/aarch64-linux/include -I$(CUDNN_DIR)
-#		LDFLAGS += -L$(TORCH_DIR)/lib -L$(PYTHON_DIR)/lib -L$(CUDNN_LIB) -L$(CUDA_HOME)/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -Xlinker -rpath=$(PYTHON_DIR)/lib -Xlinker -rpath=$(CUDNN_LIB) -Xlinker -rpath=$(CUDA_HOME)/lib64 -lpython3.8 -ltorch -ltorch_cpu -ltorch_cuda -ltorch_python -lnvrtc -lcuda -lcudart -lcudnn -lcudart -lcublas -lcurand -lcusolver -lc10 -lc10_cuda
-		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/aarch64-linux/lib -L$(CUDNN_LIB) -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/aarch64-linux/lib -Xlinker -rpath=$(CUDNN_LIB) 
+# For ARM aarch64 platforms with CUDA
+		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/aarch64-linux/include -I/usr/include/aarch64-linux-gnu
+		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/aarch64-linux/lib -L/usr/lib/aarch64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/aarch64-linux/lib -Xlinker -rpath=/usr/lib/aarch64-linux-gnu 
 		CXXFLAGS += -arch=sm_87 --forward-unknown-to-host-compiler
 	else
-# For ARM aarch64 platforms (such as Nvidia Jetson devices) with NEON
+# For ARM aarch64 platforms with NEON
 		LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
 		LIB_SRC += $(LIB_NEON_SRC)
 		CXXFLAGS += -march=native

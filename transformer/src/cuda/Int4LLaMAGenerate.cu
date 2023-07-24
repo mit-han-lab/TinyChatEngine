@@ -2,6 +2,7 @@
 #include "LLaMATokenizer.h"
 #include "common.h"
 #include "utils.h"
+#include "utils.cuh"
 
 // void Int4LLaMAFreeMemory() {
 //     // Int4LlamaForCausalLM

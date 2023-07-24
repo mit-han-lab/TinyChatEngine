@@ -4,6 +4,7 @@
 
 #include "Int4llamaDecoder.h"
 #include "utils.h"
+#include "utils.cuh"
 
 __global__ void prepare_decoder_attention_mask_float(Matrix3D<float> causal_attention_mask, int length, int past_length) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;

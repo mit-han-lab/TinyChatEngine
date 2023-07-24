@@ -7,6 +7,7 @@
 
 #include "model.h"
 #include "utils.h"
+#include "utils.cuh"
 
 #define DEBUG false
 
