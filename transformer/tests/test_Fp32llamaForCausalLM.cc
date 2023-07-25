@@ -1,7 +1,7 @@
 #include <chrono>
 #include <cstring>
 
-#include "Fp32LlamaForCausalLM.h"
+#include "Fp32llamaForCausalLM.h"
 #include "operators.h"
 #include "utils.h"
 #include "utils_memalloc.h"

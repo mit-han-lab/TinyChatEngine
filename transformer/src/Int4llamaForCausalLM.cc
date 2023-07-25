@@ -1,4 +1,4 @@
-#include "Int4LlamaForCausalLM.h"
+#include "Int4llamaForCausalLM.h"
 
 #include <chrono>
 
