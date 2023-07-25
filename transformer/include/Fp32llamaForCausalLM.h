@@ -21,10 +21,6 @@ class Fp32LlamaForCausalLM {
    public:
     Fp32LlamaForCausalLM(std::string param_path, const struct model_config config);
 
-    // std::string param_path, int voc_size_, int embed_dim_, int hidden_dim_, int num_heads_,
-    //            int padding_idx_, int num_layers);
-    // Fp32llamaDecoder decoder, Matrix3D<float> lm_head): m_decoder(decoder), lm_head_weights(lm_head) {} // TODO: take
-    // a decoder
     struct Fp32LlamaForCausalLM_output forward(const struct Fp32LlamaForCausalLM_input& input);
 
    private:
