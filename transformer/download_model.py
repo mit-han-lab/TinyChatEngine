@@ -85,7 +85,7 @@ def _remove_file(filepath):
 
 
 def _md5(filepath):
-    hash_md5 = hashlib._md5()
+    hash_md5 = hashlib.md5()
     with open(filepath, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
