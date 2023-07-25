@@ -1,38 +1,39 @@
 #include <cmath>
 #include "operators.cuh"
+// #include "operators.h"
 
-__global__ void RotaryPosEmb_float_forward(Matrix3D<float> query, Matrix3D<float> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
-  // TODO: maybe we can use shared memory here
-  float query_buf[4096], key_buf[4096];
+// __global__ void RotaryPosEmb_float_forward(Matrix3D<float> query, Matrix3D<float> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
+//   // TODO: maybe we can use shared memory here
+//   float query_buf[4096], key_buf[4096];
 
-  int num_heads = query.m_dim_x;
-  int head_embed = cos.m_dim_z;
-  int half = head_embed / 2;
+//   int num_heads = query.m_dim_x;
+//   int head_embed = cos.m_dim_z;
+//   int half = head_embed / 2;
   
-  // Convert the 1D CUDA thread indices into 3D indices
-  int b = blockIdx.x;
-  int i = threadIdx.x;
+//   // Convert the 1D CUDA thread indices into 3D indices
+//   int b = blockIdx.x;
+//   int i = threadIdx.x;
 
-  if(b < num_heads && i < len) {
-    for(int j = 0; j < half; j++) {
-      query_buf[j] = -1 * query(b, i, j + half);
-      key_buf[j] = -1 * key(b, i, j + half);
-    }
-    for(int j = half; j < head_embed; j++) {
-      query_buf[j] = query(b, i, j - half);
-      key_buf[j] = key(b, i, j - half);
-    }
+//   if(b < num_heads && i < len) {
+//     for(int j = 0; j < half; j++) {
+//       query_buf[j] = -1 * query(b, i, j + half);
+//       key_buf[j] = -1 * key(b, i, j + half);
+//     }
+//     for(int j = half; j < head_embed; j++) {
+//       query_buf[j] = query(b, i, j - half);
+//       key_buf[j] = key(b, i, j - half);
+//     }
 
-    for(int j = 0; j < head_embed; j++) {
-      query(b, i, j) = ((query(b, i, j) * cos(0, i + start_idx, j)) +
-                        (query_buf[j] * sin(0, i + start_idx, j)));
-      key(b, i, j) = ((key(b, i, j) * cos(0, i + start_idx, j)) +
-                      (key_buf[j] * sin(0, i + start_idx, j)));
-    }
-  }
-}
+//     for(int j = 0; j < head_embed; j++) {
+//       query(b, i, j) = ((query(b, i, j) * cos(0, i + start_idx, j)) +
+//                         (query_buf[j] * sin(0, i + start_idx, j)));
+//       key(b, i, j) = ((key(b, i, j) * cos(0, i + start_idx, j)) +
+//                       (key_buf[j] * sin(0, i + start_idx, j)));
+//     }
+//   }
+// }
 
-__global__ void RotaryPosEmb_half_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
+__global__ void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
   // TODO: maybe we can use shared memory here
   half query_buf[4096], key_buf[4096];
 

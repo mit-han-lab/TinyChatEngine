@@ -31,3 +31,4 @@ demo
 profile_*
 !profile_*.cc
 libtorch/
+*.pyc

@@ -1,5 +1,4 @@
 #include "common.h"
-// #include "common.cuh"
 
 class BMM_F16T{
 public:

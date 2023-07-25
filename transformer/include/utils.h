@@ -8,8 +8,6 @@
 
 #include "profiler.h"
 
-#define QK 32
-
 #define STATS_START(x) Profiler::getInstance().start(x)
 #define STATS_FLOPS(x, y) Profiler::getInstance().start(x, y)
 #define STATS_END(x) Profiler::getInstance().stop(x)

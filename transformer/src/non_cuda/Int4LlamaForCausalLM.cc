@@ -8,7 +8,7 @@
 Int4LlamaForCausalLM::Int4LlamaForCausalLM(std::string param_path, const struct model_config config) {
     allocate_aligned_memory(logits_output, config.max_sqlen * config.vocsize * sizeof(float));
     allocate_aligned_memory(lm_head_weight, (config.embed_dim * config.vocsize * sizeof(uint8_t)) / 2);
-    //allocate_aligned_memory(lm_head_weight, config.embed_dim * config.vocsize * sizeof(float));
+    // allocate_aligned_memory(lm_head_weight, config.embed_dim * config.vocsize * sizeof(float));
 
     this->decoder = Int4llamaDecoder(param_path + "/decoder", config);
     this->lm_head = Linear_FP_int4(Matrix3D<uint8_t>(lm_head_weight, 1, config.vocsize, config.embed_dim / 2),
@@ -18,12 +18,6 @@ Int4LlamaForCausalLM::Int4LlamaForCausalLM(std::string param_path, const struct 
 }
 
 struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct Int4LlamaForCausalLM_input &input) {
-    // Pycode: Skipped
-    // output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-    // output_hidden_states = (
-    //     output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-    // )
-    // return_dict = return_dict if return_dict is not None else self.config.use_return_dict
     PROFILE_START(profile_name);
     int sqlen = input.input_ids.m_dim_z;
 
@@ -41,7 +35,6 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct In
 
     // logits = self.lm_head(outputs[0]).contiguous()
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
-    // std::cout << "lm_head" << std::endl;
     this->lm_head.forward(decoder_output.last_hidden_state, logits);
     // print_first_k_elelment("logits_output", logits.m_data, 20);
 

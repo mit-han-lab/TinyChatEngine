@@ -5,8 +5,8 @@
 #include "utils.h"
 
 // Fp32LlamaForCausalLM
-std::vector<int> Fp32LLaMAGenerate(Fp32LlamaForCausalLM model, std::string text, const struct opt_params generation_config,
-                               std::string voc_path, bool interactive) {
+std::vector<int> Fp32LLaMAGenerate(Fp32LlamaForCausalLM model, std::string text,
+                                   const struct opt_params generation_config, std::string voc_path, bool interactive) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -121,6 +121,7 @@ std::vector<int> Fp32LLaMAGenerate(Fp32LlamaForCausalLM model, std::string text,
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
 
+        if (id == 2) break;  // eos
         if (interactive) std::cout << llama_id_to_token(vocab, id) << std::flush;
 
         --n_remain;

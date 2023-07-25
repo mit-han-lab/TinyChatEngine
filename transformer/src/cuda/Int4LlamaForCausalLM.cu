@@ -6,7 +6,7 @@
 #include "utils.cuh"
 
 Int4LlamaForCausalLM::Int4LlamaForCausalLM(std::string param_path, const struct model_config config) {
-    allocate_aligned_memory_gpu(logits_output_half, config.max_sqlen * config.vocsize * sizeof(half));
+    allocate_aligned_memory_gpu(logits_output_half, config.max_sqlen * config.vocsize * sizeof(float16_t));
     allocate_aligned_memory_gpu(logits_output, config.max_sqlen * config.vocsize * sizeof(float));
     allocate_aligned_memory_gpu(lm_head_weight, (config.embed_dim * config.vocsize * sizeof(int)) / 8);
 
@@ -30,7 +30,7 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct In
         decoder_output = this->decoder.forward(decoder_input);
     }
 
-    Matrix3D<half> logits_half(logits_output_half, 1, sqlen, this->decoder.voc_size);
+    Matrix3D<float16_t> logits_half(logits_output_half, 1, sqlen, this->decoder.voc_size);
     this->lm_head.forward(decoder_output.last_hidden_state, logits_half);
 
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);

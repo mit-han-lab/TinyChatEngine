@@ -1,8 +1,10 @@
 #include <cstring>
 
 #include "operators.cuh"
+// #include "operators.h"
 #include "utils.h"
 #include "utils.cuh"
+
 
 __global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<float> output, float* lookup, int embed_dim) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -18,11 +20,11 @@ __global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<float> output, 
     }
 }
 
-void load_Embedding_params(Embedding_half& op, std::string prefix) {
+void load_Embedding_params(Embedding_cuda& op, std::string prefix) {
     op.lookup.load((prefix + "/weight.bin").c_str());
 }
 
-void Embedding_half::forward(Matrix3D<int> input_id, Matrix3D<float> output) {
+void Embedding_cuda::forward(Matrix3D<int> input_id, Matrix3D<float> output) {
     PROFILE_START(profile_name);
     assert(input_id.m_dim_x == 1);
     assert(input_id.m_dim_y == 1);

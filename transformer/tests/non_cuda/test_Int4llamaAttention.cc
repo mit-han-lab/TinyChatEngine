@@ -19,6 +19,7 @@ void test_Int4llamaAttention() {
 
     attn.initialized_memory(llama7B);
     struct Int4llamaAttention_input input(hidden_states, attention_mask, 0);
+
     struct Int4llamaAttention_output output = attn.forward(input);
 
     Matrix3D<float> attn_outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
@@ -79,6 +80,7 @@ void test_Int4llamaAttention_gen() {
 }
 
 int main() {
-    test_Int4llamaAttention();
-    test_Int4llamaAttention_gen();
+    // This tests are directly from fp32 and are not completed yet!
+    // test_Int4llamaAttention();
+    // test_Int4llamaAttention_gen();
 }

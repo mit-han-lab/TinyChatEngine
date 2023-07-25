@@ -1,31 +1,32 @@
 #include "operators.cuh"
+// #include "operators.h"
 #include "utils.h"
 #include "utils.cuh"
-#include "lib/matmul.h"
+// #include "lib/matmul.h"
 
-__global__ void mat_mul_transposed_cuda_float(Matrix3D<float> A, Matrix3D<float> B, Matrix3D<float> C, const float alpha) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int j = blockIdx.y * blockDim.y + threadIdx.y;
+// __global__ void mat_mul_transposed_cuda_float(Matrix3D<float> A, Matrix3D<float> B, Matrix3D<float> C, const float alpha) {
+//     int i = blockIdx.x * blockDim.x + threadIdx.x;
+//     int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    const int m = A.m_dim_y, n = B.m_dim_y, k = A.m_dim_z;
+//     const int m = A.m_dim_y, n = B.m_dim_y, k = A.m_dim_z;
 
-    for (int bz = 0; bz < A.m_dim_x; bz++) {
-        if (i < C.m_dim_y && j < C.m_dim_z) {
-            float* data_A = A.m_data, *data_B = B.m_data, *data_C = C.m_data;
+//     for (int bz = 0; bz < A.m_dim_x; bz++) {
+//         if (i < C.m_dim_y && j < C.m_dim_z) {
+//             float* data_A = A.m_data, *data_B = B.m_data, *data_C = C.m_data;
 
-            float acc = 0;
-            for (int k = 0; k < A.m_dim_z; k++) {
-                acc += data_A[i * A.m_dim_z + k] * data_B[j * B.m_dim_z + k];
-            }
+//             float acc = 0;
+//             for (int k = 0; k < A.m_dim_z; k++) {
+//                 acc += data_A[i * A.m_dim_z + k] * data_B[j * B.m_dim_z + k];
+//             }
             
-            data_C[i * C.m_dim_z + j] = alpha * acc;
-        }
+//             data_C[i * C.m_dim_z + j] = alpha * acc;
+//         }
 
-        A.m_data += m * k;
-        B.m_data += k * n;
-        C.m_data += m * n;
-    }
-}
+//         A.m_data += m * k;
+//         B.m_data += k * n;
+//         C.m_data += m * n;
+//     }
+// }
 
 __global__ void mat_mul_transposed_cuda(Matrix3D<half> A, Matrix3D<half> B, Matrix3D<half> C, const half alpha) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;

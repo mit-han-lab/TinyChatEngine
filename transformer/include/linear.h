@@ -35,14 +35,35 @@ class Linear_FP_int4 {
         offset.load((weight_path + "/offset_int4.bin").c_str());
         scale.load((weight_path + "/scaling_factor_int4.bin").c_str());
         zero_point.load((weight_path + "/zero_point_int4.bin").c_str());
+
+#ifdef PACK_QK
+        // pack weights and scales together to increase memory efficiency
+        allocate_aligned_memory(packed_weights, ((weight.length() * 2) / QK) * sizeof(pack_q4_tensor));
+        struct pack_q4_tensor *t = (struct pack_q4_tensor *)packed_weights;
+        int num_blocks = (weight.length() * 2) / QK;
+        for (int i = 0; i < num_blocks; i++) {
+            int weight_idx = i * (QK / 2);
+            memcpy(t[i].qx, &weight.m_data[weight_idx], (QK / 2) * sizeof(uint8_t));
+            t[i].scale = scale.m_data[i];
+        }
+        // deallocate
+        deallocate_memory(weight.m_data);
+        deallocate_memory(scale.m_data);
+#endif
     };
     Linear_FP_int4(){};
     void forward(const Matrix3D<float> &x, Matrix3D<float> &output);
     void forward_ref(const Matrix3D<float> &x, Matrix3D<float> &output);
     void forward_fast(const Matrix3D<float> &x, Matrix3D<float> &output);
+#ifdef USE_INT8_INT4_PRODUCT
+    static void initialize_memory(const int block_size);
+#endif
     Matrix3D<uint8_t> weight;
     Matrix3D<float> scale, zero_point;
     Matrix3D<float> offset;
+#ifdef PACK_QK
+    struct pack_q4_tensor *packed_weights;
+#endif
 
    private:
     std::string profile_name = "Linear_FP_int4";

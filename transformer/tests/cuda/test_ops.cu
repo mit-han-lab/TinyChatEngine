@@ -6,109 +6,7 @@
 #include "../utils_memalloc.h"
 #include "linear.cuh"
 
-void test_LayerNormQ() {
-    const int b = 1, m = 108, n = 768;
-    MemoryAllocator mem_buf;
-
-    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
-    float *weight_arr = mem_buf.get_fpbuffer(b * n);
-    float *bias_arr = mem_buf.get_fpbuffer(b * n);
-    int8_t *output_arr = mem_buf.get_int8buffer(b * m * n);
-    int8_t *GToutput_arr = mem_buf.get_int8buffer(b * m * n);
-
-    Matrix3D<float> input(intput_arr, b, m, n);
-    Matrix3D<float> weight(weight_arr, b, 1, n);
-    Matrix3D<float> bias(bias_arr, b, 1, n);
-    Matrix3D<int8_t> output(output_arr, b, m, n);
-    Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
-
-    bias.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_bias.bin");
-    input.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_x.bin");
-    weight.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_weight.bin");
-    GToutput.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_out.bin");
-
-    struct LayerNormQ_params op_params = {weight, bias};
-
-    LayerNormQ test_op = LayerNormQ(op_params);
-
-    test_op.forward(input, output);
-
-    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
-    if (!success)
-        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
-    else
-        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
-}
-
-void test_LayerNormQ_len512() {
-    const int b = 1, m = 512, n = 768;
-    MemoryAllocator mem_buf;
-
-    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
-    float *weight_arr = mem_buf.get_fpbuffer(b * n);
-    float *bias_arr = mem_buf.get_fpbuffer(b * n);
-    int8_t *output_arr = mem_buf.get_int8buffer(b * m * n);
-    int8_t *GToutput_arr = mem_buf.get_int8buffer(b * m * n);
-
-    Matrix3D<float> input(intput_arr, b, m, n);
-    Matrix3D<float> weight(weight_arr, b, 1, n);
-    Matrix3D<float> bias(bias_arr, b, 1, n);
-    Matrix3D<int8_t> output(output_arr, b, m, n);
-    Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
-
-    input.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_x_len512.bin");
-    GToutput.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_y_len512.bin");
-
-    struct LayerNormQ_params op_params = {weight, bias};
-
-    LayerNormQ test_op = LayerNormQ(op_params);
-    load_LayerNormQ(test_op, "models/OPT_125m/decoder/layer0/self_attn_layer_norm");
-
-    test_op.forward(input, output);
-
-    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
-    if (!success)
-        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
-    else
-        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
-}
-
-void test_LayerNormQ_1_3B() {
-    const int b = 1, m = 108, n = 2048;
-    MemoryAllocator mem_buf;
-
-    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
-    float *weight_arr = mem_buf.get_fpbuffer(b * n);
-    float *bias_arr = mem_buf.get_fpbuffer(b * n);
-    int8_t *output_arr = mem_buf.get_int8buffer(b * m * n);
-    int8_t *GToutput_arr = mem_buf.get_int8buffer(b * m * n);
-
-    Matrix3D<float> input(intput_arr, b, m, n);
-    Matrix3D<float> weight(weight_arr, b, 1, n);
-    Matrix3D<float> bias(bias_arr, b, 1, n);
-    Matrix3D<int8_t> output(output_arr, b, m, n);
-    Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
-
-    input.load("assets/OPT/tests/ops/OPT_1.3B/LayerNormQ_x.bin");
-    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/LayerNormQ_out.bin");
-
-    struct LayerNormQ_params op_params = {weight, bias};
-
-    LayerNormQ op = LayerNormQ(op_params);
-    load_LayerNormQ(op, "models/OPT_1.3B/decoder/layer0/self_attn_layer_norm/");
-
-    LayerNormQ test_op = LayerNormQ(op_params);
-
-    test_op.forward(input, output);
-
-    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
-    if (!success)
-        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
-    else
-        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
-}
-
-void test_LayerNorm() {
+void test_LlamaRMSNorm_cuda() {
     const int b = 1, m = 108, n = 768;
     MemoryAllocator mem_buf;
 
@@ -135,39 +33,6 @@ void test_LayerNorm() {
     test_op.forward(input, output);
 
     bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
-    if (!success)
-        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
-    else
-        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
-}
-
-void test_LayerNorm_1_3B_len512() {
-    const int b = 1, m = 512, n = 2048;
-    MemoryAllocator mem_buf;
-
-    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
-    float *weight_arr = mem_buf.get_fpbuffer(b * n);
-    float *bias_arr = mem_buf.get_fpbuffer(b * n);
-    float *output_arr = mem_buf.get_fpbuffer(b * m * n);
-    float *GToutput_arr = mem_buf.get_fpbuffer(b * m * n);
-
-    Matrix3D<float> input(intput_arr, b, m, n);
-    Matrix3D<float> weight(weight_arr, b, 1, n);
-    Matrix3D<float> bias(bias_arr, b, 1, n);
-    Matrix3D<float> output(output_arr, b, m, n);
-    Matrix3D<float> GToutput(GToutput_arr, b, m, n);
-
-    input.load("assets/OPT/tests/ops/OPT_1.3B/decoder/final_layer_norm_hidden_states.bin");
-    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/decoder/final_layer_norm_output.bin");
-
-    struct LayerNorm_params op_params = {weight, bias};
-
-    LayerNorm test_op = LayerNorm(op_params);
-    load_LayerNorm(test_op, "models/OPT_1.3B/decoder/final_layer_norm/");
-
-    test_op.forward(input, output);
-
-    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n, 8e-6);
     if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
@@ -769,11 +634,7 @@ void test_FP16Linear_int4_mini() {
 }
 
 int main() {
-    // from OPT test_LayerNormQ();
-    test_LayerNormQ_len512();
-    test_LayerNormQ_1_3B();
-    test_LayerNorm();
-    test_LayerNorm_1_3B_len512();
+    test_LlamaRMSNorm_cuda();
     test_W8A8B8O8LinearReLU();
     test_W8A8B8O8LinearReLU_1_3B();
     test_W8A8B8O8Linear();

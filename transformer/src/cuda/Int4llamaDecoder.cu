@@ -6,27 +6,27 @@
 #include "utils.h"
 #include "utils.cuh"
 
-__global__ void prepare_decoder_attention_mask_float(Matrix3D<float> causal_attention_mask, int length, int past_length) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int j = blockIdx.y * blockDim.y + threadIdx.y;
+// __global__ void prepare_decoder_attention_mask_float(Matrix3D<float> causal_attention_mask, int length, int past_length) {
+//     int i = blockIdx.x * blockDim.x + threadIdx.x;
+//     int j = blockIdx.y * blockDim.y + threadIdx.y;
     
-    if(i < length - past_length && j < length) {
-        float min = -FLT_MAX;
-        if (i + past_length < j) {
-            causal_attention_mask(0, i, j) = min;
-        } else {
-            causal_attention_mask(0, i, j) = 0.0;
-        }
-    }
-}
+//     if(i < length - past_length && j < length) {
+//         float min = -FLT_MAX;
+//         if (i + past_length < j) {
+//             causal_attention_mask(0, i, j) = min;
+//         } else {
+//             causal_attention_mask(0, i, j) = 0.0;
+//         }
+//     }
+// }
 
-__global__ void prepare_decoder_attention_mask_half(Matrix3D<half> causal_attention_mask, int length, int past_length) {
+__global__ void prepare_decoder_attention_mask_half(Matrix3D<float16_t> causal_attention_mask, int length, int past_length) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
     
     if(i < length - past_length && j < length) {
-        // half min = __float2half(-FLT_MAX);
-        half min = __float2half(-65504.0f);
+        // float16_t min = __float2half(-FLT_MAX);
+        float16_t min = __float2half(-65504.0f);
         if (i + past_length < j) {
             causal_attention_mask(0, i, j) = min;
         } else {
@@ -36,10 +36,10 @@ __global__ void prepare_decoder_attention_mask_half(Matrix3D<half> causal_attent
 }
 
 Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_config config) {
-    allocate_aligned_memory_gpu(attention_mask_buf, config.max_sqlen * config.max_sqlen * sizeof(half));
-    allocate_aligned_memory_gpu(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(half));
+    allocate_aligned_memory_gpu(attention_mask_buf, config.max_sqlen * config.max_sqlen * sizeof(float16_t));
+    allocate_aligned_memory_gpu(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
-    allocate_aligned_memory_gpu(hidden_states_half_buf, config.max_sqlen * config.embed_dim * sizeof(half));
+    allocate_aligned_memory_gpu(hidden_states_half_buf, config.max_sqlen * config.embed_dim * sizeof(float16_t));
 
     this->voc_size = config.vocsize;
     this->embed_dim = config.embed_dim;
@@ -56,7 +56,7 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     allocate_aligned_memory_gpu(norm_weight_ptr, embed_dim * sizeof(float));
     Matrix3D<float> norm_weight(norm_weight_ptr, 1, 1, embed_dim);
     norm_weight.load((param_path + "/norm/weight.bin").c_str());
-    this->norm = LlamaRMSNorm_half(norm_weight);
+    this->norm = LlamaRMSNorm_cuda(norm_weight);
 
     // Load all the decoder layers
     for (int layer_idx = 0; layer_idx < config.num_layers; layer_idx++) {
@@ -78,8 +78,8 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
     Matrix3D<float> hidden_states_float(hidden_states_buf, 1, sqlen, this->embed_dim);
     this->embed_tokens.forward(input.input_ids, hidden_states_float);
 
-    // Convert from float to half
-    Matrix3D<half> hidden_states(hidden_states_half_buf, 1, sqlen, this->embed_dim);
+    // Convert from float to float16_t
+    Matrix3D<float16_t> hidden_states(hidden_states_half_buf, 1, sqlen, this->embed_dim);
     int threadsPerBlock_1D = 1024;
     int blocksPerGrid =(sqlen * this->embed_dim + threadsPerBlock_1D - 1) / threadsPerBlock_1D;
     float2half<<<blocksPerGrid, threadsPerBlock_1D>>>(hidden_states_buf, hidden_states_half_buf, sqlen * this->embed_dim);
@@ -89,13 +89,13 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
     }
     int length = sqlen + past_key_values_length;
     int past_length = past_key_values_length;
-    Matrix3D<half> causal_attention_mask(attention_mask_buf, 1, length - past_length, length);
+    Matrix3D<float16_t> causal_attention_mask(attention_mask_buf, 1, length - past_length, length);
     dim3 threadsPerBlock(32, 32);
     dim3 numBlocks((length - past_length + threadsPerBlock.x - 1) / threadsPerBlock.x, 
                    (length + threadsPerBlock.y - 1) / threadsPerBlock.y);
     prepare_decoder_attention_mask_half<<<numBlocks, threadsPerBlock>>>(causal_attention_mask, length, past_length);
 
-    std::vector<Matrix3D<half>> past_keys, past_values;
+    std::vector<Matrix3D<float16_t>> past_keys, past_values;
     for (int i = 0; i < this->layers.size(); i++) {
         if (!input.has_past_keys_values) {
             struct Int4llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask};
@@ -113,7 +113,7 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
         }
     }
 
-    Matrix3D<half> last_hidden_states(last_hidden_states_buf, 1, sqlen, this->embed_dim);
+    Matrix3D<float16_t> last_hidden_states(last_hidden_states_buf, 1, sqlen, this->embed_dim);
     this->norm.forward(hidden_states, last_hidden_states);
 
     struct Int4llamaDecoder_output output = {last_hidden_states, past_keys, past_values};

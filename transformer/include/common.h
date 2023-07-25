@@ -8,6 +8,10 @@
 
 #include "model.h"
 
+#if defined(__CUDACC__)
+#include "utils.cuh"
+#endif
+
 #define MAX_LINEAR_LENGTH 1024 * 1024 * 16  // 16MB, TO BE REMOVED with better memory allocation!
 #define DEBUG false
 
@@ -31,6 +35,15 @@ class Matrix3D {
    public:
     Matrix3D(T *data, int dim_x, int dim_y, int dim_z) : m_data(data), m_dim_x(dim_x), m_dim_y(dim_y), m_dim_z(dim_z) {}
 
+#if defined(__CUDACC__)
+    __host__ __device__ T &operator()(int x, int y, int z) {
+        return m_data[x * m_dim_y * m_dim_z + y * m_dim_z + z];
+    }
+
+    __host__ __device__ const T &operator()(int x, int y, int z) const {
+        return m_data[x * m_dim_y * m_dim_z + y * m_dim_z + z];
+    }
+#else
     T &operator()(int x, int y, int z) {
         if (x < 0 || x >= m_dim_x || y < 0 || y >= m_dim_y || z < 0 || z >= m_dim_z) {
             printf("%d, %d, %d\n", x, y, z);
@@ -48,6 +61,7 @@ class Matrix3D {
         }
         return m_data[x * m_dim_y * m_dim_z + y * m_dim_z + z];
     }
+#endif
 
     bool operator==(const Matrix3D<T> &other) const {
         if (m_dim_x != other.m_dim_x || m_dim_y != other.m_dim_y || m_dim_z != other.m_dim_z) {
@@ -67,7 +81,12 @@ class Matrix3D {
         return true;
     }
 
+#if defined(__CUDACC__)
+    __host__ __device__ int length() const { return m_dim_x * m_dim_y * m_dim_z; }
+#else
     int length() const { return m_dim_x * m_dim_y * m_dim_z; }
+#endif
+
     T sum() const {
         T sum = 0;
         for (int i = 0; i < this->length(); i++) {
