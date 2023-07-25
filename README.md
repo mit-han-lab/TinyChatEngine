@@ -33,6 +33,10 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 - Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the enviroment path
 
+## Supported models
+
+# TODO: table of supported model, precision, platforms
+
 ## Demo with LLaMA2 model
 
 ```bash
@@ -41,7 +45,7 @@ git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
 cd TinyLLMEngine/transformer
 # download and convert the AWQ model to int4 format, this will take a while...
 python download_model.py LLaMA_7B_2_chat
-python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method Q4_0 # Use Q4_4 for M1/M2 MacBook
+python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86 # Use QM_ARM for M1/M2 chips
 # compile the demo program
 make -j
 # run the demo

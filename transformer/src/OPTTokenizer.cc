@@ -22,35 +22,6 @@ Encoder::Encoder(std::map<std::string, int> encoder, std::vector<std::pair<std::
     }
 }
 
-/*
-Encoder::std::vector<std::pair<int, unsigned char>> bytes_to_unicode() {
-    std::vector<int> bs;
-    std::vector<int> cs;
-
-    for (int i = int(U'!'); i <= int(U'~'); ++i) bs.push_back(i);
-    for (int i = int(U'¡'); i <= int(U'¬'); ++i) bs.push_back(i);
-    for (int i = int(U'®'); i <= int(U'ÿ'); ++i) bs.push_back(i);
-
-    cs = bs;  // Copy bs to cs
-
-    int n = 0;
-    for (int b = 0; b < 256; ++b) {
-        if (std::find(bs.begin(), bs.end(), b) == bs.end()) {
-            bs.push_back(b);
-            cs.push_back(256 + n);
-            ++n;
-        }
-    }
-
-    std::vector<std::pair<int, unsigned char>> b2u;
-    for (int i = 0; i < bs.size(); ++i) {
-        b2u.emplace_back(bs[i], static_cast<unsigned char>(bs[i]));
-    }
-
-    return b2u;
-}
-*/
-
 std::unordered_map<int, std::string> Encoder::bytes_to_unicode() {
     std::unordered_map<int, std::string> byte_to_unicode;
 

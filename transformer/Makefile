@@ -19,7 +19,7 @@ ifeq ($(shell uname -m),x86_64)
 	# For Intel machines with AVX
 	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
 	LIB_SRC += $(LIB_AVX_SRC)
-	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive
+	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
 else ifeq ($(shell uname -p),arm)
 	CXX = /opt/homebrew/opt/llvm/bin/clang++
 	# For ARM A-series (such as Mac M1) with Metal GPU
@@ -28,10 +28,10 @@ else ifeq ($(shell uname -p),arm)
 	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
 	# LIB += -framework Metal -framework Foundation -framework MetalKit
 	# TARGET += default.metallib library.air
-	# CXXFLAGS += -stdlib=libc++ -DUSE_METAL
+	# CXXFLAGS += -stdlib=libc++ -DQM_METAL
 	# Use NEON with int8 runtime quantization is faster
 	LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
-	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQ4_4 -fPIC -march=armv8.2-a
+	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	LIB += -L/opt/homebrew/opt/boost/lib
 else

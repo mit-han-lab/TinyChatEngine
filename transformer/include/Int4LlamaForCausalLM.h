@@ -20,19 +20,12 @@ struct Int4LlamaForCausalLM_input {
 class Int4LlamaForCausalLM {
    public:
     Int4LlamaForCausalLM(std::string param_path, const struct model_config config);
-
-    // std::string param_path, int voc_size_, int embed_dim_, int hidden_dim_, int num_heads_,
-    //            int padding_idx_, int num_layers);
-    // Int4llamaDecoder decoder, Matrix3D<float> lm_head): m_decoder(decoder), lm_head_weights(lm_head) {} // TODO: take
-    // a decoder
     struct Int4LlamaForCausalLM_output forward(const struct Int4LlamaForCausalLM_input& input);
 
    private:
     Int4llamaDecoder decoder;
     Linear_FP_int4 lm_head;
-    //Linear_FP lm_head;
     std::string profile_name = "Int4LlamaForCausalLM";
     float* logits_output;
     uint8_t* lm_head_weight;
-    //float* lm_head_weight;
 };

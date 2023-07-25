@@ -103,7 +103,7 @@ void matmul_int8_int4_no_offset(struct matmul_params* params) {
                 const uint8x16_t w3 = vld1q_u8(w_start + 48);  // 32 4bit weight
                 w_start += 64;
 
-                // Quantization Method Q4_4, convert 64 4-bit to 64 8-bit
+                // Quantization Method QM_ARM, convert 64 4-bit to 64 8-bit
                 // sequential: (0, 1), (2, 3), (4, 5), (6, 7)... : 128 bit
                 // expected layout of inB: (0, 16), (1, 17), (2, 18), (3, 19)...
                 // low; (0, 0), (1, 0), (2, 0), (3, 0) ...
@@ -191,7 +191,7 @@ static void* matmul_int8_int4_no_offset_over_column(void* args) {
                 const uint8x16_t w1 = vld1q_u8(w_start + 16);  // 32 4bit weight
                 w_start += 32;
 
-                // Quantization Method Q4_4, convert 64 4-bit to 64 8-bit
+                // Quantization Method QM_ARM, convert 64 4-bit to 64 8-bit
                 // sequential: (0, 1), (2, 3), (4, 5), (6, 7)... : 128 bit
                 // expected layout of inB: (0, 16), (1, 17), (2, 18), (3, 19)...
                 // low; (0, 0), (1, 0), (2, 0), (3, 0) ...
@@ -265,7 +265,7 @@ static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
                 const uint8x16_t w3 = vld1q_u8(w_start + 48);  // 32 4bit weight
                 w_start += 64;
 
-                // Quantization Method Q4_4, convert 64 4-bit to 64 8-bit
+                // Quantization Method QM_ARM, convert 64 4-bit to 64 8-bit
                 // sequential: (0, 1), (2, 3), (4, 5), (6, 7)... : 128 bit
                 // expected layout of inB: (0, 16), (1, 17), (2, 18), (3, 19)...
                 // low; (0, 0), (1, 0), (2, 0), (3, 0) ...
@@ -351,7 +351,7 @@ static void* matmul_int8_int4_no_offset_over_column_packed(void* args) {
                 const uint8x16_t w0 = vld1q_u8(w_start[0].qx);  // 32 4bit weight
                 const uint8x16_t w1 = vld1q_u8(w_start[1].qx);  // 32 4bit weight
 
-                // Quantization Method Q4_4, convert 64 4-bit to 64 8-bit
+                // Quantization Method QM_ARM, convert 64 4-bit to 64 8-bit
                 // sequential: (0, 1), (2, 3), (4, 5), (6, 7)... : 128 bit
                 // expected layout of inB: (0, 16), (1, 17), (2, 18), (3, 19)...
                 // low; (0, 0), (1, 0), (2, 0), (3, 0) ...

@@ -1,7 +1,10 @@
 """Implementation of exporting LLaMA PyTorch model to TinyLLMEngine format.
 
+Usage:
+   python llama_exporter.py <path of hugging face model checkpoint> <output dir>
+
 Example commandline:
-   python model_exporter.py <path to model checkpoint> <output dir>
+   python llama_exporter.py ~/llama2-chat/hf7B models/LLaMA_7B_2_chat
 """
 import argparse
 import math

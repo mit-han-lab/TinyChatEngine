@@ -13,7 +13,7 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
     float *B_zp = params->zero_point;
     float *data_C = C->data_ptr;
     CHECK_MATRICES_int4weight(A, B, C);
-#ifdef USE_METAL
+#ifdef QM_METAL
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {
             float acc = 0;
@@ -48,7 +48,7 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
         }
     }
 #else
-#ifdef Q4_4
+#ifdef QM_ARM
     for (i = 0; i < C->row; i++) {
         for (j = 0; j < C->column; j++) {
             float acc = 0;
@@ -97,8 +97,8 @@ void MatmulOperator::naive_mat_mul_int4(const struct matmul_params *params) {
             data_C[i * C->column + j] = acc;
         }
     }
-#endif  // Q4_4
-#endif  // USE_METAL
+#endif  // QM_ARM
+#endif  // QM_METAL
 }
 
 void MatmulOperator::naive_mat_mul_int4_with_offset(const struct matmul_params *params) {

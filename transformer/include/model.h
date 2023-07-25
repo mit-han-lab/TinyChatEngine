@@ -2,14 +2,6 @@
 #define MODEL_H
 #include <cstring>
 
-// #define BATCH 1
-// #define HEAD 12
-// #define LAYERS 12
-// #define MAXSQLEN 512
-// #define EMBED_DIM 768
-// #define HIDDEN_DIM 3072
-// #define MAXVOCSIZE 50272
-
 struct model_config {
     int batch;
     int num_heads;
