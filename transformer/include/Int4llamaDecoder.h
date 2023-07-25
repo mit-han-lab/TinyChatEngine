@@ -7,17 +7,30 @@
 #include "operators.h"
 
 struct Int4llamaDecoder_output {
+#ifdef USE_CUDA
     Matrix3D<float16_t> last_hidden_state;
     std::vector<Matrix3D<float16_t>> past_keys, past_values;
+#else
+    Matrix3D<float> last_hidden_state;
+    std::vector<Matrix3D<float>> past_keys, past_values;
+#endif
 };
 struct Int4llamaDecoder_input {
     Matrix3D<int> input_ids;
-    std::vector<Matrix3D<float16_t>> past_keys, past_values;
     bool has_past_keys_values;
+#ifdef USE_CUDA
+    std::vector<Matrix3D<float16_t>> past_keys, past_values;
+#else
+    std::vector<Matrix3D<float>> past_keys, past_values;
+#endif
 
     Int4llamaDecoder_input(Matrix3D<int> input_ids_) : input_ids(input_ids_) { has_past_keys_values = false; }
-    Int4llamaDecoder_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float16_t>> past_keys_,
-                           std::vector<Matrix3D<float16_t>> past_values_)
+
+#ifdef USE_CUDA
+    Int4llamaDecoder_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float16_t>> past_keys_, std::vector<Matrix3D<float16_t>> past_values_)
+#else
+    Int4llamaDecoder_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float>> past_keys_, std::vector<Matrix3D<float>> past_values_)
+#endif
         : input_ids(input_ids_), past_keys(past_keys_), past_values(past_values_) {
         has_past_keys_values = true;
     }
@@ -30,14 +43,24 @@ class Int4llamaDecoder {
     Matrix3D<float> prepare_decoder_attention_mask(int length, int past_length);
     struct Int4llamaDecoder_output forward(const struct Int4llamaDecoder_input& input);
     Embedding embed_tokens;
-    LlamaRMSNorm_cuda norm;
     int voc_size, embed_dim, padding_idx, hidden_dim, num_heads;
     std::vector<Int4llamaDecoderLayer> layers;
     std::string profile_name = "Int4llamaDecoder";
+#ifdef USE_CUDA
+    LlamaRMSNorm_cuda norm;
+#else
+    LlamaRMSNorm norm;
+#endif
 
    private:
+    float* hidden_states_buf;
+#ifdef USE_CUDA
     float16_t* attention_mask_buf;
     float16_t* last_hidden_states_buf;
-    float* hidden_states_buf;
     float16_t* hidden_states_half_buf;
+#else
+    float* attention_mask_buf;
+    float* pos_embeds_buf;
+    float* last_hidden_states_buf;
+#endif
 };

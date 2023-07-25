@@ -1,6 +1,5 @@
 #include <cassert>
 #include "operators.h"
-#include "linear.cuh"
 
 void Linear_half_int4_ref::forward(const Matrix3D<float> &x, Matrix3D<float> &output) {
     const int num_thread = 8;
@@ -35,23 +34,7 @@ void Linear_half_int4_ref::forward(const Matrix3D<float> &x, Matrix3D<float> &ou
     params.block_size = QK;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
-    // op.mat_mul_accelerator_int4_half_fast_no_offset(&params);
     op.mat_mul_accelerator_int4_fast_no_offset(&params);
-
-    // cudaDeviceSynchronize();
-    // cudaError_t err;
-    // err = cudaGetLastError();
-    // if (err != cudaSuccess) {
-    //     printf("Error launching cudaDeviceSynchronize xx kernel: %s\n", cudaGetErrorString(err));
-    // }
-
-    // std::cout << "params.A.row: " << params.A.row << std::endl;
-    // std::cout << "params.A.column: " << params.A.column << std::endl;
-    // std::cout << "params.B.row: " << params.B.row << std::endl;
-    // std::cout << "params.B.column: " << params.B.column << std::endl;
-    // std::cout << "params.C.row: " << params.C.row << std::endl;
-    // std::cout << "params.C.column: " << params.C.column << std::endl;
-    // std::cout << std::endl;
 
     PROFILE_END(profile_name);
     return;
@@ -97,7 +80,7 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
 }
 
 
-void Linear_FP16_int4_ref::forward_ref(const Matrix3D<float16_t> &a, Matrix3D<float16_t> &c) {
+void Linear_FP16_int4_ref::forward_ref(const Matrix3D<naive_float16_t> &a, Matrix3D<naive_float16_t> &c) {
     Matrix3D<int> b = this->weight;
     // const int m = a.m_dim_y, n = b.m_dim_y, k = a.m_dim_z, b_size = b.m_dim_x;
     // const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
@@ -127,14 +110,6 @@ void Linear_FP16_int4_ref::forward_ref(const Matrix3D<float16_t> &a, Matrix3D<fl
     // params.offset = this->offset.m_data;   // TODO: Currently, we don't need offset
     params.int32_zero_point = this->zero_point.m_data;
     params.block_size = QK;
-
-    // std::cout << "params.A.row: " << params.A.row << std::endl;
-    // std::cout << "params.A.column: " << params.A.column << std::endl;
-    // std::cout << "params.B.row: " << params.B.row << std::endl;
-    // std::cout << "params.B.column: " << params.B.column << std::endl;
-    // std::cout << "params.C.row: " << params.C.row << std::endl;
-    // std::cout << "params.C.column: " << params.C.column << std::endl;
-    // std::cout << std::endl;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
     op.naive_mat_mul_fp16_int4((const struct matmul_params *)&params);
@@ -173,14 +148,6 @@ void Linear_half_int4_test::forward(const Matrix3D<float16_t> &x, Matrix3D<float
     matmul::MatmulOperator op = matmul::MatmulOperator();
     // op.mat_mul_accelerator_int4_half_fast_no_offset(&params);
     op.gemm_forward_cuda_half_test(&params, 1);
-
-    // std::cout << "params.A.row: " << params.A.row << std::endl;
-    // std::cout << "params.A.column: " << params.A.column << std::endl;
-    // std::cout << "params.B.row: " << params.B.row << std::endl;
-    // std::cout << "params.B.column: " << params.B.column << std::endl;
-    // std::cout << "params.C.row: " << params.C.row << std::endl;
-    // std::cout << "params.C.column: " << params.C.column << std::endl;
-    // std::cout << std::endl;
 
     PROFILE_END(profile_name);
     return;

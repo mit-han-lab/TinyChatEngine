@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "../matmul.h"
-#include "linear.h"
+#include "ops/linear.h"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>

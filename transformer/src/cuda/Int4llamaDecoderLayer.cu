@@ -1,6 +1,6 @@
 #include "Int4llamaDecoderLayer.h"
 #include "utils.h"
-#include "utils.cuh"
+// #include "utils.cuh"
 
 // Shared memory space across all layers
 static float16_t *hidden_states_half_arr;
@@ -76,6 +76,7 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
 
     this->attn = Int4llamaAttention(param_path + "/self_attn", config);
 
+    int *gate_proj_weight, *down_proj_weight, *up_proj_weight;
     allocate_aligned_memory_gpu(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(up_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);

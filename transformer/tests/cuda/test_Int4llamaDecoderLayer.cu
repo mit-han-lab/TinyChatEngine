@@ -1,7 +1,7 @@
 #include "Int4llamaDecoderLayer.h"
 #include "operators.h"
 #include "utils.h"
-#include "utils.cuh"
+// #include "utils.cuh"
 #include "utils_memalloc.cuh"
 
 void test_Int4llamaDecoderLayer() {

@@ -32,3 +32,7 @@ profile_*
 !profile_*.cc
 libtorch/
 *.pyc
+
+build/
+build_profile/
+transformer/matmul_optimization/

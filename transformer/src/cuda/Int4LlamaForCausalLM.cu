@@ -3,7 +3,7 @@
 #include "Int4LlamaForCausalLM.h"
 #include "operators.h"
 #include "utils.h"
-#include "utils.cuh"
+// #include "utils.cuh"
 
 Int4LlamaForCausalLM::Int4LlamaForCausalLM(std::string param_path, const struct model_config config) {
     allocate_aligned_memory_gpu(logits_output_half, config.max_sqlen * config.vocsize * sizeof(float16_t));

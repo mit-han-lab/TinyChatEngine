@@ -22,13 +22,12 @@ $(info CUDA is available!)
 	CXX = $(CUDA_HOME)/bin/nvcc
 	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-pthread"
 	CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu) $(wildcard $(LIB_DIR)/lib/cuda/*.cc)
-	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cu) $(wildcard src/cuda/*.cc) $(wildcard src/ops/cuda/*.cu) 
-	INCLUDE_DIRS += -I./include/cuda -I./include/ops/cuda
+	LIB_SRC += $(CUDA_SRCS) $(wildcard src/cuda/*.cu) $(wildcard src/ops/cuda/*.cu) 
+	INCLUDE_DIRS += -I./include/ops/cuda
 	IS_CUDA = cuda
 else
 $(info CUDA is unavailable!)
 	LIB_SRC += $(wildcard src/non_cuda/*.cc)
-	INCLUDE_DIRS += -I./include/non_cuda -I./include/ops/non_cuda
 	IS_CUDA = non_cuda
 endif
 
@@ -38,7 +37,7 @@ ifeq ($(shell uname -m),x86_64)
 		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I/usr/include/x86_64-linux-gnu
 		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L/usr/lib/x86_64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=/usr/lib/x86_64-linux-gnu 
 # Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-		CXXFLAGS += -Xcompiler "-mavx2" -arch=sm_86
+		CXXFLAGS += -Xcompiler "-mavx2" -arch=sm_86 -DUSE_CUDA
 	else
 # For x86_64 machines with AVX
 		LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
@@ -51,7 +50,7 @@ else ifeq ($(shell uname -m),aarch64)
 		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/aarch64-linux/include -I/usr/include/aarch64-linux-gnu
 		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/aarch64-linux/lib -L/usr/lib/aarch64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/aarch64-linux/lib -Xlinker -rpath=/usr/lib/aarch64-linux-gnu 
 # Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-		CXXFLAGS += -arch=sm_87 --forward-unknown-to-host-compiler
+		CXXFLAGS += -arch=sm_87 --forward-unknown-to-host-compiler -DUSE_CUDA
 	else
 # For ARM aarch64 platforms with NEON
 		LIB_NEON_SRC = $(wildcard $(LIB_DIR)/lib/neon/*.cc)
@@ -76,7 +75,7 @@ endif
 
 SRC_DIR = src
 SRC = $(wildcard src/*.cc)
-OPS = $(wildcard src/ops/*.cc) $(wildcard src/ops/$(IS_CUDA)/*.cc) 
+OPS = $(wildcard src/ops/*.cc)
 SRC += $(OPS)
 SRC += $(LIB_SRC)
 

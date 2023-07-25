@@ -3,7 +3,7 @@
 #include "Int4llamaDecoder.h"
 #include "operators.h"
 #include "utils.h"
-#include "utils.cuh"
+// #include "utils.cuh"
 #include "utils_memalloc.cuh"
 
 void test_Decoder() {

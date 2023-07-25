@@ -8,6 +8,8 @@
 
 #include "profiler.h"
 
+#include "half.hpp"  // Third-party header
+
 #define STATS_START(x) Profiler::getInstance().start(x)
 #define STATS_FLOPS(x, y) Profiler::getInstance().start(x, y)
 #define STATS_END(x) Profiler::getInstance().stop(x)
@@ -55,5 +57,22 @@ void print_first_k_elelment(std::string name, const float* arr, int k, int start
 
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
+
+
+#ifdef USE_CUDA
+#include <cuda.h>
+#include <cuda_fp16.h>
+#include <cuda_runtime.h>
+
+bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error);
+bool check_two_equal_float_half(float* array, half* array2, int size);
+
+template <typename T>
+void allocate_aligned_memory_gpu(T*& ptr, size_t size);
+
+__global__ void float2half(float* floatArray, half* halfArray, int N);
+__global__ void half2float(half* halfArray, float* floatArray, int N);
+__global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int N, int split_k_iters);
+#endif
 
 #endif

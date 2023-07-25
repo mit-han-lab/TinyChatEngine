@@ -1,9 +1,9 @@
 #include <cstring>
 
-#include "operators.cuh"
-// #include "operators.h"
+// #include "operators.cuh"
+#include "operators.h"
 #include "utils.h"
-#include "utils.cuh"
+// #include "utils.cuh"
 
 
 __global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<float> output, float* lookup, int embed_dim) {

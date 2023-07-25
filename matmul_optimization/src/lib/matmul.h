@@ -2,9 +2,10 @@
 #include <sys/time.h>
 
 #include "half.hpp"  // Third-party header
+typedef half_float::half naive_float16_t;
 
 ////// TODO: Fix this
-#if defined(__CUDACC__)
+#ifdef USE_CUDA
     #include <cuda.h>
     #include <cuda_fp16.h>
     #include <cuda_runtime.h>
@@ -37,7 +38,7 @@ struct matrix {
     int column;
     float *data_ptr;
     float16_t *half_data_ptr;
-    float16_t *fp16_data_ptr;
+    naive_float16_t *fp16_data_ptr;
     int *int32_data_ptr;
     int8_t *int8_data_ptr;
     uint8_t *uint8_data_ptr;
@@ -59,7 +60,7 @@ struct matmul_params {
     // for int4
     float *scales, *offset, *zero_point;
     float16_t *half_scales;
-    float16_t *fp16_scales;
+    naive_float16_t *fp16_scales;
     int *int32_zero_point;
     int block_size;
 };

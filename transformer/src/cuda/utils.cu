@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "utils.cuh"
 
 #include <stdio.h>
 
@@ -18,7 +17,7 @@
         } \
     } while(0)
 
-bool check_two_equal_cpu_gpu(half* array, half* array2, int size, float error) {
+bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error) {
     float sq_diff = 0;
     float max_sqdiff = 0;
     struct max_error_info error_info;
@@ -101,3 +100,4 @@ template void allocate_aligned_memory_gpu(int*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(int8_t*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(uint8_t*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(half*& ptr, size_t size);
+template void allocate_aligned_memory_gpu(half_float::half*& ptr, size_t size);

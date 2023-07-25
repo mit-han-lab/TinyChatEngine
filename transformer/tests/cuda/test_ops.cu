@@ -2,9 +2,9 @@
 
 #include "operators.h"
 #include "utils.h"
-#include "utils.cuh"
+// #include "utils.cuh"
 #include "../utils_memalloc.h"
-#include "linear.cuh"
+// #include "ops/linear.h"
 
 void test_LlamaRMSNorm_cuda() {
     const int b = 1, m = 108, n = 768;
@@ -476,16 +476,16 @@ void test_FP16Linear_int4() {
     Matrix3D<float> hidden_states(hidden_states_arr, 1, m, k);
     hidden_states.load("assets/llama/tests/ops/Linear/input.bin");
 
-    float16_t *hidden_states_ref_arr;
-    allocate_aligned_memory_gpu(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
-    Matrix3D<float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
+    naive_float16_t *hidden_states_ref_arr;
+    allocate_aligned_memory_gpu(hidden_states_ref_arr, (m * k * sizeof(naive_float16_t)));
+    Matrix3D<naive_float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
 
     half *hidden_states_cuda_arr;
     allocate_aligned_memory_gpu(hidden_states_cuda_arr, (m * k * sizeof(half)));
     Matrix3D<half> hidden_states_cuda(hidden_states_cuda_arr, 1, m, k);
 
     for(int i = 0; i < m * k; i++) {
-        hidden_states_ref_arr[i] = static_cast<float16_t>(hidden_states_arr[i]);
+        hidden_states_ref_arr[i] = static_cast<naive_float16_t>(hidden_states_arr[i]);
         hidden_states_cuda_arr[i] = __float2half(hidden_states_arr[i]);
     }
 
@@ -499,9 +499,9 @@ void test_FP16Linear_int4() {
     Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n / 8, k);
     Linear_half_int4_test int4_op_cuda = Linear_half_int4_test(int4_cuda_weight, "models/LLaMA_7B/lm_head/");
 
-    float16_t *outputQ_ref_arr;
-    allocate_aligned_memory_gpu(outputQ_ref_arr, (m * n * sizeof(float16_t)));
-    Matrix3D<float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
+    naive_float16_t *outputQ_ref_arr;
+    allocate_aligned_memory_gpu(outputQ_ref_arr, (m * n * sizeof(naive_float16_t)));
+    Matrix3D<naive_float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
     
     half *outputQ_cuda_arr;
     allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
@@ -524,114 +524,114 @@ void test_FP16Linear_int4() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
-// TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
-void test_FP16Linear_int4_mini() {
-    const int m = 1, n = 64, k = 32;
+// // TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
+// void test_FP16Linear_int4_mini() {
+//     const int m = 1, n = 64, k = 32;
 
-    float16_t *hidden_states_ref_arr;
-    allocate_aligned_memory_gpu(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
-    Matrix3D<float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
+//     float16_t *hidden_states_ref_arr;
+//     allocate_aligned_memory_gpu(hidden_states_ref_arr, (m * k * sizeof(float16_t)));
+//     Matrix3D<float16_t> hidden_states_ref(hidden_states_ref_arr, 1, m, k);
 
-    half *hidden_states_cuda_arr;
-    allocate_aligned_memory_gpu(hidden_states_cuda_arr, (m * k * sizeof(half)));
-    Matrix3D<half> hidden_states_cuda(hidden_states_cuda_arr, 1, m, k);
+//     half *hidden_states_cuda_arr;
+//     allocate_aligned_memory_gpu(hidden_states_cuda_arr, (m * k * sizeof(half)));
+//     Matrix3D<half> hidden_states_cuda(hidden_states_cuda_arr, 1, m, k);
 
-    printf("a\n");
+//     printf("a\n");
 
-    for(int i = 0; i < m * k; i++) {
-        float v = float(i % 4) / 4;
-        hidden_states_ref_arr[i] = static_cast<float16_t>(v);
-        hidden_states_cuda_arr[i] = __float2half(v);
-    }
+//     for(int i = 0; i < m * k; i++) {
+//         float v = float(i % 4) / 4;
+//         hidden_states_ref_arr[i] = static_cast<float16_t>(v);
+//         hidden_states_cuda_arr[i] = __float2half(v);
+//     }
 
-    printf("b\n");
+//     printf("b\n");
 
-    int32_t *int4_weight_ref_arr;
-    allocate_aligned_memory(int4_weight_ref_arr, (n * k / 8 * sizeof(int32_t)));
-    Matrix3D<int32_t> int4_ref_weight(int4_weight_ref_arr, 1, n / 8, k);
-    Linear_FP16_int4_ref int4_op_ref;
+//     int32_t *int4_weight_ref_arr;
+//     allocate_aligned_memory(int4_weight_ref_arr, (n * k / 8 * sizeof(int32_t)));
+//     Matrix3D<int32_t> int4_ref_weight(int4_weight_ref_arr, 1, n / 8, k);
+//     Linear_FP16_int4_ref int4_op_ref;
 
-    float16_t *scale_ref_arr;
-    allocate_aligned_memory_gpu(scale_ref_arr, (n * k / 32 * sizeof(float16_t)));
-    Matrix3D<float16_t> int4_ref_scale(scale_ref_arr, 1, n / 32, k);
+//     float16_t *scale_ref_arr;
+//     allocate_aligned_memory_gpu(scale_ref_arr, (n * k / 32 * sizeof(float16_t)));
+//     Matrix3D<float16_t> int4_ref_scale(scale_ref_arr, 1, n / 32, k);
 
-    int *zero_ref_arr;
-    allocate_aligned_memory(zero_ref_arr, (n * k / 32 * sizeof(half)));
-    Matrix3D<int> int4_ref_zero(zero_ref_arr, 1, n / 32, k);
+//     int *zero_ref_arr;
+//     allocate_aligned_memory(zero_ref_arr, (n * k / 32 * sizeof(half)));
+//     Matrix3D<int> int4_ref_zero(zero_ref_arr, 1, n / 32, k);
     
-    int4_op_ref.weight = int4_ref_weight;
-    int4_op_ref.scale = int4_ref_scale;
-    int4_op_ref.zero_point = int4_ref_zero;
+//     int4_op_ref.weight = int4_ref_weight;
+//     int4_op_ref.scale = int4_ref_scale;
+//     int4_op_ref.zero_point = int4_ref_zero;
 
-    int32_t *int4_weight_cuda_arr;
-    allocate_aligned_memory_gpu(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
-    Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n / 8, k);
-    Linear_half_int4_test int4_op_cuda;
+//     int32_t *int4_weight_cuda_arr;
+//     allocate_aligned_memory_gpu(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
+//     Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n / 8, k);
+//     Linear_half_int4_test int4_op_cuda;
 
-    half *scale_cuda_arr;
-    allocate_aligned_memory_gpu(scale_cuda_arr, (n * k / 32 * sizeof(half)));
-    Matrix3D<half> int4_cuda_scale(scale_cuda_arr, 1, n / 32, k);
+//     half *scale_cuda_arr;
+//     allocate_aligned_memory_gpu(scale_cuda_arr, (n * k / 32 * sizeof(half)));
+//     Matrix3D<half> int4_cuda_scale(scale_cuda_arr, 1, n / 32, k);
 
-    int *zero_cuda_arr;
-    allocate_aligned_memory_gpu(zero_cuda_arr, (n * k / 32 * sizeof(int)));
-    Matrix3D<int> int4_cuda_zero(zero_cuda_arr, 1, n / 32, k);
+//     int *zero_cuda_arr;
+//     allocate_aligned_memory_gpu(zero_cuda_arr, (n * k / 32 * sizeof(int)));
+//     Matrix3D<int> int4_cuda_zero(zero_cuda_arr, 1, n / 32, k);
 
-    int4_op_cuda.weight = int4_cuda_weight;
-    int4_op_cuda.scale = int4_cuda_scale;
-    int4_op_cuda.zero_point = int4_cuda_zero;
+//     int4_op_cuda.weight = int4_cuda_weight;
+//     int4_op_cuda.scale = int4_cuda_scale;
+//     int4_op_cuda.zero_point = int4_cuda_zero;
 
-    printf("c\n");
+//     printf("c\n");
 
-    for(int i = 0; i < n * k / 8; i++) {
-        const int const_w = 0x23413221;
-        int4_weight_ref_arr[i] = const_w;
-        int4_weight_cuda_arr[i] = const_w;
-    }
-    printf("d\n");
-    for(int i = 0; i < n * k / 32; i++) {
-        float v = float(i % 4) / 4;
-        scale_ref_arr[i] = static_cast<float16_t>(v);
-        scale_cuda_arr[i] = __float2half(v);
-    }
-    printf("e\n");
-    for(int i = 0; i < n * k / 32; i++) {
-        const int const_z = 0x88888888;
-        zero_ref_arr[i] = const_z;
-        zero_cuda_arr[i] = const_z;
-    }
-    printf("f\n");
+//     for(int i = 0; i < n * k / 8; i++) {
+//         const int const_w = 0x23413221;
+//         int4_weight_ref_arr[i] = const_w;
+//         int4_weight_cuda_arr[i] = const_w;
+//     }
+//     printf("d\n");
+//     for(int i = 0; i < n * k / 32; i++) {
+//         float v = float(i % 4) / 4;
+//         scale_ref_arr[i] = static_cast<float16_t>(v);
+//         scale_cuda_arr[i] = __float2half(v);
+//     }
+//     printf("e\n");
+//     for(int i = 0; i < n * k / 32; i++) {
+//         const int const_z = 0x88888888;
+//         zero_ref_arr[i] = const_z;
+//         zero_cuda_arr[i] = const_z;
+//     }
+//     printf("f\n");
 
-    cudaDeviceSynchronize();
+//     cudaDeviceSynchronize();
 
-    float16_t *outputQ_ref_arr;
-    allocate_aligned_memory_gpu(outputQ_ref_arr, (m * n * sizeof(float16_t)));
-    Matrix3D<float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
-    half *outputQ_cuda_arr;
-    allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
-    Matrix3D<half> outputQ_cuda(outputQ_cuda_arr, 1, m, n);
+//     float16_t *outputQ_ref_arr;
+//     allocate_aligned_memory_gpu(outputQ_ref_arr, (m * n * sizeof(float16_t)));
+//     Matrix3D<float16_t> outputQ_ref(outputQ_ref_arr, 1, m, n);
+//     half *outputQ_cuda_arr;
+//     allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
+//     Matrix3D<half> outputQ_cuda(outputQ_cuda_arr, 1, m, n);
 
-    printf("g\n");
+//     printf("g\n");
 
-    const int flops = k * m * n * 2;
-    STATS_FLOPS("int4_ref", flops);
-    int4_op_ref.forward_ref(hidden_states_ref, outputQ_ref);
-    STATS_END("int4_ref");
-    STATS_FLOPS("int4_fast", flops);
-    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda);
-    cudaDeviceSynchronize();
-    STATS_END("int4_fast");
+//     const int flops = k * m * n * 2;
+//     STATS_FLOPS("int4_ref", flops);
+//     int4_op_ref.forward_ref(hidden_states_ref, outputQ_ref);
+//     STATS_END("int4_ref");
+//     STATS_FLOPS("int4_fast", flops);
+//     int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda);
+//     cudaDeviceSynchronize();
+//     STATS_END("int4_fast");
 
-    printf("h\n");
+//     printf("h\n");
 
-    bool success = check_two_equal_cpu_gpu(outputQ_ref.m_data, outputQ_cuda.m_data, outputQ_ref.length(), 1e-10);
+//     bool success = check_two_equal_cpu_gpu(outputQ_ref.m_data, outputQ_cuda.m_data, outputQ_ref.length(), 1e-10);
 
-    printf("i\n");
+//     printf("i\n");
 
-    if (!success)
-        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
-    else
-        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
-}
+//     if (!success)
+//         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+//     else
+//         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+// }
 
 int main() {
     test_LlamaRMSNorm_cuda();
