@@ -40,13 +40,13 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
 cd TinyLLMEngine/transformer
 # download and convert the AWQ model to int4 format, this will take a while...
-python download_model.py LLaMA2
+python download_model.py LLaMA7B_2_chat
 python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q4_4 for M1/M2 MacBook
 # compile the demo program
 make -j
 # run the demo
 ./demo # demo.exe on Windows
-Using model: LLaMA7B_AWQ
+Using model: LLaMA7B_2_chat
 Using LLaMA's default data format: INT4
 Loading model... Finished!
 Please enter an instruction: Write a syllabus for Operating Systems.
