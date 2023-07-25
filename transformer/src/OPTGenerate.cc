@@ -614,15 +614,16 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
     if (interactive) std::cout << "Generated: " << std::endl;
 
     bool has_past_kv = false;
+    bool previous_two_hash = false;
     std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
     int break_cnt = 2;
     while (n_remain != 0 && break_cnt) {
-        if (has_past_kv) STATS_START("Token generation");
         std::vector<float> logits(generation_config.n_vocab);
 
         int sqlen = 1;
         struct Int4LlamaForCausalLM_output model_output;
+        if (has_past_kv) STATS_START("Token generation");
         if (has_past_kv) {
             Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
             struct Int4LlamaForCausalLM_input model_input = {input_ids_mat, past_keys, past_values};
@@ -633,6 +634,8 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
             struct Int4LlamaForCausalLM_input model_input = {input_ids_mat};
             model_output = model.forward(model_input);
         }
+        if (has_past_kv) STATS_END("Token generation");
+        has_past_kv = true;
         past_keys = model_output.past_keys;
         past_values = model_output.past_values;
         // memcpy model_ouput.logits[-1] to logits
@@ -696,7 +699,6 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
             }
         }
 
-        // printf("(%d)",id);
         if (id == 2) {
             break_cnt--;
             continue;
@@ -704,6 +706,13 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
         else if (id == 1)
             continue;
         break_cnt = 2;
+
+        if (id == 2277 && !previous_two_hash)
+            previous_two_hash = true;
+        else if (previous_two_hash && id == 29937)  // token = #
+            break_cnt = 0;
+        else
+            previous_two_hash = false;
 
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
@@ -714,8 +723,6 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
         if (interactive) std::cout << llama_id_to_token(vocab, id) << std::flush;
 
         --n_remain;
-        if (has_past_kv) STATS_END("Token generation");
-        has_past_kv = true;
     }
 
     if (interactive) std::cout << std::endl;

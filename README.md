@@ -33,14 +33,14 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 - Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the enviroment path
 
-## Demo with AWQ model
+## Demo with LLaMA2 model
 
-````bash
+```bash
 # pull repo
 git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
 cd TinyLLMEngine/transformer
 # download and convert the AWQ model to int4 format, this will take a while...
-./download_model.sh LLaMA_7B_AWQ models
+python download_model.py LLaMA2
 python model_quantizer.py --model_path models/LLaMA_7B_AWQ --method Q4_0 # Use Q4_4 for M1/M2 MacBook
 # compile the demo program
 make -j
@@ -49,25 +49,16 @@ make -j
 Using model: LLaMA7B_AWQ
 Using LLaMA's default data format: INT4
 Loading model... Finished!
-Please enter an instruction: Write a program to sort an integer array.
-Generated:
-```python
-def sort_array(arr):
-    if len(arr) <= 1:
-        return arr
-
-    pivot = arr[0]
-    left = []
-    right = []
-    for num in arr:
-        if num < pivot:
-            left.append(num)
-        else:
-            right.append(num)
-
-    return sort_array(left) + [pivot] + sort_array(right)
+Please enter an instruction: Write a syllabus for Operating Systems.
+Of course! Here is a sample syllabus for a college-level course on operating systems:
+Course Title: Introduction to Operating Systems
+Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer.
+Course Objectives:
+* Understand the basic architecture of an operating system
+* Learn about processes, threads, and process scheduling algorithms
+* Study memory management techniques such as paging and segmentation
+* Explore file systems including file organization, storage devices, and file access methods
+* Investigate security mechanisms to protect against malicious software attacks
+* Analyze input/output (I/O) operations and their handling by the operating system
+...
 ```
-Section, Total time(us), Average time(us), Count, GOPs
-Token generation, 8345204, 81021, 103, N/A, N/A
-
-````

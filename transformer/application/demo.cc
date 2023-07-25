@@ -3,18 +3,20 @@
 
 #include "OPTGenerate.h"
 
-std::map<std::string, int> model_config = {
-    {"OPT125M", OPT_125M},        {"OPT1.3B", OPT_1_3B},     {"OPT6.7B", OPT_6_7B},           {"LLaMA7B", LLaMA_7B},
-    {"LLaMA7B_smooth", LLaMA_7B}, {"LLaMA7B_AWQ", LLaMA_7B}, {"LLaMA7B_Vicuna_AWQ", LLaMA_7B}};
+std::map<std::string, int> model_config = {{"OPT125M", OPT_125M},
+                                           {"OPT1.3B", OPT_1_3B},
+                                           {"OPT6.7B", OPT_6_7B},
+                                           {"LLaMA7B", LLaMA_7B},
+                                           {"LLaMA7B_smooth", LLaMA_7B},
+                                           {"LLaMA7B_AWQ", LLaMA_7B},
+                                           {"LLaMA7B_Vicuna_AWQ", LLaMA_7B},
+                                           {"LLaMA7B_2", LLaMA_7B},
+                                           {"LLaMA7B_2_chat", LLaMA_7B}};
 
 std::map<std::string, std::string> model_path = {
-    {"OPT125M", "models/OPT_125m"},
-    {"OPT1.3B", "models/OPT_1.3B"},
-    {"OPT6.7B", "models/OPT_6.7B"},
-    {"LLaMA7B", "models/LLaMA_7B"},
-    {"LLaMA7B_smooth", "models/LLaMA_7B_smooth_lift"},
-    {"LLaMA7B_AWQ", "models/LLaMA_7B_AWQ"},
-    {"LLaMA7B_Vicuna_AWQ", "models/LLaMA_7B_Vicuna_AWQ"},
+    {"OPT125M", "models/OPT_125m"},         {"OPT1.3B", "models/OPT_1.3B"},
+    {"OPT6.7B", "models/OPT_6.7B"},         {"LLaMA7B", "models/LLaMA_7B"},
+    {"LLaMA7B_AWQ", "models/LLaMA_7B_AWQ"}, {"LLaMA7B_2_chat", "models/LLaMA_7B_2_chat"},
 };
 
 std::map<std::string, int> data_format_list = {
@@ -32,8 +34,17 @@ bool isLLaMA7B(std::string s) {
         return false;
 }
 
+bool requiredInstruction(std::string s) {
+    std::string LLaMA_prefix = "LLaMA7B_AWQ";
+
+    if (s.substr(0, LLaMA_prefix.size()) == LLaMA_prefix)
+        return true;
+    else
+        return false;
+}
+
 int main(int argc, char* argv[]) {
-    std::string target_model = "LLaMA7B_AWQ";
+    std::string target_model = "LLaMA7B_2_chat";
     std::string target_data_format = "INT4";
 
     if (argc == 3) {
@@ -83,7 +94,7 @@ int main(int argc, char* argv[]) {
         std::string m_path = model_path[target_model];
 
         struct opt_params generation_config;
-        generation_config.n_predict = 256;
+        generation_config.n_predict = 512;
         generation_config.n_vocab = 32000;
         generation_config.temp = 0.1f;
         generation_config.repeat_penalty = 1.25f;
@@ -109,6 +120,7 @@ int main(int argc, char* argv[]) {
                 std::getline(std::cin, input);
                 // input = "Below is an instruction that describes a task. Write a response that appropriately completes
                 // the request. ### Instruction: " + input; input += "### Response: ";
+                // if (requiredInstruction(target_model))
                 input = "A chat between a human and an assistant in English.\n\n### Human: " + input +
                         "\n### Assistant: \n";
 
