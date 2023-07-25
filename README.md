@@ -58,41 +58,48 @@ For instance, to download the LLaMA-2-7B-chat model:
 python download_model.py LLaMA_7B_2_chat
 ```
 
-| Models  | Size | ID |
-| ------------- | ------------- |  ------------- |
-| LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |
-| LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |
-| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  |
+| Models  | Size | ID | Supported Precision |
+| ------------- | ------------- |  ------------- |  ------------- |
+| LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |  int4 |
+| LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |  int4 |
+| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | int8 |
 
 ## Step-by-step to deploy LLaMA2-7B-chat with TinyLLMEngine
 
-```bash
-# pull repo
-git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
-cd TinyLLMEngine/transformer
-# download and convert the AWQ model to int4 format, this will take a while...
-python download_model.py LLaMA_7B_2_chat
-python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86 # Use QM_ARM for M1/M2 chips
-# compile the demo program
-make -j
-# run the demo
-./demo # demo.exe on Windows
-Using model: LLaMA7B_2_chat
-Using LLaMA's default data format: INT4
-Loading model... Finished!
-Please enter an instruction: Write a syllabus for Operating Systems.
-Of course! Here is a sample syllabus for a college-level course on operating systems:
-Course Title: Introduction to Operating Systems
-Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer.
-Course Objectives:
-* Understand the basic architecture of an operating system
-* Learn about processes, threads, and process scheduling algorithms
-* Study memory management techniques such as paging and segmentation
-* Explore file systems including file organization, storage devices, and file access methods
-* Investigate security mechanisms to protect against malicious software attacks
-* Analyze input/output (I/O) operations and their handling by the operating system
-...
-```
+Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLMEngine from scratch.
+
+- Download the repo.
+  ```bash
+  # pull repo
+  git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
+  ```
+- Download and quantize the LLaMA2-7B-chat model to int4 format.
+  ```bash
+  cd TinyLLMEngine/transformer
+  # download and convert the AWQ model to int4 format, this will take a while...
+  python download_model.py LLaMA_7B_2_chat
+  python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86 # Use QM_ARM for M1/M2 chips
+  ```
+- Compile and run the demo program.
+  ```bash
+  make demo -j
+  ./demo # demo.exe on Windows
+  Using model: LLaMA7B_2_chat
+  Using LLaMA's default data format: INT4
+  Loading model... Finished!
+  Please enter an instruction: Write a syllabus for Operating Systems.
+  Of course! Here is a sample syllabus for a college-level course on operating systems:
+  Course Title: Introduction to Operating Systems
+  Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer.
+  Course Objectives:
+  * Understand the basic architecture of an operating system
+  * Learn about processes, threads, and process scheduling algorithms
+  * Study memory management techniques such as paging and segmentation
+  * Explore file systems including file organization, storage devices, and file access methods
+  * Investigate security mechanisms to protect against malicious software attacks
+  * Analyze input/output (I/O) operations and their handling by the operating system
+  ...
+  ```
 
 ## Related Projects
 
