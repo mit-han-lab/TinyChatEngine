@@ -4,7 +4,7 @@ Usage:
    python model_quantizer.py --model_path <path to TinyEngine modelt> --method <Quantization method>
 
 Example commandline:
-   python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method Q4_4
+   python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
 
 """
 import argparse

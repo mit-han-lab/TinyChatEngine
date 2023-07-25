@@ -1,12 +1,6 @@
-This is the implementation of TinyLLMEngine, a memory-efficient and high-performance neural network library for quantized large language model (LLM) on the edge.
+# TinyLLMEngine: A Efficient Neural Network Library for LLM
 
-## Supported devices
-
-We currently support int8 OPT and fp32/int4 LLaMA models on Intel and Apple M-series CPU:
-
-- Target models: LLaMA, OPT
-- Target device: Intel CPU, Apple M-series CPU/GPU, Nvidia edge GPU (on-going)
-- Target quantization schemes: w4a16 (GPU), w4a32 (CPU)
+TinyLLMEngine is a powerful neural network library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
 
 ## Prerequisites
 
@@ -33,11 +27,44 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 - Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the enviroment path
 
-## Supported models
+## Quantization and Model Support
 
-# TODO: table of supported model, precision, platforms
+At present, we support int8 OPT and int4 LLaMA models for x86 and ARM CPUs as well as Apple's M-series GPUs. Quantized weights for int8 OPT models originate from [smoothquant](https://github.com/mit-han-lab/smoothquant)  and can be converted to TinyLLMEngine format using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py).
 
-## Demo with LLaMA2 model
+We also plan to support edge GPUs, which will be coming soon.
+
+### Device-specific Quantization Methods
+
+Different target devices require different quantization methods due to the variants of kernel implementation that suit the SIMD bit-width and instructions supported by your device. To quantize your LLaMA model to int4, please consult the following table:
+
+Example of quantizing a LLaMA model on an Intel laptop:
+
+```bash
+python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86
+```
+
+| Platforms  | ISA | Quantization methods |
+| ------------- | ------------- |  ------------- |
+| Intel/AMD |  x86-64  | QM_x86  |
+| M1/M2 Mac | arm | QM_ARM  |
+
+### Download models from our Model Zoo
+
+We offer a selection of models that have been tested with TinyLLMEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
+
+For instance, to download the LLaMA-2-7B-chat model:
+
+```bash
+python download_model.py LLaMA_7B_2_chat
+```
+
+| Models  | Size | ID |
+| ------------- | ------------- |  ------------- |
+| LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |
+| LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |
+| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  |
+
+## Step-by-step to deploy LLaMA2-7B-chat with TinyLLMEngine
 
 ```bash
 # pull repo
@@ -66,3 +93,11 @@ Course Objectives:
 * Analyze input/output (I/O) operations and their handling by the operating system
 ...
 ```
+
+## Related Projects
+
+[TinyEngine](https://github.com/mit-han-lab/tinyengine).
+
+[Smoothquant](https://github.com/mit-han-lab/smoothquant).
+
+[MAWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)

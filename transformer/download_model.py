@@ -1,4 +1,11 @@
-"""Python script to download model binaries."""
+"""Python script to download model binaries.
+
+Usage:
+   python download_model.py <model_id>
+
+Example commandline:
+   python download_model.py LLaMA_7B_2_chat
+"""
 import argparse
 import hashlib
 import os
