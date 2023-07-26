@@ -86,8 +86,6 @@ std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder* encoder = NULL,
                              bool interactive = false);
 
-std::vector<int> Fp32LLaMAGenerate(Fp32LlamaForCausalLM model, std::string text,
-                                   const struct opt_params generation_config, std::string voc_path, bool interactive);
-
-std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
-                                   const struct opt_params generation_config, std::string voc_path, bool interactive);
+enum { OPT, LLaMA_FP32, LLaMA_INT4 };
+std::vector<int> LLaMAGenerate(void* model, int model_type, std::string text, const struct opt_params generation_config,
+                               std::string voc_path, bool interactive);

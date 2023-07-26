@@ -1,7 +1,7 @@
 #include <iostream>
 #include <map>
 
-#include "OPTGenerate.h"
+#include "Generate.h"
 
 std::map<std::string, int> model_config = {{"OPT125M", OPT_125M},
                                            {"OPT1.3B", OPT_1_3B},
@@ -104,11 +104,15 @@ int main(int argc, char* argv[]) {
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user
-            std::cout << "Please enter an instruction: ";
-            std::string input;
-            std::getline(std::cin, input);
+            while (true) {
+                std::cout << "Please enter an instruction: ";
+                std::string input;
+                std::getline(std::cin, input);
+                input = "A chat between a human and an assistant in English.\n\n### Human: " + input +
+                        "\n### Assistant: \n";
 
-            Fp32LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
+                LLaMAGenerate(&model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true);
+            }
         } else if (format_id == INT4) {
             Int4LlamaForCausalLM model = Int4LlamaForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
@@ -118,13 +122,10 @@ int main(int argc, char* argv[]) {
                 std::cout << "Please enter an instruction: ";
                 std::string input;
                 std::getline(std::cin, input);
-                // input = "Below is an instruction that describes a task. Write a response that appropriately completes
-                // the request. ### Instruction: " + input; input += "### Response: ";
-                // if (requiredInstruction(target_model))
-                input = "A chat between a human and an assistant in English.\n\n### Human: " + input +
+                input = "A chat between a human and an assistan t in English.\n\n### Human: " + input +
                         "\n### Assistant: \n";
 
-                Int4LLaMAGenerate(model, input, generation_config, "models/LLaMA_7B/ggml-vocab.bin", true);
+                LLaMAGenerate(&model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true);
             }
         } else {
             std::cout << std::endl;
@@ -139,8 +140,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Finished!" << std::endl;
 
         // Load encoder
-        std::string vocab_file = "./models/OPT_125m/vocab.json";
-        std::string bpe_file = "./models/OPT_125m/merges.txt";
+        std::string vocab_file = "models/opt_merges.txt";
+        std::string bpe_file = "models/opt_vocab.json";
         Encoder encoder = get_encoder(vocab_file, bpe_file);
 
         // Get input from the user

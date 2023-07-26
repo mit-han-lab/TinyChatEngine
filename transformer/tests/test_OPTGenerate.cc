@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "OPTGenerate.h"
+#include "Generate.h"
 
 int main() {
     // std::vector<int> input_ids = {37500, 10,  998, 64, 28, 626, 11,   158, 2007, 2402, 4,  152,  1579,  16,

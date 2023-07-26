@@ -101,8 +101,8 @@ class Matrix3D {
             infile.close();
         }
     }
-    int m_dim_x, m_dim_y, m_dim_z;
     T *m_data;
+    int m_dim_x, m_dim_y, m_dim_z;
 
     // Default constructor
     Matrix3D() { m_data = NULL; }
