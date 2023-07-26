@@ -278,11 +278,14 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // printf("softmax, attn_probs.sum: %f\n", attn_probs.sum());
     // print_first_k_elelment("attn_probs", attn_probs.m_data, 20);
 
-    Matrix3D<float> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
-    transpose_1_2idx_float_threads(final_value_states, value_states_transpose);
+    // Matrix3D<float> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
+    // transpose_1_2idx_float_threads(final_value_states, value_states_transpose);
+    // Matrix3D<float> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
+    // this->pv_bmm.forward(attn_probs, value_states_transpose, attn_output);
 
+    // This implementation avoid additional data movement and is much faster
     Matrix3D<float> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
-    this->pv_bmm.forward(attn_probs, value_states_transpose, attn_output);
+    this->pv_bmm.forward_weight_untransposed(attn_probs, final_value_states, attn_output);
     // printf("pv_bmm.forward, attn_output.sum: %f\n", attn_output.sum());
     // print_first_k_elelment("attn_output", attn_output.m_data, 20);
 
