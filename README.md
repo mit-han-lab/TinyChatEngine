@@ -50,13 +50,13 @@ python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86
 
 We offer a selection of models that have been tested with TinyLLMEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
 
-For instance, to download the LLaMA-2-7B-chat model:
-
 | Models  | Size | ID | Supported Precision |
 | ------------- | ------------- |  ------------- |  ------------- |
 | LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |  int4 |
 | LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |  int4 |
 | OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | int8 |
+
+For instance, to download the LLaMA-2-7B-chat model:
 
 ```bash
 python download_model.py LLaMA_7B_2_chat
@@ -71,7 +71,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
   # pull repo
   git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
   ```
-- Download and quantize the LLaMA2-7B-chat model to int4 format.
+- Download the LLaMA2-7B-chat model from our model zoo and and quantize it to int4 format.
   ```bash
   cd TinyLLMEngine/transformer
   # download and convert the AWQ model to int4 format, this will take a while...
