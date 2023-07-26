@@ -55,32 +55,31 @@ struct opt_params {
     float mirostat_eta = 0.10f;                 // learning rate
 };
 
-void OPT_sample_repetition_penalty(OPT_token_data_array* candidates, const int* last_tokens, size_t last_tokens_size,
-                                   float penalty);
+void sample_repetition_penalty(OPT_token_data_array* candidates, const int* last_tokens, size_t last_tokens_size,
+                               float penalty);
 
-void OPT_sample_frequency_and_presence_penalties(OPT_token_data_array* candidates, const int* last_tokens_p,
-                                                 size_t last_tokens_size, float alpha_frequency, float alpha_presence);
+void sample_frequency_and_presence_penalties(OPT_token_data_array* candidates, const int* last_tokens_p,
+                                             size_t last_tokens_size, float alpha_frequency, float alpha_presence);
 
-int OPT_sample_token_greedy(OPT_token_data_array* candidates);
+int sample_token_greedy(OPT_token_data_array* candidates);
 
-void OPT_sample_temperature(OPT_token_data_array* candidates_p, float temp);
+void sample_temperature(OPT_token_data_array* candidates_p, float temp);
 
-void OPT_sample_softmax(OPT_token_data_array* candidates);
+void sample_softmax(OPT_token_data_array* candidates);
 
-int OPT_sample_token(OPT_token_data_array* candidates);
+int sample_token(OPT_token_data_array* candidates);
 
-void OPT_sample_top_k(OPT_token_data_array* candidates, int k, size_t min_keep);
+void sample_top_k(OPT_token_data_array* candidates, int k, size_t min_keep);
 
-int OPT_sample_token_mirostat(const int n_vocab, OPT_token_data_array* candidates, float tau, float eta, int m,
-                              float* mu);
+int sample_token_mirostat(const int n_vocab, OPT_token_data_array* candidates, float tau, float eta, int m, float* mu);
 
-int OPT_sample_token_mirostat_v2(OPT_token_data_array* candidates, float tau, float eta, float* mu);
+int sample_token_mirostat_v2(OPT_token_data_array* candidates, float tau, float eta, float* mu);
 
-void OPT_sample_tail_free(OPT_token_data_array* candidates, float z, size_t min_keep);
+void sample_tail_free(OPT_token_data_array* candidates, float z, size_t min_keep);
 
-void OPT_sample_typical(OPT_token_data_array* candidates, float p, size_t min_keep);
+void sample_typical(OPT_token_data_array* candidates, float p, size_t min_keep);
 
-void OPT_sample_top_p(OPT_token_data_array* candidates, float p, size_t min_keep);
+void sample_top_p(OPT_token_data_array* candidates, float p, size_t min_keep);
 
 std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder* encoder = NULL,

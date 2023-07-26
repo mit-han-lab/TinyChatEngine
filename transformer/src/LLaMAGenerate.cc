@@ -109,34 +109,34 @@ std::vector<int> LLaMAGenerate(void *model_ptr, int model_type, std::string text
 
         // Apply penalties
         auto last_n_repeat = std::min(std::min((int)last_n_tokens.size(), repeat_last_n), n_ctx);
-        OPT_sample_repetition_penalty(&candidates_p, last_n_tokens.data() + last_n_tokens.size() - last_n_repeat,
-                                      last_n_repeat, repeat_penalty);
-        OPT_sample_frequency_and_presence_penalties(&candidates_p,
-                                                    last_n_tokens.data() + last_n_tokens.size() - last_n_repeat,
-                                                    last_n_repeat, alpha_frequency, alpha_presence);
+        sample_repetition_penalty(&candidates_p, last_n_tokens.data() + last_n_tokens.size() - last_n_repeat,
+                                  last_n_repeat, repeat_penalty);
+        sample_frequency_and_presence_penalties(&candidates_p,
+                                                last_n_tokens.data() + last_n_tokens.size() - last_n_repeat,
+                                                last_n_repeat, alpha_frequency, alpha_presence);
 
         int id = 0;
         if (temp <= 0) {
-            id = OPT_sample_token_greedy(&candidates_p);
+            id = sample_token_greedy(&candidates_p);
         } else {
             if (mirostat == 1) {
                 static float mirostat_mu = 2.0f * mirostat_tau;
                 const int mirostat_m = 100;
-                OPT_sample_temperature(&candidates_p, temp);
-                id = OPT_sample_token_mirostat(n_vocab, &candidates_p, mirostat_tau, mirostat_eta, mirostat_m,
-                                               &mirostat_mu);
+                sample_temperature(&candidates_p, temp);
+                id =
+                    sample_token_mirostat(n_vocab, &candidates_p, mirostat_tau, mirostat_eta, mirostat_m, &mirostat_mu);
             } else if (mirostat == 2) {
                 static float mirostat_mu = 2.0f * mirostat_tau;
-                OPT_sample_temperature(&candidates_p, temp);
-                id = OPT_sample_token_mirostat_v2(&candidates_p, mirostat_tau, mirostat_eta, &mirostat_mu);
+                sample_temperature(&candidates_p, temp);
+                id = sample_token_mirostat_v2(&candidates_p, mirostat_tau, mirostat_eta, &mirostat_mu);
             } else {
                 // Temperature sampling
-                OPT_sample_top_k(&candidates_p, top_k, 1);
-                OPT_sample_tail_free(&candidates_p, tfs_z, 1);
-                OPT_sample_typical(&candidates_p, typical_p, 1);
-                OPT_sample_top_p(&candidates_p, top_p, 1);
-                OPT_sample_temperature(&candidates_p, temp);
-                id = OPT_sample_token(&candidates_p);
+                sample_top_k(&candidates_p, top_k, 1);
+                sample_tail_free(&candidates_p, tfs_z, 1);
+                sample_typical(&candidates_p, typical_p, 1);
+                sample_top_p(&candidates_p, top_p, 1);
+                sample_temperature(&candidates_p, temp);
+                id = sample_token(&candidates_p);
             }
         }
 
