@@ -218,7 +218,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(value_states_unshape, value_states, sqlen);
 
-    // Value states
+    // Rotate position
     int start_idx = 0;
     if (input.has_past_key_value) start_idx = input.past_key.m_dim_y;
     this->rotary_pos_emb.forward(query_states, key_states, start_idx, sqlen);
