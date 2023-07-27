@@ -15,9 +15,7 @@ MetalMatmulInt4::MetalMatmulInt4(MTL::Device *device, MetalMatMulParams param) {
         return;
     }
 
-    // auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_packed_unroll32", NS::ASCIIStringEncoding);
-    // auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_unroll32", NS::ASCIIStringEncoding);
-    auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_unroll32_exp6", NS::ASCIIStringEncoding);
+    auto str = NS::String::string("matmulUInt4_SIMD_Q4Interleave_unroll32", NS::ASCIIStringEncoding);
     MTL::Function *matmulFunction = defaultLibrary->newFunction(str);
     defaultLibrary->release();
 

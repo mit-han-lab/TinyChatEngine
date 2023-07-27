@@ -22,18 +22,21 @@ ifeq ($(shell uname -m),x86_64)
 	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
 else ifeq ($(shell uname -p),arm)
 	CXX = /opt/homebrew/opt/llvm/bin/clang++
-	# Use NEON with int8 runtime quantization is faster
-	LIB_SRC += $(wildcard $(LIB_DIR)/neon/*.cc)
-	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
-	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	LIB += -L/opt/homebrew/opt/boost/lib
 	# For ARM A-series (such as Mac M1) with Metal GPU
-	# LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp -I$(LIB_DIR)/metal
-	# LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc)
-	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
-	# LIB += -framework Metal -framework Foundation -framework MetalKit
-	# TARGET += default.metallib library.air
-	# CXXFLAGS += -stdlib=libc++ -DQM_METAL
+	ifdef USE_METAL
+		LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp -I$(LIB_DIR)/metal
+		LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc)
+		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
+		LIB += -framework Metal -framework Foundation -framework MetalKit
+		TARGET += default.metallib library.air
+		CXXFLAGS += -std=c++17 -stdlib=libc++ -DQM_METAL
+	# Use NEON with int8 runtime quantization is faster
+	else
+		LIB_SRC += $(wildcard $(LIB_DIR)/neon/*.cc)
+		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
+		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
+	endif
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
