@@ -140,8 +140,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Finished!" << std::endl;
 
         // Load encoder
-        std::string vocab_file = "models/opt_merges.txt";
-        std::string bpe_file = "models/opt_vocab.json";
+        std::string bpe_file = "models/opt_merges.txt";
+        std::string vocab_file = "models/opt_vocab.json";
         Encoder encoder = get_encoder(vocab_file, bpe_file);
 
         // Get input from the user
