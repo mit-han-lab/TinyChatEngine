@@ -86,26 +86,42 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
     int n_remain = generation_config.n_predict;
     int break_cnt = 2;
     while (n_remain != 0 && break_cnt) {
+        // printf("eeeeeeeeeee\n");
         if (has_past_kv) STATS_START("Token generation");
+        // printf("fffffffffff\n");
         std::vector<float> logits(generation_config.n_vocab);
+        // printf("ggggggggggg\n");
 
         int sqlen = 1;
         struct Int4LlamaForCausalLM_output model_output;
+        // printf("hhhhhhhhhhh\n");
         if (has_past_kv) {
+            // printf("iiiiiiiiiii\n");
             Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
+            // printf("jjjjjjjjjjj\n");
             struct Int4LlamaForCausalLM_input model_input = {input_ids_mat, past_keys, past_values};
+            // printf("kkkkkkkkkkk\n");
             model_output = model.forward(model_input);
+            // printf("lllllllllll\n");
         } else {
             sqlen = input_ids.size();
             Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
             struct Int4LlamaForCausalLM_input model_input = {input_ids_mat};
             model_output = model.forward(model_input);
         }
+        // cudaDeviceSynchronize();
+        // printf("aaaaaaaaaa\n");
         past_keys = model_output.past_keys;
+        // printf("bbbbbbbbbb\n");
         past_values = model_output.past_values;
+        // printf("cccccccccc\n");
+
         // memcpy model_ouput.logits[-1] to logits
-        memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab],
-               generation_config.n_vocab * sizeof(float));
+        //// Original CPU memcpy
+        memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab], generation_config.n_vocab * sizeof(float));
+        //// Revised GPU cudaMemcpyAsync
+        // cudaMemcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab], generation_config.n_vocab * sizeof(float), cudaMemcpyHostToHost);
+        // printf("dddddddddd\n");
 
         // Generate
         const int n_ctx = generation_config.n_ctx;

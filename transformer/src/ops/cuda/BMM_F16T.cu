@@ -1,8 +1,5 @@
-// #include "operators.cuh"
 #include "operators.h"
 #include "utils.h"
-// #include "utils.cuh"
-// #include "lib/matmul.h"
 
 // __global__ void mat_mul_transposed_cuda_float(Matrix3D<float> A, Matrix3D<float> B, Matrix3D<float> C, const float alpha) {
 //     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -80,7 +77,7 @@ void BMM_F16T::forward(const Matrix3D<half> &a, const Matrix3D<half> &weight, Ma
     params.C.half_data_ptr = c.m_data;
     params.half_alpha = __float2half(alpha);
 
-    dim3 block(16, 16);
+    dim3 block(32, 32);
     dim3 grid((params.C.row + block.x - 1) / block.x, (params.C.column + block.y - 1) / block.y);
     mat_mul_transposed_cuda<<<grid, block>>>(a, weight, c, params.half_alpha);
 

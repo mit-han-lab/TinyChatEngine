@@ -2,11 +2,111 @@
 
 #include "operators.h"
 #include "utils.h"
-// #include "utils.cuh"
 #include "../utils_memalloc.h"
-// #include "ops/linear.h"
 
-void test_LlamaRMSNorm_cuda() {
+void test_LayerNormQ() {
+    const int b = 1, m = 108, n = 768;
+    MemoryAllocator mem_buf;
+
+    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
+    float *weight_arr = mem_buf.get_fpbuffer(b * n);
+    float *bias_arr = mem_buf.get_fpbuffer(b * n);
+    int8_t *output_arr = mem_buf.get_int8buffer(b * m * n);
+    int8_t *GToutput_arr = mem_buf.get_int8buffer(b * m * n);
+
+    Matrix3D<float> input(intput_arr, b, m, n);
+    Matrix3D<float> weight(weight_arr, b, 1, n);
+    Matrix3D<float> bias(bias_arr, b, 1, n);
+    Matrix3D<int8_t> output(output_arr, b, m, n);
+    Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
+
+    bias.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_bias.bin");
+    input.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_x.bin");
+    weight.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_weight.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_out.bin");
+
+    struct LayerNormQ_params op_params = {weight, bias};
+
+    LayerNormQ test_op = LayerNormQ(op_params);
+
+    test_op.forward(input, output);
+
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+}
+
+void test_LayerNormQ_len512() {
+    const int b = 1, m = 512, n = 768;
+    MemoryAllocator mem_buf;
+
+    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
+    float *weight_arr = mem_buf.get_fpbuffer(b * n);
+    float *bias_arr = mem_buf.get_fpbuffer(b * n);
+    int8_t *output_arr = mem_buf.get_int8buffer(b * m * n);
+    int8_t *GToutput_arr = mem_buf.get_int8buffer(b * m * n);
+
+    Matrix3D<float> input(intput_arr, b, m, n);
+    Matrix3D<float> weight(weight_arr, b, 1, n);
+    Matrix3D<float> bias(bias_arr, b, 1, n);
+    Matrix3D<int8_t> output(output_arr, b, m, n);
+    Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
+
+    input.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_x_len512.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_125m/LayerNormQ_y_len512.bin");
+
+    struct LayerNormQ_params op_params = {weight, bias};
+
+    LayerNormQ test_op = LayerNormQ(op_params);
+    load_LayerNormQ(test_op, "models/OPT_125m/decoder/layer0/self_attn_layer_norm");
+
+    test_op.forward(input, output);
+
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+}
+
+void test_LayerNormQ_1_3B() {
+    const int b = 1, m = 108, n = 2048;
+    MemoryAllocator mem_buf;
+
+    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
+    float *weight_arr = mem_buf.get_fpbuffer(b * n);
+    float *bias_arr = mem_buf.get_fpbuffer(b * n);
+    int8_t *output_arr = mem_buf.get_int8buffer(b * m * n);
+    int8_t *GToutput_arr = mem_buf.get_int8buffer(b * m * n);
+
+    Matrix3D<float> input(intput_arr, b, m, n);
+    Matrix3D<float> weight(weight_arr, b, 1, n);
+    Matrix3D<float> bias(bias_arr, b, 1, n);
+    Matrix3D<int8_t> output(output_arr, b, m, n);
+    Matrix3D<int8_t> GToutput(GToutput_arr, b, m, n);
+
+    input.load("assets/OPT/tests/ops/OPT_1.3B/LayerNormQ_x.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/LayerNormQ_out.bin");
+
+    struct LayerNormQ_params op_params = {weight, bias};
+
+    LayerNormQ op = LayerNormQ(op_params);
+    load_LayerNormQ(op, "models/OPT_1.3B/decoder/layer0/self_attn_layer_norm/");
+
+    LayerNormQ test_op = LayerNormQ(op_params);
+
+    test_op.forward(input, output);
+
+    bool success = check_two_exact_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+}
+
+void test_LayerNorm() {
     const int b = 1, m = 108, n = 768;
     MemoryAllocator mem_buf;
 
@@ -33,6 +133,39 @@ void test_LlamaRMSNorm_cuda() {
     test_op.forward(input, output);
 
     bool success = check_two_equal(output_arr, GToutput_arr, b * m * n);
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+}
+
+void test_LayerNorm_1_3B_len512() {
+    const int b = 1, m = 512, n = 2048;
+    MemoryAllocator mem_buf;
+
+    float *intput_arr = mem_buf.get_fpbuffer(b * m * n);
+    float *weight_arr = mem_buf.get_fpbuffer(b * n);
+    float *bias_arr = mem_buf.get_fpbuffer(b * n);
+    float *output_arr = mem_buf.get_fpbuffer(b * m * n);
+    float *GToutput_arr = mem_buf.get_fpbuffer(b * m * n);
+
+    Matrix3D<float> input(intput_arr, b, m, n);
+    Matrix3D<float> weight(weight_arr, b, 1, n);
+    Matrix3D<float> bias(bias_arr, b, 1, n);
+    Matrix3D<float> output(output_arr, b, m, n);
+    Matrix3D<float> GToutput(GToutput_arr, b, m, n);
+
+    input.load("assets/OPT/tests/ops/OPT_1.3B/decoder/final_layer_norm_hidden_states.bin");
+    GToutput.load("assets/OPT/tests/ops/OPT_1.3B/decoder/final_layer_norm_output.bin");
+
+    struct LayerNorm_params op_params = {weight, bias};
+
+    LayerNorm test_op = LayerNorm(op_params);
+    load_LayerNorm(test_op, "models/OPT_1.3B/decoder/final_layer_norm/");
+
+    test_op.forward(input, output);
+
+    bool success = check_two_equal(output_arr, GToutput_arr, b * m * n, 8e-6);
     if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
@@ -497,7 +630,7 @@ void test_FP16Linear_int4() {
     int32_t *int4_weight_cuda_arr;
     allocate_aligned_memory_gpu(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
     Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n / 8, k);
-    Linear_half_int4_test int4_op_cuda = Linear_half_int4_test(int4_cuda_weight, "models/LLaMA_7B/lm_head/");
+    Linear_half_int4 int4_op_cuda = Linear_half_int4(int4_cuda_weight, "models/LLaMA_7B/lm_head/");
 
     naive_float16_t *outputQ_ref_arr;
     allocate_aligned_memory_gpu(outputQ_ref_arr, (m * n * sizeof(naive_float16_t)));
@@ -633,8 +766,236 @@ void test_FP16Linear_int4() {
 //         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 // }
 
+void test_LlamaRMSNorm_cuda() {
+    const struct model_config llama7B = llama_7B;
+    const int sqlen = 9, embed_dim = llama7B.embed_dim;
+
+    half* buffer_1;
+    cudaMallocManaged(&buffer_1, sizeof(half) * sqlen * embed_dim);
+    Matrix3D<half> hidden_states(buffer_1, 1, sqlen, embed_dim);
+    read_to_array_half("assets/llama/tests/ops/RMSnorm/hidden_states_half.bin", hidden_states.m_data, sqlen * embed_dim);
+
+    float* buffer_2;
+    cudaMallocManaged(&buffer_2, sizeof(float) * embed_dim);
+    Matrix3D<float> weight(buffer_2, 1, 1, embed_dim);
+    read_to_array("assets/llama/tests/ops/RMSnorm/weight.bin", weight.m_data, embed_dim);
+
+    half* buffer_3;
+    cudaMallocManaged(&buffer_3, sizeof(half) * sqlen * embed_dim);
+    Matrix3D<half> outputGT(buffer_3, 1, sqlen, embed_dim);
+    read_to_array_half("assets/llama/tests/ops/RMSnorm/output_half.bin", outputGT.m_data, sqlen * embed_dim);
+
+    half* buffer_4;
+    cudaMallocManaged(&buffer_4, sizeof(half) * sqlen * embed_dim);
+    Matrix3D<half> output(buffer_4, 1, sqlen, embed_dim);
+
+    LlamaRMSNorm_cuda op(weight);
+    op.forward(hidden_states, output);
+    cudaDeviceSynchronize();
+
+    bool success = check_two_equal_half_half(output.m_data, outputGT.m_data, sqlen * embed_dim);
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    cudaFree(buffer_1);
+    cudaFree(buffer_2);
+    cudaFree(buffer_3);
+    cudaFree(buffer_4);
+}
+
+void test_softmax_cuda() {
+    const struct model_config llama7B = llama_7B;
+    const int sqlen = 9, past_sqlen = 0, num_heads = llama7B.num_heads;
+    const int tgz = (sqlen + past_sqlen);
+
+    half* buffer_1;
+    cudaMallocManaged(&buffer_1, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> attn_weights(buffer_1, num_heads, sqlen, tgz);
+    read_to_array_half("assets/llama/tests/ops/softmax/input_half.bin", attn_weights.m_data, num_heads * sqlen * tgz);
+
+    half* buffer_2;
+    cudaMallocManaged(&buffer_2, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> attn_probsGT(buffer_2, num_heads, sqlen, tgz);
+    read_to_array_half("assets/llama/tests/ops/softmax/output_half.bin", attn_probsGT.m_data, num_heads * sqlen * tgz);
+
+    half* buffer_3;
+    cudaMallocManaged(&buffer_3, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> attn_probs(buffer_3, num_heads, sqlen, tgz);
+
+    int blockSize = 32;
+    dim3 threadsPerBlock(blockSize, blockSize);
+    dim3 numBlocksPerGrid((num_heads + blockSize - 1) / blockSize, (sqlen + blockSize - 1) / blockSize);
+    softmax_cuda<<<numBlocksPerGrid, threadsPerBlock>>>(attn_weights, attn_probs);
+    cudaDeviceSynchronize();
+
+    bool success = check_two_equal_half_half(attn_probs.m_data, attn_probsGT.m_data, num_heads * sqlen * tgz);
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    cudaFree(buffer_1);
+    cudaFree(buffer_2);
+    cudaFree(buffer_3);
+}
+
+void test_BMM_F16T() {
+    const struct model_config llama7B = llama_7B;
+    const int sqlen = 9, past_sqlen = 0, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads,
+              head_dim = embed_dim / num_heads;
+    const int tgz = (sqlen + past_sqlen);
+    const float alpha = 0.088388;
+
+    half* buffer_1;
+    cudaMallocManaged(&buffer_1, sizeof(half) * num_heads * sqlen * head_dim);
+    Matrix3D<half> query_states(buffer_1, num_heads, sqlen, head_dim);
+    read_to_array_half("assets/llama/tests/ops/BMM_F16T/input_half.bin", query_states.m_data, num_heads * sqlen * head_dim);
+
+    half* buffer_2;
+    cudaMallocManaged(&buffer_2, sizeof(half) * num_heads * tgz * head_dim);
+    Matrix3D<half> final_key_states(buffer_2, num_heads, tgz, head_dim);
+    read_to_array_half("assets/llama/tests/ops/BMM_F16T/weight_half.bin", final_key_states.m_data, num_heads * tgz * head_dim);
+
+    half* buffer_3;
+    cudaMallocManaged(&buffer_3, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> attn_weightsGT(buffer_3, num_heads, sqlen, tgz);
+    read_to_array_half("assets/llama/tests/ops/BMM_F16T/output_half.bin", attn_weightsGT.m_data, num_heads * sqlen * tgz);
+
+    half* buffer_4;
+    cudaMallocManaged(&buffer_4, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> attn_weights(buffer_4, num_heads, sqlen, tgz);
+
+    BMM_F16T qk_bmm = BMM_F16T(alpha);
+    qk_bmm.forward(query_states, final_key_states, attn_weights);
+    cudaDeviceSynchronize();
+
+    bool success = check_two_equal_half_half(attn_weights.m_data, attn_weightsGT.m_data, num_heads * sqlen * tgz);
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    cudaFree(buffer_1);
+    cudaFree(buffer_2);
+    cudaFree(buffer_3);
+    cudaFree(buffer_4);
+}
+
+void test_RotaryPosEmb_cuda() {
+    const struct model_config llama7B = llama_7B;
+    const int sqlen = 9, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads, head_dim = embed_dim / num_heads;
+    const int max_sqlen = 2048;
+    const int start_idx = 0;
+
+    half* buffer_1;
+    cudaMallocManaged(&buffer_1, sizeof(half) * num_heads * sqlen * head_dim);
+    Matrix3D<half> query_states(buffer_1, num_heads, sqlen, head_dim);
+    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/input_query_half.bin", query_states.m_data, num_heads * sqlen * head_dim);
+
+    half* buffer_2;
+    cudaMallocManaged(&buffer_2, sizeof(half) * num_heads * sqlen * head_dim);
+    Matrix3D<half> key_states(buffer_2, num_heads, sqlen, head_dim);
+    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/input_key_half.bin", key_states.m_data, num_heads * sqlen * head_dim);
+
+    float* buffer_3;
+    cudaMallocManaged(&buffer_3, sizeof(float) * max_sqlen * (embed_dim / num_heads));
+    Matrix3D<float> cos(buffer_3, 1, max_sqlen, (embed_dim / num_heads));
+    read_to_array("assets/llama/tests/ops/RotaryPosEmb/cos.bin", cos.m_data, max_sqlen * (embed_dim / num_heads));
+
+    float* buffer_4;
+    cudaMallocManaged(&buffer_4, sizeof(float) * max_sqlen * (embed_dim / num_heads));
+    Matrix3D<float> sin(buffer_4, 1, max_sqlen, (embed_dim / num_heads));
+    read_to_array("assets/llama/tests/ops/RotaryPosEmb/sin.bin", sin.m_data, max_sqlen * (embed_dim / num_heads));
+
+    half* buffer_5;
+    cudaMallocManaged(&buffer_5, sizeof(half) * num_heads * sqlen * head_dim);
+    Matrix3D<half> query_statesGT(buffer_5, num_heads, sqlen, head_dim);
+    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/output_query_half.bin", query_statesGT.m_data, num_heads * sqlen * head_dim);
+
+    half* buffer_6;
+    cudaMallocManaged(&buffer_6, sizeof(half) * num_heads * sqlen * head_dim);
+    Matrix3D<half> key_statesGT(buffer_6, num_heads, sqlen, head_dim);
+    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/output_key_half.bin", key_statesGT.m_data, num_heads * sqlen * head_dim);
+
+    dim3 grid(num_heads, 1, 1);
+    dim3 block(sqlen, 1, 1);
+    RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, cos, sin, start_idx, sqlen);
+    cudaDeviceSynchronize();
+
+    bool success = check_two_equal_half_half(query_states.m_data, query_statesGT.m_data, num_heads * sqlen * head_dim);
+    success &= check_two_equal_half_half(key_states.m_data, key_statesGT.m_data, num_heads * sqlen * head_dim);
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    cudaFree(buffer_1);
+    cudaFree(buffer_2);
+    cudaFree(buffer_3);
+    cudaFree(buffer_4);
+    cudaFree(buffer_5);
+    cudaFree(buffer_6);
+}
+
+void test_batch_Add_cuda() {
+    const struct model_config llama7B = llama_7B;
+    const int sqlen = 9, past_sqlen = 0, num_heads = llama7B.num_heads;
+    const int tgz = (sqlen + past_sqlen);
+
+    half* buffer_1;
+    cudaMallocManaged(&buffer_1, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> attn_weights(buffer_1, num_heads, sqlen, tgz);
+    read_to_array_half("assets/llama/tests/ops/batch_Add/input_half.bin", attn_weights.m_data, num_heads * sqlen * tgz);
+
+    half* buffer_2;
+    cudaMallocManaged(&buffer_2, sizeof(half) * sqlen * tgz);
+    Matrix3D<half> attention_mask(buffer_2, 1, sqlen, tgz);
+    read_to_array_half("assets/llama/tests/ops/batch_Add/input2_half.bin", attention_mask.m_data, sqlen * tgz);
+
+    half* buffer_3;
+    cudaMallocManaged(&buffer_3, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> output_attn_weightsGT(buffer_3, num_heads, sqlen, tgz);
+    read_to_array_half("assets/llama/tests/ops/batch_Add/output_half.bin", output_attn_weightsGT.m_data, num_heads * sqlen * tgz);
+
+    half* buffer_4;
+    cudaMallocManaged(&buffer_4, sizeof(half) * num_heads * sqlen * tgz);
+    Matrix3D<half> output_attn_weights(buffer_4, num_heads, sqlen, tgz);
+
+    dim3 threadsPerBlock(8, 8, 8);
+    dim3 numBlocks2((num_heads + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                (sqlen + threadsPerBlock.y - 1) / threadsPerBlock.y,
+                (tgz + threadsPerBlock.z - 1) / threadsPerBlock.z);
+    batch_Add_cuda<<<numBlocks2, threadsPerBlock>>>(attn_weights, attention_mask, output_attn_weights);
+    cudaDeviceSynchronize();
+
+    bool success = check_two_equal_half_half(output_attn_weights.m_data, output_attn_weightsGT.m_data, num_heads * sqlen * tgz);
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    cudaFree(buffer_1);
+    cudaFree(buffer_2);
+    cudaFree(buffer_3);
+    cudaFree(buffer_4);
+}
+
+
 int main() {
-    test_LlamaRMSNorm_cuda();
+    /* CPU-version ops */
+    // OPT
+    test_LayerNormQ();
+    test_LayerNormQ_len512();
+    test_LayerNormQ_1_3B();
+    test_LayerNorm();
+    test_LayerNorm_1_3B_len512();
     test_W8A8B8O8LinearReLU();
     test_W8A8B8O8LinearReLU_1_3B();
     test_W8A8B8O8Linear();
@@ -650,8 +1011,18 @@ int main() {
     // LLaMa
     test_LlamaRMSNorm();
     test_FPLinear();
+
+    /* GPU-version ops */
+    // LLaMa
     test_FP16Linear_int4();
     // test_FP16Linear_int4_mini();
+    test_LlamaRMSNorm_cuda();
+    test_softmax_cuda();
+    test_BMM_F16T();
+    test_RotaryPosEmb_cuda();
+    // test_Embedding_cuda();
+    test_batch_Add_cuda();
+
     // Report if profiling flag is on
     Profiler::getInstance().report();
 }

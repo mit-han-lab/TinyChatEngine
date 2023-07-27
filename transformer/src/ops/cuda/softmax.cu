@@ -1,5 +1,4 @@
 #include <cmath>
-// #include "operators.cuh"
 #include "operators.h"
 
 // __device__ static float atomicMax(float* address, float val)

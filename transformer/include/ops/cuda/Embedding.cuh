@@ -1,6 +1,5 @@
 #include <cassert>
 #include "common.h"
-// #include "operators.cuh"
 
 class Embedding_cuda {
    public:
@@ -10,11 +9,11 @@ class Embedding_cuda {
             assert(lookup_.m_dim_z == embed_dim_);
         }
     Embedding_cuda(){};
-    void forward(Matrix3D<int> input_id, Matrix3D<float> output);
+    void forward(Matrix3D<int> input_id, Matrix3D<half> output);
     int embed_dim, voc_size, padding_idx;
     Matrix3D<float> lookup;
 private:
     std::string profile_name = "Embedding";
 };
 
-void load_Embedding_params(Embedding_cuda &op, std::string prefix);
+void load_Embedding_params_cuda(Embedding_cuda &op, std::string prefix);

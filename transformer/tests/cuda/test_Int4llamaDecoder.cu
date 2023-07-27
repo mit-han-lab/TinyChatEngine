@@ -3,13 +3,10 @@
 #include "Int4llamaDecoder.h"
 #include "operators.h"
 #include "utils.h"
-// #include "utils.cuh"
-#include "utils_memalloc.cuh"
 
 void test_Decoder() {
     const struct model_config llama7B = llama_7B;
     const int sqlen = 9, b = 1, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads, num_layers = llama7B.num_layers;
-    MemoryAllocator mem_buf;
 
     int* buffer_1;
     cudaMallocManaged(&buffer_1, sizeof(int) * sqlen);
@@ -21,62 +18,56 @@ void test_Decoder() {
     struct Int4llamaDecoder_output output_1st = decoder.forward(input_1st);
     cudaDeviceSynchronize();
 
-    // reasoning phase: 1st run
-    float* buffer_2;
-    cudaMallocManaged(&buffer_2, sizeof(float) * b * sqlen * embed_dim);
-    Matrix3D<float> last_hidden_state1_GT(buffer_2, b, sqlen, embed_dim);
-    last_hidden_state1_GT.load("assets/llama/tests/decoder/1st_last_hidden_state.bin");
+    half* buffer_2;
+    cudaMallocManaged(&buffer_2, sizeof(half) * b * sqlen * embed_dim);
+    Matrix3D<half> last_hidden_state1_GT(buffer_2, b, sqlen, embed_dim);
+    read_to_array_half("assets/llama/tests/decoder/1st_last_hidden_state_half.bin", last_hidden_state1_GT.m_data, last_hidden_state1_GT.length());
 
-    bool success = check_two_equal_float_half(last_hidden_state1_GT.m_data, output_1st.last_hidden_state.m_data,
+    bool success = check_two_equal_half_half(last_hidden_state1_GT.m_data, output_1st.last_hidden_state.m_data,
                                    last_hidden_state1_GT.length());
 
-    float* buffer_3;
-    cudaMallocManaged(&buffer_3, sizeof(float) * b * sqlen * embed_dim);
-    Matrix3D<float> temp_key_value(buffer_3, num_heads, sqlen, embed_dim / num_heads);
+    half* buffer_3;
+    cudaMallocManaged(&buffer_3, sizeof(half) * b * sqlen * embed_dim);
+    Matrix3D<half> temp_key_value(buffer_3, num_heads, sqlen, embed_dim / num_heads);
     for (int i = 0; i < num_layers; i++) {
-        std::string path = "assets/llama/tests/decoder/1st/past_key_value/key" + std::to_string(i) + ".bin";
-        temp_key_value.load(path.c_str());
-        success &=
-            check_two_equal_float_half(temp_key_value.m_data, output_1st.past_keys[i].m_data, temp_key_value.length());
+        std::string path = "assets/llama/tests/decoder/1st/past_key_value/key" + std::to_string(i) + "_half.bin";
+        read_to_array_half(path.c_str(), temp_key_value.m_data, temp_key_value.length());
+        success &= check_two_equal_half_half(temp_key_value.m_data, output_1st.past_keys[i].m_data, temp_key_value.length());
 
-        path = "assets/llama/tests/decoder/1st/past_key_value/value" + std::to_string(i) + ".bin";
-        temp_key_value.load(path.c_str());
-        success &=
-            check_two_equal_float_half(temp_key_value.m_data, output_1st.past_values[i].m_data, temp_key_value.length());
+        path = "assets/llama/tests/decoder/1st/past_key_value/value" + std::to_string(i) + "_half.bin";
+        read_to_array_half(path.c_str(), temp_key_value.m_data, temp_key_value.length());
+        success &= check_two_equal_half_half(temp_key_value.m_data, output_1st.past_values[i].m_data, temp_key_value.length());
     }
-
 
     // generating phase: 2nd run
     int* buffer_4;
     cudaMallocManaged(&buffer_4, sizeof(int) * sqlen);
     Matrix3D<int> input_ids_2nd(buffer_4, b, 1, 1);
     input_ids_2nd.load("assets/llama/tests/decoder/2nd/input_ids.bin");
-    struct Int4llamaDecoder_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
 
+    struct Int4llamaDecoder_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
     struct Int4llamaDecoder_output output_2nd = decoder.forward(input_2nd);
     cudaDeviceSynchronize();
 
+    half* buffer_5;
+    cudaMallocManaged(&buffer_5, sizeof(half) * b * 1 * embed_dim);
+    Matrix3D<half> last_hidden_state2_GT(buffer_5, b, 1, embed_dim);
+    read_to_array_half("assets/llama/tests/decoder/2nd/last_hidden_state_half.bin", last_hidden_state2_GT.m_data, last_hidden_state2_GT.length());
 
-    float* buffer_5;
-    cudaMallocManaged(&buffer_5, sizeof(float) * b * 1 * embed_dim);
-    Matrix3D<float> last_hidden_state2_GT(buffer_5, b, 1, embed_dim);
-    last_hidden_state2_GT.load("assets/llama/tests/decoder/2nd/last_hidden_state.bin");
-    success &= check_two_equal_float_half(last_hidden_state2_GT.m_data, output_2nd.last_hidden_state.m_data,
+    success &= check_two_equal_half_half(last_hidden_state2_GT.m_data, output_2nd.last_hidden_state.m_data,
                                last_hidden_state2_GT.length());
 
-    float* buffer_6;
-    cudaMallocManaged(&buffer_6, sizeof(float) * b * (sqlen + 1) * embed_dim);
-    Matrix3D<float> temp_key_value_2nd(buffer_6, num_heads, (sqlen + 1), embed_dim / num_heads);
+    half* buffer_6;
+    cudaMallocManaged(&buffer_6, sizeof(half) * b * (sqlen + 1) * embed_dim);
+    Matrix3D<half> temp_key_value_2nd(buffer_6, num_heads, (sqlen + 1), embed_dim / num_heads);
     for (int i = 0; i < num_layers; i++) {
-        std::string path = "assets/llama/tests/decoder/2nd/past_key_value/key" + std::to_string(i) + ".bin";
-        temp_key_value_2nd.load(path.c_str());
-        success &=
-            check_two_equal_float_half(temp_key_value_2nd.m_data, output_2nd.past_keys[i].m_data, temp_key_value_2nd.length());
+        std::string path = "assets/llama/tests/decoder/2nd/past_key_value/key" + std::to_string(i) + "_half.bin";
+        read_to_array_half(path.c_str(), temp_key_value_2nd.m_data, temp_key_value_2nd.length());
+        success &= check_two_equal_half_half(temp_key_value_2nd.m_data, output_2nd.past_keys[i].m_data, temp_key_value_2nd.length());
 
-        path = "assets/llama/tests/decoder/2nd/past_key_value/value" + std::to_string(i) + ".bin";
-        temp_key_value_2nd.load(path.c_str());
-        success &=
-            check_two_equal_float_half(temp_key_value_2nd.m_data, output_2nd.past_values[i].m_data, temp_key_value_2nd.length());
+        path = "assets/llama/tests/decoder/2nd/past_key_value/value" + std::to_string(i) + "_half.bin";
+        read_to_array_half(path.c_str(), temp_key_value_2nd.m_data, temp_key_value_2nd.length());
+        success &= check_two_equal_half_half(temp_key_value_2nd.m_data, output_2nd.past_values[i].m_data, temp_key_value_2nd.length());
     }
 
     if (!success)

@@ -64,8 +64,11 @@ void allocate_aligned_memory(T*& ptr, size_t size);
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
 
+void read_to_array_half(const char* path, half* array, int size);
+
 bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error);
 bool check_two_equal_float_half(float* array, half* array2, int size);
+bool check_two_equal_half_half(half* array, half* array2, int size);
 
 template <typename T>
 void allocate_aligned_memory_gpu(T*& ptr, size_t size);

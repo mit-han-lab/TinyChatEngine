@@ -1,4 +1,3 @@
-// #include "operators.cuh"
 #include "operators.h"
 
 // __global__ void batch_Add_float(Matrix3D<float> input, Matrix3D<float> input2, Matrix3D<float> output) {

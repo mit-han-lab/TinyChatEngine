@@ -17,6 +17,17 @@
         } \
     } while(0)
 
+void read_to_array_half(const char* path, half* array, int size) {
+    std::ifstream infile(path, std::ios::binary | std::ios::in);
+    if (infile.fail()) {
+        std::cout << strerror(errno) << ": " << path << std::endl;
+        throw("Expected error...");
+    } else {
+        infile.read(reinterpret_cast<char*>(array), size * sizeof(half));
+        infile.close();
+    }
+}
+
 bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error) {
     float sq_diff = 0;
     float max_sqdiff = 0;
@@ -52,6 +63,26 @@ bool check_two_equal_float_half(float* array, half* array2, int size) {
         if (sqrt(max_sqdiff) > MAX_SQ_ERROR_MAX) {
             std::cout << "i:" << i << ",max_sqdiff:" << sqrt(max_sqdiff) << ", array[i]:";
             std::cout << static_cast<float>(array[i]) << ", array2[i]:" << __half2float(array2[i]) << std::endl;
+            return false;
+        }
+    }
+    if ((sq_diff / size) > ERROR_MAX) {
+        std::cout << "MSE:" << sq_diff / size << ", MAX SQ diff:" << max_sqdiff << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool check_two_equal_half_half(half* array, half* array2, int size) {
+    float sq_diff = 0;
+    float max_sqdiff = 0;
+    for (int i = 0; i < size; i++) {
+        float diff = __half2float(array[i]) - __half2float(array2[i]);
+        sq_diff += diff * diff;
+        if (diff * diff > max_sqdiff) max_sqdiff = diff * diff;
+        if (sqrt(max_sqdiff) > MAX_SQ_ERROR_MAX) {
+            std::cout << "i:" << i << ",max_sqdiff:" << sqrt(max_sqdiff) << ", array[i]:";
+            std::cout << __half2float(array[i]) << ", array2[i]:" << __half2float(array2[i]) << std::endl;
             return false;
         }
     }

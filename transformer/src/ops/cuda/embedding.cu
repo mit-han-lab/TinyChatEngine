@@ -1,30 +1,27 @@
 #include <cstring>
 
-// #include "operators.cuh"
 #include "operators.h"
 #include "utils.h"
-// #include "utils.cuh"
 
-
-__global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<float> output, float* lookup, int embed_dim) {
+__global__ void EmbeddingKernel(Matrix3D<int> input_id, Matrix3D<half> output, float* lookup, int embed_dim) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (i < input_id.m_dim_z) {
         int token_id = input_id(0, 0, i);
-        float* output_sample_ptr = &output.m_data[i * embed_dim];
+        half* output_sample_ptr = &output.m_data[i * embed_dim];
         float* target_embed = &lookup[token_id * embed_dim];
 
         for (int j = 0; j < embed_dim; ++j) {
-            output_sample_ptr[j] = target_embed[j];
+            output_sample_ptr[j] = __float2half(target_embed[j]);
         }
     }
 }
 
-void load_Embedding_params(Embedding_cuda& op, std::string prefix) {
+void load_Embedding_params_cuda(Embedding_cuda& op, std::string prefix) {
     op.lookup.load((prefix + "/weight.bin").c_str());
 }
 
-void Embedding_cuda::forward(Matrix3D<int> input_id, Matrix3D<float> output) {
+void Embedding_cuda::forward(Matrix3D<int> input_id, Matrix3D<half> output) {
     PROFILE_START(profile_name);
     assert(input_id.m_dim_x == 1);
     assert(input_id.m_dim_y == 1);

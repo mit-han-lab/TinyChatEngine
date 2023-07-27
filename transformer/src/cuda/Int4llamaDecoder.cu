@@ -40,6 +40,7 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     allocate_aligned_memory_gpu(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
     allocate_aligned_memory_gpu(hidden_states_half_buf, config.max_sqlen * config.embed_dim * sizeof(float16_t));
+    // allocate_aligned_memory_gpu(embweight_buf, config.vocsize * config.embed_dim * sizeof(float));
 
     this->voc_size = config.vocsize;
     this->embed_dim = config.embed_dim;
@@ -51,6 +52,9 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     Matrix3D<float> embweight(new float[voc_size * embed_dim], 1, voc_size, embed_dim);
     this->embed_tokens = Embedding(embed_dim, voc_size, padding_idx, embweight);
     load_Embedding_params(this->embed_tokens, param_path + "/embed_tokens");
+    // Matrix3D<float> embweight(embweight_buf, 1, voc_size, embed_dim);
+    // this->embed_tokens = Embedding_cuda(embed_dim, voc_size, padding_idx, embweight);
+    // load_Embedding_params_cuda(this->embed_tokens, param_path + "/embed_tokens");
 
     float *norm_weight_ptr;
     allocate_aligned_memory_gpu(norm_weight_ptr, embed_dim * sizeof(float));
@@ -75,18 +79,24 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
     int sqlen = input.input_ids.m_dim_z, past_key_values_length = 0;
     // int batch_size = input.input_ids.m_dim_x;
 
+    //// floating-point version of Embedding
     Matrix3D<float> hidden_states_float(hidden_states_buf, 1, sqlen, this->embed_dim);
     this->embed_tokens.forward(input.input_ids, hidden_states_float);
-
     // Convert from float to float16_t
     Matrix3D<float16_t> hidden_states(hidden_states_half_buf, 1, sqlen, this->embed_dim);
     int threadsPerBlock_1D = 1024;
     int blocksPerGrid =(sqlen * this->embed_dim + threadsPerBlock_1D - 1) / threadsPerBlock_1D;
     float2half<<<blocksPerGrid, threadsPerBlock_1D>>>(hidden_states_buf, hidden_states_half_buf, sqlen * this->embed_dim);
+    // //// half-precision version of Embedding
+    // // printf("11111111111\n");
+    // Matrix3D<float16_t> hidden_states(hidden_states_half_buf, 1, sqlen, this->embed_dim);
+    // this->embed_tokens.forward(input.input_ids, hidden_states);
+    // // printf("22222222222\n");
 
     if (input.has_past_keys_values) {
         past_key_values_length = input.past_keys[0].m_dim_y;
     }
+
     int length = sqlen + past_key_values_length;
     int past_length = past_key_values_length;
     Matrix3D<float16_t> causal_attention_mask(attention_mask_buf, 1, length - past_length, length);
@@ -104,12 +114,18 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
             past_keys.push_back(l_o.past_key_value.first);
             past_values.push_back(l_o.past_key_value.second);
         } else {
+            // printf("77777777777\n");
             struct Int4llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask, input.past_keys[i],
                                                       input.past_values[i]};
+            // printf("88888888888\n");
             struct Int4llamaDecoderLayer_output l_o = this->layers[i].forward(l_i);
+            // printf("99999999999\n");
             hidden_states = l_o.hidden_states;
+            // printf("zzzzzzzzzzz\n");
             past_keys.push_back(l_o.past_key_value.first);
+            // printf("yyyyyyyyyyy\n");
             past_values.push_back(l_o.past_key_value.second);
+            // printf("xxxxxxxxxxxx\n");
         }
     }
 

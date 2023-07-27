@@ -1,5 +1,4 @@
 #include <cmath>
-// #include "operators.cuh"
 #include "operators.h"
 
 // __global__ void RotaryPosEmb_float_forward(Matrix3D<float> query, Matrix3D<float> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
