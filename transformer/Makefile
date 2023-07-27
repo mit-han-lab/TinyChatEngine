@@ -10,7 +10,7 @@ TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
 BUILDDIR := build/transformer
 PROFILEDIR := build_profile/transformer
-LIB_DIR = ../matmul_lib
+LIB_DIR = ../kernels
 LIB_SRC = $(wildcard $(LIB_DIR)/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./include/nn_modules -I./json/single_include/
 LIB =
