@@ -23,48 +23,35 @@ void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
 
 struct Int8OPTDecoderLayer_output Int8OPTDecoderLayer::forward(const struct Int8OPTDecoderLayer_input &input) {
     PROFILE_START(profile_name);
+    // Layernorm
     Matrix3D<int8_t> hidden_states_int8(hidden_states_int8_arr, input.hidden_states.m_dim_x,
                                         input.hidden_states.m_dim_y, input.hidden_states.m_dim_z);
     this->self_attn_layer_norm.forward(input.hidden_states, hidden_states_int8);
-    // print_first_k_elelment("hidden_states_int8", hidden_states_int8.m_data, 20);
 
+    // Attention
     struct Int8OPTAttention_input attn_param(hidden_states_int8, input.attention_mask, input.past_key, input.past_value,
                                              input.has_past_key_value, this->layer_idx);
     struct Int8OPTAttention_output attn_output = this->attn.forward(attn_param);
-    // print_first_k_elelment("attn_output.attn_output", attn_output.attn_output.m_data, 20);
-    // read_to_array("assets/tests/OPT_125m/Int8OPTAttention_attn_output_len512.bin", attn_output.attn_output.m_data,
-    // attn_output.attn_output.length());
 
-    // opt.py: residual.add_(hidden_states.to(residual.dtype))
+    // Residual add
     Matrix3D<float> residual_add(hidden_states_float_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                  input.hidden_states.m_dim_z);
     add(input.hidden_states, attn_output.attn_output, residual_add);
-    // print_first_k_elelment("residual_add", residual_add.m_data, 20);
 
-    // opt.py: hidden_states = self.final_layer_norm(residual)
+    // Layernorm
     Matrix3D<int8_t> final_layer_norm(final_layer_norm_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                       input.hidden_states.m_dim_z);
     this->final_layer_norm.forward(residual_add, final_layer_norm);
-    // read_to_array("assets/tests/OPT_1.3B/layer23_final_layer_norm.bin", final_layer_norm.m_data,
-    // final_layer_norm.length()); print_first_k_elelment("final_layer_norm", final_layer_norm.m_data, 20);
 
-    // opt.py: hidden_states = self.fc1(hidden_states)
+    // FC
     Matrix3D<int8_t> fc1_out(fc_1_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
-    // this->fc1.x = final_layer_norm;
-    // this->fc1.output = fc1_out;
     this->fc1.forward(final_layer_norm, fc1_out);
-    // print_first_k_elelment("fc1_out", fc1_out.m_data, 20);
-
-    // opt.py: hidden_states = self.fc2(hidden_states)
     Matrix3D<float> fc2_out(fc_2_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                             input.hidden_states.m_dim_z);
     this->fc2.forward(fc1_out, fc2_out);
-    // read_to_array("assets/tests/OPT_1.3B/fc2_out.bin", fc2_out.m_data, fc2_out.length());
-    // print_first_k_elelment("fc2_out", fc2_out.m_data, 20);
 
-    // opt.py: residual.add_(hidden_states.to(residual.dtype))
+    // Reidual add
     add(residual_add, fc2_out, residual_add);
-    // print_first_k_elelment("residual_add", residual_add.m_data, 20);
 
     struct Int8OPTDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped, attn_output.past_key_value);
     PROFILE_END(profile_name);

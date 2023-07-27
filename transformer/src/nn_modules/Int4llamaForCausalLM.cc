@@ -20,6 +20,7 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct In
 
     struct Int4llamaDecoder_output decoder_output;
 
+    // Call decoder
     if (input.has_past_keys_values) {
         struct Int4llamaDecoder_input decoder_input = {input.input_ids, input.past_keys, input.past_values};
         decoder_output = this->decoder.forward(decoder_input);
@@ -29,9 +30,9 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct In
         decoder_output = this->decoder.forward(decoder_input);
     }
 
+    // Get logits
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
     this->lm_head.forward(decoder_output.last_hidden_state, logits);
-    // print_first_k_elelment("logits_output", logits.m_data, 20);
 
     struct Int4LlamaForCausalLM_output LMoutput = {logits, decoder_output.past_keys, decoder_output.past_values};
     PROFILE_END(profile_name);

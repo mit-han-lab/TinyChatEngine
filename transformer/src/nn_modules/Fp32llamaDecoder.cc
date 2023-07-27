@@ -64,24 +64,22 @@ struct Fp32llamaDecoder_output Fp32llamaDecoder::forward(const struct Fp32llamaD
     PROFILE_START(profile_name);
     int sqlen = input.input_ids.m_dim_z, batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
 
-    // modeling_opt.py: inputs_embeds = self.embed_tokens(input_ids)
+    // Input token -> Embedding
     float inputs_embeds_buf[sqlen * this->embed_dim];
     Matrix3D<float> inputs_embeds(inputs_embeds_buf, 1, sqlen, this->embed_dim);
     this->embed_tokens.forward(input.input_ids, inputs_embeds);
-    // print_first_k_elelment("inputs_embeds", inputs_embeds.m_data, 20);
 
     if (input.has_past_keys_values) {
         past_key_values_length = input.past_keys[0].m_dim_y;
     }
 
-    // causal_attention_mask = self._prepare_decoder_attention_mask
+    // Attention mask
     Matrix3D<float> causal_attention_mask =
         this->prepare_decoder_attention_mask(sqlen + past_key_values_length, past_key_values_length);
-    // print_first_k_elelment("causal_attention_mask", causal_attention_mask.m_data, 20);
 
+    // Go through each layer
     Matrix3D<float> hidden_states = inputs_embeds;
     std::vector<Matrix3D<float>> past_keys, past_values;
-    // std::cout << "input:" << hidden_states.sum() << std::endl;
     for (int i = 0; i < this->layers.size(); i++) {
         if (!input.has_past_keys_values) {
             struct Fp32llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask};
@@ -90,8 +88,6 @@ struct Fp32llamaDecoder_output Fp32llamaDecoder::forward(const struct Fp32llamaD
             past_keys.push_back(l_o.past_key_value.first);
             past_values.push_back(l_o.past_key_value.second);
         } else {
-            // std::cout << "past KV, idx:" << i << ", key:" << input.past_keys[i].sum()<< ", value:" <<
-            // input.past_values[i].sum() << std::endl;
             struct Fp32llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask, input.past_keys[i],
                                                       input.past_values[i]};
             struct Fp32llamaDecoderLayer_output l_o = this->layers[i].forward(l_i);
@@ -99,14 +95,11 @@ struct Fp32llamaDecoder_output Fp32llamaDecoder::forward(const struct Fp32llamaD
             past_keys.push_back(l_o.past_key_value.first);
             past_values.push_back(l_o.past_key_value.second);
         }
-        // std::cout << "idx:" << i << ", hidden_sum:" << hidden_states.sum() << std::endl;
     }
-    // read_to_array("assets/tests/OPT_1.3B/layers_out.bin", hidden_states.m_data, hidden_states.length());
-    // print_first_k_elelment("hidden_states(layers_out)", hidden_states.m_data, 20);
 
+    // Layernorm
     Matrix3D<float> last_hidden_states(last_hidden_states_buf, 1, sqlen, this->embed_dim);
     this->norm.forward(hidden_states, last_hidden_states);
-    // print_first_k_elelment("final_layer_norm", last_hidden_states.m_data, 20);
 
     struct Fp32llamaDecoder_output output = {last_hidden_states, past_keys, past_values};
     PROFILE_END(profile_name);
