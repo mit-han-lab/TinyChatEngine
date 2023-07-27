@@ -2,9 +2,9 @@
 #include <sys/time.h>
 
 // TODO: deprecate this
-#define MAX_TRANSPOSE_BUFFER 2048 * 2048
-#define RUNS 1
-static float transpose_tmp[MAX_TRANSPOSE_BUFFER];
+// #define MAX_TRANSPOSE_BUFFER 2048 * 2048
+// #define RUNS 1
+// static float transpose_tmp[MAX_TRANSPOSE_BUFFER];
 
 // Data structures
 struct quantization_params {
@@ -56,23 +56,23 @@ struct thread_args {
 namespace matmul {
 class MatmulOperator {
    public:
-    void naive_mat_mul(const struct matmul_params *params);
-    void mat_mul_unrolling(const struct matmul_params *params);
-    void mat_mul_reordering(const struct matmul_params *params);
-    void mat_mul_tiling(const struct matmul_params *params);
-    void mat_mul_multithreading(const struct matmul_params *params);
-    void mat_mul_transpose(const struct matmul_params *params);
+    // void naive_mat_mul(const struct matmul_params *params);
+    // void mat_mul_unrolling(const struct matmul_params *params);
+    // void mat_mul_reordering(const struct matmul_params *params);
+    // void mat_mul_tiling(const struct matmul_params *params);
+    // void mat_mul_multithreading(const struct matmul_params *params);
+    // void mat_mul_transpose(const struct matmul_params *params);
     void mat_mul_transposed(const struct matmul_params *params);
     void mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params);
-    void mat_mul_accelerator_transpose_simd(const struct matmul_params *params);
-    void mat_mul_accelerator_fast(const struct matmul_params *params);
-    void mat_mul_onednn(const struct matmul_params *params);
-    void mat_mul_onednn_int8(const struct matmul_params *params);
+    // void mat_mul_accelerator_transpose_simd(const struct matmul_params *params);
+    // void mat_mul_accelerator_fast(const struct matmul_params *params);
+    // void mat_mul_onednn(const struct matmul_params *params);
+    // void mat_mul_onednn_int8(const struct matmul_params *params);
     // int8
     void naive_mat_mul_int8(const struct matmul_params *params);
-    void mat_mul_accelerator_int8(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2(const struct matmul_params *params);
+    // void mat_mul_accelerator_int8(const struct matmul_params *params);
+    // void mat_mul_accelerator_int8_fast(const struct matmul_params *params);
+    // void mat_mul_accelerator_int8_fast_2x2(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_32unroll_over_column(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_2x2_32unroll(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(const struct matmul_params *params);
@@ -81,7 +81,7 @@ class MatmulOperator {
     void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32_batch(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);
+    // void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);
     // int4
     void mat_mul_accelerator_int4_fast(const struct matmul_params *params);
     void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params);

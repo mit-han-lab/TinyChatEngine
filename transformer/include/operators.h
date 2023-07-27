@@ -3,7 +3,7 @@
 #include <cassert>
 
 #include "common.h"
-#include "lib/matmul.h"
+#include "matmul.h"
 
 #define BLK_SIZE 16
 #define NUM_THREAD 4

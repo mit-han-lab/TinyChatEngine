@@ -10,26 +10,26 @@ TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
 BUILDDIR := build/transformer
 PROFILEDIR := build_profile/transformer
-LIB_DIR = ../matmul_optimization/src
-LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
+LIB_DIR = ../matmul_lib
+LIB_SRC = $(wildcard $(LIB_DIR)/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./include/nn_modules -I./json/single_include/
 LIB =
 
 ifeq ($(shell uname -m),x86_64)
 	# For Intel machines with AVX
-	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/lib/avx/*.cc)
+	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/avx/*.cc)
 	LIB_SRC += $(LIB_AVX_SRC)
 	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
 else ifeq ($(shell uname -p),arm)
 	CXX = /opt/homebrew/opt/llvm/bin/clang++
 	# Use NEON with int8 runtime quantization is faster
-	LIB_SRC += $(wildcard $(LIB_DIR)/lib/neon/*.cc)
+	LIB_SRC += $(wildcard $(LIB_DIR)/neon/*.cc)
 	CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
 	INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	LIB += -L/opt/homebrew/opt/boost/lib
 	# For ARM A-series (such as Mac M1) with Metal GPU
-	# LIB_ACC_INC = -I$(LIB_DIR)/lib/metal/include -I$(LIB_DIR)/lib/metal/metal-cpp -I$(LIB_DIR)/lib/metal
-	# LIB_SRC += $(wildcard $(LIB_DIR)/lib/metal/*.cc)
+	# LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp -I$(LIB_DIR)/metal
+	# LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc)
 	# INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
 	# LIB += -framework Metal -framework Foundation -framework MetalKit
 	# TARGET += default.metallib library.air
@@ -37,7 +37,7 @@ else ifeq ($(shell uname -p),arm)
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
-	LIB_REF_SRC = $(wildcard $(LIB_DIR)/lib/ref/*.cc)
+	LIB_REF_SRC = $(wildcard $(LIB_DIR)/ref/*.cc)
 	LIB_SRC += $(LIB_REF_SRC)
 endif
 
@@ -52,7 +52,7 @@ SRC += $(LIB_SRC)
 
 # Check if CUDA is available
 CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
-CUDA_SRCS = $(wildcard $(LIB_DIR)/lib/cuda/*.cu)
+CUDA_SRCS = $(wildcard $(LIB_DIR)/cuda/*.cu)
 TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
 LDFLAGS =
 
@@ -74,7 +74,7 @@ all: $(TARGET)
 .PHONY: all clean
 
 # Metal lib
-library.air: $(LIB_DIR)/lib/metal/kernel/op.metal
+library.air: $(LIB_DIR)/metal/kernel/op.metal
 	xcrun -sdk macosx metal -ffast-math -fno-fast-math $(LIB_ACC_INC) -c $< -o library.air
 default.metallib: library.air
 	xcrun -sdk macosx metallib library.air -o default.metallib
