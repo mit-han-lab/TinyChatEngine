@@ -67,10 +67,7 @@ static const std::map<std::string, std::vector<int>> &test_LLaMATokenizer() {
 
 int main(int argc, char **argv) {
     // load the vocab
-    // TODO: Change the dependency on the vocab file in the future.
-    // TODO: Remove ggml-vocab.bin, use tokenizer.model in LLaMA repo on Huggingface instead.
-    const std::string fname = "./models/LLaMA_7B/ggml-vocab.bin";
-    // fprintf(stderr, "Reading vocab from: '%s'\n", fname.c_str());
+    const std::string fname = "models/llama_vocab.bin";
     llama_vocab vocab = llama_init_vocab(fname.c_str());
 
     bool is_equal;
@@ -88,40 +85,13 @@ int main(int argc, char **argv) {
             }
         }
 
-        // Print token ids
-        // fprintf(stderr, "Test %d:\n", test_count);
-        // fprintf(stderr, "Expected token ids: ");
-        // for (const auto & t : llama_answer.second) {
-        //     fprintf(stderr, "%6d, ", t);
-        // }
-        // fprintf(stderr, "\n");
-        // fprintf(stderr, "Got token ids:      ");
-        // for (const auto & t : input_ids) {
-        //     fprintf(stderr, "%6d, ", t);
-        // }
-        // fprintf(stderr, "\n");
-
-        // // Print token strings
-        // fprintf(stderr, "Expected token strings:  ");
-        // for (const auto & t : llama_answer.first) {
-        //     fprintf(stderr, "%c", t);
-        // }
-        // fprintf(stderr, "\n");
-        // fprintf(stderr, "Got token strings:       ");
-        // for (const auto & t : input_ids) {
-        //     fprintf(stderr, "%s", llama_id_to_token(vocab, t));
-        // }
-        // fprintf(stderr, "\n");
-
         test_count++;
     }
-    // fprintf(stderr, "\n");
 
     if (!is_equal)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
-    // fprintf(stderr, "\n");
 
     return 0;
 }

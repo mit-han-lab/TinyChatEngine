@@ -3,8 +3,8 @@
 #include "OPTTokenizer.h"
 
 void test_OPTEncode() {
-    std::string vocab_file = "./models/OPT_125m/vocab.json";
-    std::string bpe_file = "./models/OPT_125m/merges.txt";
+    std::string bpe_file = "models/opt_merges.txt";
+    std::string vocab_file = "models/opt_vocab.json";
 
     Encoder encoder = get_encoder(vocab_file, bpe_file);
     std::vector<int> encoded = encoder.encode(
@@ -26,8 +26,9 @@ void test_OPTEncode() {
 }
 
 void test_OPTDecode() {
-    std::string vocab_file = "./models/OPT_125m/vocab.json";
-    std::string bpe_file = "./models/OPT_125m/merges.txt";
+    std::string bpe_file = "models/opt_merges.txt";
+    std::string vocab_file = "models/opt_vocab.json";
+    ;
 
     Encoder encoder = get_encoder(vocab_file, bpe_file);
     std::vector<int> encoded_answer = {37500, 10,  998, 64, 28, 626, 11,   158, 2007, 2402, 4,  152,  1579,  16,
