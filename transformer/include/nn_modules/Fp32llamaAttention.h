@@ -19,7 +19,7 @@ struct Fp32llamaAttention_input {
         : hidden_states(hidden_states_), attention_mask(attention_mask_), layer_idx(layer_idx_) {}
 
     Fp32llamaAttention_input(Matrix3D<float> hidden_states_, Matrix3D<float> attention_mask_, Matrix3D<float> past_key_,
-                           Matrix3D<float> past_value_, bool has_past_key_value_, int layer_idx_)
+                             Matrix3D<float> past_value_, bool has_past_key_value_, int layer_idx_)
         : hidden_states(hidden_states_),
           attention_mask(attention_mask_),
           past_key(past_key_),

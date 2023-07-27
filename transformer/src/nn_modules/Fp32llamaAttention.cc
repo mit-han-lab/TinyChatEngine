@@ -182,8 +182,6 @@ Fp32llamaAttention::Fp32llamaAttention(std::string param_path, const struct mode
     this->head_dim = config.embed_dim / config.num_heads;
 }
 
-
-
 struct Fp32llamaAttention_output Fp32llamaAttention::forward(const struct Fp32llamaAttention_input &input) {
     PROFILE_START(profile_name);
     struct Fp32llamaAttention_output output;

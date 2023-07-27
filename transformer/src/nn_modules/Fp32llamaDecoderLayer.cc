@@ -13,7 +13,6 @@ void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
     PROFILE_END("int4llamaDecoderLayer::add");
 }
 
-
 void SiLuMul(Matrix3D<float> a, Matrix3D<float> b) {
     PROFILE_START("MulSiLu");
     for (int i = 0; i < a.length(); i++) {

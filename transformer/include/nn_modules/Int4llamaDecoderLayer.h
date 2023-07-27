@@ -1,5 +1,5 @@
-#include "common.h"
 #include "Int4llamaAttention.h"
+#include "common.h"
 #include "operators.h"
 
 struct Int4llamaDecoderLayer_output {

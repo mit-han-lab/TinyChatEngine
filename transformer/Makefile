@@ -12,7 +12,7 @@ BUILDDIR := build/transformer
 PROFILEDIR := build_profile/transformer
 LIB_DIR = ../matmul_optimization/src
 LIB_SRC = $(wildcard $(LIB_DIR)/lib/*.cc)
-INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./json/single_include/
+INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./include/nn_modules -I./json/single_include/
 LIB =
 
 ifeq ($(shell uname -m),x86_64)
@@ -45,6 +45,7 @@ endif
 
 SRC_DIR = src
 SRC = $(wildcard src/*.cc)
+SRC += $(wildcard src/nn_modules/*.cc)
 OPS =  $(wildcard src/ops/*.cc)
 SRC += $(OPS)
 SRC += $(LIB_SRC)
