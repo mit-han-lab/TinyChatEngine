@@ -600,7 +600,6 @@ void test_FPLinear() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 }
 
-// TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
 void test_FPLinear_int4() {
     const int m = 1, n = 32000, k = 4096;
 
@@ -644,8 +643,12 @@ void test_FPLinear_int4() {
         int4_op.forward(hidden_states, outputQ_fast);
         STATS_END("int4_fast");
     }
-
+#ifdef USE_INT8_INT4_PRODUCT
+    // With a8w4, we allow larger error
+    bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 5e-4);
+#else
     bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
+#endif
 
     if (!success)
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;

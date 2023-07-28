@@ -46,7 +46,7 @@ void print_first_k_elelment(std::string name, const int8_t* arr, int k, int star
 void print_first_k_elelment(std::string name, const int32_t* arr, int k, int start_idx = 0);
 void print_first_k_elelment(std::string name, const float* arr, int k, int start_idx = 0);
 
-#ifdef USE_METAL
+#ifdef QM_METAL
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
 #else

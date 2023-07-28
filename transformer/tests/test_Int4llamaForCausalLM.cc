@@ -1,7 +1,7 @@
 #include <chrono>
 #include <cstring>
 
-#include "Int4LlamaForCausalLM.h"
+#include "Int4llamaForCausalLM.h"
 #include "operators.h"
 #include "utils.h"
 #include "utils_memalloc.h"

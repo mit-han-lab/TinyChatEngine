@@ -179,7 +179,7 @@ void print_first_k_elelment(std::string name, const float* arr, int k, int start
     std::cout << std::endl;
 }
 
-#ifdef USE_METAL
+#ifdef QM_METAL
 // If we use metal GPU, let's make all the allocated memory accesible from GPU. We will
 // 1. allocate the memory in to format of MTL::Buffer
 // 2. make a mapping (unordered_map) between MTL::Buffer and memory address
@@ -218,7 +218,7 @@ void allocate_aligned_memory(T*& ptr, size_t size) {
     }
 }
 void deallocate_memory(void* ptr) { free(ptr); }
-#endif
+#endif  // QM_METAL
 
 // Explicitly instantiate the generic template function for other types (if needed)
 template bool check_two_equal<float>(float* array, float* array2, int size);

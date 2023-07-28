@@ -1,23 +1,23 @@
-"""Quantize TinyLLMEngine model to specific methods."""
+"""Quantize LLaMA model to specific Quantization methods.
+
+Usage:
+   python model_quantizer.py --model_path <path to TinyEngine modelt> --method <Quantization method>
+
+Example commandline:
+   python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
+
+"""
 import argparse
 import os
 
 import numpy as np
 from quantize_constants import STORE_FP16
-from quantize_methods import (
-    quantize_row_q4_0,
-    quantize_row_q4_1,
-    quantize_row_q4_2,
-    quantize_row_q4_3,
-    quantize_row_q4_4,
-)
+from quantize_methods import quantize_row_q4_0, quantize_row_q4_2, quantize_row_q4_4
 
 quantization_funcs = {
-    "Q4_0": quantize_row_q4_0,
-    "Q4_1": quantize_row_q4_1,
-    "Q4_2": quantize_row_q4_2,
-    "Q4_3": quantize_row_q4_3,
-    "Q4_4": quantize_row_q4_4,
+    "QM_x86": quantize_row_q4_0,
+    "QM_METAL": quantize_row_q4_2,
+    "QM_ARM": quantize_row_q4_4,
 }
 
 
