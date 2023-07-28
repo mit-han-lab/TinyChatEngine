@@ -42,7 +42,7 @@ class Profiler {
             row += std::to_string(entry.second) + ", ";
             row += std::to_string(entry.second / counts.at(entry.first)) + ", ";
             if (flops.count(entry.first) == 0)
-                row += std::to_string(counts.at(entry.first)) + ", N/A, N/A";
+                row += std::to_string(counts.at(entry.first)) + ", N/A";
             else {
                 row += std::to_string(counts.at(entry.first)) + ", ";
                 // ops and microsecond

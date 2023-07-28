@@ -46,20 +46,28 @@ Example of quantizing a LLaMA model on an Intel laptop:
 python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86
 ```
 
-### Download models from our Model Zoo
+### Download and deploy models from our Model Zoo
 
 We offer a selection of models that have been tested with TinyLLMEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
 
 | Models  | Size | ID | Supported Precision |
 | ------------- | ------------- |  ------------- |  ------------- |
-| LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |  int4 |
-| LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |  int4 |
-| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | int8 |
+| LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |  INT4 |
+| LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |  INT4 |
+| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | INT8 |
 
 For instance, to download the LLaMA-2-7B-chat model:
 
 ```bash
 python download_model.py LLaMA_7B_2_chat
+```
+
+To deploy the model with TinyLLMEngine, please refer to the previous section to quantize the model to spefic quantization method based on your device and then compile the chat program and run it with the model ID and precision.
+
+```
+python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86 # for x86-64
+make chat -j
+./chat LLaMA_7B_2_chat INT4
 ```
 
 ## Step-by-step to deploy LLaMA2-7B-chat with TinyLLMEngine
@@ -78,10 +86,10 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
   python download_model.py LLaMA_7B_2_chat
   python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86 # Use QM_ARM for M1/M2 chips
   ```
-- Compile and run the demo program.
+- Compile and start the chat locally.
   ```bash
-  make demo -j
-  ./demo # demo.exe on Windows
+  make chat -j
+  ./chat # chat.exe on Windows
   Using model: LLaMA7B_2_chat
   Using LLaMA's default data format: INT4
   Loading model... Finished!
