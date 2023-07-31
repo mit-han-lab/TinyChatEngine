@@ -2,6 +2,8 @@
 
 TinyLLMEngine is a powerful neural network library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
 
+![demo](assets/figures/chat.gif)
+
 ## Prerequisites
 
 ### MacOS
