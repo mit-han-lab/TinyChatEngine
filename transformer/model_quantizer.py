@@ -12,10 +12,10 @@ import os
 
 import numpy as np
 from quantize_constants import STORE_FP16
-from quantize_methods import quantize_row_q4_0, quantize_row_q4_2, quantize_row_q4_4
+from quantize_methods import quantize_row_q4_2, quantize_row_q4_3, quantize_row_q4_4
 
 quantization_funcs = {
-    "QM_x86": quantize_row_q4_0,
+    "QM_x86": quantize_row_q4_3,
     "QM_METAL": quantize_row_q4_2,
     "QM_ARM": quantize_row_q4_4,
 }
