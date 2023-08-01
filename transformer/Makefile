@@ -3,8 +3,8 @@ CXX = g++
 CXXFLAGS = -std=c++11 -pthread -Ofast
 
 # Executable and source files
-TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32LlamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4llamaForCausalLM
-PROFILE_TARGET = profile_Fp32LlamaForCausalLM profile_Int4LlamaForCausalLM profile_OPTForCausalLM profile_ops
+TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32llamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4llamaForCausalLM
+PROFILE_TARGET = profile_Fp32llamaForCausalLM profile_Int4llamaForCausalLM profile_OPTForCausalLM profile_ops
 APP_TARGET = chat
 TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
@@ -53,23 +53,6 @@ OPS =  $(wildcard src/ops/*.cc)
 SRC += $(OPS)
 SRC += $(LIB_SRC)
 
-# Check if CUDA is available
-CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
-CUDA_SRCS = $(wildcard $(LIB_DIR)/cuda/*.cu)
-TORCH_DIR = ../matmul_optimization/src/lib/cuda/libtorch
-LDFLAGS =
-
-ifdef CUDA_AVAILABLE
-    $(info CUDA is available)
-	CXX = /usr/local/cuda/bin/nvcc
-# Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-	CXXFLAGS = -std=c++17 -O3 -DCUDA_ENABLE -Xcompiler "-mavx2" -Xcompiler "-pthread" -arch=sm_86
-	SRC += $(CUDA_SRCS)
-# Please modify the paths in the following two lines ('-I/usr/include/python3.8' & '-lpython3.8') according to your Python development environment
-	INCLUDE_DIRS += -I/usr/local/cuda/include -I$(TORCH_DIR)/include -I$(TORCH_DIR)/include/torch/csrc/api/include -I/usr/include/python3.8
-	LDFLAGS += -L$(TORCH_DIR)/lib -ltorch -lc10 -lcudart -L/usr/local/cuda/lib64 -Xlinker -rpath=$(TORCH_DIR)/lib -lpython3.8
-endif
-
 # Default target
 all: $(TARGET)
 
@@ -102,10 +85,10 @@ $(TEST_TARGET): %: tests/%.cc $(OBJS)
 
 # Rule for PROFILE_TARGET
 # Here we define explicit rules for each profile target
-profile_Fp32LlamaForCausalLM: tests/test_Fp32LlamaForCausalLM.cc $(PROFILE_OBJS)
+profile_Fp32llamaForCausalLM: tests/test_Fp32llamaForCausalLM.cc $(PROFILE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
-profile_Int4LlamaForCausalLM: tests/test_Int4llamaForCausalLM.cc $(PROFILE_OBJS)
+profile_Int4llamaForCausalLM: tests/test_Int4llamaForCausalLM.cc $(PROFILE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
 profile_OPTForCausalLM: tests/test_OPTForCausalLM.cc $(PROFILE_OBJS)
