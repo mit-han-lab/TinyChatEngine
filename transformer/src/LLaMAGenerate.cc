@@ -29,7 +29,7 @@ std::vector<int> LLaMAGenerate(void *model_ptr, int model_type, std::string text
         }
     }
 
-    if (interactive) std::cout << "Generated: " << std::endl;
+    if (interactive) std::cout << "ASSISTANT: " << std::endl;
 
     bool has_past_kv = false;
     bool previous_two_hash = false;

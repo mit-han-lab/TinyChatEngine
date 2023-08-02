@@ -23,7 +23,7 @@ std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
     }
 
     if (encoder == NULL) interactive = false;
-    if (interactive) std::cout << "Generated: " << std::endl;
+    if (interactive) std::cout << "ASSISTANT: " << std::endl;
 
     bool has_past_kv = false;
     std::vector<Matrix3D<int8_t>> past_keys, past_values;
