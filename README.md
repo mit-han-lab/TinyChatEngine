@@ -95,7 +95,8 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
   Using model: LLaMA7B_2_chat
   Using LLaMA's default data format: INT4
   Loading model... Finished!
-  Please enter an instruction: Write a syllabus for Operating Systems.
+  USER: Write a syllabus for Operating Systems.
+  ASSISTANT:
   Of course! Here is a sample syllabus for a college-level course on operating systems:
   Course Title: Introduction to Operating Systems
   Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer.
