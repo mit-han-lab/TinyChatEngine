@@ -118,3 +118,6 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
 [MAWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
 
 ## Acknowledgement
+
+[llama.cpp](https://github.com/ggerganov/llama.cpp)
+[transformers](https://github.com/huggingface/transformers)
