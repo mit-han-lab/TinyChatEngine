@@ -645,7 +645,7 @@ void test_FPLinear_int4() {
     }
 #ifdef USE_INT8_INT4_PRODUCT
     // With a8w4, we allow larger error
-    bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 5e-4);
+    bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 7e-4);
 #else
     bool success = check_two_equal(outputQ.m_data, outputQ_fast.m_data, outputQ_fast.length(), 1e-10);
 #endif

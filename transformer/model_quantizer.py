@@ -66,7 +66,7 @@ def _read_weight_from_file(prefix: str):
 
 
 # Quantize model
-def _quantize_model(prefix, method="Q4_0", data_type="fp32"):
+def _quantize_model(prefix, method, data_type="fp32"):
     # Check model name
     model_name_size = prefix.split("/")[-1]
     if model_name_size == "OPT_125m":
@@ -82,7 +82,7 @@ def _quantize_model(prefix, method="Q4_0", data_type="fp32"):
 
     # Check quantization method
     if method not in quantization_funcs:
-        raise ValueError("Invalid quantization method. Expected 'Q4_0', 'Q4_1', 'Q4_2.")
+        raise ValueError(f"Invalid quantization method. Expected one of {quantization_funcs.keys()}")
     quantize_method = quantization_funcs[method]
 
     # Check data type
@@ -374,7 +374,7 @@ def _test():
 
     # Check quantization method
     if method not in quantization_funcs:
-        raise ValueError("Invalid quantization method. Expected 'Q4_0', 'Q4_1', 'Q4_2.")
+        raise ValueError(f"Invalid quantization method. Expected one of {quantization_funcs.keys()}")
     quantize_method = quantization_funcs[method]
 
     # Check data type
@@ -474,4 +474,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # _test()
