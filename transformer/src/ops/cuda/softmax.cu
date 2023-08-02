@@ -54,8 +54,8 @@ __global__ void softmax_cuda(Matrix3D<half> input, Matrix3D<half> output) {
 
     if (i < input.m_dim_x && j < input.m_dim_y) {
         // half max_value = __float2half(-INFINITY);
-        half max_value = __float2half(-65504.0f);
-        half sum = __float2half(0.0f);
+        half max_value = -65504;
+        half sum = 0;
 
         // Find the maximum value in the input array
         for (int k = 0; k < input.m_dim_z; k++) {

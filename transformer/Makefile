@@ -174,8 +174,9 @@ $(APP_TARGET): %: application/%.cc $(OBJS)
 clean:
 	rm -f $(TARGET)
 	rm -rf *.dSYM
-	rm -rf $(BUILDDIR)/../matmul_optimization
+	rm -rf $(BUILDDIR)/$(LIB_DIR)
 	rm -rf $(BUILDDIR)
+	rm -rf $(PROFILEDIR)/$(LIB_DIR)
 	rm -rf $(PROFILEDIR)
 
 	

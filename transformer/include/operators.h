@@ -36,6 +36,7 @@ void linear(Matrix3D<T> &a, Matrix3D<T> &b, Matrix3D<T> &c);
 
 __global__ void batch_Add_float(const Matrix3D<float> input, const Matrix3D<float> input2, Matrix3D<float> output);
 __global__ void batch_Add_cuda(const Matrix3D<float16_t> input, const Matrix3D<float16_t> input2, Matrix3D<float16_t> output);
+__global__ void batch_Add_cuda_half2(Matrix3D<float16_t> input, Matrix3D<float16_t> input2, Matrix3D<float16_t> output);
 __global__ void softmax_float(Matrix3D<float> input, Matrix3D<float> output);
 __global__ void softmax_cuda(Matrix3D<float16_t> input, Matrix3D<float16_t> output);
 #endif

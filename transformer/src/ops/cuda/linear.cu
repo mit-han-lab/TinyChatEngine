@@ -1,5 +1,6 @@
 #include <cassert>
 #include "operators.h"
+#include "utils.h"
 
 // void Linear_half_int4_ref::forward(const Matrix3D<float> &x, Matrix3D<float> &output) {
 //     const int num_thread = 8;
@@ -40,7 +41,7 @@
 //     return;
 // }
 
-void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output) {
+void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output, half *split_8_buffer) {
     const int num_thread = 8;
     Matrix3D<int> b = this->weight;
     // const int m = x.m_dim_y, n = b.m_dim_y, k = x.m_dim_z, b_size = b.m_dim_x;
@@ -73,7 +74,8 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
     params.block_size = QK;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
-    op.gemm_forward_cuda(&params, 1);
+    // op.gemm_forward_cuda(&params, 1);
+    op.gemm_forward_cuda_8splits(&params, split_8_buffer);
 
     PROFILE_END(profile_name);
     return;

@@ -2,7 +2,7 @@
 import numpy as np
 from quantize_constants import STORE_FP16
 
-QK4_0 = 32
+QK4_0 = 128
 QK4_1 = 32
 QK4_2 = 32
 QK4_3 = 32

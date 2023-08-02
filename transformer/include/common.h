@@ -14,7 +14,8 @@
 #define DEBUG_INS(x) \
     if (DEBUG) x
 
-#define QK 32
+#define QK 128
+// #define SPLIT_K_SIZE 8
 
 struct pack_q4_tensor {
     uint8_t qx[QK / 2];

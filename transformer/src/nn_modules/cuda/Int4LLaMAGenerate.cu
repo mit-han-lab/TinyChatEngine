@@ -95,6 +95,9 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
         int sqlen = 1;
         struct Int4LlamaForCausalLM_output model_output;
         // printf("hhhhhhhhhhh\n");
+
+        // auto start_time = std::chrono::high_resolution_clock::now();
+        
         if (has_past_kv) {
             // printf("iiiiiiiiiii\n");
             Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
@@ -109,6 +112,10 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
             struct Int4LlamaForCausalLM_input model_input = {input_ids_mat};
             model_output = model.forward(model_input);
         }
+        // auto end_time = std::chrono::high_resolution_clock::now();
+        // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+        // std::cout << " (" << duration << " us)" << std::endl;
+
         // cudaDeviceSynchronize();
         // printf("aaaaaaaaaa\n");
         past_keys = model_output.past_keys;

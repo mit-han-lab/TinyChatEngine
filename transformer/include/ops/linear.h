@@ -167,7 +167,8 @@ class Linear_half_int4 {
         zero_point.load((weight_path + "/zero_point_int4.bin").c_str());
     };
     Linear_half_int4(){};
-    void forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output);
+    // void forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output);
+    void forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output, half *split_8_buffer);
     Matrix3D<int> weight;
     Matrix3D<float16_t> scale;
     Matrix3D<float16_t> offset;  // TODO: Currently, we don't need offset

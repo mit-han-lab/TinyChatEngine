@@ -35,7 +35,7 @@ __global__ void mat_mul_transposed_cuda(Matrix3D<half> A, Matrix3D<half> B, Matr
         if (i < C.m_dim_y && j < C.m_dim_z) {
             half* data_A = A.m_data, *data_B = B.m_data, *data_C = C.m_data;
 
-            half acc = __float2half(0.0f);
+            half acc = 0;
             for (int k = 0; k < A.m_dim_z; k++) {
                 acc = __hfma(data_A[i * A.m_dim_z + k], data_B[j * B.m_dim_z + k], acc);
             }

@@ -47,6 +47,7 @@ class Int4LlamaForCausalLM {
     Linear_half_int4 lm_head;
     int* lm_head_weight;
     float16_t* logits_output_half;
+    float16_t* split_8_buffer;
 #else
     Linear_FP_int4 lm_head;
     uint8_t* lm_head_weight;

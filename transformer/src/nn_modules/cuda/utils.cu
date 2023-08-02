@@ -125,6 +125,20 @@ __global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int
     }
 }
 
+__global__ void merge_k_iters(half *input, half *output, int N, int split_k_iters) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (index < N) {
+        half sum = 0;
+        for (int j = 0; j < split_k_iters; j++) {
+            // sum += input[index + j * N];
+            sum = __hadd(sum, input[index + j * N]);
+        }
+
+        output[index] = sum;
+    }
+}
+
 // Explicitly instantiate the generic template function for other types (if needed)
 template void allocate_aligned_memory_gpu(float*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(int*& ptr, size_t size);

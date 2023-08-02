@@ -465,6 +465,61 @@ namespace matmul{
     PROFILE_END("gemm_forward_4bit_cuda_m16n128k32");
   }
 
+  void MatmulOperator::gemm_forward_cuda_8splits(const struct matmul_params *params, half *split_8_buffer)
+  {
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+
+    int num_in_feats = A->row;
+    int num_in_channels = A->column;
+    int num_out_feats = C->row;
+    int num_out_channels = C->column;
+
+    half* in_feats = A->half_data_ptr;
+    half* out_feats = C->half_data_ptr;
+    int* kernel = B->int32_data_ptr;
+    half* scaling_factors = params->half_scales;
+    int* zeros = params->int32_zero_point;
+    int group_size = QK;
+
+    int split_k_iters = 8;
+    half* _out_feats = split_8_buffer;
+
+    if (num_out_channels % 64 != 0)
+      throw std::invalid_argument("OC is not multiple of cta_N = 64");
+    if (num_out_channels % 8 != 0)
+      throw std::invalid_argument("OC is not multiple of pack_num = 8");
+    if (group_size % 32 != 0)
+      throw std::invalid_argument("Group size should be a multiple of 32");
+    if (num_out_channels % group_size != 0)
+      throw std::invalid_argument("OC is not multiple of Group size");
+
+
+    PROFILE_START("gemm_forward_4bit_cuda_m16n128k32");
+
+    if (num_out_channels % 128 == 0) {
+      int j_factors1 = num_out_channels / 128 / 1;
+      dim3 num_blocks((num_out_feats + 16 - 1) / 16 * j_factors1 * split_k_iters);
+      dim3 threads_per_block(32, 2);
+      
+      gemm_forward_4bit_cuda_m16n128k32<<<num_blocks, threads_per_block>>>(
+          group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, _out_feats);
+    }
+    else if (num_out_channels % 64 == 0) {
+      int j_factors1 = num_out_channels / 64 / 1;
+      dim3 num_blocks(1 * (num_out_feats + 16 - 1) / 16 * j_factors1 * split_k_iters);
+      dim3 threads_per_block(32, 2);
+
+      gemm_forward_4bit_cuda_m16n64k32<<<num_blocks, threads_per_block>>>(
+          group_size, split_k_iters, in_feats, kernel, scaling_factors, zeros, num_in_feats, num_in_channels, num_out_channels, _out_feats);
+    }
+
+    int threadsPerBlock = 1024;
+    int blocksPerGrid =(num_out_feats * num_out_channels + threadsPerBlock - 1) / threadsPerBlock;
+    merge_k_iters<<<blocksPerGrid, threadsPerBlock>>>(_out_feats, out_feats, num_out_feats * num_out_channels, split_k_iters);
+
+    PROFILE_END("gemm_forward_4bit_cuda_m16n128k32");
+  }
+
   // in_feats: M, IC [float16]
   // kernel: IC, OC // 8 [int32] -> cast to IC, OC [uint4b]
   // scaling_factors: IC // G, OC [float16]

@@ -69,6 +69,7 @@ class Int4llamaDecoderLayer {
 #ifdef USE_CUDA
     LlamaRMSNorm_cuda input_layernorm, post_attention_layernorm;
     Linear_half_int4 gate_proj, down_proj, up_proj;
+    float16_t* split_8_buffer;
 #else
     LlamaRMSNorm input_layernorm, post_attention_layernorm;  // from torch_int.nn
     Linear_FP_int4 gate_proj, down_proj, up_proj;

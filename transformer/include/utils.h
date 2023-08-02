@@ -76,6 +76,7 @@ void allocate_aligned_memory_gpu(T*& ptr, size_t size);
 __global__ void float2half(float* floatArray, half* halfArray, int N);
 __global__ void half2float(half* halfArray, float* floatArray, int N);
 __global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int N, int split_k_iters);
+__global__ void merge_k_iters(half *input, half *output, int N, int split_k_iters);
 #endif
 
 #endif

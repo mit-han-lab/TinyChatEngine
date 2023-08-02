@@ -113,6 +113,7 @@ class MatmulOperator {
     // cuda
     void mat_mul_cuda(const struct matmul_params *params);
     void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters);
+    void gemm_forward_cuda_8splits(const struct matmul_params *params, float16_t *split_8_buffer);
     void gemm_forward_cuda_half(const struct matmul_params *params, int split_k_iters);
     void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
 

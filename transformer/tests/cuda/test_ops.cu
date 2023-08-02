@@ -640,12 +640,15 @@ void test_FP16Linear_int4() {
     allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
     Matrix3D<half> outputQ_cuda(outputQ_cuda_arr, 1, m, n);
 
+    half *split_k_buffer;
+    allocate_aligned_memory_gpu(split_k_buffer, (m * n * 8 * sizeof(half)));
+
     const int flops = k * m * n * 2;
     STATS_FLOPS("int4_ref", flops);
     int4_op_ref.forward_ref(hidden_states_ref, outputQ_ref);
     STATS_END("int4_ref");
     STATS_FLOPS("int4_fast", flops);
-    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda);
+    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda, split_k_buffer);
     cudaDeviceSynchronize();
     STATS_END("int4_fast");
 
@@ -655,6 +658,14 @@ void test_FP16Linear_int4() {
         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
     else
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    // Free memory
+    cudaFree(hidden_states_ref_arr);
+    cudaFree(hidden_states_cuda_arr);
+    cudaFree(int4_weight_cuda_arr);
+    cudaFree(outputQ_ref_arr);
+    cudaFree(outputQ_cuda_arr);
+    cudaFree(split_k_buffer);
 }
 
 // // TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4

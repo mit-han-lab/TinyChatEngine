@@ -1,6 +1,5 @@
 #include "Int4llamaDecoderLayer.h"
 #include "utils.h"
-// #include "utils.cuh"
 
 // Shared memory space across all layers
 static float16_t *hidden_states_half_arr;
@@ -55,6 +54,8 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
         allocate_aligned_memory_gpu(down_proj_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
         allocate_aligned_memory_gpu(hidden_states_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
         Int4llamaAttention::initialized_memory(config);
+
+        allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.hidden_dim * sizeof(float16_t) * 8);
     }
 
     float *input_layernorm_weight_ptr;
@@ -91,13 +92,38 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
 
 struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct Int4llamaDecoderLayer_input &input) {
     PROFILE_START(profile_name);
+    
+    // cudaEvent_t start, stop;
+    // cudaEventCreate(&start);
+    // cudaEventCreate(&stop);
+    // float milliseconds = 0;
+
+
+    // cudaEventRecord(start);
+
     Matrix3D<float16_t> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                   input.hidden_states.m_dim_z);
     this->input_layernorm.forward(input.hidden_states, hidden_states);
 
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("input_layernorm.forward: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
+
     struct Int4llamaAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
                                                input.has_past_key_value, this->layer_idx);
     struct Int4llamaAttention_output attn_output = this->attn.forward(attn_param);
+
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("this->attn.forward: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
 
     Matrix3D<float16_t> residual_add(hidden_states_half_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                  input.hidden_states.m_dim_z);
@@ -105,29 +131,86 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct 
     int blocksPerGrid =(input.hidden_states.length() + threadsPerBlock - 1) / threadsPerBlock;
     add_half<<<blocksPerGrid, threadsPerBlock>>>(input.hidden_states, attn_output.attn_output, residual_add);
 
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("add_half: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
+
     Matrix3D<float16_t> post_attention_layernorm(final_layer_norm_arr, input.hidden_states.m_dim_x,
                                              input.hidden_states.m_dim_y, input.hidden_states.m_dim_z);
     this->post_attention_layernorm.forward(residual_add, post_attention_layernorm);
 
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("post_attention_layernorm.forward: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
+
     Matrix3D<float16_t> gate_proj(gate_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                               this->hidden_dim);
-    this->gate_proj.forward(post_attention_layernorm, gate_proj);
+    this->gate_proj.forward(post_attention_layernorm, gate_proj, split_8_buffer);
+
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("gate_proj.forward: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
 
     Matrix3D<float16_t> up_proj(up_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
-    this->up_proj.forward(post_attention_layernorm, up_proj);
+    this->up_proj.forward(post_attention_layernorm, up_proj, split_8_buffer);
+
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("up_proj.forward: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
 
     int blocksPerGrid2 =(gate_proj.length() + threadsPerBlock - 1) / threadsPerBlock;
     SiLuMul_half<<<blocksPerGrid2, threadsPerBlock>>>(gate_proj, up_proj);
 
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("SiLuMul_half: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
+
     Matrix3D<float16_t> down_proj(down_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->embed_dim);
-    this->down_proj.forward(gate_proj, down_proj);
+    this->down_proj.forward(gate_proj, down_proj, split_8_buffer);
+
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("down_proj.forward: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
+    // cudaEventRecord(start);
 
     int blocksPerGrid3 =(residual_add.length() + threadsPerBlock - 1) / threadsPerBlock;
     add_half<<<blocksPerGrid3, threadsPerBlock>>>(residual_add, down_proj, residual_add);
 
+    // cudaEventRecord(stop);
+    // cudaEventSynchronize(stop);
+    // cudaEventElapsedTime(&milliseconds, start, stop);
+    // printf("add_half: %.2f ms\n", milliseconds * this->num_attention_heads);
+
+
     struct Int4llamaDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped,
                                                attn_output.past_key_value);
     PROFILE_END(profile_name);
+
+    // cudaEventDestroy(start);
+    // cudaEventDestroy(stop);
 
     return output;
 }
