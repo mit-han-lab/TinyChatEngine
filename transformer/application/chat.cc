@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             while (true) {
-                std::cout << "Please enter an instruction: ";
+                std::cout << "USER: ";
                 std::string input;
                 std::getline(std::cin, input);
                 input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             while (true) {
-                std::cout << "Please enter an instruction: ";
+                std::cout << "USER: ";
                 std::string input;
                 std::getline(std::cin, input);
                 input = "A chat between a human and an assistan.\n\n### Human: " + input + "\n### Assistant: \n";
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
         Encoder encoder = get_encoder(vocab_file, bpe_file);
 
         // Get input from the user
-        std::cout << "Please enter an instruction: ";
+        std::cout << "USER: ";
         std::string input;
         std::getline(std::cin, input);
         std::vector<int> input_ids = encoder.encode(input);

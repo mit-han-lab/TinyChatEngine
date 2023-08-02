@@ -116,3 +116,5 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
 [Smoothquant](https://github.com/mit-han-lab/smoothquant).
 
 [MAWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
+
+## Acknowledgement
