@@ -42,10 +42,16 @@ Different target devices require different quantization methods due to the varia
 | Intel/AMD |  x86-64  | QM_x86  |
 | M1/M2 Mac | arm | QM_ARM  |
 
-Example of quantizing a LLaMA model on an Intel laptop:
+Example of quantizing a LLaMA model for a Intel/AMD laptop:
 
 ```bash
-python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86
+python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86 --output_path INT4/
+```
+
+Example of quantizing a LLaMA model for a M1/M2 Macbook:
+
+```bash
+python model_quantizer.py --model_path models/LLaMA_7B --method QM_ARM --output_path INT4/
 ```
 
 ### Download and deploy models from our Model Zoo
@@ -58,16 +64,20 @@ We offer a selection of models that have been tested with TinyLLMEngine. These m
 | LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |  INT4 |
 | OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | INT8 |
 
-For instance, to download the LLaMA-2-7B-chat model:
+For instance, to download the quantized LLaMA-2-7B-chat model:
 
-```bash
-python download_model.py LLaMA_7B_2_chat
+- On a Intel/AMD latptop:
+  ```bash
+  python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+  ```
+- On a M1/M2 Macbook:
+  ```bash
+  python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
+  ```
+
+To deploy the quantized model with TinyLLMEngine, compile the chat program and run it with the model ID and precision.
+
 ```
-
-To deploy the model with TinyLLMEngine, please refer to the previous section to quantize the model to spefic quantization method based on your device and then compile the chat program and run it with the model ID and precision.
-
-```
-python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86 # for x86-64
 make chat -j
 ./chat LLaMA_7B_2_chat INT4
 ```
@@ -81,13 +91,18 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
   # pull repo
   git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
   ```
-- Download the LLaMA2-7B-chat model from our model zoo and and quantize it to int4 format.
+- Download the quantized LLaMA2-7B-chat model from our model zoo.
   ```bash
   cd TinyLLMEngine/transformer
-  # download and convert the AWQ model to int4 format, this will take a while...
-  python download_model.py LLaMA_7B_2_chat
-  python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86 # Use QM_ARM for M1/M2 chips
   ```
+  - On a x86 device (e.g., Intel/AMD laptop)
+    ```bash
+    python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
+    ```
+  - On a ARM device (e.g., M1/M2 Macbook)
+    ```bash
+    python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+    ```
 - Compile and start the chat locally.
   ```bash
   make chat -j
@@ -116,7 +131,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
 
 [Smoothquant](https://github.com/mit-han-lab/smoothquant).
 
-[MAWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
+[AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
 
 ## Acknowledgement
 
