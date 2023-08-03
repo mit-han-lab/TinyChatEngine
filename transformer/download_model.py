@@ -1,10 +1,10 @@
 """Python script to download model binaries.
 
 Usage:
-   python download_model.py <model_id>
+   python download_model.py --model <model_id> --QM <method>
 
 Example commandline:
-   python download_model.py LLaMA_7B_2_chat
+   python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
 """
 import argparse
 import hashlib
@@ -61,16 +61,16 @@ Qmodels = {
     },
     "QM_x86": {
         "LLaMA_7B_AWQ": {
-            "url": "",
-            "md5sum": "",
+            "url": "https://www.dropbox.com/scl/fi/qs2pk2gangeim1f7iafg7/LLaMA_7B_AWQ.zip?rlkey=ofe1mz4rz5xvgph9tk3s826vy&dl=1",  # noqa: E501
+            "md5sum": "9f7750a5c58cdbf36fe9f20dffbba4b0",
         },
         "LLaMA_7B": {
-            "url": "",  # noqa: E501
-            "md5sum": "",
+            "url": "https://www.dropbox.com/scl/fi/i7yqzwr94wki2kywh9emr/LLaMA_7B.zip?rlkey=ce5j5p03wlwz5xdjrwuetxp4h&dl=1",  # noqa: E501
+            "md5sum": "08c118ec34645808cd2d21678ad33659",
         },
         "LLaMA_7B_2_chat": {
-            "url": "",  # noqa: E501
-            "md5sum": "",
+            "url": "https://www.dropbox.com/scl/fi/vu7wnes1c7gkcegg854ys/LLaMA_7B_2_chat.zip?rlkey=q61o8fpc954g1ke6g2eaot7cf&dl=1",  # noqa: E501
+            "md5sum": "18f2193ccb393c7bca328f42427ef233",
         },
     },
 }
@@ -101,14 +101,14 @@ def _download_file(url, filepath):
             print(f"Failed to download the file. HTTP status code: {response.status_code}")
 
 
-def _unzip_file(filepath):
+def _unzip_file(filepath, model_dir):
     print(f"Start unzip the model: {filepath}...")
     # Check if the file is a zip file
     if zipfile.is_zipfile(filepath):
         # Create a ZipFile object
         with zipfile.ZipFile(filepath, "r") as zip_ref:
             # Extract all the contents of the zip file in the current directory
-            zip_ref.extractall("models/")
+            zip_ref.extractall(model_dir)
             print(f"File unzipped successfully: {filepath}")
     else:
         print(f"The file is not a zip file: {filepath}")
@@ -141,9 +141,9 @@ def _main():
         if args.QM == "fp32":
             model_table = models
             model_dir = MODEL_DIR
-        elif args.QM == ["QM_ARM", "QM_x86"]:
+        elif args.QM in ["QM_ARM", "QM_x86"]:
             model_table = Qmodels[args.QM]
-            model_dir = "./"
+            model_dir = "."
         else:
             raise NotImplementedError(f"{args.QM} is not supported.")
     else:
@@ -162,7 +162,7 @@ def _main():
 
         if actual_md5sum == expected_md5sum:
             print("The md5sum of the file matches the expected md5sum.")
-            _unzip_file(filepath)  # Unzip the file
+            _unzip_file(filepath, model_dir)  # Unzip the file
             _remove_file(filepath)  # Remove the zip file
         else:
             print(
