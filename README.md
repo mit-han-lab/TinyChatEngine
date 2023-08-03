@@ -65,14 +65,15 @@ We offer a selection of models that have been tested with TinyLLMEngine. These m
 | OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | INT8 |
 
 For instance, to download the quantized LLaMA-2-7B-chat model:
-  * On a Intel/AMD latptop:
-    ```bash
-    python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
-    ```
-  * On a M1/M2 Macbook:
-    ```bash
-    python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
-    ```
+
+- On a Intel/AMD latptop:
+  ```bash
+  python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+  ```
+- On a M1/M2 Macbook:
+  ```bash
+  python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
+  ```
 
 To deploy the quantized model with TinyLLMEngine, compile the chat program and run it with the model ID and precision.
 
@@ -94,11 +95,11 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
   ```bash
   cd TinyLLMEngine/transformer
   ```
-  - On a Intel/AMD laptop
+  - On a x86 device (e.g., Intel/AMD laptop)
     ```bash
     python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
     ```
-  - On a M1/M2 Macbook
+  - On a ARM device (e.g., M1/M2 Macbook)
     ```bash
     python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
     ```
