@@ -44,6 +44,37 @@ models = {
     },
 }
 
+Qmodels = {
+    "QM_ARM": {
+        "LLaMA_7B_AWQ": {
+            "url": "https://www.dropbox.com/scl/fi/y63qpsr5y2o2xka52wmem/LLaMA_7B_AWQ.zip?rlkey=dqnys72t6h27p64lx2bzcymjq&dl=1",  # noqa: E501
+            "md5sum": "fd866ff3a2c4864318294b76274d10fe",
+        },
+        "LLaMA_7B": {
+            "url": "https://www.dropbox.com/scl/fi/92yg27e0p21izx7lalryb/LLaMA_7B.zip?rlkey=97m442isg29es3ddon66nwfmy&dl=1",  # noqa: E501
+            "md5sum": "4118dca49c39547929d9e02d67838153",
+        },
+        "LLaMA_7B_2_chat": {
+            "url": "https://www.dropbox.com/scl/fi/1trpw92vmh4czvl28hkv0/LLaMA_7B_2_chat.zip?rlkey=dy1pdek0147gnuxdzpodi6pkt&dl=1",  # noqa: E501
+            "md5sum": "af20c96de302c503a9fcfd5877ed0600",
+        },
+    },
+    "QM_x86": {
+        "LLaMA_7B_AWQ": {
+            "url": "",
+            "md5sum": "",
+        },
+        "LLaMA_7B": {
+            "url": "",  # noqa: E501
+            "md5sum": "",
+        },
+        "LLaMA_7B_2_chat": {
+            "url": "",  # noqa: E501
+            "md5sum": "",
+        },
+    },
+}
+
 
 def _download_file(url, filepath):
     # Create a session
@@ -101,15 +132,30 @@ def _md5(filepath):
 
 def _main():
     parser = argparse.ArgumentParser(description="Download a file and check its md5sum")
-    parser.add_argument("model", help="The name of the file to download")
+    parser.add_argument("--model", help="The name of the file to download.")
+    parser.add_argument("--QM", default="fp32", help="Quantization method.")
 
     args = parser.parse_args()
 
-    if args.model in models:
-        url = models[args.model]["url"]
-        expected_md5sum = models[args.model]["md5sum"]
+    if args.model.startswith("LLaMA"):
+        if args.QM == "fp32":
+            model_table = models
+            model_dir = MODEL_DIR
+        elif args.QM == ["QM_ARM", "QM_x86"]:
+            model_table = Qmodels[args.QM]
+            model_dir = "./"
+        else:
+            raise NotImplementedError(f"{args.QM} is not supported.")
+    else:
+        # OPT
+        model_table = models
+        model_dir = MODEL_DIR
 
-        filepath = f"{MODEL_DIR}/{args.model}.zip"  # Save the file in the current directory
+    if args.model in model_table:
+        url = model_table[args.model]["url"]
+        expected_md5sum = model_table[args.model]["md5sum"]
+
+        filepath = f"{model_dir}/{args.model}.zip"  # Save the file in the current directory
         _download_file(url, filepath)
 
         actual_md5sum = _md5(filepath)
