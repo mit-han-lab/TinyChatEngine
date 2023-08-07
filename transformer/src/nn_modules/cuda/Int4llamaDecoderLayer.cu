@@ -28,9 +28,11 @@ __global__ void add_half(Matrix3D<float16_t> a, Matrix3D<float16_t> b, Matrix3D<
 __global__ void SiLuMul_half(Matrix3D<float16_t> a, Matrix3D<float16_t> b) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
 
+    half scalar_one = 1;
+
     if (i < a.length()) {
         float16_t v = a.m_data[i];
-        float16_t silu_v = __hmul(v, __hdiv(__float2half(1.0f), __hadd(__float2half(1.0f), hexp(__hneg(v)))));
+        float16_t silu_v = __hmul(v, __hdiv(scalar_one, __hadd(scalar_one, hexp(__hneg(v)))));
         a.m_data[i] = __hmul(silu_v, b.m_data[i]);
     }
 }

@@ -116,7 +116,6 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
         // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
         // std::cout << " (" << duration << " us)" << std::endl;
 
-        // cudaDeviceSynchronize();
         // printf("aaaaaaaaaa\n");
         past_keys = model_output.past_keys;
         // printf("bbbbbbbbbb\n");

@@ -283,11 +283,11 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
         int past_block = input.past_key.m_dim_y * input.past_key.m_dim_z;
         int sq_block = sqlen * this->head_dim;
         for (int i = 0; i < input.past_key.m_dim_x; i++) {
-            cudaMemcpyAsync(val_ptr, &input.past_value.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyHostToDevice);
+            cudaMemcpyAsync(val_ptr, &input.past_value.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
             val_ptr += past_block;
             cudaMemcpyAsync(val_ptr, &value_states.m_data[sq_block * i], sq_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
             val_ptr += sq_block;
-            cudaMemcpyAsync(key_ptr, &input.past_key.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyHostToDevice);
+            cudaMemcpyAsync(key_ptr, &input.past_key.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
             key_ptr += past_block;
             cudaMemcpyAsync(key_ptr, &key_states.m_data[sq_block * i], sq_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
             key_ptr += sq_block;
@@ -356,6 +356,8 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // cudaEventElapsedTime(&milliseconds, start, stop);
     // printf("softmax_cuda: %.2f ms\n", milliseconds * this->num_heads);
 
+
+    /* Legacy Implementation of PV_BMM*/
     // cudaEventRecord(start);
     // PROFILE_START(profile_name + "::transpose_1_2idx_cuda");
     Matrix3D<float16_t> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
@@ -379,6 +381,18 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // cudaEventSynchronize(stop);
     // cudaEventElapsedTime(&milliseconds, start, stop);
     // printf("pv_bmm.forward: %.2f ms\n", milliseconds * this->num_heads);
+
+    // /* Optimized Implementation of PV_BMM*/
+    // // cudaEventRecord(start);
+    // // PROFILE_START(profile_name + "::pv_bmm");
+    // Matrix3D<float16_t> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
+    // this->pv_bmm.forward_weight_untransposed(attn_probs, final_value_states, attn_output);
+    // // PROFILE_END(profile_name + "::pv_bmm");
+    // // cudaEventRecord(stop);
+    // // cudaEventSynchronize(stop);
+    // // cudaEventElapsedTime(&milliseconds, start, stop);
+    // // printf("pv_bmm.forward: %.2f ms\n", milliseconds * this->num_heads);
+
 
     // cudaEventRecord(start);
     // PROFILE_START(profile_name + "::unshape_cuda");
