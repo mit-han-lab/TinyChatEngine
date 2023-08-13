@@ -48,6 +48,7 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     this->padding_idx = config.padding_idx;
 
     // Embedding
+    // Matrix3D<float> embweight(embweight_buf, 1, voc_size, embed_dim);
     Matrix3D<float> embweight(new float[voc_size * embed_dim], 1, voc_size, embed_dim);
     this->embed_tokens = Embedding(embed_dim, voc_size, padding_idx, embweight);
     load_Embedding_params(this->embed_tokens, param_path + "/embed_tokens");
@@ -55,7 +56,6 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     // this->embed_tokens = Embedding_cuda(embed_dim, voc_size, padding_idx, embweight);
     // load_Embedding_params_cuda(this->embed_tokens, param_path + "/embed_tokens");
 
-    float *norm_weight_ptr;
     allocate_aligned_memory_gpu(norm_weight_ptr, embed_dim * sizeof(float));
     Matrix3D<float> norm_weight(norm_weight_ptr, 1, 1, embed_dim);
     norm_weight.load((param_path + "/norm/weight.bin").c_str());
@@ -123,18 +123,13 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
             past_keys.push_back(l_o.past_key_value.first);
             past_values.push_back(l_o.past_key_value.second);
         } else {
-            // printf("77777777777\n");
             struct Int4llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask, input.past_keys[i],
                                                       input.past_values[i]};
-            // printf("88888888888\n");
             struct Int4llamaDecoderLayer_output l_o = this->layers[i].forward(l_i);
-            // printf("99999999999\n");
+            
             hidden_states = l_o.hidden_states;
-            // printf("zzzzzzzzzzz\n");
             past_keys.push_back(l_o.past_key_value.first);
-            // printf("yyyyyyyyyyy\n");
             past_values.push_back(l_o.past_key_value.second);
-            // printf("xxxxxxxxxxxx\n");
         }
     }
 
@@ -154,4 +149,13 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
     // cudaEventDestroy(stop);
 
     return output;
+}
+
+void Int4llamaDecoder::free_cuda_memory() {
+    free_aligned_memory_gpu(attention_mask_buf);
+    free_aligned_memory_gpu(last_hidden_states_buf);
+    free_aligned_memory_gpu(hidden_states_buf);
+    free_aligned_memory_gpu(hidden_states_half_buf);
+    free_aligned_memory_gpu(norm_weight_ptr);
+    // free_aligned_memory_gpu(embweight_buf);
 }

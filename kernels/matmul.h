@@ -1,3 +1,5 @@
+#ifndef MATMUL_H
+#define MATMUL_H
 #include <stdint.h>
 #include <sys/time.h>
 
@@ -123,3 +125,5 @@ class MatmulOperator {
     void CHECK_MATRICES_int4weight(const struct matrix *A, const struct matrix *B, const struct matrix *C);
 };
 }  // namespace matmul
+
+#endif

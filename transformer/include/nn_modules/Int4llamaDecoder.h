@@ -40,6 +40,8 @@ class Int4llamaDecoder {
    public:
     Int4llamaDecoder(std::string param_path, const struct model_config config);
     Int4llamaDecoder(){};
+    void free_cuda_memory();
+
     Matrix3D<float> prepare_decoder_attention_mask(int length, int past_length);
     struct Int4llamaDecoder_output forward(const struct Int4llamaDecoder_input& input);
     int voc_size, embed_dim, padding_idx, hidden_dim, num_heads;
@@ -49,22 +51,20 @@ class Int4llamaDecoder {
     // Embedding_cuda embed_tokens;
     Embedding embed_tokens;
     LlamaRMSNorm_cuda norm;
+
+    float16_t* attention_mask_buf = nullptr;
+    float16_t* last_hidden_states_buf = nullptr;
+    float* hidden_states_buf = nullptr;
+    float16_t* hidden_states_half_buf = nullptr;
+    // float* embweight_buf = nullptr;
 #else
     Embedding embed_tokens;
     LlamaRMSNorm norm;
-#endif
 
-   private:
-#ifdef USE_CUDA
-    float16_t* attention_mask_buf;
-    float16_t* last_hidden_states_buf;
-    float* hidden_states_buf;
-    float16_t* hidden_states_half_buf;
-    // float* embweight_buf;
-#else
     float* attention_mask_buf;
     float* pos_embeds_buf;
     float* last_hidden_states_buf;
     float* hidden_states_buf;
 #endif
+    float *norm_weight_ptr = nullptr;
 };

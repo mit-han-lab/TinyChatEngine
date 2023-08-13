@@ -4,6 +4,23 @@
 #include "operators.h"
 #include "utils.h"
 
+static void Int4LLaMAFreeMemory() {
+    // Int4llamaDecoder
+    Int4llamaDecoder llamaDecoder;
+    llamaDecoder.free_cuda_memory();
+
+    // Int4llamaDecoderLayer
+    Int4llamaDecoderLayer llamaDecoderLayer;
+    llamaDecoderLayer.free_cuda_memory();
+
+    // Int4llamaAttention
+    Int4llamaAttention llamaAttention;
+    llamaAttention.free_cuda_memory();
+
+    // split_k_buffer
+    free_aligned_memory_gpu(split_8_buffer);
+}
+
 void test_Decoder() {
     const struct model_config llama7B = llama_7B;
     const int sqlen = 9, b = 1, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads, num_layers = llama7B.num_layers;
@@ -76,12 +93,13 @@ void test_Decoder() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 
     // Free memory
-    cudaFree(buffer_1);
-    cudaFree(buffer_2);
-    cudaFree(buffer_3);
-    cudaFree(buffer_4);
-    cudaFree(buffer_5);
-    cudaFree(buffer_6);
+    free_aligned_memory_gpu(buffer_1);
+    free_aligned_memory_gpu(buffer_2);
+    free_aligned_memory_gpu(buffer_3);
+    free_aligned_memory_gpu(buffer_4);
+    free_aligned_memory_gpu(buffer_5);
+    free_aligned_memory_gpu(buffer_6);
+    Int4LLaMAFreeMemory();
 }
 
 int main() { test_Decoder(); }

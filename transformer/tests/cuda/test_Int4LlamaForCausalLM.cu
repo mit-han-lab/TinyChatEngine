@@ -5,6 +5,26 @@
 #include "operators.h"
 #include "utils.h"
 
+static void Int4LLaMAFreeMemory() {
+    // Int4LlamaForCausalLM
+    Int4LlamaForCausalLM LlamaForCausalLM;
+    LlamaForCausalLM.free_cuda_memory();
+
+    // Int4llamaDecoder
+    Int4llamaDecoder llamaDecoder;
+    llamaDecoder.free_cuda_memory();
+
+    // Int4llamaDecoderLayer
+    Int4llamaDecoderLayer llamaDecoderLayer;
+    llamaDecoderLayer.free_cuda_memory();
+
+    // Int4llamaAttention
+    Int4llamaAttention llamaAttention;
+    llamaAttention.free_cuda_memory();
+
+    free_aligned_memory_gpu(split_8_buffer);
+}
+
 void test_Int4LlamaForCausalLM() {
     struct model_config config = get_opt_model_config(LLaMA_7B);
     const int voc_size = config.vocsize, sqlen = 9, b = 1;
@@ -52,10 +72,11 @@ void test_Int4LlamaForCausalLM() {
         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 
     // Free memory
-    cudaFree(buffer_1);
-    cudaFree(buffer_2);
-    cudaFree(buffer_3);
-    cudaFree(buffer_4);
+    free_aligned_memory_gpu(buffer_1);
+    free_aligned_memory_gpu(buffer_2);
+    free_aligned_memory_gpu(buffer_3);
+    free_aligned_memory_gpu(buffer_4);
+    Int4LLaMAFreeMemory();
 }
 
 int main() { test_Int4LlamaForCausalLM(); }

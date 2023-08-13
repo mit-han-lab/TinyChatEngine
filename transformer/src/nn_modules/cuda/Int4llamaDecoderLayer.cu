@@ -2,12 +2,12 @@
 #include "utils.h"
 
 // Shared memory space across all layers
-static float16_t *hidden_states_half_arr;
-static float16_t *final_layer_norm_arr;
-static float16_t *gate_proj_arr;
-static float16_t *up_proj_arr;
-static float16_t *down_proj_arr;
-static float16_t *hidden_states_arr;
+static float16_t *hidden_states_half_arr = nullptr;
+static float16_t *final_layer_norm_arr = nullptr;
+static float16_t *gate_proj_arr = nullptr;
+static float16_t *up_proj_arr = nullptr;
+static float16_t *down_proj_arr = nullptr;
+static float16_t *hidden_states_arr = nullptr;
 
 __global__ void add_half(Matrix3D<float16_t> a, Matrix3D<float16_t> b, Matrix3D<float16_t> c) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
@@ -56,17 +56,18 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
         allocate_aligned_memory_gpu(down_proj_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
         allocate_aligned_memory_gpu(hidden_states_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
         Int4llamaAttention::initialized_memory(config);
+        // Int4llamaAttention llamaAttention;
+        // llamaAttention.initialized_memory(config);
 
-        allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.hidden_dim * sizeof(float16_t) * 8);
+        // allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.hidden_dim * sizeof(float16_t) * 8);
+        // printf("config.max_sqlen, config.hidden_dim: %d, %d\n", config.max_sqlen, config.hidden_dim);
     }
 
-    float *input_layernorm_weight_ptr;
     allocate_aligned_memory_gpu(input_layernorm_weight_ptr, config.embed_dim * sizeof(float));
     Matrix3D<float> input_layernorm_weight(input_layernorm_weight_ptr, 1, 1, config.embed_dim);
     input_layernorm_weight.load((param_path + "/input_layernorm/weight.bin").c_str());
     this->input_layernorm = LlamaRMSNorm_cuda(input_layernorm_weight);
 
-    float *post_attention_layernorm_ptr;
     allocate_aligned_memory_gpu(post_attention_layernorm_ptr, config.embed_dim * sizeof(float));
     Matrix3D<float> post_attention_layernorm_weight(post_attention_layernorm_ptr, 1, 1, config.embed_dim);
     post_attention_layernorm_weight.load((param_path + "/post_attention_layernorm/weight.bin").c_str());
@@ -79,7 +80,6 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
 
     this->attn = Int4llamaAttention(param_path + "/self_attn", config);
 
-    int *gate_proj_weight, *down_proj_weight, *up_proj_weight;
     allocate_aligned_memory_gpu(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(up_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
@@ -90,7 +90,6 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     this->up_proj = Linear_half_int4(Matrix3D<int>(up_proj_weight, 1, config.hidden_dim / 8, config.embed_dim),
                                    (param_path + "/up_proj"));
 }
-
 
 struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct Int4llamaDecoderLayer_input &input) {
     PROFILE_START(profile_name);
@@ -215,4 +214,18 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct 
     // cudaEventDestroy(stop);
 
     return output;
+}
+
+void Int4llamaDecoderLayer::free_cuda_memory() {
+    free_aligned_memory_gpu(hidden_states_half_arr);
+    free_aligned_memory_gpu(final_layer_norm_arr);
+    free_aligned_memory_gpu(gate_proj_arr);
+    free_aligned_memory_gpu(up_proj_arr);
+    free_aligned_memory_gpu(down_proj_arr);
+    free_aligned_memory_gpu(hidden_states_arr);
+    free_aligned_memory_gpu(input_layernorm_weight_ptr);
+    free_aligned_memory_gpu(post_attention_layernorm_ptr);
+    free_aligned_memory_gpu(gate_proj_weight);
+    free_aligned_memory_gpu(down_proj_weight);
+    free_aligned_memory_gpu(up_proj_weight);
 }

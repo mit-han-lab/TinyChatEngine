@@ -6,22 +6,22 @@
 #include "operators.h"
 #include "utils.h"
 
-static float16_t *attn_weights_arr;
-static float16_t *attn_output_half_arr;
-static float16_t *query_states_unshape_arr;
-static float16_t *attn_output_arr;
-static float16_t *attn_output_transpose_arr;
-static float16_t *key_states_unshape_arr;
-static float16_t *key_states_arr;
-static float16_t *value_states_unshape_arr;
-static float16_t *value_states_arr;
-static float16_t *query_states_arr;
-static float16_t *value_states_transpose_arr;
-static float16_t *key_states_arr_cache;
-static float16_t *value_states_arr_cache;
-static int *cache_num;
+static float16_t *attn_weights_arr = nullptr;
+static float16_t *attn_output_half_arr = nullptr;
+static float16_t *query_states_unshape_arr = nullptr;
+static float16_t *attn_output_arr = nullptr;
+static float16_t *attn_output_transpose_arr = nullptr;
+static float16_t *key_states_unshape_arr = nullptr;
+static float16_t *key_states_arr = nullptr;
+static float16_t *value_states_unshape_arr = nullptr;
+static float16_t *value_states_arr = nullptr;
+static float16_t *query_states_arr = nullptr;
+static float16_t *value_states_transpose_arr = nullptr;
+static float16_t *key_states_arr_cache = nullptr;
+static float16_t *value_states_arr_cache = nullptr;
+static int *cache_num = nullptr;
 
-static float16_t* split_8_buffer;
+// static float16_t* split_8_buffer;
 
 void Int4llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory_gpu(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float16_t));
@@ -42,7 +42,9 @@ void Int4llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory_gpu(key_states_arr_cache, config.num_layers * 2 * config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(value_states_arr_cache, config.num_layers * 2 * config.max_sqlen * config.embed_dim * sizeof(float16_t));
 
-    allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.embed_dim * sizeof(float16_t) * 8);
+    // allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.embed_dim * sizeof(float16_t) * 8);
+    allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.vocsize * sizeof(float16_t) * 8);
+    // printf("config.max_sqlen, config.embed_dim: %d, %d\n", config.max_sqlen, config.embed_dim);
 }
 
 template <typename T>
@@ -68,7 +70,6 @@ __global__ void unshape_cuda(Matrix3D<T> shaped, Matrix3D<T> unshape, int num_he
 }
 
 Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config) {
-    int *q_weight, *k_weight, *v_weight, *o_weight;
     allocate_aligned_memory_gpu(q_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(k_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(v_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
@@ -83,18 +84,17 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
     this->o_proj = Linear_half_int4(Matrix3D<int>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/o_proj");
 
-    float *cos_buf, *sin_buf;
-    allocate_aligned_memory_gpu(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
-    allocate_aligned_memory_gpu(sin_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
-    Matrix3D<float> cos(cos_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
-    Matrix3D<float> sin(sin_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
+    allocate_aligned_memory_gpu(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(half));
+    allocate_aligned_memory_gpu(sin_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(half));
+    Matrix3D<half> cos(cos_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
+    Matrix3D<half> sin(sin_buf, 1, config.max_sqlen, (config.embed_dim / config.num_heads));
 
     this->rotary_pos_emb = RotaryPosEmb_cuda(cos, sin, param_path + "/rotary_emb");
 
-    float qk_bmm_alpha;
-    read_to_array((param_path + "/qk_bmm/alpha.bin").c_str(), &qk_bmm_alpha, 1);
+    half qk_bmm_alpha;
+    read_to_array_half((param_path + "/qk_bmm/alpha_half.bin").c_str(), &qk_bmm_alpha, 1);
     this->qk_bmm = BMM_F16T(qk_bmm_alpha);
-    this->pv_bmm = BMM_F16T(1.0f);
+    this->pv_bmm = BMM_F16T(__float2half(1.0f));
 
     this->embed_dim = config.embed_dim;
     this->num_heads = config.num_heads;
@@ -161,6 +161,8 @@ __global__ void check_inf_half(Matrix3D<float16_t> a) {
 struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4llamaAttention_input &input) {
     PROFILE_START(profile_name);
 
+    // printf("aaaaaaaaaa\n");
+
     // cudaEvent_t start_Attention, stop_Attention, start, stop;
     // cudaEventCreate(&start_Attention);
     // cudaEventCreate(&stop_Attention);
@@ -201,6 +203,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
 
     // cudaEventRecord(start);
     // PROFILE_START(profile_name + "::set_cache_num");
+    // printf("bbbbbbbbbb\n");
     float16_t *ret_value_states, *ret_key_states;
     if (cache_num[input.layer_idx] == 1) {
         ret_value_states = &value_states_arr_cache[(input.layer_idx * 2 + 1) * this->max_sqlen * this->embed_dim];
@@ -216,6 +219,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // cudaEventSynchronize(stop);
     // cudaEventElapsedTime(&milliseconds, start, stop);
     // printf("set_cache_num: %.2f ms\n", milliseconds * this->num_heads);
+    // printf("cccccccccc\n");
 
     // Key
     // cudaEventRecord(start);
@@ -261,6 +265,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
 
     int start_idx = 0;
     if (input.has_past_key_value) start_idx = input.past_key.m_dim_y;
+    // printf("dddddddddd\n");
 
     // cudaEventRecord(start);
     // PROFILE_START(profile_name + "::RotaryPosEmb_cuda_forward");
@@ -297,6 +302,8 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
         cudaMemcpyAsync(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float16_t), cudaMemcpyDeviceToDevice);
     }
 
+    // printf("eeeeeeeeee\n");
+
     Matrix3D<float16_t> final_value_states(ret_value_states, this->num_heads, tgz, this->head_dim);
     Matrix3D<float16_t> final_key_states(ret_key_states, this->num_heads, tgz, this->head_dim);
     // PROFILE_END(profile_name + "::cat_past_keys_values");
@@ -332,6 +339,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // cudaEventSynchronize(stop);
     // cudaEventElapsedTime(&milliseconds, start, stop);
     // printf("batch_Add_cuda: %.2f ms\n", milliseconds * this->num_heads);
+    // printf("fffffffff\n");
 
     // cudaEventRecord(start);
     // PROFILE_START(profile_name + "::check_inf_half");
@@ -355,6 +363,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // cudaEventSynchronize(stop);
     // cudaEventElapsedTime(&milliseconds, start, stop);
     // printf("softmax_cuda: %.2f ms\n", milliseconds * this->num_heads);
+    // printf("gggggggggg\n");
 
 
     /* Legacy Implementation of PV_BMM*/
@@ -392,6 +401,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // // cudaEventSynchronize(stop);
     // // cudaEventElapsedTime(&milliseconds, start, stop);
     // // printf("pv_bmm.forward: %.2f ms\n", milliseconds * this->num_heads);
+    // printf("hhhhhhhhhh\n");
 
 
     // cudaEventRecord(start);
@@ -425,10 +435,39 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
 
     PROFILE_END(profile_name);
 
+    // printf("iiiiiiiiii\n");
+
     // cudaEventDestroy(start_Attention);
     // cudaEventDestroy(stop_Attention);
     // cudaEventDestroy(start);
     // cudaEventDestroy(stop);
 
     return output;
+}
+
+void Int4llamaAttention::free_cuda_memory() {
+    free_aligned_memory_gpu(attn_weights_arr);
+    free_aligned_memory_gpu(attn_output_half_arr);
+    free_aligned_memory_gpu(query_states_unshape_arr);
+    free_aligned_memory_gpu(attn_output_arr);
+    free_aligned_memory_gpu(attn_output_transpose_arr);
+    free_aligned_memory_gpu(key_states_unshape_arr);
+    free_aligned_memory_gpu(key_states_arr);
+    free_aligned_memory_gpu(value_states_unshape_arr);
+    free_aligned_memory_gpu(value_states_arr);
+    free_aligned_memory_gpu(query_states_arr);
+    free_aligned_memory_gpu(value_states_transpose_arr);
+    free_aligned_memory_gpu(key_states_arr_cache);
+    free_aligned_memory_gpu(value_states_arr_cache);
+    free_aligned_memory_gpu(cos_buf);
+    free_aligned_memory_gpu(sin_buf);
+    free_aligned_memory_gpu(q_weight);
+    free_aligned_memory_gpu(k_weight);
+    free_aligned_memory_gpu(v_weight);
+    free_aligned_memory_gpu(o_weight);
+
+    if(cache_num) {
+        free(cache_num);
+        cache_num = nullptr;
+    }
 }

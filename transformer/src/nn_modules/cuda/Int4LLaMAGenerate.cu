@@ -4,54 +4,25 @@
 #include "utils.h"
 // #include "utils.cuh"
 
-// void Int4LLaMAFreeMemory() {
-//     // Int4LlamaForCausalLM
-//     cudaFree(logits_output_half);
-//     cudaFree(logits_output);
-//     cudaFree(lm_head_weight);
+static void Int4LLaMAFreeMemory() {
+    // Int4LlamaForCausalLM
+    Int4LlamaForCausalLM LlamaForCausalLM;
+    LlamaForCausalLM.free_cuda_memory();
 
-//     // Int4llamaDecoder
-//     cudaFree(attention_mask_buf);
-//     cudaFree(last_hidden_states_buf);
-//     cudaFree(hidden_states_buf);
-//     cudaFree(hidden_states_half_buf);
-//     cudaFree(norm_weight_ptr);
+    // Int4llamaDecoder
+    Int4llamaDecoder llamaDecoder;
+    llamaDecoder.free_cuda_memory();
 
-//     // Int4llamaDecoderLayer
-//     cudaFree(hidden_states_half_arr);
-//     cudaFree(final_layer_norm_arr);
-//     cudaFree(gate_proj_arr);
-//     cudaFree(up_proj_arr);
-//     cudaFree(down_proj_arr);
-//     cudaFree(hidden_states_arr);
-//     cudaFree(input_layernorm_weight_ptr);
-//     cudaFree(post_attention_layernorm_ptr);
-//     cudaFree(gate_proj_weight);
-//     cudaFree(down_proj_weight);
-//     cudaFree(up_proj_weight);
+    // Int4llamaDecoderLayer
+    Int4llamaDecoderLayer llamaDecoderLayer;
+    llamaDecoderLayer.free_cuda_memory();
 
-//     // Int4llamaAttention
-//     cudaFree(attn_weights_arr);
-//     cudaFree(attn_output_half_arr);
-//     cudaFree(query_states_unshape_arr);
-//     cudaFree(attn_output_arr);
-//     cudaFree(attn_output_transpose_arr);
-//     cudaFree(key_states_unshape_arr);
-//     cudaFree(key_states_arr);
-//     cudaFree(value_states_unshape_arr);
-//     cudaFree(value_states_arr);
-//     cudaFree(query_states_arr);
-//     cudaFree(value_states_transpose_arr);
-//     cudaFree(key_states_arr_cache);
-//     cudaFree(value_states_arr_cache);
-//     cudaFree(cos_buf);
-//     cudaFree(sin_buf);
-//     cudaFree(q_weight);
-//     cudaFree(k_weight);
-//     cudaFree(v_weight);
-//     cudaFree(o_weight);
-//     free(cache_num);
-// }
+    // Int4llamaAttention
+    Int4llamaAttention llamaAttention;
+    llamaAttention.free_cuda_memory();
+
+    free_aligned_memory_gpu(split_8_buffer);
+}
 
 // Int4LlamaForCausalLM
 std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
@@ -212,6 +183,8 @@ std::vector<int> Int4LLaMAGenerate(Int4LlamaForCausalLM model, std::string text,
 
     Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
+
+    Int4LLaMAFreeMemory();
 
     return generate_ids;
 }

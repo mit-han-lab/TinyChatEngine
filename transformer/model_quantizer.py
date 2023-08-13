@@ -10,6 +10,7 @@ from quantize_methods import (
     quantize_row_q4_2,
     quantize_row_q4_3,
     quantize_row_q4_4,
+    _convert_to_fp16,
 )
 
 quantization_funcs = {
@@ -50,6 +51,23 @@ def _write_weight_to_file(prefix: str, qs, d, m, zp, is_lm_head=False, cuda_is_a
         f.write(m_data)
     with open(out_path + "/zero_point_int4.bin", "wb") as f:
         f.write(zp_data)
+
+    f.close()
+
+# Quantize fp32 data to fp16, and write it into binary file
+def _write_fp16_to_file(input_path: str, array_size, dim_x, dim_y, dim_z):
+    assert array_size == dim_x * dim_y * dim_z
+
+    with open(input_path, mode="rb") as fp:
+        fp32_data = fp.read()
+    fp.close()
+
+    # Convert to bytes
+    fp16_data = _convert_to_fp16(np.frombuffer(fp32_data, dtype=np.float32)).tobytes()
+
+    output_path = input_path.split(".bin")[0] + "_half.bin"
+    with open(output_path, "wb") as f:
+        f.write(fp16_data)
 
     f.close()
 
@@ -329,6 +347,32 @@ def _quantize_model(prefix, method="Q4_0", data_type="fp32", cuda_is_available=F
             array_size = file_size_bytes // bytes_per_element
             qs, d, m, zp = quantize_method(weight_path, array_size, data_type, cuda_is_available, 4096, 4096)
             _write_weight_to_file(file_path, qs, d, m, zp, False, cuda_is_available)
+
+            # Quantize self_attn/qk_bmm
+            file_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
+            weight_path = f"{file_path}/alpha.bin"
+            file_size_bytes = os.path.getsize(weight_path)
+            if file_size_bytes % bytes_per_element != 0:
+                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+            array_size = file_size_bytes // bytes_per_element
+            _write_fp16_to_file(weight_path, array_size, 1, 1, 1)
+
+            # Quantize self_attn/rotary_emb
+            file_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
+            ## cos_cached.bin
+            weight_path = f"{file_path}/cos_cached.bin"
+            file_size_bytes = os.path.getsize(weight_path)
+            if file_size_bytes % bytes_per_element != 0:
+                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+            array_size = file_size_bytes // bytes_per_element
+            _write_fp16_to_file(weight_path, array_size, 1, 2048, 128)
+            ## cos_cached.bin
+            weight_path = f"{file_path}/sin_cached.bin"
+            file_size_bytes = os.path.getsize(weight_path)
+            if file_size_bytes % bytes_per_element != 0:
+                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+            array_size = file_size_bytes // bytes_per_element
+            _write_fp16_to_file(weight_path, array_size, 1, 2048, 128)
 
             # Quantize self_attn/v_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/v_proj"

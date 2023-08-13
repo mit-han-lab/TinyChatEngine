@@ -9,13 +9,7 @@
 #include <cstring>  // for strerror
 #include <iostream>
 
-#define CHECK_CUDA(call) \
-    do { \
-        cudaError_t err = call; \
-        if(err != cudaSuccess) { \
-            throw std::runtime_error(std::string("CUDA error calling \"") + #call + "\", code is " + std::to_string(err)); \
-        } \
-    } while(0)
+half *split_8_buffer = nullptr;
 
 void read_to_array_half(const char* path, half* array, int size) {
     std::ifstream infile(path, std::ios::binary | std::ios::in);
@@ -99,6 +93,14 @@ void allocate_aligned_memory_gpu(T*& ptr, size_t size) {
     CHECK_CUDA(cudaMallocManaged((void**)&ptr, size));
 }
 
+template <typename T>
+void free_aligned_memory_gpu(T*& ptr) {
+    if (ptr) {
+        CHECK_CUDA(cudaFree(ptr));
+        ptr = nullptr;
+    }
+}
+
 __global__ void float2half(float* floatArray, half* halfArray, int N) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index < N) {
@@ -146,3 +148,10 @@ template void allocate_aligned_memory_gpu(int8_t*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(uint8_t*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(half*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(half_float::half*& ptr, size_t size);
+
+template void free_aligned_memory_gpu(float*& ptr);
+template void free_aligned_memory_gpu(int*& ptr);
+template void free_aligned_memory_gpu(int8_t*& ptr);
+template void free_aligned_memory_gpu(uint8_t*& ptr);
+template void free_aligned_memory_gpu(half*& ptr);
+template void free_aligned_memory_gpu(half_float::half*& ptr);

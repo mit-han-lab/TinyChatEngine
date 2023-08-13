@@ -32,24 +32,29 @@ struct Int4LlamaForCausalLM_input {
 class Int4LlamaForCausalLM {
    public:
     Int4LlamaForCausalLM(std::string param_path, const struct model_config config);
+    Int4LlamaForCausalLM() {};
+    void free_cuda_memory();
 
     // std::string param_path, int voc_size_, int embed_dim_, int hidden_dim_, int num_heads_,
     //            int padding_idx_, int num_layers);
     // Int4llamaDecoder decoder, Matrix3D<float> lm_head): m_decoder(decoder), lm_head_weights(lm_head) {} // TODO: take
     // a decoder
     struct Int4LlamaForCausalLM_output forward(const struct Int4LlamaForCausalLM_input& input);
+    float* logits_output = nullptr;
+#ifdef USE_CUDA
+    int* lm_head_weight = nullptr;
+    float16_t* logits_output_half = nullptr;
+    // float16_t* split_8_buffer;
+#else
+    uint8_t* lm_head_weight;
+#endif
 
    private:
     std::string profile_name = "Int4LlamaForCausalLM";
     Int4llamaDecoder decoder;
-    float* logits_output;
 #ifdef USE_CUDA
     Linear_half_int4 lm_head;
-    int* lm_head_weight;
-    float16_t* logits_output_half;
-    float16_t* split_8_buffer;
 #else
     Linear_FP_int4 lm_head;
-    uint8_t* lm_head_weight;
 #endif
 };

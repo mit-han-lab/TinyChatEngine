@@ -45,9 +45,9 @@ __global__ void mat_mul_transposed_cuda(Matrix3D<half> A, Matrix3D<half> B, Matr
     }
 }
 
-void load_BMM_F16T(BMM_F16T &op, std::string prefix) { read_to_array((prefix + "/alpha.bin").c_str(), &op.alpha, 1); }
+void load_BMM_F16T(BMM_F16T &op, std::string prefix) { read_to_array_half((prefix + "/alpha_half.bin").c_str(), &op.alpha, 1); }
 
-BMM_F16T::BMM_F16T(float _alpha) { this->alpha = _alpha; }
+BMM_F16T::BMM_F16T(half _alpha) { this->alpha = _alpha; }
 
 void BMM_F16T::forward(const Matrix3D<half> &a, const Matrix3D<half> &weight, Matrix3D<half> &c) {
     const Matrix3D<half> b = weight;
@@ -71,7 +71,7 @@ void BMM_F16T::forward(const Matrix3D<half> &a, const Matrix3D<half> &weight, Ma
     params.C.row = c.m_dim_y;
     params.C.column = c.m_dim_z;
     params.C.half_data_ptr = c.m_data;
-    params.half_alpha = __float2half(alpha);
+    params.half_alpha = alpha;
 
     // dim3 block(32, 32);
     // dim3 grid((params.C.row + block.x - 1) / block.x, (params.C.column + block.y - 1) / block.y);
@@ -86,7 +86,7 @@ void BMM_F16T::forward(const Matrix3D<half> &a, const Matrix3D<half> &weight, Ma
 }
 
 
-__global__ void mat_mul_untransposed_cuda(Matrix3D<half> A, Matrix3D<half> B, Matrix3D<half> C, const half alpha) {
+__global__ void mat_mul_untransposed_cuda(Matrix3D<half> A, Matrix3D<half> B, Matrix3D<half> C) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
     int bz = blockIdx.z * blockDim.z + threadIdx.z;
@@ -125,11 +125,10 @@ void BMM_F16T::forward_weight_untransposed(const Matrix3D<half> &a, const Matrix
     params.C.row = c.m_dim_y;
     params.C.column = c.m_dim_z;
     params.C.half_data_ptr = c.m_data;
-    params.half_alpha = __float2half(alpha);
 
     dim3 block(8, 8, 16);
     dim3 grid((params.C.row + block.x - 1) / block.x, (params.C.column + block.y - 1) / block.y, (a.m_dim_x + block.z - 1) / block.z);
-    mat_mul_untransposed_cuda<<<grid, block>>>(a, weight, c, params.half_alpha);
+    mat_mul_untransposed_cuda<<<grid, block>>>(a, weight, c);
 
     PROFILE_END(profile_name);
 }

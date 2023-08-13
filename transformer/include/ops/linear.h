@@ -1,3 +1,5 @@
+#ifndef LINEAR_H
+#define LINEAR_H
 #include "common.h"
 #include "utils.h"
 
@@ -211,4 +213,6 @@ class Linear_half_int4 {
 //    private:
 //     std::string profile_name = "Linear_half_int4_test";
 // };
+#endif
+
 #endif

@@ -2,11 +2,11 @@
 
 class BMM_F16T{
 public:
-    BMM_F16T(float _alpha);  // TODO: convert alpha to half
+    BMM_F16T(half _alpha);
     BMM_F16T(){};
     void forward(const Matrix3D<half> &x, const Matrix3D<half> &weight, Matrix3D<half> &output);  // TODO: convert weight to half
     void forward_weight_untransposed(const Matrix3D<half> &a, const Matrix3D<half> &weight, Matrix3D<half> &c);
-    float alpha;
+    half alpha;
 private:
     std::string profile_name = "BMM_F16T";
 };

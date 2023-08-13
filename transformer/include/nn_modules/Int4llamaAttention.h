@@ -52,7 +52,41 @@ class Int4llamaAttention {
     Int4llamaAttention(std::string param_path, const struct model_config config);
     Int4llamaAttention() {}
     static void initialized_memory(const struct model_config config);
+    // void initialized_memory(const struct model_config config);
+    void free_cuda_memory();
     struct Int4llamaAttention_output forward(const struct Int4llamaAttention_input &input);
+// #ifdef USE_CUDA
+//     float16_t *attn_weights_arr;
+//     float16_t *attn_output_half_arr;
+//     float16_t *query_states_unshape_arr;
+//     float16_t *attn_output_arr;
+//     float16_t *attn_output_transpose_arr;
+//     float16_t *key_states_unshape_arr;
+//     float16_t *key_states_arr;
+//     float16_t *value_states_unshape_arr;
+//     float16_t *value_states_arr;
+//     float16_t *query_states_arr;
+//     float16_t *value_states_transpose_arr;
+//     float16_t *key_states_arr_cache;
+//     float16_t *value_states_arr_cache;
+//     // int *cache_num;
+
+//     // Linear_half_int4 k_proj, v_proj, q_proj, o_proj;
+//     // RotaryPosEmb_cuda rotary_pos_emb;
+//     // BMM_F16T qk_bmm, pv_bmm;
+//     // int max_sqlen;
+// // #else
+//     // Linear_FP_int4 k_proj, v_proj, q_proj, o_proj;
+//     // RotaryPosEmb rotary_pos_emb;
+//     // BMM_F32T qk_bmm, pv_bmm;
+//     // void unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen);
+//     // void shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen);
+// #endif
+//     // std::string profile_name = "Int4llamaAttention";
+//     // int embed_dim, num_heads, head_dim;
+
+    int *q_weight = nullptr, *k_weight = nullptr, *v_weight = nullptr, *o_weight = nullptr;
+    half *cos_buf = nullptr, *sin_buf = nullptr;
 
    private:
     std::string profile_name = "Int4llamaAttention";

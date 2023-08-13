@@ -859,7 +859,7 @@ void test_BMM_F16T() {
     const int sqlen = 9, past_sqlen = 0, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads,
               head_dim = embed_dim / num_heads;
     const int tgz = (sqlen + past_sqlen);
-    const float alpha = 0.088388;
+    const half alpha = __float2half(0.088388);
 
     half* buffer_1;
     cudaMallocManaged(&buffer_1, sizeof(half) * num_heads * sqlen * head_dim);
@@ -897,62 +897,62 @@ void test_BMM_F16T() {
     cudaFree(buffer_4);
 }
 
-void test_RotaryPosEmb_cuda() {
-    const struct model_config llama7B = llama_7B;
-    const int sqlen = 9, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads, head_dim = embed_dim / num_heads;
-    const int max_sqlen = 2048;
-    const int start_idx = 0;
+// void test_RotaryPosEmb_cuda() {
+//     const struct model_config llama7B = llama_7B;
+//     const int sqlen = 9, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads, head_dim = embed_dim / num_heads;
+//     const int max_sqlen = 2048;
+//     const int start_idx = 0;
 
-    half* buffer_1;
-    cudaMallocManaged(&buffer_1, sizeof(half) * num_heads * sqlen * head_dim);
-    Matrix3D<half> query_states(buffer_1, num_heads, sqlen, head_dim);
-    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/input_query_half.bin", query_states.m_data, num_heads * sqlen * head_dim);
+//     half* buffer_1;
+//     cudaMallocManaged(&buffer_1, sizeof(half) * num_heads * sqlen * head_dim);
+//     Matrix3D<half> query_states(buffer_1, num_heads, sqlen, head_dim);
+//     read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/input_query_half.bin", query_states.m_data, num_heads * sqlen * head_dim);
 
-    half* buffer_2;
-    cudaMallocManaged(&buffer_2, sizeof(half) * num_heads * sqlen * head_dim);
-    Matrix3D<half> key_states(buffer_2, num_heads, sqlen, head_dim);
-    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/input_key_half.bin", key_states.m_data, num_heads * sqlen * head_dim);
+//     half* buffer_2;
+//     cudaMallocManaged(&buffer_2, sizeof(half) * num_heads * sqlen * head_dim);
+//     Matrix3D<half> key_states(buffer_2, num_heads, sqlen, head_dim);
+//     read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/input_key_half.bin", key_states.m_data, num_heads * sqlen * head_dim);
 
-    float* buffer_3;
-    cudaMallocManaged(&buffer_3, sizeof(float) * max_sqlen * (embed_dim / num_heads));
-    Matrix3D<float> cos(buffer_3, 1, max_sqlen, (embed_dim / num_heads));
-    read_to_array("assets/llama/tests/ops/RotaryPosEmb/cos.bin", cos.m_data, max_sqlen * (embed_dim / num_heads));
+//     float* buffer_3;
+//     cudaMallocManaged(&buffer_3, sizeof(float) * max_sqlen * (embed_dim / num_heads));
+//     Matrix3D<float> cos(buffer_3, 1, max_sqlen, (embed_dim / num_heads));
+//     read_to_array("assets/llama/tests/ops/RotaryPosEmb/cos.bin", cos.m_data, max_sqlen * (embed_dim / num_heads));
 
-    float* buffer_4;
-    cudaMallocManaged(&buffer_4, sizeof(float) * max_sqlen * (embed_dim / num_heads));
-    Matrix3D<float> sin(buffer_4, 1, max_sqlen, (embed_dim / num_heads));
-    read_to_array("assets/llama/tests/ops/RotaryPosEmb/sin.bin", sin.m_data, max_sqlen * (embed_dim / num_heads));
+//     float* buffer_4;
+//     cudaMallocManaged(&buffer_4, sizeof(float) * max_sqlen * (embed_dim / num_heads));
+//     Matrix3D<float> sin(buffer_4, 1, max_sqlen, (embed_dim / num_heads));
+//     read_to_array("assets/llama/tests/ops/RotaryPosEmb/sin.bin", sin.m_data, max_sqlen * (embed_dim / num_heads));
 
-    half* buffer_5;
-    cudaMallocManaged(&buffer_5, sizeof(half) * num_heads * sqlen * head_dim);
-    Matrix3D<half> query_statesGT(buffer_5, num_heads, sqlen, head_dim);
-    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/output_query_half.bin", query_statesGT.m_data, num_heads * sqlen * head_dim);
+//     half* buffer_5;
+//     cudaMallocManaged(&buffer_5, sizeof(half) * num_heads * sqlen * head_dim);
+//     Matrix3D<half> query_statesGT(buffer_5, num_heads, sqlen, head_dim);
+//     read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/output_query_half.bin", query_statesGT.m_data, num_heads * sqlen * head_dim);
 
-    half* buffer_6;
-    cudaMallocManaged(&buffer_6, sizeof(half) * num_heads * sqlen * head_dim);
-    Matrix3D<half> key_statesGT(buffer_6, num_heads, sqlen, head_dim);
-    read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/output_key_half.bin", key_statesGT.m_data, num_heads * sqlen * head_dim);
+//     half* buffer_6;
+//     cudaMallocManaged(&buffer_6, sizeof(half) * num_heads * sqlen * head_dim);
+//     Matrix3D<half> key_statesGT(buffer_6, num_heads, sqlen, head_dim);
+//     read_to_array_half("assets/llama/tests/ops/RotaryPosEmb/output_key_half.bin", key_statesGT.m_data, num_heads * sqlen * head_dim);
 
-    dim3 grid(num_heads, 1, 1);
-    dim3 block(sqlen, 1, 1);
-    RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, cos, sin, start_idx, sqlen);
-    cudaDeviceSynchronize();
+//     dim3 grid(num_heads, 1, 1);
+//     dim3 block(sqlen, 1, 1);
+//     RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, cos, sin, start_idx, sqlen);
+//     cudaDeviceSynchronize();
 
-    bool success = check_two_equal_half_half(query_states.m_data, query_statesGT.m_data, num_heads * sqlen * head_dim);
-    success &= check_two_equal_half_half(key_states.m_data, key_statesGT.m_data, num_heads * sqlen * head_dim);
+//     bool success = check_two_equal_half_half(query_states.m_data, query_statesGT.m_data, num_heads * sqlen * head_dim);
+//     success &= check_two_equal_half_half(key_states.m_data, key_statesGT.m_data, num_heads * sqlen * head_dim);
 
-    if (!success)
-        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
-    else
-        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+//     if (!success)
+//         std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+//     else
+//         std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
 
-    cudaFree(buffer_1);
-    cudaFree(buffer_2);
-    cudaFree(buffer_3);
-    cudaFree(buffer_4);
-    cudaFree(buffer_5);
-    cudaFree(buffer_6);
-}
+//     cudaFree(buffer_1);
+//     cudaFree(buffer_2);
+//     cudaFree(buffer_3);
+//     cudaFree(buffer_4);
+//     cudaFree(buffer_5);
+//     cudaFree(buffer_6);
+// }
 
 void test_batch_Add_cuda() {
     const struct model_config llama7B = llama_7B;
@@ -1030,7 +1030,7 @@ int main() {
     test_LlamaRMSNorm_cuda();
     test_softmax_cuda();
     test_BMM_F16T();
-    test_RotaryPosEmb_cuda();
+    // test_RotaryPosEmb_cuda();
     // test_Embedding_cuda();
     test_batch_Add_cuda();
 

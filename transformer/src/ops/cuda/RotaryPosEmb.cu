@@ -32,7 +32,7 @@
 //   }
 // }
 
-__global__ void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len) {
+__global__ void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<half> cos, Matrix3D<half> sin, int start_idx, int len) {
   // TODO: maybe we can use shared memory here
   half query_buf[4096], key_buf[4096];
 
@@ -56,8 +56,8 @@ __global__ void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> k
     }
 
     for(int j = 0; j < head_embed; j++) {
-      half cos_half = __float2half(cos(0, i + start_idx, j));
-      half sin_half = __float2half(sin(0, i + start_idx, j));
+      half cos_half = cos(0, i + start_idx, j);
+      half sin_half = sin(0, i + start_idx, j);
 
       query(b, i, j) = __hadd(__hmul(query(b, i, j), cos_half), __hmul(query_buf[j], sin_half));  // TODO: check if we can optimize this by using __hfma
       key(b, i, j) = __hadd(__hmul(key(b, i, j), cos_half), __hmul(key_buf[j], sin_half));  // TODO: check if we can optimize this by using __hfma
