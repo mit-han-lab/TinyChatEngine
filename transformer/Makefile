@@ -35,10 +35,19 @@ $(info CUDA is unavailable!)
 endif
 
 ifeq ($(shell uname -m),x86_64)
+	ifdef CUDA_AVAILABLE
+# For x86_64 platforms with CUDA
+		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I/usr/include/x86_64-linux-gnu
+		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L/usr/lib/x86_64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=/usr/lib/x86_64-linux-gnu 
+# Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
+		CXXFLAGS += -arch=sm_86 --forward-unknown-to-host-compiler -Xcompiler "-mavx2" -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
+	else
+# For x86_64 platforms with NEON
 	# For Intel machines with AVX
 	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/avx/*.cc)
 	LIB_SRC += $(LIB_AVX_SRC)
 	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
+	endif
 else ifeq ($(shell uname -m),aarch64)
 	ifdef CUDA_AVAILABLE
 # For ARM aarch64 platforms with CUDA
