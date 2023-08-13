@@ -39,6 +39,16 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 | W4A8   |  ✅  |  ✅  |      |
 | W8A8   |  ✅  |  ✅  |      |
 
+### Model support list
+
+| Models | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |
+| ------ | --------------------------- | --------- | --------- | --------- |
+| LLaMA-2   |  ✅  |  ✅  |  ✅  |  ✅
+| LLaMA  |  ✅  |  ✅  |  ✅  | ✅ 
+| OPT  |  ✅  |  ✅  |      | ✅
+| Vicuna   |    |    |      |
+| MPT   |    |    |      |
+| Falcon   |    |    |      |
 
 ## Quantization and Model Support
 
