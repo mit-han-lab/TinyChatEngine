@@ -15,7 +15,7 @@ brew install boost
 brew install llvm
 ```
 
-For M1/M2 users, install xcode from AppStore to enable metal compiler for GPU support.
+For M1/M2 users, install Xcode from AppStore to enable the metal compiler for GPU support.
 
 ### Windows
 
@@ -27,11 +27,23 @@ For Windows, download and install the GCC compiler with MSYS2. Follow this tutor
 pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 ```
 
-- Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the enviroment path
+- Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the environment path
+
+### Kernel support list
+
+| Kernel precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |
+| ------ | --------------------------- | --------- | --------- | --------- |
+| FP16/FP32   |  ✅    |    ✅  |         |  
+| W4A16  |      |      |  ✅  | ✅ 
+| W4A32  |  ✅  |  ✅  |      | ✅
+| W4A8   |  ✅  |  ✅  |      |
+| W8A8   |  ✅  |  ✅  |      |
+
 
 ## Quantization and Model Support
 
 At present, we support int8 OPT and int4 LLaMA models for x86 and ARM CPUs as well as Apple's M-series GPUs. Quantized weights for int8 OPT models originate from [smoothquant](https://github.com/mit-han-lab/smoothquant)  and can be converted to TinyLLMEngine format using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). We also plan to support edge GPUs, which will be coming soon.
+
 
 ### Device-specific Quantization Methods
 
@@ -42,13 +54,13 @@ Different target devices require different quantization methods due to the varia
 | Intel/AMD |  x86-64  | QM_x86  |
 | M1/M2 Mac | arm | QM_ARM  |
 
-Example of quantizing a LLaMA model for a Intel/AMD laptop:
+Example of quantizing a LLaMA model for an Intel/AMD laptop:
 
 ```bash
 python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86 --output_path INT4/
 ```
 
-Example of quantizing a LLaMA model for a M1/M2 Macbook:
+Example of quantizing a LLaMA model for an M1/M2 Macbook:
 
 ```bash
 python model_quantizer.py --model_path models/LLaMA_7B --method QM_ARM --output_path INT4/
