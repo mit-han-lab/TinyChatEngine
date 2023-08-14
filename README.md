@@ -39,6 +39,16 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 | W4A8   |  ✅  |  ✅  |      |
 | W8A8   |  ✅  |  ✅  |      |
 
+### Model and quantization method support list
+
+| Models | AWQ (INT4) | SmoothQuant (INT8) |
+| ------ | --------- | --------- |
+| LLaMA-2   |  ✅  |   
+| LLaMA  |  ✅  |   
+| Vicuna |  ✅  |  
+| OPT  |    |  ✅ 
+| MPT   |    |  
+| Falcon   |    |  
 
 ## Quantization and Model Support
 
