@@ -41,7 +41,7 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 ### Model and quantization method support list
 
-| Models | AWQ | SmoothQuant |
+| Models | AWQ (INT4) | SmoothQuant (INT8) |
 | ------ | --------- | --------- |
 | LLaMA-2   |  ✅  |   
 | LLaMA  |  ✅  |   
