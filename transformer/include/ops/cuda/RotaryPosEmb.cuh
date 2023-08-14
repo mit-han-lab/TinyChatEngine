@@ -25,3 +25,4 @@ void load_RotaryPosEmb_cuda(RotaryPosEmb_cuda &op, std::string prefix);
 
 __global__ void RotaryPosEmb_float_forward(Matrix3D<float> query, Matrix3D<float> key, Matrix3D<float> cos, Matrix3D<float> sin, int start_idx, int len);
 __global__ void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<half> cos, Matrix3D<half> sin, int start_idx, int len);
+__global__ void RotaryPosEmb_cuda_forward_new(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<half> cos, Matrix3D<half> sin, int start_idx, int len);

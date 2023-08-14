@@ -190,7 +190,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // cudaEventRecord(start);
     // PROFILE_START(profile_name + "::shape_cuda_query");
     Matrix3D<float16_t> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
-    dim3 threadsPerBlock(8, 4, 32);
+    dim3 threadsPerBlock(16, 1, 64);
     dim3 numBlocks((this->num_heads + threadsPerBlock.x - 1) / threadsPerBlock.x,
                 (sqlen + threadsPerBlock.y - 1) / threadsPerBlock.y,
                 (this->head_dim + threadsPerBlock.z - 1) / threadsPerBlock.z);
@@ -271,7 +271,15 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // PROFILE_START(profile_name + "::RotaryPosEmb_cuda_forward");
     dim3 grid(num_heads, 1, 1);
     dim3 block(sqlen, 1, 1);
-    RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
+    // RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
+
+    const int shared_memory_size = 2 * this->embed_dim * sizeof(half);
+    RotaryPosEmb_cuda_forward_new<<<grid, block, shared_memory_size>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
+
+    // const int threads_per_block = 1024; // This value can be tuned for best performance.
+    // const int blocks_per_grid = (num_heads * sqlen + threads_per_block - 1) / threads_per_block;
+    // const int shared_memory_size = 2 * this->embed_dim * sizeof(half);
+    // RotaryPosEmb_cuda_forward_new<<<blocks_per_grid, threads_per_block, shared_memory_size>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
     // PROFILE_END(profile_name + "::RotaryPosEmb_cuda_forward");
     // cudaEventRecord(stop);
     // cudaEventSynchronize(stop);
@@ -287,6 +295,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
         float16_t *val_ptr = ret_value_states, *key_ptr = ret_key_states;
         int past_block = input.past_key.m_dim_y * input.past_key.m_dim_z;
         int sq_block = sqlen * this->head_dim;
+#pragma unroll
         for (int i = 0; i < input.past_key.m_dim_x; i++) {
             cudaMemcpyAsync(val_ptr, &input.past_value.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
             val_ptr += past_block;

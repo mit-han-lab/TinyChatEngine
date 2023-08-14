@@ -37,6 +37,25 @@ __global__ void SiLuMul_half(Matrix3D<float16_t> a, Matrix3D<float16_t> b) {
     }
 }
 
+template<typename T>
+__device__ __forceinline__ T silu(const T& x) {
+  // x * sigmoid(x)
+  return (T) (((float) x) / (1.0f + expf((float) -x)));
+}
+
+template<typename scalar_t>
+__global__ void silu_and_mul_kernel(
+  scalar_t* __restrict__ out,        
+  const scalar_t* __restrict__ input, 
+  const int d) {
+  const int token_idx = blockIdx.x;
+  for (int idx = threadIdx.x; idx < d; idx += blockDim.x) {
+    const scalar_t x = __ldg(&out[token_idx * d + idx]);
+    const scalar_t y = __ldg(&input[token_idx * d + idx]);
+    out[token_idx * d + idx] = silu(x) * y;
+  }
+}
+
 // __global__ void SiLuMul_float(Matrix3D<float> a, Matrix3D<float> b) {
 //     int i = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -177,6 +196,9 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct 
 
     int blocksPerGrid2 =(gate_proj.length() + threadsPerBlock - 1) / threadsPerBlock;
     SiLuMul_half<<<blocksPerGrid2, threadsPerBlock>>>(gate_proj, up_proj);
+    // dim3 grid(input.hidden_states.m_dim_x * input.hidden_states.m_dim_y);
+    // dim3 block(std::min(this->hidden_dim, 1024));
+    // silu_and_mul_kernel<<<grid, block>>>(gate_proj.m_data, up_proj.m_data, this->hidden_dim);
 
     // cudaEventRecord(stop);
     // cudaEventSynchronize(stop);

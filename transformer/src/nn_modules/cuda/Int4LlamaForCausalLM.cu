@@ -70,7 +70,12 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(const struct In
 
     // cudaEventRecord(start);
 
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
+    cudaEvent_t event;
+    cudaEventCreate(&event);
+    cudaEventRecord(event, 0);
+    cudaEventSynchronize(event);
+    cudaEventDestroy(event);
 
     // cudaEventRecord(stop);
     // cudaEventSynchronize(stop);
