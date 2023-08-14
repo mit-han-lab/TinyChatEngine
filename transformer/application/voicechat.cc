@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
                 std::getline(std::cin, input);
                 input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
 
-                LLaMAGenerate(&model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
+                LLaMAGenerate(&model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, true);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -106,10 +106,24 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::cout << "USER: ";
                 std::string input;
-                std::getline(std::cin, input);
-                input = "A chat between a human and an assistan.\n\n### Human: " + input + "\n### Assistant: \n";
-
-                LLaMAGenerate(&model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false);
+                std::string output;
+                std::string model_input;
+                std::system("./whisper.cpp/stream -m ./whisper.cpp/models/ggml-base.en.bin -t 6 --step 0 --length 30000 -vth 0.7 -c 1 > tmpfile");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                std::system("rm tmpfile");
+                std::cout << input << std::endl;
+                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                output = LLaMAGenerate(&model, LLaMA_INT4, model_input, generation_config, "models/llama_vocab.bin", true, true);
+                // Remove newlines
+                output.erase(std::remove(output.begin(), output.end(), '\n'), output.end());
+                // Remove quotes
+                output.erase(std::remove(output.begin(), output.end(), '\"'), output.end()); 
+                // Remove hashtags
+                output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
+                output = "say \"" + output + "\"";
+                std::cout << "Command: " << output << std::endl; 
+                std::system(output.c_str());
             }
         } else {
             std::cout << std::endl;

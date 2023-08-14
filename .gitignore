@@ -30,3 +30,8 @@ demo
 profile_*
 !profile_*.cc
 libtorch/
+
+transformer/chat
+transformer/voicechat
+transformer/voicechat
+transformer/voicechat

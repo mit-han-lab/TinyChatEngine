@@ -5,7 +5,7 @@ CXXFLAGS = -std=c++11 -pthread -Ofast
 # Executable and source files
 TEST_TARGET = test_ops test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32llamaForCausalLM test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4llamaForCausalLM
 PROFILE_TARGET = profile_Fp32llamaForCausalLM profile_Int4llamaForCausalLM profile_OPTForCausalLM profile_ops
-APP_TARGET = chat
+APP_TARGET = voicechat chat
 TARGET = $(TEST_TARGET) $(PROFILE_TARGET) $(APP_TARGET)
 
 BUILDDIR := build/transformer
