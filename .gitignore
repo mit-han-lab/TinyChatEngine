@@ -1,12 +1,4 @@
 *.o
-!main_int8.o
-!main.o
-!matmul_avx_int8.o
-!matmul_imp.o
-!matmul_int8.o
-!matmul_int4.o
-!matmul_onednn.o
-!utils.o
 *.a
 .DS_Store
 .build/
@@ -30,3 +22,6 @@ demo
 profile_*
 !profile_*.cc
 libtorch/
+
+transformer/chat
+transformer/voicechat

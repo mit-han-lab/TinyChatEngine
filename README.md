@@ -1,6 +1,6 @@
-# TinyLLMEngine: A Efficient Neural Network Library for LLM
+# TinyChatEngine: A Efficient Neural Network Library for LLM
 
-TinyLLMEngine is a powerful neural network library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
+TinyChatEngine is a powerful neural network library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
 
 ![demo](assets/figures/chat.gif)
 
@@ -52,7 +52,7 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 ## Quantization and Model Support
 
-At present, we support int8 OPT and int4 LLaMA models for x86 and ARM CPUs as well as Apple's M-series GPUs. Quantized weights for int8 OPT models originate from [smoothquant](https://github.com/mit-han-lab/smoothquant)  and can be converted to TinyLLMEngine format using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). We also plan to support edge GPUs, which will be coming soon.
+At present, we support int8 OPT and int4 LLaMA models for x86 and ARM CPUs as well as Apple's M-series GPUs. Quantized weights for int8 OPT models originate from [smoothquant](https://github.com/mit-han-lab/smoothquant)  and can be converted to TinyChatEngine format using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). We also plan to support edge GPUs, which will be coming soon.
 
 
 ### Device-specific Quantization Methods
@@ -78,7 +78,7 @@ python model_quantizer.py --model_path models/LLaMA_7B --method QM_ARM --output_
 
 ### Download and deploy models from our Model Zoo
 
-We offer a selection of models that have been tested with TinyLLMEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
+We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
 
 | Models  | Size | ID | Supported Precision |
 | ------------- | ------------- |  ------------- |  ------------- |
@@ -90,32 +90,32 @@ For instance, to download the quantized LLaMA-2-7B-chat model:
 
 - On a Intel/AMD latptop:
   ```bash
-  python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+  python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
   ```
 - On a M1/M2 Macbook:
   ```bash
-  python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
+  python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
   ```
 
-To deploy the quantized model with TinyLLMEngine, compile the chat program and run it with the model ID and precision.
+To deploy the quantized model with TinyChatEngine, compile the chat program and run it with the model ID and precision.
 
 ```
 make chat -j
 ./chat LLaMA_7B_2_chat INT4
 ```
 
-## Step-by-step to deploy LLaMA2-7B-chat with TinyLLMEngine
+## Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine
 
-Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLMEngine from scratch.
+Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.
 
 - Download the repo.
   ```bash
   # pull repo
-  git clone --recursive https://github.com/mit-han-lab/TinyLLMEngine.git
+  git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git
   ```
 - Download the quantized LLaMA2-7B-chat model from our model zoo.
   ```bash
-  cd TinyLLMEngine/transformer
+  cd TinyChatEngine/transformer
   ```
   - On a x86 device (e.g., Intel/AMD laptop)
     ```bash
@@ -147,6 +147,36 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
   ...
   ```
 
+## Instructions to run a speech-to-speech chatbot demo
+  - Follow instructions above to deploy LLaMA2-7B-chat
+  - Configure whisper.cpp
+    ```bash
+    cd whisper.cpp
+
+    # Install SDL2 on Linux
+    sudo apt-get install libsdl2-dev
+    # Install SDL2 on Mac OS
+    brew install sdl2
+
+    git apply ./../clean_up_patch
+    bash ./models/download-ggml-model.sh base.en
+    make stream
+    cd ../
+    ```
+ - Edit the listen file in the transformers directory so whisper.cpp is using your preferred parameters.
+    ```bash
+    nano listen
+    ```
+ - Edit the speak file in the transformers directory so the demo uses your preferred TTS program.
+    ```bash
+    nano speak
+    ```
+ - Compile and start the voicechat locally.
+    ```bash
+    make -j voicechat 
+    ./voicechat # voicechat.exe on Windows
+    ```
+
 ## Related Projects
 
 [TinyEngine](https://github.com/mit-han-lab/tinyengine).
@@ -156,7 +186,6 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
 [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
 
 ## Acknowledgement
-
 [llama.cpp](https://github.com/ggerganov/llama.cpp)
 
 [transformers](https://github.com/huggingface/transformers)

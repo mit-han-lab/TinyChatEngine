@@ -4,8 +4,8 @@
 #include "common.h"
 #include "utils.h"
 
-std::vector<int> LLaMAGenerate(void *model_ptr, int model_type, std::string text,
-                               const struct opt_params generation_config, std::string voc_path, bool interactive) {
+std::string LLaMAGenerate(void *model_ptr, int model_type, std::string text,
+                               const struct opt_params generation_config, std::string voc_path, bool interactive, bool voicechat) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -28,7 +28,6 @@ std::vector<int> LLaMAGenerate(void *model_ptr, int model_type, std::string text
             break;
         }
     }
-
     if (interactive) std::cout << "ASSISTANT: " << std::endl;
 
     bool has_past_kv = false;
@@ -36,6 +35,7 @@ std::vector<int> LLaMAGenerate(void *model_ptr, int model_type, std::string text
     std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
     int break_cnt = 2;
+    std::string output;
     while (n_remain != 0 && break_cnt) {
         std::vector<float> logits(generation_config.n_vocab);
 
@@ -161,15 +161,17 @@ std::vector<int> LLaMAGenerate(void *model_ptr, int model_type, std::string text
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
 
-        if (interactive) std::cout << llama_id_to_token(vocab, id) << std::flush;
+        if (interactive) {
+            std::cout << llama_id_to_token(vocab, id) << std::flush;
+            output += llama_id_to_token(vocab, id);
+        }
 
         --n_remain;
     }
 
     if (interactive) std::cout << std::endl;
 
-    Profiler::getInstance().report_internal();
+    if (!voicechat) Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
-
-    return generate_ids;
+    return output;
 }

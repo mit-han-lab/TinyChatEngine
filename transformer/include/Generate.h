@@ -86,5 +86,5 @@ std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
                              bool interactive = false);
 
 enum { OPT, LLaMA_FP32, LLaMA_INT4 };
-std::vector<int> LLaMAGenerate(void* model, int model_type, std::string text, const struct opt_params generation_config,
-                               std::string voc_path, bool interactive);
+std::string LLaMAGenerate(void* model, int model_type, std::string text, const struct opt_params generation_config,
+                               std::string voc_path, bool interactive, bool voicechat);
