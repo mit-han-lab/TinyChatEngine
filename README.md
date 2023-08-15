@@ -147,6 +147,23 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyLLM
   ...
   ```
 
+## Instructions to run a speech-to-speech chatbot demo (Currently MacOS Only)
+  - Follow instructions above to deploy the chat.
+  - Configure whisper.cpp
+  ```bash
+  cd whisper.cpp
+  bash ./models/download-ggml-model.sh base.en
+  # Install SDL2 on Mac OS
+  brew install sdl2
+  make stream
+  cd ../
+  ```
+ - Compile and start the voicechat locally.
+  ```bash
+  make -j voicechat 
+  ./voicechat
+  ```
+
 ## Related Projects
 
 [TinyEngine](https://github.com/mit-han-lab/tinyengine).
