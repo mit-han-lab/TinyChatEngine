@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
                 std::string input;
                 std::string output;
                 std::string model_input;
-                std::system("./whisper.cpp/stream -m ./whisper.cpp/models/ggml-base.en.bin -t 6 --step 0 --length 30000 -vth 0.7 -c 1 > tmpfile");
+                std::system("./listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
                 std::system("rm tmpfile");
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
                 output.erase(std::remove(output.begin(), output.end(), '\"'), output.end()); 
                 // Remove hashtags
                 output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
-                output = "say \"" + output + "\"";
+                output = "./speak \"" + output + "\"";
                 std::cout << "Command: " << output << std::endl; 
                 std::system(output.c_str());
             }
