@@ -9,6 +9,8 @@
 
 #include "profiler.h"
 
+#include "half.hpp"  // Third-party header
+
 #define STATS_START(x) Profiler::getInstance().start(x)
 #define STATS_FLOPS(x, y) Profiler::getInstance().start(x, y)
 #define STATS_END(x) Profiler::getInstance().stop(x)
@@ -55,5 +57,41 @@ void allocate_aligned_memory(T*& ptr, size_t size);
 #endif
 
 void deallocate_memory(void* ptr);
+
+#ifdef QM_CUDA
+#include <cuda.h>
+#include <cuda_fp16.h>
+#include <cuda_runtime.h>
+
+#define CHECK_CUDA(call) \
+    do { \
+        cudaError_t err = call; \
+        if(err != cudaSuccess) { \
+            printf("Error: %s:%d, ", __FILE__, __LINE__);                 \
+            printf("code: %d, reason: %s\n", err,                       \
+                   cudaGetErrorString(err));                            \
+            throw std::runtime_error(std::string("CUDA error calling \"") + #call + "\", code is " + std::to_string(err)); \
+        } \
+    } while(0)
+
+extern half *split_8_buffer;
+
+void read_to_array_half(const char* path, half* array, int size);
+
+bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, float error);
+bool check_two_equal_float_half(float* array, half* array2, int size);
+bool check_two_equal_half_half(half* array, half* array2, int size);
+
+template <typename T>
+void allocate_aligned_memory_gpu(T*& ptr, size_t size);
+
+template <typename T>
+void free_aligned_memory_gpu(T*& ptr);
+
+__global__ void float2half(float* floatArray, half* halfArray, int N);
+__global__ void half2float(half* halfArray, float* floatArray, int N);
+__global__ void half2float_merge_k_iters(half *halfArray, float *floatArray, int N, int split_k_iters);
+__global__ void merge_k_iters(half *input, half *output, int N, int split_k_iters);
+#endif
 
 #endif

@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
         std::string m_path = model_path[target_model];
 
         struct opt_params generation_config;
-        generation_config.n_predict = 512;
+        generation_config.n_predict = 256;
         generation_config.n_vocab = 32000;
         generation_config.temp = 0.1f;
         generation_config.repeat_penalty = 1.25f;
@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "USER: ";
                 std::string input;
                 std::getline(std::cin, input);
-                input = "A chat between a human and an assistan.\n\n### Human: " + input + "\n### Assistant: \n";
+                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
 
                 LLaMAGenerate(&model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false);
             }
