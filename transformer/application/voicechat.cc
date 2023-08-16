@@ -122,7 +122,6 @@ int main(int argc, char* argv[]) {
                 // Remove hashtags
                 output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
                 output = "./speak \"" + output + "\"";
-                std::cout << "Command: " << output << std::endl; 
                 std::system(output.c_str());
             }
         } else {
