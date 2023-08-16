@@ -113,10 +113,6 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   # pull repo
   git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git
   ```
-- (Temporary) Checkout GPU branch.
-  ```bash
-  git checkout dev/w4a16_gpu
-  ```
 - Download the quantized LLaMA2-7B-chat model from our model zoo.
   ```bash
   cd TinyChatEngine/transformer
