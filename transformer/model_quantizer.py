@@ -13,22 +13,29 @@ import shutil
 
 import numpy as np
 from quantize_constants import STORE_FP16
-from quantize_methods import quantize_row_q4_2, quantize_row_q4_3, quantize_row_q4_4
+from quantize_methods import quantize_row_q4_2, quantize_row_q4_3, quantize_row_q4_4, quantize_row_q4_5, _convert_to_fp16
 
 quantization_funcs = {
     "QM_x86": quantize_row_q4_3,
     "QM_METAL": quantize_row_q4_2,
     "QM_ARM": quantize_row_q4_4,
+    "QM_CUDA": quantize_row_q4_5,
 }
 
 
 # Write quantized data into binary file
-def _write_weight_to_file(prefix: str, qs, d, m, zp, is_lm_head=False):
+def _write_weight_to_file(prefix: str, qs, d, m, zp, is_cuda=False, is_lm_head=False):
     # Convert to bytes
-    qs_data = np.asarray(qs, dtype=np.uint8).tobytes()
-    d_data = np.asarray(d, dtype=np.float32).tobytes()
-    m_data = np.asarray(m, dtype=np.float32).tobytes()
-    zp_data = np.asarray(zp, dtype=np.float32).tobytes()
+    if is_cuda:
+        qs_data = np.asarray(qs, dtype=np.int32).tobytes()
+        d_data = np.asarray(d, dtype=np.float16).tobytes() # Need to ne converted to fp16 in CUDA
+        m_data = np.asarray(m, dtype=np.float16).tobytes() # TODO: Currently, we don't use offsets for CUDA so this is redundant
+        zp_data = np.asarray(zp, dtype=np.int32).tobytes()
+    else:
+        qs_data = np.asarray(qs, dtype=np.uint8).tobytes()
+        d_data = np.asarray(d, dtype=np.float32).tobytes()
+        m_data = np.asarray(m, dtype=np.float32).tobytes()
+        zp_data = np.asarray(zp, dtype=np.float32).tobytes()
 
     # Write data
     if is_lm_head:
@@ -48,6 +55,23 @@ def _write_weight_to_file(prefix: str, qs, d, m, zp, is_lm_head=False):
 
     f.close()
 
+# Quantize fp32 data to fp16, and write it into binary file
+def _write_fp16_to_file(output_path: str, input_path: str, array_size, dim_x, dim_y, dim_z):
+    assert array_size == dim_x * dim_y * dim_z
+
+    with open(input_path, mode="rb") as fp:
+        fp32_data = fp.read()
+    fp.close()
+
+    # Convert to bytes
+    fp16_data = _convert_to_fp16(np.frombuffer(fp32_data, dtype=np.float32)).tobytes()
+
+    os.makedirs(output_path, exist_ok=True)
+    output_path = output_path.split(".bin")[0] + "_half.bin"
+    with open(output_path, "wb") as f:
+        f.write(fp16_data)
+
+    f.close()
 
 def _rm_and_cp_dir_if_exist(src, des):
     if os.path.exists(des):
@@ -78,6 +102,7 @@ def _quantize_model(
     method: str,
     output_path: str,
     data_type: str = "fp32",
+    is_cuda: bool = False,
 ):
     # Check model name
     model_name_size = prefix.split("/")[-1]
@@ -119,8 +144,8 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, True)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda, True)
         print("Quantization of lm_head finished.")
 
         # Quantize embed_positions
@@ -130,8 +155,8 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
         print("Quantization of embed_positions finished.")
 
         # Quantize embed_tokens
@@ -141,8 +166,8 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
         print("Quantization of embed_tokens finished.")
 
         # Quantize final_layer_norm
@@ -152,8 +177,8 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
         print("Quantization of final_layer_norm finished.")
 
         # Quantize layers
@@ -165,8 +190,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize fc2
             file_path = f"{prefix}/decoder/layer{idx}/fc2"
@@ -175,8 +200,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize final_layer_norm
             file_path = f"{prefix}/decoder/layer{idx}/final_layer_norm"
@@ -185,8 +210,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/k_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/k_proj"
@@ -195,8 +220,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/out_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/out_proj"
@@ -205,8 +230,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/q_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/q_proj"
@@ -215,8 +240,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/v_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/v_proj"
@@ -225,8 +250,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn_layer_norm
             file_path = f"{prefix}/decoder/layer{idx}/self_attn_layer_norm"
@@ -235,8 +260,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 1, array_size)  # TODO: fix this for QM_CUDA
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             print(f"Quantization of layer {idx} finished.")
 
@@ -249,8 +274,8 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, True)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 32000)
+        _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda, True)
         print("Quantization of lm_head finished.")
 
         # Quantize embed_tokens
@@ -267,8 +292,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 11008, 4096)
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize gate_proj
             file_path = f"{prefix}/decoder/layer{idx}/gate_proj"
@@ -277,8 +302,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 11008)
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize input_layernorm
             dir_path = f"{prefix}/decoder/layer{idx}/input_layernorm"
@@ -295,8 +320,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/o_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/o_proj"
@@ -305,8 +330,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/q_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/q_proj"
@@ -315,8 +340,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/v_proj
             file_path = f"{prefix}/decoder/layer{idx}/self_attn/v_proj"
@@ -325,16 +350,41 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
-            # Quantize self_attn/rotary_emb
-            dir_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
-            _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
+            # # Quantize self_attn/rotary_emb
+            # dir_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
+            # _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
+            # # Quantize self_attn/qk_bmm
+            # dir_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
+            # _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
 
             # Quantize self_attn/qk_bmm
-            dir_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
-            _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
+            file_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
+            weight_path = f"{file_path}/alpha.bin"
+            file_size_bytes = os.path.getsize(weight_path)
+            if file_size_bytes % bytes_per_element != 0:
+                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+            array_size = file_size_bytes // bytes_per_element
+            _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 1, 1)
+
+            # Quantize self_attn/rotary_emb
+            file_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
+            ## cos_cached.bin
+            weight_path = f"{file_path}/cos_cached.bin"
+            file_size_bytes = os.path.getsize(weight_path)
+            if file_size_bytes % bytes_per_element != 0:
+                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+            array_size = file_size_bytes // bytes_per_element
+            _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
+            ## cos_cached.bin
+            weight_path = f"{file_path}/sin_cached.bin"
+            file_size_bytes = os.path.getsize(weight_path)
+            if file_size_bytes % bytes_per_element != 0:
+                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+            array_size = file_size_bytes // bytes_per_element
+            _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
 
             # Quantize up_proj
             file_path = f"{prefix}/decoder/layer{idx}/up_proj"
@@ -343,8 +393,8 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type)
-            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 11008)
+            _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             print(f"Quantization of layer {idx} finished.")
 
@@ -473,7 +523,7 @@ def main():
     else:
         output_path = "INT4"
         print(f"output_path not defined, using {output_path} by default.")
-    _quantize_model(prefix=args.model_path, method=args.method, output_path=output_path, data_type=args.data_type)
+    _quantize_model(prefix=args.model_path, method=args.method, output_path=output_path, data_type=args.data_type, is_cuda=args.method == "QM_CUDA")
 
 
 if __name__ == "__main__":

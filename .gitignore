@@ -1,5 +1,7 @@
 *.o
 *.a
+*.pyc
+*.cuu
 .DS_Store
 .build/
 .cache/
@@ -12,7 +14,6 @@
 
 assets/
 *.bin
-!ggml-vocab.bin
 *.zip
 *.txt
 *.json

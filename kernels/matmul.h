@@ -1,5 +1,25 @@
+#ifndef MATMUL_H
+#define MATMUL_H
 #include <stdint.h>
 #include <sys/time.h>
+
+#include "half.hpp"  // Third-party header
+typedef half_float::half naive_float16_t;
+
+#ifdef QM_CUDA
+    #include <cuda.h>
+    #include <cuda_fp16.h>
+    #include <cuda_runtime.h>
+    typedef half float16_t;
+#elif defined(__ARM_NEON)
+    typedef __fp16 float16_t;
+#elif defined(__x86_64__)
+    printf("x86_64 does not natively support fp16, so we use `half_float` library to support fp16 through software-based solution.\n");
+    typedef half_float::half float16_t;
+#else
+    printf("Unsupported platform (we only support CUDA, Arm, and x86_64). Using uint16_t as float16_t.\n");
+    typedef uint16_t float16_t;
+#endif
 
 // TODO: deprecate this
 // #define MAX_TRANSPOSE_BUFFER 2048 * 2048
@@ -18,6 +38,8 @@ struct matrix {
     int row;
     int column;
     float *data_ptr;
+    float16_t *half_data_ptr;
+    naive_float16_t *fp16_data_ptr;
     int32_t *int32_data_ptr;
     int8_t *int8_data_ptr;
     uint8_t *uint8_data_ptr;
@@ -35,8 +57,12 @@ struct matmul_params {
     struct matrix A, B, C, bias;
     struct optimization_params opt_params;
     float alpha, beta;
+    float16_t half_alpha;
     // for int4
     float *scales, *offset, *zero_point;
+    float16_t *half_scales;
+    naive_float16_t *fp16_scales;
+    int *int32_zero_point;
     int block_size;
     // for int8 activation
     float *A_scales;
@@ -89,7 +115,12 @@ class MatmulOperator {
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda
+    void naive_mat_mul_fp16_int4(const struct matmul_params *params);
     void mat_mul_cuda(const struct matmul_params *params);
+    void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters);
+    void gemm_forward_cuda_8splits(const struct matmul_params *params, float16_t *split_8_buffer);
+    void gemm_forward_cuda_half(const struct matmul_params *params, int split_k_iters);
+    void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);
@@ -97,3 +128,5 @@ class MatmulOperator {
     void CHECK_MATRICES_int4weight(const struct matrix *A, const struct matrix *B, const struct matrix *C);
 };
 }  // namespace matmul
+
+#endif

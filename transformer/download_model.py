@@ -73,6 +73,12 @@ Qmodels = {
             "md5sum": "18f2193ccb393c7bca328f42427ef233",
         },
     },
+    "QM_CUDA": {
+        "LLaMA_7B_2_chat": {
+            "url": "https://www.dropbox.com/scl/fi/du8rfgexkk4b2xp9j6yrn/LLaMA_7B_2_chat.zip?rlkey=2nao2sh4hi3t1dhltsoae2muw&dl=1",  # noqa: E501
+            "md5sum": "d0b1d11e498ac7d0a2e90348e946a7f5",
+        },
+    },
 }
 
 
@@ -141,7 +147,7 @@ def _main():
         if args.QM == "fp32":
             model_table = models
             model_dir = MODEL_DIR
-        elif args.QM in ["QM_ARM", "QM_x86"]:
+        elif args.QM in ["QM_ARM", "QM_x86", "QM_CUDA"]:
             model_table = Qmodels[args.QM]
             model_dir = "."
         else:

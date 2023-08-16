@@ -113,6 +113,10 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   # pull repo
   git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git
   ```
+- (Temporary) Checkout GPU branch.
+  ```bash
+  git checkout dev/w4a16_gpu
+  ```
 - Download the quantized LLaMA2-7B-chat model from our model zoo.
   ```bash
   cd TinyChatEngine/transformer
@@ -124,6 +128,10 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   - On a ARM device (e.g., M1/M2 Macbook)
     ```bash
     python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+    ```
+  - On a CUDA device (e.g., Jetson AGX Orin)
+    ```bash
+    python download_model.py --model LLaMA_7B_2_chat --QM QM_CUDA
     ```
 - Compile and start the chat locally.
   ```bash
@@ -179,9 +187,9 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
 ## Related Projects
 
-[TinyEngine](https://github.com/mit-han-lab/tinyengine).
+[TinyEngine](https://github.com/mit-han-lab/tinyengine)
 
-[Smoothquant](https://github.com/mit-han-lab/smoothquant).
+[Smoothquant](https://github.com/mit-han-lab/smoothquant)
 
 [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
 
