@@ -104,6 +104,7 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             while (true) {
+                std::system("rm tmpfile");
                 std::cout << "USER: ";
                 std::string input;
                 std::string output;
@@ -122,7 +123,6 @@ int main(int argc, char* argv[]) {
                 // Remove hashtags
                 output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
                 output = "./speak \"" + output + "\"";
-                std::cout << "Command: " << output << std::endl; 
                 std::system(output.c_str());
             }
         } else {
