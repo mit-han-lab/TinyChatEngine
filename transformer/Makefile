@@ -18,7 +18,7 @@ LIB =
 LDFLAGS =
 
 # Check if CUDA is available
-CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
+# CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
 ifdef CUDA_AVAILABLE
 $(info CUDA is available!)
 	CUDA_HOME = /usr/local/cuda

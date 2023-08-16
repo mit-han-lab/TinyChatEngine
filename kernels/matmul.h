@@ -14,10 +14,10 @@ typedef half_float::half naive_float16_t;
 #elif defined(__ARM_NEON)
     typedef __fp16 float16_t;
 #elif defined(__x86_64__)
-    printf("x86_64 does not natively support fp16, so we use `half_float` library to support fp16 through software-based solution.\n");
+    // x86_64 does not natively support fp16, so we use `half_float` library to support fp16 through software-based solution.
     typedef half_float::half float16_t;
 #else
-    printf("Unsupported platform (we only support CUDA, Arm, and x86_64). Using uint16_t as float16_t.\n");
+    // Unsupported platform (we only support CUDA, Arm, and x86_64). Using uint16_t as float16_t.
     typedef uint16_t float16_t;
 #endif
 

@@ -14,7 +14,11 @@
 #define DEBUG_INS(x) \
     if (DEBUG) x
 
+#ifdef QM_CUDA
 #define QK 128
+#else
+#define QK 32
+#endif
 
 struct pack_q4_tensor {
     uint8_t qx[QK / 2];

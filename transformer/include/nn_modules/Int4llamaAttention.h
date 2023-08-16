@@ -57,10 +57,12 @@ class Int4llamaAttention {
     struct Int4llamaAttention_output forward(const struct Int4llamaAttention_input &input);
 
     int *q_weight = nullptr, *k_weight = nullptr, *v_weight = nullptr, *o_weight = nullptr;
-    half *cos_buf = nullptr, *sin_buf = nullptr;
 
 #ifdef QM_CUDA
     void free_cuda_memory();
+    half *cos_buf = nullptr, *sin_buf = nullptr;
+#else
+    float *cos_buf = nullptr, *sin_buf = nullptr;
 #endif
 
    private:
