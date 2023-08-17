@@ -101,25 +101,29 @@ def _export_attention_params(attn, prefix: str):
 def main():
     """Export a LLaMA model to TinyLLMEngine format."""
     parser = argparse.ArgumentParser(description="export LLaMA pytorch model to TinyLLMEngine format.")
+    parser.add_argument("--hf_path", type=str, help="Path to huggingface model hub", default=None)
     parser.add_argument("model", type=str, help="Path of the LLaMA torch model")
     parser.add_argument("output", type=str, help="Output directory of the exported model")
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.model):
-        print(f"The model path '{args.model}' does not exist.")
-        return
+    if args.hf_path is None:
+        if not os.path.exists(args.model):
+            print(f"The model path '{args.model}' does not exist.")
+            return
 
-    if not os.path.exists(args.output):
-        print(f"The model path '{args.output}' does not exist.")
-        return
+        if not os.path.exists(args.output):
+            print(f"The model path '{args.output}' does not exist.")
+            return
 
-    print("Loading model...")
-    if args.model.endswith(".pt"):
-        model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
-        model.load_state_dict(torch.load(args.model))
+        print("Loading model...")
+        if args.model.endswith(".pt"):
+            model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
+            model.load_state_dict(torch.load(args.model))
+        else:
+            model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
     else:
-        model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
+        model = LlamaForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.float16)
 
     print("Start exporting the model...")
     _export_model(model, args.output)

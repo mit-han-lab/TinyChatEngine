@@ -5,12 +5,14 @@
 
 std::map<std::string, int> model_config = {{"OPT_125m", OPT_125M},     {"OPT_1.3B", OPT_1_3B},
                                            {"OPT_6.7B", OPT_6_7B},     {"LLaMA_7B", LLaMA_7B},
-                                           {"LLaMA_7B_AWQ", LLaMA_7B}, {"LLaMA_7B_2_chat", LLaMA_7B}};
+                                           {"LLaMA_7B_AWQ", LLaMA_7B}, {"LLaMA_7B_2_chat", LLaMA_7B},
+                                           {"LLaMA_13B_2_chat", LLaMA_13B}};
 
 std::map<std::string, std::string> model_path = {
     {"OPT_125m", "models/OPT_125m"},         {"OPT_1.3B", "models/OPT_1.3B"},
     {"OPT_6.7B", "models/OPT_6.7B"},         {"LLaMA_7B", "models/LLaMA_7B"},
     {"LLaMA_7B_AWQ", "models/LLaMA_7B_AWQ"}, {"LLaMA_7B_2_chat", "models/LLaMA_7B_2_chat"},
+    {"LLaMA_13B_2_chat", "models/LLaMA_13B_2_chat"}
 };
 
 std::map<std::string, int> data_format_list = {
@@ -19,8 +21,8 @@ std::map<std::string, int> data_format_list = {
     {"INT4", INT4},
 };
 
-bool isLLaMA7B(std::string s) {
-    std::string LLaMA_prefix = "LLaMA_7B";
+bool isLLaMA(std::string s) {
+    std::string LLaMA_prefix = "LLaMA";
 
     if (s.substr(0, LLaMA_prefix.size()) == LLaMA_prefix)
         return true;
@@ -59,7 +61,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Data format: " << argv[2] << " selected" << std::endl;
         target_data_format = argv[2];
     } else {
-        if (isLLaMA7B(target_model)) {
+        if (isLLaMA(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
             std::cout << "Using LLaMA's default data format: " + target_data_format << std::endl;
         } else {  // OPT
@@ -70,7 +72,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (isLLaMA7B(target_model)) {
+    if (isLLaMA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
         // Load model
