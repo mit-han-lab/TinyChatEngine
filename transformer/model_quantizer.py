@@ -114,8 +114,10 @@ def _quantize_model(
         layer_num = 32
     elif model_name_size.startswith("LLaMA_7B"):
         layer_num = 32
+    elif model_name_size.startswith("LLaMA_13B"):
+        layer_num = 40
     else:
-        raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B'.")
+        raise ValueError("Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', or 'LLaMA_7B', or 'LLaMA_7B'.")
 
     # Check quantization method
     if method not in quantization_funcs:
@@ -134,9 +136,9 @@ def _quantize_model(
 
     print(f"Quantizing {model_name_size} with {method} method... (original data type: {data_type})")
 
-    model_name = model_name_size.split("_")[0]
+    model_name = model_name_size
     # OPT
-    if model_name == "OPT":
+    if model_name.startswith("OPT"):
         # Quantize lm_head
         file_path = f"{prefix}"
         weight_path = f"{file_path}/lm_head.bin"
@@ -266,7 +268,18 @@ def _quantize_model(
             print(f"Quantization of layer {idx} finished.")
 
     # LLaMA
-    elif model_name == "LLaMA":
+    elif model_name.startswith("LLaMA"):
+        if model_name.startswith("LLaMA_7B"):
+            embed_dim = 4096
+            hidden_dim = 11008
+            num_head = 32
+        elif model_name.startswith("LLaMA_13B"):
+            embed_dim = 5120
+            hidden_dim = 13824
+            num_head = 40
+        else:
+            raise NotImplementedError(f"{model_name} not supported.")
+
         # Quantize lm_head
         file_path = f"{prefix}"
         weight_path = f"{file_path}/lm_head.bin"
@@ -274,7 +287,7 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 32000)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, 32000)
         _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda, True)
         print("Quantization of lm_head finished.")
 
@@ -292,7 +305,7 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 11008, 4096)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, hidden_dim, embed_dim)
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize gate_proj
@@ -302,7 +315,7 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 11008)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, hidden_dim)
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize input_layernorm
@@ -320,7 +333,7 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, embed_dim)
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/o_proj
@@ -330,7 +343,7 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, embed_dim)
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/q_proj
@@ -340,7 +353,7 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, embed_dim)
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             # Quantize self_attn/v_proj
@@ -350,41 +363,42 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 4096)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, embed_dim)
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
-            # # Quantize self_attn/rotary_emb
-            # dir_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
-            # _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
-            # # Quantize self_attn/qk_bmm
-            # dir_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
-            # _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
-
-            # Quantize self_attn/qk_bmm
-            file_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
-            weight_path = f"{file_path}/alpha.bin"
-            file_size_bytes = os.path.getsize(weight_path)
-            if file_size_bytes % bytes_per_element != 0:
-                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
-            array_size = file_size_bytes // bytes_per_element
-            _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 1, 1)
-
             # Quantize self_attn/rotary_emb
-            file_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
-            ## cos_cached.bin
-            weight_path = f"{file_path}/cos_cached.bin"
-            file_size_bytes = os.path.getsize(weight_path)
-            if file_size_bytes % bytes_per_element != 0:
-                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
-            array_size = file_size_bytes // bytes_per_element
-            _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
-            ## cos_cached.bin
-            weight_path = f"{file_path}/sin_cached.bin"
-            file_size_bytes = os.path.getsize(weight_path)
-            if file_size_bytes % bytes_per_element != 0:
-                raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
-            array_size = file_size_bytes // bytes_per_element
-            _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
+            # Quantize self_attn/qk_bmm
+            if is_cuda:
+                file_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
+                ## cos_cached.bin
+                weight_path = f"{file_path}/cos_cached.bin"
+                file_size_bytes = os.path.getsize(weight_path)
+                if file_size_bytes % bytes_per_element != 0:
+                    raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+                array_size = file_size_bytes // bytes_per_element
+                _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
+                ## cos_cached.bin
+                weight_path = f"{file_path}/sin_cached.bin"
+                file_size_bytes = os.path.getsize(weight_path)
+                if file_size_bytes % bytes_per_element != 0:
+                    raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+                array_size = file_size_bytes // bytes_per_element
+                _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
+                file_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
+                weight_path = f"{file_path}/alpha.bin"
+                file_size_bytes = os.path.getsize(weight_path)
+                if file_size_bytes % bytes_per_element != 0:
+                    raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
+                array_size = file_size_bytes // bytes_per_element
+                _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 1, 1)
+            else:
+                # cp self_attn/rotary_emb
+                dir_path = f"{prefix}/decoder/layer{idx}/self_attn/rotary_emb"
+                _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
+                # cp self_attn/qk_bmm
+                dir_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
+                _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
+
 
             # Quantize up_proj
             file_path = f"{prefix}/decoder/layer{idx}/up_proj"
@@ -393,7 +407,7 @@ def _quantize_model(
             if file_size_bytes % bytes_per_element != 0:
                 raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
             array_size = file_size_bytes // bytes_per_element
-            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, 4096, 11008)
+            qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, hidden_dim)
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
 
             print(f"Quantization of layer {idx} finished.")

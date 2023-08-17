@@ -30,6 +30,10 @@ models = {
         "url": "https://www.dropbox.com/scl/fi/55hei425f6tiev9cc9h9r/LLaMA_7B_2_chat.zip?rlkey=42j8vp7d3crz6qm9om23vth25&dl=1",  # noqa: E501
         "md5sum": "fccbd388c1e89dd90e153ed6d9734189",
     },
+    "LLaMA_13B_2_chat": {
+        "url": "https://www.dropbox.com/scl/fi/qpzv3805ftdldvlocssu4/LLaMA_13B_2_chat.zip?rlkey=tfgnv9cz2i8lwuznyy6u3sf4k&dl=1",  # noqa: E501
+        "md5sum": "59b73efa638be4131e5fd27c3fdee597",
+    },
     "OPT_6.7B": {
         "url": "https://www.dropbox.com/scl/fi/9ve3um8d63099qpx1h9ds/OPT_6.7B.zip?rlkey=9twzt8kpmttwbhj3nujkik0un&dl=1",
         "md5sum": "3fc742b690e32f2c51e59f96ebff3101",
@@ -58,6 +62,10 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/1trpw92vmh4czvl28hkv0/LLaMA_7B_2_chat.zip?rlkey=dy1pdek0147gnuxdzpodi6pkt&dl=1",  # noqa: E501
             "md5sum": "af20c96de302c503a9fcfd5877ed0600",
         },
+        "LLaMA_13B_2_chat": {
+            "url": "https://www.dropbox.com/scl/fi/rb7el1reycad98xrzif9a/LLaMA_13B_2_chat.zip?rlkey=wwd400no2uelcthvqxut3ojvj&dl=1",  # noqa: E501
+            "md5sum": "f1f7693da630bb7aa269ecae5bcc397a",
+        },
     },
     "QM_x86": {
         "LLaMA_7B_AWQ": {
@@ -71,6 +79,10 @@ Qmodels = {
         "LLaMA_7B_2_chat": {
             "url": "https://www.dropbox.com/scl/fi/vu7wnes1c7gkcegg854ys/LLaMA_7B_2_chat.zip?rlkey=q61o8fpc954g1ke6g2eaot7cf&dl=1",  # noqa: E501
             "md5sum": "18f2193ccb393c7bca328f42427ef233",
+        },
+        "LLaMA_13B_2_chat": {
+            "url": "https://www.dropbox.com/scl/fi/t4u1jkp7gav8om4m6xjjv/LLaMA_13B_2_chat.zip?rlkey=tahltmq9bqu3ofx03r4mrsk2r&dl=1",  # noqa: E501
+            "md5sum": "3684e5740f44ed05e213d6d807a1f136",
         },
     },
     "QM_CUDA": {

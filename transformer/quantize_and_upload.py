@@ -11,7 +11,7 @@ import os
 
 from upload import subebackups
 
-model_paths = ["models/LLaMA_7B", "models/LLaMA_7B_2_chat", "models/LLaMA_7B_AWQ"]
+model_paths = ["models/LLaMA_7B", "models/LLaMA_7B_2_chat", "models/LLaMA_7B_AWQ", "models/LLaMA_13B_2_chat"]
 
 quantized_dir = "INT4"
 db_prefix = "/MIT/transformer_assets/"
@@ -37,27 +37,31 @@ def main():
     parser = _get_parser()
     args = parser.parse_args()
 
-    if args.method not in ["QM_x86", "QM_ARM"]:
-        raise ValueError("expect method to be one of ['QM_x86', 'QM_ARM']")
+    if args.method not in ["QM_x86", "QM_ARM", "FP32"]:
+        raise ValueError("expect method to be one of ['QM_x86', 'QM_ARM', 'FP32']")
     QM_method = args.method
 
     for model_path in model_paths:
         # quantize
-        quantize_cmd = (
-            f"python model_quantizer.py --model_path {model_path} --method {QM_method} --output_path {quantized_dir}"
-        )
-        os.system(quantize_cmd)
+        if args.method != "FP32":
+            out_dir = quantized_dir
+            quantize_cmd = (
+                f"python model_quantizer.py --model_path {model_path} --method {QM_method} --output_path {out_dir}"
+            )
+            os.system(quantize_cmd)
+        else:
+            out_dir = "./"
         # zip
         print("zipping...")
         model_name_size = model_path.rsplit("/", maxsplit=1)[-1]
-        zip_path = model_name_size + ".zip"
-        zip_cmd = f"zip -qq -r {zip_path} {os.path.join(quantized_dir, model_path)}"
+        zip_path = "/tmp/" + model_name_size + ".zip"
+        zip_cmd = f"zip -qq -r {zip_path} {os.path.join(out_dir, model_path)}"
         os.system(zip_cmd)
         # md5sum
         print(f"md5sum is {_get_md5sum(zip_path)}.")
         print("uploading...")
         # upload
-        upload_path = os.path.join(db_prefix, QM_method, zip_path)
+        upload_path = os.path.join(db_prefix, QM_method, model_name_size + ".zip")
         subebackups(zip_path, upload_path, args.token)
         print("removing temporary zip file...")
         # rm zip

@@ -2,6 +2,9 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -pthread -Ofast
 
+# CUDA flag
+DISABLE_CUDA ?= 0
+
 # Executable and source files
 TEST_TARGET_GENERAL = test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OPTDecoder test_OPTForCausalLM test_OPTTokenizer test_LLaMATokenizer test_OPTGenerate test_Fp32llamaAttention test_Fp32llamaDecoderLayer test_Fp32llamaDecoder test_Fp32llamaForCausalLM
 TEST_TARGET_IF_CUDA = test_ops test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4llamaForCausalLM
@@ -18,7 +21,10 @@ LIB =
 LDFLAGS =
 
 # Check if CUDA is available
+ifeq ($(DISABLE_CUDA), 0)
 CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
+endif
+
 ifdef CUDA_AVAILABLE
 $(info CUDA is available!)
 	CUDA_HOME = /usr/local/cuda

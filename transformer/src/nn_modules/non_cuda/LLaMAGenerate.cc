@@ -148,12 +148,20 @@ std::string LLaMAGenerate(void *model_ptr, int model_type, std::string text,
             continue;
         break_cnt = 2;
 
-        if (id == 2277 && !previous_two_hash)
+        bool skip = false;
+        if (id == 2277 && !previous_two_hash){
             previous_two_hash = true;
-        else if (previous_two_hash && id == 29937)  // token = #
+            skip = true;
+        }
+        else if (previous_two_hash && id == 29937) { // token = #
             break_cnt = 0;
-        else
+            skip = true;
+        }
+        else{
+            if (previous_two_hash)
+                std::cout << "##" << std::endl;
             previous_two_hash = false;
+        }
 
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
@@ -161,7 +169,7 @@ std::string LLaMAGenerate(void *model_ptr, int model_type, std::string text,
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
 
-        if (interactive) {
+        if (interactive && !skip) {
             std::cout << llama_id_to_token(vocab, id) << std::flush;
             output += llama_id_to_token(vocab, id);
         }
