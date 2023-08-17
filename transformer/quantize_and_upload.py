@@ -11,8 +11,7 @@ import os
 
 from upload import subebackups
 
-# model_paths = ["models/LLaMA_7B", "models/LLaMA_7B_2_chat", "models/LLaMA_7B_AWQ"]
-model_paths = ["models/LLaMA_13B_2_chat"]
+model_paths = ["models/LLaMA_7B", "models/LLaMA_7B_2_chat", "models/LLaMA_7B_AWQ", "models/LLaMA_13B_2_chat"]
 
 quantized_dir = "INT4"
 db_prefix = "/MIT/transformer_assets/"
