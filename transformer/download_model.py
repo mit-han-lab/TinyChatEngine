@@ -31,8 +31,8 @@ models = {
         "md5sum": "fccbd388c1e89dd90e153ed6d9734189",
     },
     "LLaMA_13B_2_chat": {
-        "url": "",  # noqa: E501
-        "md5sum": "",
+        "url": "https://www.dropbox.com/scl/fi/qpzv3805ftdldvlocssu4/LLaMA_13B_2_chat.zip?rlkey=tfgnv9cz2i8lwuznyy6u3sf4k&dl=1",  # noqa: E501
+        "md5sum": "59b73efa638be4131e5fd27c3fdee597",
     },
     "OPT_6.7B": {
         "url": "https://www.dropbox.com/scl/fi/9ve3um8d63099qpx1h9ds/OPT_6.7B.zip?rlkey=9twzt8kpmttwbhj3nujkik0un&dl=1",

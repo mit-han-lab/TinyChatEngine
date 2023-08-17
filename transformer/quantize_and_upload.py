@@ -62,7 +62,7 @@ def main():
         print(f"md5sum is {_get_md5sum(zip_path)}.")
         print("uploading...")
         # upload
-        upload_path = os.path.join(db_prefix, QM_method, zip_path)
+        upload_path = os.path.join(db_prefix, QM_method, model_name_size + ".zip")
         subebackups(zip_path, upload_path, args.token)
         print("removing temporary zip file...")
         # rm zip
