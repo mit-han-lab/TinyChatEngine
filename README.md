@@ -153,7 +153,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
 ## Instructions to run a speech-to-speech chatbot demo
   - Follow instructions above to deploy LLaMA2-7B-chat
-  - Configure whisper.cpp
+  - Configure whisper.cpp (Note)
     ```bash
     cd whisper.cpp
 
@@ -164,14 +164,25 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
     git apply ./../clean_up_patch
     bash ./models/download-ggml-model.sh base.en
+    # NVIDIA GPU (Note: you may need to change the Makefile of whisper.cpp depending on your environment or device)
+    WHISPER_CUBLAS=1 make -j stream
+    # Otherwise
     make stream
     cd ../
     ```
- - Edit the listen file in the transformers directory so whisper.cpp is using your preferred parameters.
+  - If you have an edge device and want a better TTS program than espeak, download [piper](https://github.com/rhasspy/piper)
+    ```bash
+      mkdir TTS
+      wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
+      tar -xvzf piper_arm64.tar.gz
+    ```
+    - Download your preferred voice from the [huggingface repo](https://huggingface.co/rhasspy/piper-voices/tree/v1.0.0) and drag both the .onxx and .onnx.json files into the TTS directory
+
+ - Edit the listen shell file in the transformers directory so whisper.cpp is using your preferred parameters.
     ```bash
     nano listen
     ```
- - Edit the speak file in the transformers directory so the demo uses your preferred TTS program.
+ - Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.
     ```bash
     nano speak
     ```

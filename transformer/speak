@@ -12,6 +12,9 @@
 # for Mac
 say "$1"
 
+# for edge devices
+# echo "$1" | ./TTS/piper/piper --model ./TTS/en_US-ryan-low.onnx --output_file output.wav && aplay output.wav
+
 # Eleven Labs
 # To use it, install the elevenlabs module from pip (pip install elevenlabs)
 # It's possible to use the API for free with limited number of characters. To increase this limit register to https://beta.elevenlabs.io to get an api key and paste it after 'ELEVEN_API_KEY='

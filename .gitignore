@@ -27,3 +27,6 @@ libtorch/
 
 transformer/chat
 transformer/voicechat
+transformer/output.wav
+transformer/tmpfile
+transformer/TTS
