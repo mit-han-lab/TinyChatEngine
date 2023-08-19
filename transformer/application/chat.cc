@@ -166,11 +166,10 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             std::cout << "USER: ";
-            std::string input = "Step to build a house:";
-            // std::getline(std::cin, input);
+            std::string input;
+            std::getline(std::cin, input);
             std::vector<int> input_ids = encoder.encode(input);
-            // std::string decoded = encoder.decode(input_ids);
-            // std::cout << "input:" << decoded << std::endl;
+            std::string decoded = encoder.decode(input_ids);
 
             // Generate
             std::vector<int> generated_ids =
