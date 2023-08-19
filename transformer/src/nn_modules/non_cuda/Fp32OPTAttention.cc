@@ -167,6 +167,8 @@ struct Fp32OPTAttention_output Fp32OPTAttention::forward(const struct Fp32OPTAtt
     this->q_proj.forward(input.hidden_states, query_states_unshape);
     for (int i = 0; i < sqlen * embed_dim; i++) query_states_unshape.m_data[i] *= this->scaling;
 
+    assert(!std::isnan(query_states_unshape_arr[0]));
+
     // Get the memory buffer
     float *ret_value_states, *ret_key_states;
     if (cache_num[input.layer_idx] == 1) {
@@ -185,11 +187,15 @@ struct Fp32OPTAttention_output Fp32OPTAttention::forward(const struct Fp32OPTAtt
     Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shpae(key_states_unshape, key_states, sqlen);
 
+    assert(!std::isnan(key_states_unshape.sum()));
+
     // Value states
     Matrix3D<float> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
     this->v_proj.forward(input.hidden_states, value_states_unshape);
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shpae(value_states_unshape, value_states, sqlen);
+
+    assert(!std::isnan(value_states_unshape_arr[0]));
 
     // Concate with past key, value if exists
     PROFILE_START(profile_name + "::cat_past_keys_values");

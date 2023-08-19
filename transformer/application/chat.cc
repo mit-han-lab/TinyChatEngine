@@ -142,7 +142,6 @@ int main(int argc, char* argv[]) {
             std::getline(std::cin, input);
             std::vector<int> input_ids = encoder.encode(input);
             std::string decoded = encoder.decode(input_ids);
-            std::cout << "input:" << decoded << std::endl;
 
             // Generate
             std::vector<int> generated_ids =
@@ -157,7 +156,6 @@ int main(int argc, char* argv[]) {
             std::getline(std::cin, input);
             std::vector<int> input_ids = encoder.encode(input);
             std::string decoded = encoder.decode(input_ids);
-            std::cout << "input:" << decoded << std::endl;
 
             // Generate
             std::vector<int> generated_ids =

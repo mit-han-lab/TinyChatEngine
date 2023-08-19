@@ -3,8 +3,10 @@
 Usage:
    python model_quantizer.py --model_path <path to TinyEngine modelt> --method <Quantization method>
 
-Example commandline:
+Example commands:
    python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
+
+   python model_quantizer.py --model_path FP32/models/OPT_125m --method QM_ARM --output_path INT4
 
 """
 import argparse

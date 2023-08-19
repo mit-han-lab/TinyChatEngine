@@ -6,12 +6,16 @@ Usage:
 python opt_smooth_exporter.py --model-name <model_name> --output-path <output_path>
 
 Example command:
+INT8:
 python opt_smooth_exporter.py --model-name mit-han-lab/opt-1.3B-smoothquant --output-path models/OPT_1.3B
-
 Supported model_name:
 - opt-125m-smoothquant
 - opt-1.3B-smoothquant
 - opt-6.7B-smoothquant
+
+FP32:
+python opt_smooth_exporter.py --model_name facebook/opt-125m --output_path FP32/models/OPT_125m --no-int8_smooth
+
 """
 import argparse
 import os

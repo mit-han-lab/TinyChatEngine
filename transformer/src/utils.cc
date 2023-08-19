@@ -36,6 +36,7 @@ bool check_two_equal(float* array, float* array2, int size, float error) {
 
     for (int i = 0; i < size; i++) {
         float diff = (float)array[i] - (float)array2[i];
+        if (std::isnan(diff)) return false;
         sq_diff += diff * diff;
         if (diff * diff > max_sqdiff) {
             max_sqdiff = diff * diff;

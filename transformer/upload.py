@@ -10,7 +10,6 @@ import dropbox
 
 files_to_upload = [
     "assets.zip",
-    "models.zip",
 ]
 
 
