@@ -82,7 +82,11 @@ static void *fast_int8_int4_zp_no_offset_over_column_unroll2block(void *args) {
                 x_ptr += 32 * 2;
             }
             float *ptr = (float *)&acc0;
-            C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
+            if (params->bias.data_ptr)
+                C->data_ptr[i * C->column + j] =
+                    ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7] + params->bias.data_ptr[j];
+            else
+                C->data_ptr[i * C->column + j] = ptr[0] + ptr[1] + ptr[2] + ptr[3] + ptr[4] + ptr[5] + ptr[6] + ptr[7];
         }
     }
     return NULL;
@@ -165,26 +169,6 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
 
     // quantize A
     assert((params->A.column * params->A.row) % params->block_size == 0);
-    // Ref imp.
-    // for (i = 0; i < params->A.column * params->A.row; i+=params->block_size){
-    //     float* start_A = &params->A.data_ptr[i];
-    //     int8_t* start_int8_A = &params->A.int8_data_ptr[i];
-    //     // abs_max
-    //     float abs_max = -1;
-    //     float s = 0;
-    //     for (j = 0; j < params->block_size; j++){
-    //         float abs_v = std::abs(start_A[j]);
-    //         if (abs_v > abs_max){
-    //             abs_max = abs_v;
-    //         }
-    //     }
-    //     s = abs_max / 127;
-    //     // quantize
-    //     for (j = 0; j < params->block_size; j++){
-    //         start_int8_A[j] = (int8_t)(start_A[j] / s);
-    //     }
-    //     s_a[i / params->block_size] = s;
-    // }
     quantize_fp_to_int8_block_size32(params->A.data_ptr, params->A.column * params->A.row, params->A.int8_data_ptr,
                                      params->A_scales);
 

@@ -3,8 +3,8 @@
 #include "utils.h"
 
 // OPTGenerate function
-std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
-                             const struct opt_params generation_config, Encoder* encoder, bool interactive) {
+std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> input_ids,
+                             const struct opt_params generation_config, Encoder *encoder, bool interactive) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -26,31 +26,72 @@ std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
     if (interactive) std::cout << "ASSISTANT: " << std::endl;
 
     bool has_past_kv = false;
-    std::vector<Matrix3D<int8_t>> past_keys, past_values;
+    std::vector<Matrix3D<int8_t>> past_keys_int8, past_values_int8;
+    std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
     while (n_remain != 0) {
         STATS_START("Token generation");
         std::vector<float> logits(generation_config.n_vocab);
 
         int sqlen = 1;
-        struct OPTForCausalLM_output model_output;
-        if (has_past_kv) {
-            Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
-            struct OPTForCausalLM_input model_input = {input_ids_mat, past_keys, past_values};
-            model_output = model.forward(model_input);
-        } else {
-            sqlen = input_ids.size();
-            Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
-            struct OPTForCausalLM_input model_input = {input_ids_mat};
-            model_output = model.forward(model_input);
+        if (model_type == OPT_INT8) {
+            struct OPTForCausalLM_output model_output;
+            OPTForCausalLM *model = static_cast<OPTForCausalLM *>(model_ptr);
+            if (has_past_kv) {
+                Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
+                struct OPTForCausalLM_input model_input = {input_ids_mat, past_keys_int8, past_values_int8};
+                model_output = model->forward(model_input);
+            } else {
+                sqlen = input_ids.size();
+                Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
+                struct OPTForCausalLM_input model_input = {input_ids_mat};
+                model_output = model->forward(model_input);
+            }
+            past_keys_int8 = model_output.past_keys;
+            past_values_int8 = model_output.past_values;
+            has_past_kv = true;
+            // memcpy model_ouput.logits[-1] to logits
+            memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab],
+                   generation_config.n_vocab * sizeof(float));
+        } else if (model_type == OPT_FP32) {
+            struct Fp32OPTForCausalLM_output model_output;
+            Fp32OPTForCausalLM *model = static_cast<Fp32OPTForCausalLM *>(model_ptr);
+            if (has_past_kv) {
+                Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
+                struct Fp32OPTForCausalLM_input model_input = {input_ids_mat, past_keys, past_values};
+                model_output = model->forward(model_input);
+            } else {
+                sqlen = input_ids.size();
+                Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
+                struct Fp32OPTForCausalLM_input model_input = {input_ids_mat};
+                model_output = model->forward(model_input);
+            }
+            past_keys = model_output.past_keys;
+            past_values = model_output.past_values;
+            has_past_kv = true;
+            // memcpy model_ouput.logits[-1] to logits
+            memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab],
+                   generation_config.n_vocab * sizeof(float));
+        } else if (model_type == OPT_INT4) {
+            struct Int4OPTForCausalLM_output model_output;
+            Int4OPTForCausalLM *model = static_cast<Int4OPTForCausalLM *>(model_ptr);
+            if (has_past_kv) {
+                Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
+                struct Int4OPTForCausalLM_input model_input = {input_ids_mat, past_keys, past_values};
+                model_output = model->forward(model_input);
+            } else {
+                sqlen = input_ids.size();
+                Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
+                struct Int4OPTForCausalLM_input model_input = {input_ids_mat};
+                model_output = model->forward(model_input);
+            }
+            past_keys = model_output.past_keys;
+            past_values = model_output.past_values;
+            has_past_kv = true;
+            // memcpy model_ouput.logits[-1] to logits
+            memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab],
+                   generation_config.n_vocab * sizeof(float));
         }
-        past_keys = model_output.past_keys;
-        past_values = model_output.past_values;
-        has_past_kv = true;
-        // memcpy model_ouput.logits[-1] to logits
-        memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab],
-               generation_config.n_vocab * sizeof(float));
-
         // Generate
         const int n_ctx = generation_config.n_ctx;
         const float temp = generation_config.temp;

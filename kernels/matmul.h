@@ -7,18 +7,19 @@
 typedef half_float::half naive_float16_t;
 
 #ifdef QM_CUDA
-    #include <cuda.h>
-    #include <cuda_fp16.h>
-    #include <cuda_runtime.h>
-    typedef half float16_t;
+#include <cuda.h>
+#include <cuda_fp16.h>
+#include <cuda_runtime.h>
+typedef half float16_t;
 #elif defined(__ARM_NEON)
-    typedef __fp16 float16_t;
+typedef __fp16 float16_t;
 #elif defined(__x86_64__)
-    // x86_64 does not natively support fp16, so we use `half_float` library to support fp16 through software-based solution.
-    typedef half_float::half float16_t;
+// x86_64 does not natively support fp16, so we use `half_float` library to support fp16 through software-based
+// solution.
+typedef half_float::half float16_t;
 #else
-    // Unsupported platform (we only support CUDA, Arm, and x86_64). Using uint16_t as float16_t.
-    typedef uint16_t float16_t;
+// Unsupported platform (we only support CUDA, Arm, and x86_64). Using uint16_t as float16_t.
+typedef uint16_t float16_t;
 #endif
 
 // TODO: deprecate this
@@ -82,23 +83,11 @@ struct thread_args {
 namespace matmul {
 class MatmulOperator {
    public:
-    // void naive_mat_mul(const struct matmul_params *params);
-    // void mat_mul_unrolling(const struct matmul_params *params);
-    // void mat_mul_reordering(const struct matmul_params *params);
-    // void mat_mul_tiling(const struct matmul_params *params);
-    // void mat_mul_multithreading(const struct matmul_params *params);
-    // void mat_mul_transpose(const struct matmul_params *params);
     void mat_mul_transposed(const struct matmul_params *params);
     void mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params);
-    // void mat_mul_accelerator_transpose_simd(const struct matmul_params *params);
-    // void mat_mul_accelerator_fast(const struct matmul_params *params);
-    // void mat_mul_onednn(const struct matmul_params *params);
-    // void mat_mul_onednn_int8(const struct matmul_params *params);
+    void mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params *params);
     // int8
     void naive_mat_mul_int8(const struct matmul_params *params);
-    // void mat_mul_accelerator_int8(const struct matmul_params *params);
-    // void mat_mul_accelerator_int8_fast(const struct matmul_params *params);
-    // void mat_mul_accelerator_int8_fast_2x2(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_32unroll_over_column(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_2x2_32unroll(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(const struct matmul_params *params);

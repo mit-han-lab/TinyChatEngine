@@ -114,11 +114,12 @@ int main(int argc, char* argv[]) {
                 std::system("rm tmpfile");
                 std::cout << input << std::endl;
                 model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
-                output = LLaMAGenerate(&model, LLaMA_INT4, model_input, generation_config, "models/llama_vocab.bin", true, true);
+                output = LLaMAGenerate(&model, LLaMA_INT4, model_input, generation_config, "models/llama_vocab.bin",
+                                       true, true);
                 // Remove newlines
                 output.erase(std::remove(output.begin(), output.end(), '\n'), output.end());
                 // Remove quotes
-                output.erase(std::remove(output.begin(), output.end(), '\"'), output.end()); 
+                output.erase(std::remove(output.begin(), output.end(), '\"'), output.end());
                 // Remove hashtags
                 output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
                 output = "./speak \"" + output + "\"";
@@ -151,7 +152,7 @@ int main(int argc, char* argv[]) {
 
         struct opt_params generation_config;
         generation_config.n_predict = 256;
-        std::vector<int> generated_ids = OPTGenerate(model, input_ids, generation_config, &encoder, true);
+        std::vector<int> generated_ids = OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true);
 
         decoded = encoder.decode(generated_ids);
     }

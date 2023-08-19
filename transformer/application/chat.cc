@@ -122,26 +122,61 @@ int main(int argc, char* argv[]) {
         std::cout << "Loading model... " << std::flush;
         int model_id = model_config[target_model];
         std::string m_path = model_path[target_model];
-        OPTForCausalLM model = OPTForCausalLM(m_path, get_opt_model_config(model_id));
-        std::cout << "Finished!" << std::endl;
+        int format_id = data_format_list[target_data_format];
 
         // Load encoder
         std::string bpe_file = "models/opt_merges.txt";
         std::string vocab_file = "models/opt_vocab.json";
         Encoder encoder = get_encoder(vocab_file, bpe_file);
-
-        // Get input from the user
-        std::cout << "USER: ";
-        std::string input;
-        std::getline(std::cin, input);
-        std::vector<int> input_ids = encoder.encode(input);
-        std::string decoded = encoder.decode(input_ids);
-        std::cout << "input:" << decoded << std::endl;
+        std::string decode;
 
         struct opt_params generation_config;
         generation_config.n_predict = 512;
-        std::vector<int> generated_ids = OPTGenerate(model, input_ids, generation_config, &encoder, true);
+        if (format_id == INT8) {
+            OPTForCausalLM model = OPTForCausalLM(m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl;
 
-        decoded = encoder.decode(generated_ids);
+            // Get input from the user
+            std::cout << "USER: ";
+            std::string input;
+            std::getline(std::cin, input);
+            std::vector<int> input_ids = encoder.encode(input);
+            std::string decoded = encoder.decode(input_ids);
+            std::cout << "input:" << decoded << std::endl;
+
+            // Generate
+            std::vector<int> generated_ids =
+                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true);
+        } else if (format_id == FP32) {
+            Fp32OPTForCausalLM model = Fp32OPTForCausalLM("FP32/" + m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl;
+
+            // Get input from the user
+            std::cout << "USER: ";
+            std::string input;
+            std::getline(std::cin, input);
+            std::vector<int> input_ids = encoder.encode(input);
+            std::string decoded = encoder.decode(input_ids);
+            std::cout << "input:" << decoded << std::endl;
+
+            // Generate
+            std::vector<int> generated_ids =
+                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true);
+        } else if (format_id == INT4) {
+            Int4OPTForCausalLM model = Int4OPTForCausalLM("INT4/" + m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl;
+
+            // Get input from the user
+            std::cout << "USER: ";
+            std::string input = "Step to build a house:";
+            // std::getline(std::cin, input);
+            std::vector<int> input_ids = encoder.encode(input);
+            // std::string decoded = encoder.decode(input_ids);
+            // std::cout << "input:" << decoded << std::endl;
+
+            // Generate
+            std::vector<int> generated_ids =
+                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true);
+        }
     }
 };

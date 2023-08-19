@@ -159,7 +159,7 @@ def _main():
         if args.QM == "fp32":
             model_table = models
             model_dir = MODEL_DIR
-        elif args.QM in ["QM_ARM", "QM_x86", "QM_CUDA"]:
+        elif args.QM in Qmodels:
             model_table = Qmodels[args.QM]
             model_dir = "."
         else:
