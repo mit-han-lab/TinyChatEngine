@@ -30,6 +30,7 @@ def main():
 
     def _get_parser():
         parser = argparse.ArgumentParser(description="Quantize model")
+        parser.add_argument("--model_path", type=str, help="Quantization method", default=None)
         parser.add_argument("--method", type=str, help="Quantization method")
         parser.add_argument("--token", help="Your Dropbox OAuth2 token.")
         return parser
@@ -37,13 +38,18 @@ def main():
     parser = _get_parser()
     args = parser.parse_args()
 
-    if args.method not in ["QM_x86", "QM_ARM", "FP32"]:
-        raise ValueError("expect method to be one of ['QM_x86', 'QM_ARM', 'FP32']")
+    if args.method not in ["QM_x86", "QM_ARM", "FP32", "INT8"]:
+        raise ValueError("expect method to be one of ['QM_x86', 'QM_ARM', 'FP32', 'INT8']")
     QM_method = args.method
 
-    for model_path in model_paths:
+    if args.model_path:
+        target_paths = [args.model_path]
+    else:
+        target_paths = model_paths
+
+    for model_path in target_paths:
         # quantize
-        if args.method != "FP32":
+        if args.method in ["QM_x86", "QM_ARM"]:
             out_dir = quantized_dir
             quantize_cmd = (
                 f"python model_quantizer.py --model_path {model_path} --method {QM_method} --output_path {out_dir}"

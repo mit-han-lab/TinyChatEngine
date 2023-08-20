@@ -35,16 +35,16 @@ models = {
         "md5sum": "59b73efa638be4131e5fd27c3fdee597",
     },
     "OPT_6.7B": {
-        "url": "https://www.dropbox.com/scl/fi/9ve3um8d63099qpx1h9ds/OPT_6.7B.zip?rlkey=9twzt8kpmttwbhj3nujkik0un&dl=1",
-        "md5sum": "3fc742b690e32f2c51e59f96ebff3101",
+        "url": "https://www.dropbox.com/scl/fi/jetyhj4rlhgsxz4qsizpc/OPT_6.7B.zip?rlkey=nuey04ta87hq80fupkduzsgjz&dl=1",
+        "md5sum": "69cffdc090388ac2d2abcbe8163b0397",
     },
     "OPT_1.3B": {
-        "url": "https://www.dropbox.com/scl/fi/qrmwcr5v4s4of9rj4jkve/OPT_1.3B.zip?rlkey=ye5qrt3wraypvebkkq69lg659&dl=1",
-        "md5sum": "dc888e6ba784a948724bee1624d37a57",
+        "url": "https://www.dropbox.com/scl/fi/nyqvc8hejzo4mwnw4690w/OPT_1.3B.zip?rlkey=d1a11e9o8d6qmsisbdqo1qftl&dl=1",
+        "md5sum": "a49490989fe030a0e9dee119285f7cf5",
     },
     "OPT_125m": {
-        "url": "https://www.dropbox.com/scl/fi/9d6s8zd6nuzqyy7nf3j4h/OPT_125m.zip?rlkey=uqcg8tmdf6emps0l1eqy5xmcj&dl=1",
-        "md5sum": "d106cee7300fcb980ac066026a8f3c8c",
+        "url": "https://www.dropbox.com/scl/fi/zvmdw8cdf7j0j3a99q8sx/OPT_125m.zip?rlkey=qehxgfs21m36wvm7ratwy1r5d&dl=1",
+        "md5sum": "816958aed84120b763942ba83c1b010f",
     },
 }
 
@@ -89,6 +89,20 @@ Qmodels = {
         "LLaMA_7B_2_chat": {
             "url": "https://www.dropbox.com/scl/fi/du8rfgexkk4b2xp9j6yrn/LLaMA_7B_2_chat.zip?rlkey=2nao2sh4hi3t1dhltsoae2muw&dl=1",  # noqa: E501
             "md5sum": "d0b1d11e498ac7d0a2e90348e946a7f5",
+        },
+    },
+    "INT8": {
+        "OPT_125m": {
+            "url": "https://www.dropbox.com/scl/fi/onoifsya2o96vb22mo0zq/OPT_125m.zip?rlkey=cuzmajx96v6nvfq3qctf3ke4u&dl=1",  # noqa: E501
+            "md5sum": "e3bf0b7f13f393aa054de00a8433f232",
+        },
+        "OPT_1.3B": {
+            "url": "https://www.dropbox.com/scl/fi/6a2lt28o37m0n5stpzj3q/OPT_1.3B.zip?rlkey=yzhj4pvo5y1dtvyh90ur0kotj&dl=1",  # noqa: E501
+            "md5sum": "d40d797f32d7b8a0a8648e9395575b12",
+        },
+        "OPT_6.7B": {
+            "url": "https://www.dropbox.com/scl/fi/jetyhj4rlhgsxz4qsizpc/OPT_6.7B.zip?rlkey=nuey04ta87hq80fupkduzsgjz&dl=1",  # noqa: E501
+            "md5sum": "635994471bc6e56857cfa75f9949a090",
         },
     },
 }

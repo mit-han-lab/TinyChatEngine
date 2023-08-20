@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
         struct opt_params generation_config;
         generation_config.n_predict = 512;
         if (format_id == INT8) {
-            OPTForCausalLM model = OPTForCausalLM(m_path, get_opt_model_config(model_id));
+            OPTForCausalLM model = OPTForCausalLM("INT8/" + m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user
@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
             std::vector<int> generated_ids =
                 OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true);
         } else if (format_id == FP32) {
-            Fp32OPTForCausalLM model = Fp32OPTForCausalLM("FP32/" + m_path, get_opt_model_config(model_id));
+            Fp32OPTForCausalLM model = Fp32OPTForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user

@@ -129,31 +129,7 @@ int main(int argc, char* argv[]) {
             std::cout << std::endl;
             std::cerr << "At this time, we only support FP32 and INT4 for LLaMA7B." << std::endl;
         }
-    } else {  // OPT
-        // Load model
-        std::cout << "Loading model... " << std::flush;
-        int model_id = model_config[target_model];
-        std::string m_path = model_path[target_model];
-        OPTForCausalLM model = OPTForCausalLM(m_path, get_opt_model_config(model_id));
-        std::cout << "Finished!" << std::endl;
-
-        // Load encoder
-        std::string bpe_file = "models/opt_merges.txt";
-        std::string vocab_file = "models/opt_vocab.json";
-        Encoder encoder = get_encoder(vocab_file, bpe_file);
-
-        // Get input from the user
-        std::cout << "USER: ";
-        std::string input;
-        std::getline(std::cin, input);
-        std::vector<int> input_ids = encoder.encode(input);
-        std::string decoded = encoder.decode(input_ids);
-        std::cout << "input:" << decoded << std::endl;
-
-        struct opt_params generation_config;
-        generation_config.n_predict = 256;
-        std::vector<int> generated_ids = OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true);
-
-        decoded = encoder.decode(generated_ids);
+    } else {
+        std::cout << target_model << " is not supported with voicechat!" << std::endl;
     }
 };
