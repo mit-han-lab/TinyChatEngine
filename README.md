@@ -81,9 +81,8 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
 
 | Models  | Size | ID | Supported Precision |
 | ------------- | ------------- |  ------------- |  ------------- |
-| LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |  INT4 |
-| LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |  INT4 |
-| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | INT8 |
+| LLaMA-2 |  7B/13B  | LLaMA_7B_2_chat/LLaMA_13B_2_chat  |  INT4/FP32 |
+| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | INT4/INT8/FP32 |
 
 For instance, to download the quantized LLaMA-2-7B-chat model:
 
