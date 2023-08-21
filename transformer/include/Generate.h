@@ -8,7 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Fp32OPTForCausalLM.h"
 #include "Fp32llamaForCausalLM.h"
+#include "Int4OPTForCausalLM.h"
 #include "Int4llamaForCausalLM.h"
 #include "OPTForCausalLM.h"
 #include "OPTTokenizer.h"
@@ -81,10 +83,10 @@ void sample_typical(OPT_token_data_array* candidates, float p, size_t min_keep);
 
 void sample_top_p(OPT_token_data_array* candidates, float p, size_t min_keep);
 
-std::vector<int> OPTGenerate(OPTForCausalLM model, std::vector<int> input_ids,
+std::vector<int> OPTGenerate(void* model, int model_type, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder* encoder = NULL,
                              bool interactive = false);
 
-enum { OPT, LLaMA_FP32, LLaMA_INT4 };
+enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4 };
 std::string LLaMAGenerate(void* model, int model_type, std::string text, const struct opt_params generation_config,
-                               std::string voc_path, bool interactive, bool voicechat);
+                          std::string voc_path, bool interactive, bool voicechat);

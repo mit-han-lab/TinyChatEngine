@@ -1,4 +1,5 @@
 #include <cmath>
+
 #include "operators.h"
 
 void softmax(const Matrix3D<float> &input, Matrix3D<float> &output, const int dim) {
@@ -28,7 +29,8 @@ void softmax(const Matrix3D<float> &input, Matrix3D<float> &output, const int di
                 // Normalize the softmax values and store them in the output array
                 for (int k = 0; k < input.m_dim_z; k++) {
                     float value = input(i, j, k);
-                    output(i, j, k) = (std::exp(value - max_value) / sum);
+                    float final_v = (std::exp(value - max_value) / (sum + 1e-10));
+                    output(i, j, k) = final_v;
                 }
             }
         }

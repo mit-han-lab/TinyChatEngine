@@ -16,7 +16,7 @@ int main() {
 
     OPTForCausalLM model = OPTForCausalLM("models/OPT_125m", get_opt_model_config(OPT_125M));
     const struct opt_params generation_config;
-    std::vector<int> generated_ids = OPTGenerate(model, input_ids, generation_config);
+    std::vector<int> generated_ids = OPTGenerate(&model, OPT_INT8, input_ids, generation_config);
 
     decoded = encoder.decode(generated_ids);
     std::cout << "generated:" << decoded << std::endl;

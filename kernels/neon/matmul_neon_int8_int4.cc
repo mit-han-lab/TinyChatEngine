@@ -315,8 +315,12 @@ static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
                 sumv2 = vmlaq_n_f32(sumv2, vcvtq_f32_s32(int_sum2), s_2);
                 sumv3 = vmlaq_n_f32(sumv3, vcvtq_f32_s32(int_sum3), s_3);
             }
-            params->C.data_ptr[i * n + j] =
-                vaddvq_f32(sumv0) + vaddvq_f32(sumv1) + vaddvq_f32(sumv2) + vaddvq_f32(sumv3);
+            if (params->bias.data_ptr)
+                params->C.data_ptr[i * n + j] = params->bias.data_ptr[j] + vaddvq_f32(sumv0) + vaddvq_f32(sumv1) +
+                                                vaddvq_f32(sumv2) + vaddvq_f32(sumv3);
+            else
+                params->C.data_ptr[i * n + j] =
+                    vaddvq_f32(sumv0) + vaddvq_f32(sumv1) + vaddvq_f32(sumv2) + vaddvq_f32(sumv3);
         }
     }
 

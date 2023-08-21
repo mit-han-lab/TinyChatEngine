@@ -33,8 +33,8 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 | Kernel precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |
 | ------ | --------------------------- | --------- | --------- | --------- |
-| FP16/FP32   |  ✅    |    ✅  |         |  
-| W4A16  |      |      |  ✅  | ✅ 
+| FP16/FP32   |  ✅    |    ✅  |         |
+| W4A16  |      |      |  ✅  | ✅
 | W4A32  |  ✅  |  ✅  |      | ✅
 | W4A8   |  ✅  |  ✅  |      |
 | W8A8   |  ✅  |  ✅  |      |
@@ -43,17 +43,16 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 | Models | AWQ (INT4) | SmoothQuant (INT8) |
 | ------ | --------- | --------- |
-| LLaMA-2   |  ✅  |   
-| LLaMA  |  ✅  |   
-| Vicuna |  ✅  |  
-| OPT  |    |  ✅ 
-| MPT   |    |  
-| Falcon   |    |  
+| LLaMA-2   |  ✅  |
+| LLaMA  |  ✅  |
+| Vicuna |  ✅  |
+| OPT  | ✅ |  ✅
+| MPT   |    |
+| Falcon   |    |
 
 ## Quantization and Model Support
 
-At present, we support int8 OPT and int4 LLaMA models for x86 and ARM CPUs as well as Apple's M-series GPUs. Quantized weights for int8 OPT models originate from [smoothquant](https://github.com/mit-han-lab/smoothquant)  and can be converted to TinyChatEngine format using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). We also plan to support edge GPUs, which will be coming soon.
-
+The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 OPT models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant)  and can be converted to TinyChatEngine format using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). We also plan to more models.
 
 ### Device-specific Quantization Methods
 
@@ -82,9 +81,8 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
 
 | Models  | Size | ID | Supported Precision |
 | ------------- | ------------- |  ------------- |  ------------- |
-| LLaMA-2 |  7B-chat  | LLaMA_7B_2_chat  |  INT4 |
-| LLaMA | 7B/7B-AWQ | LLaMA_7B/LLaMA_7B_AWQ  |  INT4 |
-| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | INT8 |
+| LLaMA-2 |  7B/13B  | LLaMA_7B_2_chat/LLaMA_13B_2_chat  |  INT4/FP32 |
+| OPT | 125m/1.3B/6.7B | OPT_125/OPT_1.3B/OPT_6.7B  | INT4/INT8/FP32 |
 
 For instance, to download the quantized LLaMA-2-7B-chat model:
 
@@ -152,45 +150,56 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   ```
 
 ## Instructions to run a speech-to-speech chatbot demo
-  - Follow instructions above to deploy LLaMA2-7B-chat
-  - Configure whisper.cpp (Note)
-    ```bash
-    cd whisper.cpp
 
-    # Install SDL2 on Linux
-    sudo apt-get install libsdl2-dev
-    # Install SDL2 on Mac OS
-    brew install sdl2
+- Follow instructions above to deploy LLaMA2-7B-chat
 
-    git apply ./../clean_up_patch
-    bash ./models/download-ggml-model.sh base.en
-    # NVIDIA GPU (Note: you may need to change the Makefile of whisper.cpp depending on your environment or device)
-    WHISPER_CUBLAS=1 make -j stream
-    # Otherwise
-    make stream
-    cd ../
-    ```
-  - If you have an edge device and want a better TTS program than espeak, download [piper](https://github.com/rhasspy/piper)
-    ```bash
-      mkdir TTS
-      wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
-      tar -xvzf piper_arm64.tar.gz
-    ```
-    - Download your preferred voice from the [huggingface repo](https://huggingface.co/rhasspy/piper-voices/tree/v1.0.0) and drag both the .onxx and .onnx.json files into the TTS directory
+- Configure whisper.cpp (Note)
 
- - Edit the listen shell file in the transformers directory so whisper.cpp is using your preferred parameters.
-    ```bash
-    nano listen
-    ```
- - Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.
-    ```bash
-    nano speak
-    ```
- - Compile and start the voicechat locally.
-    ```bash
-    make -j voicechat 
-    ./voicechat # voicechat.exe on Windows
-    ```
+  ```bash
+  cd whisper.cpp
+
+  # Install SDL2 on Linux
+  sudo apt-get install libsdl2-dev
+  # Install SDL2 on Mac OS
+  brew install sdl2
+
+  git apply ./../clean_up_patch
+  bash ./models/download-ggml-model.sh base.en
+  # NVIDIA GPU (Note: you may need to change the Makefile of whisper.cpp depending on your environment or device)
+  WHISPER_CUBLAS=1 make -j stream
+  # Otherwise
+  make stream
+  cd ../
+  ```
+
+- If you have an edge device and want a better TTS program than espeak, download [piper](https://github.com/rhasspy/piper)
+
+  ```bash
+    mkdir TTS
+    wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
+    tar -xvzf piper_arm64.tar.gz
+  ```
+
+  - Download your preferred voice from the [huggingface repo](https://huggingface.co/rhasspy/piper-voices/tree/v1.0.0) and drag both the .onxx and .onnx.json files into the TTS directory
+
+- Edit the listen shell file in the transformers directory so whisper.cpp is using your preferred parameters.
+
+  ```bash
+  nano listen
+  ```
+
+- Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.
+
+  ```bash
+  nano speak
+  ```
+
+- Compile and start the voicechat locally.
+
+  ```bash
+  make -j voicechat
+  ./voicechat # voicechat.exe on Windows
+  ```
 
 ## Related Projects
 
@@ -201,6 +210,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
 
 ## Acknowledgement
+
 [llama.cpp](https://github.com/ggerganov/llama.cpp)
 
 [transformers](https://github.com/huggingface/transformers)

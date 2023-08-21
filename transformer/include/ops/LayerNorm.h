@@ -6,12 +6,13 @@ struct LayerNorm_params {
 };
 
 class LayerNorm {
-public:
-    LayerNorm(LayerNorm_params &params_): params(params_) {};
+   public:
+    LayerNorm(LayerNorm_params params_) : params(params_){};
     LayerNorm(){};
     void forward(const Matrix3D<float> &x, Matrix3D<float> &output);
     struct LayerNorm_params params;
-private:
+
+   private:
     std::string profile_name = "LayerNorm";
 };
 
