@@ -6,20 +6,19 @@ on:
       - dev/docs
 
 jobs:
-  documentation:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-    - name: Install Doxygen
-      run: sudo apt-get install doxygen
+    - name: Doxygen Action
+      uses: mattnotmitt/doxygen-action@v1.1.0
+      with:
+        doxyfile-path: "./Doxyfile" # default is ./Doxyfile
+        working-directory: "." # default is .
 
-    - name: Generate documentation
-      run: doxygen Doxyfile
-
-    - name: Deploy to GitHub Pages
+    - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
