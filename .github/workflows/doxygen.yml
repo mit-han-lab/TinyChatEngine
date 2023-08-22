@@ -3,7 +3,7 @@ name: Generate and Deploy Doxygen Documentation
 on:
   push:
     branches:
-      - main
+      - dev/docs
 
 jobs:
   documentation:
