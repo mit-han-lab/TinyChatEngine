@@ -2,6 +2,7 @@
 #include "common.h"
 #include "utils.h"
 
+#ifndef QM_CUDA // not support yet
 // OPTGenerate function
 std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder *encoder, bool interactive) {
@@ -175,3 +176,4 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
 
     return generate_ids;
 }
+#endif
