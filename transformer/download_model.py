@@ -18,10 +18,6 @@ MODEL_DIR = "models"
 
 # URLs and md5sums for models
 models = {
-    "LLaMA_7B_AWQ": {
-        "url": "https://www.dropbox.com/s/c00cp1bcrwil8rl/LLaMA_7B_AWQ.zip",
-        "md5sum": "0d2f13eadb4dd010102dbb473e909743",
-    },
     "LLaMA_7B": {
         "url": "https://www.dropbox.com/scl/fi/xli03zmet80vxrib7tuq7/LLaMA_7B.zip?rlkey=98e2vvptmn6qz0fw2uudd3gb1&dl=1",  # noqa: E501
         "md5sum": "1ef6fde9b90745fa4c3d43e6d29d0c53",
@@ -34,15 +30,15 @@ models = {
         "url": "https://www.dropbox.com/scl/fi/qpzv3805ftdldvlocssu4/LLaMA_13B_2_chat.zip?rlkey=tfgnv9cz2i8lwuznyy6u3sf4k&dl=1",  # noqa: E501
         "md5sum": "59b73efa638be4131e5fd27c3fdee597",
     },
-    "OPT_6.7B": {
+    "opt_6.7B": {
         "url": "https://www.dropbox.com/scl/fi/jetyhj4rlhgsxz4qsizpc/OPT_6.7B.zip?rlkey=nuey04ta87hq80fupkduzsgjz&dl=1",
         "md5sum": "69cffdc090388ac2d2abcbe8163b0397",
     },
-    "OPT_1.3B": {
+    "opt_1.3b": {
         "url": "https://www.dropbox.com/scl/fi/nyqvc8hejzo4mwnw4690w/OPT_1.3B.zip?rlkey=d1a11e9o8d6qmsisbdqo1qftl&dl=1",
         "md5sum": "a49490989fe030a0e9dee119285f7cf5",
     },
-    "OPT_125m": {
+    "opt_125m": {
         "url": "https://www.dropbox.com/scl/fi/zvmdw8cdf7j0j3a99q8sx/OPT_125m.zip?rlkey=qehxgfs21m36wvm7ratwy1r5d&dl=1",
         "md5sum": "816958aed84120b763942ba83c1b010f",
     },
@@ -50,61 +46,53 @@ models = {
 
 Qmodels = {
     "QM_ARM": {
-        "LLaMA_7B_AWQ": {
-            "url": "https://www.dropbox.com/scl/fi/y63qpsr5y2o2xka52wmem/LLaMA_7B_AWQ.zip?rlkey=dqnys72t6h27p64lx2bzcymjq&dl=1",  # noqa: E501
-            "md5sum": "fd866ff3a2c4864318294b76274d10fe",
-        },
-        "LLaMA_7B": {
+        "LLaMA_7B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/92yg27e0p21izx7lalryb/LLaMA_7B.zip?rlkey=97m442isg29es3ddon66nwfmy&dl=1",  # noqa: E501
             "md5sum": "4118dca49c39547929d9e02d67838153",
         },
-        "LLaMA_7B_2_chat": {
+        "LLaMA_7B_2_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/1trpw92vmh4czvl28hkv0/LLaMA_7B_2_chat.zip?rlkey=dy1pdek0147gnuxdzpodi6pkt&dl=1",  # noqa: E501
             "md5sum": "af20c96de302c503a9fcfd5877ed0600",
         },
-        "LLaMA_13B_2_chat": {
+        "LLaMA_13B_2_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/rb7el1reycad98xrzif9a/LLaMA_13B_2_chat.zip?rlkey=wwd400no2uelcthvqxut3ojvj&dl=1",  # noqa: E501
             "md5sum": "f1f7693da630bb7aa269ecae5bcc397a",
         },
     },
     "QM_x86": {
-        "LLaMA_7B_AWQ": {
-            "url": "https://www.dropbox.com/scl/fi/qs2pk2gangeim1f7iafg7/LLaMA_7B_AWQ.zip?rlkey=ofe1mz4rz5xvgph9tk3s826vy&dl=1",  # noqa: E501
-            "md5sum": "9f7750a5c58cdbf36fe9f20dffbba4b0",
-        },
-        "LLaMA_7B": {
+        "LLaMA_7B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/i7yqzwr94wki2kywh9emr/LLaMA_7B.zip?rlkey=ce5j5p03wlwz5xdjrwuetxp4h&dl=1",  # noqa: E501
             "md5sum": "08c118ec34645808cd2d21678ad33659",
         },
-        "LLaMA_7B_2_chat": {
+        "LLaMA_7B_2_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/vu7wnes1c7gkcegg854ys/LLaMA_7B_2_chat.zip?rlkey=q61o8fpc954g1ke6g2eaot7cf&dl=1",  # noqa: E501
             "md5sum": "18f2193ccb393c7bca328f42427ef233",
         },
-        "LLaMA_13B_2_chat": {
+        "LLaMA_13B_2_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/t4u1jkp7gav8om4m6xjjv/LLaMA_13B_2_chat.zip?rlkey=tahltmq9bqu3ofx03r4mrsk2r&dl=1",  # noqa: E501
             "md5sum": "3684e5740f44ed05e213d6d807a1f136",
         },
     },
     "QM_CUDA": {
-        "LLaMA_7B_2_chat": {
+        "LLaMA_7B_2_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/du8rfgexkk4b2xp9j6yrn/LLaMA_7B_2_chat.zip?rlkey=2nao2sh4hi3t1dhltsoae2muw&dl=1",  # noqa: E501
             "md5sum": "d0b1d11e498ac7d0a2e90348e946a7f5",
         },
-        "LLaMA_13B_2_chat": {
+        "LLaMA_13B_2_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/fes1l27b9kv4dn4h0qjzu/LLaMA_13B_2_chat.zip?rlkey=u1j2kt96xpj764zkj1v87gw6u&dl=1",  # noqa: E501
             "md5sum": "802c81d86b6393aff3e93326e5b58f7f",
         },
     },
     "INT8": {
-        "OPT_125m": {
+        "opt_125m_smooth_int8": {
             "url": "https://www.dropbox.com/scl/fi/onoifsya2o96vb22mo0zq/OPT_125m.zip?rlkey=cuzmajx96v6nvfq3qctf3ke4u&dl=1",  # noqa: E501
             "md5sum": "e3bf0b7f13f393aa054de00a8433f232",
         },
-        "OPT_1.3B": {
+        "opt_1.3B_smooth_int8": {
             "url": "https://www.dropbox.com/scl/fi/6a2lt28o37m0n5stpzj3q/OPT_1.3B.zip?rlkey=yzhj4pvo5y1dtvyh90ur0kotj&dl=1",  # noqa: E501
             "md5sum": "d40d797f32d7b8a0a8648e9395575b12",
         },
-        "OPT_6.7B": {
+        "opt_6.7B_smooth_int8": {
             "url": "https://www.dropbox.com/scl/fi/jetyhj4rlhgsxz4qsizpc/OPT_6.7B.zip?rlkey=nuey04ta87hq80fupkduzsgjz&dl=1",  # noqa: E501
             "md5sum": "635994471bc6e56857cfa75f9949a090",
         },
