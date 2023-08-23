@@ -36,18 +36,16 @@ class Profiler {
     }
 
     void report_internal() const {
-        if (for_demo){
-            std::cout << "Section, Total time(s), ms/token, #tokens" << std::endl;
-
+        if (for_demo) {
             for (const auto& entry : durations) {
                 std::string row;
                 std::cout << entry.first + ", ";
                 float s = (float)(entry.second) / 1000000;
                 float ts = (float)counts.at(entry.first);
-                printf("Total time: %.1f s, %.1f ms/token, %.1f token/s, %d tokens\n" , s, s/ts*1000, ts/s, counts.at(entry.first));
+                printf("Total time: %.1f s, %.1f ms/token, %.1f token/s, %d tokens\n", s, s / ts * 1000, ts / s,
+                       counts.at(entry.first));
             }
-        }
-        else{
+        } else {
             std::cout << "Section, Total time(us), Average time(us), Count, GOPs" << std::endl;
             for (const auto& entry : durations) {
                 std::string row;
