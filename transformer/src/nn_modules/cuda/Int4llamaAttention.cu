@@ -271,10 +271,10 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4ll
     // PROFILE_START(profile_name + "::RotaryPosEmb_cuda_forward");
     dim3 grid(num_heads, 1, 1);
     dim3 block(sqlen, 1, 1);
-    // RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
+    RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
 
-    const int shared_memory_size = 2 * this->embed_dim * sizeof(half);
-    RotaryPosEmb_cuda_forward_new<<<grid, block, shared_memory_size>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
+    // const int shared_memory_size = 2 * this->embed_dim * sizeof(half);
+    // RotaryPosEmb_cuda_forward_new<<<grid, block, shared_memory_size>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
 
     // const int threads_per_block = 1024; // This value can be tuned for best performance.
     // const int blocks_per_grid = (num_heads * sqlen + threads_per_block - 1) / threads_per_block;
