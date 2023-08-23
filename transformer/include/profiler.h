@@ -37,8 +37,6 @@ class Profiler {
 
     void report_internal() const {
         if (for_demo){
-            std::cout << "Section, Total time(s), ms/token, #tokens" << std::endl;
-
             for (const auto& entry : durations) {
                 std::string row;
                 std::cout << entry.first + ", ";
