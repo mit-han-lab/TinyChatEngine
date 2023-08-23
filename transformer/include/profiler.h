@@ -44,7 +44,7 @@ class Profiler {
                 std::cout << entry.first + ", ";
                 float s = (float)(entry.second) / 1000000;
                 float ts = (float)counts.at(entry.first);
-                printf("%.2f, %.2f, %d\n", s, s/ts*1000, counts.at(entry.first));
+                printf("Total time: %.1f s, %.1f ms/token, %.1f token/s, %d tokens\n" , s, s/ts*1000, ts/s, counts.at(entry.first));
             }
         }
         else{
