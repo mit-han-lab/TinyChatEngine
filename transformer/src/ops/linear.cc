@@ -55,12 +55,14 @@ void Linear_FP::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     params.opt_params.num_thread = NUM_THREAD;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
+    #ifndef QM_CUDA // not support yet
     if (this->has_bias) {
         params.bias.row = this->bias.m_dim_y;
         params.bias.column = this->bias.m_dim_z;
         params.bias.data_ptr = this->bias.m_data;
         op.mat_mul_accelerator_transposed_fastover_column_bias((const struct matmul_params *)&params);
     } else
+    #endif
         op.mat_mul_accelerator_transposed_fastover_column((const struct matmul_params *)&params);
 
     PROFILE_END(profile_name);
@@ -199,10 +201,12 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
 #ifdef PACK_QK
     params.B.int4_data_ptr = (uint8_t *)this->packed_weights;
 #endif
+#ifndef QM_CUDA // not support yet
     if (!this->has_bias)
         params.bias.data_ptr = NULL;
     else
         params.bias.data_ptr = this->bias.m_data;
+#endif
     op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
 #else
     op.mat_mul_accelerator_int4_fast_no_offset(&params);

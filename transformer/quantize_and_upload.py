@@ -11,7 +11,7 @@ import os
 
 from upload import subebackups
 
-model_paths = ["models/LLaMA_7B", "models/LLaMA_7B_2_chat", "models/LLaMA_7B_AWQ", "models/LLaMA_13B_2_chat"]
+model_paths = ["models/LLaMA_13B_2_chat"]
 
 quantized_dir = "INT4"
 db_prefix = "/MIT/transformer_assets/"
@@ -38,8 +38,8 @@ def main():
     parser = _get_parser()
     args = parser.parse_args()
 
-    if args.method not in ["QM_x86", "QM_ARM", "FP32", "INT8"]:
-        raise ValueError("expect method to be one of ['QM_x86', 'QM_ARM', 'FP32', 'INT8']")
+    if args.method not in ["QM_x86", "QM_ARM", "QM_CUDA", "FP32", "INT8"]:
+        raise ValueError("expect method to be one of ['QM_x86', 'QM_ARM', 'QM_CUDA', 'FP32', 'INT8']")
     QM_method = args.method
 
     if args.model_path:
@@ -49,7 +49,7 @@ def main():
 
     for model_path in target_paths:
         # quantize
-        if args.method in ["QM_x86", "QM_ARM"]:
+        if args.method in ["QM_x86", "QM_CUDA", "QM_ARM"]:
             out_dir = quantized_dir
             quantize_cmd = (
                 f"python model_quantizer.py --model_path {model_path} --method {QM_method} --output_path {out_dir}"

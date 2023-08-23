@@ -5,6 +5,7 @@
 
 class Profiler {
    public:
+    bool for_demo = false;
     static Profiler& getInstance() {
         static Profiler instance;
         return instance;
@@ -35,20 +36,33 @@ class Profiler {
     }
 
     void report_internal() const {
-        std::cout << "Section, Total time(us), Average time(us), Count, GOPs" << std::endl;
-        for (const auto& entry : durations) {
-            std::string row;
-            row += entry.first + ", ";
-            row += std::to_string(entry.second) + ", ";
-            row += std::to_string(entry.second / counts.at(entry.first)) + ", ";
-            if (flops.count(entry.first) == 0)
-                row += std::to_string(counts.at(entry.first)) + ", N/A";
-            else {
-                row += std::to_string(counts.at(entry.first)) + ", ";
-                // ops and microsecond
-                row += std::to_string((((float)flops.at(entry.first)) / (float)(entry.second)) / 1000.0);
+        if (for_demo){
+            std::cout << "Section, Total time(s), ms/token, #tokens" << std::endl;
+
+            for (const auto& entry : durations) {
+                std::string row;
+                std::cout << entry.first + ", ";
+                float s = (float)(entry.second) / 1000000;
+                float ts = (float)counts.at(entry.first);
+                printf("%.2f, %.2f, %d\n", s, s/ts*1000, counts.at(entry.first));
             }
-            std::cout << row << std::endl;
+        }
+        else{
+            std::cout << "Section, Total time(us), Average time(us), Count, GOPs" << std::endl;
+            for (const auto& entry : durations) {
+                std::string row;
+                row += entry.first + ", ";
+                row += std::to_string(entry.second) + ", ";
+                row += std::to_string(entry.second / counts.at(entry.first)) + ", ";
+                if (flops.count(entry.first) == 0)
+                    row += std::to_string(counts.at(entry.first)) + ", N/A";
+                else {
+                    row += std::to_string(counts.at(entry.first)) + ", ";
+                    // ops and microsecond
+                    row += std::to_string((((float)flops.at(entry.first)) / (float)(entry.second)) / 1000.0);
+                }
+                std::cout << row << std::endl;
+            }
         }
     }
 
