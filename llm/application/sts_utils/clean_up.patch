@@ -1,0 +1,56 @@
+diff --git a/examples/stream/stream.cpp b/examples/stream/stream.cpp
+index 4c7f7d1..151d918 100644
+--- a/examples/stream/stream.cpp
++++ b/examples/stream/stream.cpp
+@@ -212,7 +212,6 @@ int main(int argc, char ** argv) {
+         }
+     }
+ 
+-    printf("[Start speaking]");
+     fflush(stdout);
+ 
+           auto t_last  = std::chrono::high_resolution_clock::now();
+@@ -329,10 +328,6 @@ int main(int argc, char ** argv) {
+                 } else {
+                     const int64_t t1 = (t_last - t_start).count()/1000000;
+                     const int64_t t0 = std::max(0.0, t1 - pcmf32.size()*1000.0/WHISPER_SAMPLE_RATE);
+-
+-                    printf("\n");
+-                    printf("### Transcription %d START | t0 = %d ms | t1 = %d ms\n", n_iter, (int) t0, (int) t1);
+-                    printf("\n");
+                 }
+ 
+                 const int n_segments = whisper_full_n_segments(ctx);
+@@ -349,20 +344,10 @@ int main(int argc, char ** argv) {
+                     } else {
+                         const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
+                         const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
+-
+-                        std::string output = "[" + to_timestamp(t0) + " --> " + to_timestamp(t1) + "]  " + text;
+-
+-                        if (whisper_full_get_segment_speaker_turn_next(ctx, i)) {
+-                            output += " [SPEAKER_TURN]";
+-                        }
+-
+-                        output += "\n";
+-
+-                        printf("%s", output.c_str());
+-                        fflush(stdout);
++                        printf ("%s\n", text);
+ 
+                         if (params.fname_out.length() > 0) {
+-                            fout << output;
++                            fout << text << std::endl;
+                         }
+                     }
+                 }
+@@ -372,8 +357,7 @@ int main(int argc, char ** argv) {
+                 }
+ 
+                 if (use_vad){
+-                    printf("\n");
+-                    printf("### Transcription %d END\n", n_iter);
++                    break;
+                 }
+             }
+ 

@@ -1,0 +1,28 @@
+#!/bin/bash
+
+<<comm
+usage: ./stream [options]
+
+options:
+  -h,       --help          [default] show this help message and exit
+  -t N,     --threads N     [4      ] number of threads to use during computation
+            --step N        [3000   ] audio step size in milliseconds
+            --length N      [10000  ] audio length in milliseconds
+            --keep N        [200    ] audio to keep from previous step in ms
+  -c ID,    --capture ID    [-1     ] capture device ID
+  -mt N,    --max-tokens N  [32     ] maximum number of tokens per audio chunk
+  -ac N,    --audio-ctx N   [0      ] audio context size (0 - all)
+  -vth N,   --vad-thold N   [0.60   ] voice activity detection threshold
+  -fth N,   --freq-thold N  [100.00 ] high-pass frequency cutoff
+  -su,      --speed-up      [false  ] speed up audio by x2 (reduced accuracy)
+  -tr,      --translate     [false  ] translate from source language to english
+  -nf,      --no-fallback   [false  ] do not use temperature fallback while decoding
+  -ps,      --print-special [false  ] print special tokens
+  -kc,      --keep-context  [false  ] keep context between audio chunks
+  -l LANG,  --language LANG [en     ] spoken language
+  -m FNAME, --model FNAME   [models/ggml-base.en.bin] model path
+  -f FNAME, --file FNAME    [       ] text output file name
+  -tdrz,     --tinydiarize  [false  ] enable tinydiarize (requires a tdrz model)
+comm
+
+./whisper.cpp/stream -m ./whisper.cpp/models/ggml-base.en.bin -t 6 --step 0 --length 30000 -vth 0.7 -c 1 > tmpfile
