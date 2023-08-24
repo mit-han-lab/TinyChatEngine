@@ -1,8 +1,8 @@
 ![tinychat_logo](assets/figures/tinychat_logo.png)
 
-# TinyChatEngine: Efficient Neural Network Library for LLM
+# TinyChatEngine: On-Device LLM Inference Library
 
-TinyChatEngine is a powerful neural network library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
+TinyChatEngine is a powerful LLM inference library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
 
 ![chat_demo](assets/figures/chat_demo.gif)
 
