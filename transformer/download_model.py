@@ -14,7 +14,7 @@ import zipfile
 import requests
 from tqdm import tqdm
 
-MODEL_DIR = "models"
+MODEL_DIR = "./"
 
 # URLs and md5sums for models
 models = {
@@ -35,7 +35,7 @@ models = {
         "md5sum": "59b73efa638be4131e5fd27c3fdee597",
     },
     "OPT_6.7B": {
-        "url": "https://www.dropbox.com/scl/fi/jetyhj4rlhgsxz4qsizpc/OPT_6.7B.zip?rlkey=nuey04ta87hq80fupkduzsgjz&dl=1",
+        "url": "https://www.dropbox.com/scl/fi/mwy0uw51anodezy9rtcf1/OPT_6.7B.zip?rlkey=f8mtjg5eesuflrz3t5och4219&dl=1",
         "md5sum": "69cffdc090388ac2d2abcbe8163b0397",
     },
     "OPT_1.3B": {
@@ -66,6 +66,18 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/rb7el1reycad98xrzif9a/LLaMA_13B_2_chat.zip?rlkey=wwd400no2uelcthvqxut3ojvj&dl=1",  # noqa: E501
             "md5sum": "f1f7693da630bb7aa269ecae5bcc397a",
         },
+        "OPT_6.7B": {
+            "url": "https://www.dropbox.com/scl/fi/7lu8rz8z5npe2nccfr66n/OPT_6.7B.zip?rlkey=5dtie29ncqscifs2g4ylpwnz7&dl=1",  # noqa: E501
+            "md5sum": "6d061dc64ccc60864391f484b5e564d0",
+        },
+        "OPT_1.3B": {
+            "url": "https://www.dropbox.com/scl/fi/1gzynks9u5j9bv5k2a0zj/OPT_1.3B.zip?rlkey=amtwlxypce84lvauo62on1601&dl=1",  # noqa: E501
+            "md5sum": "1fb1296184c8c61e4066775ba59573b9",
+        },
+        "OPT_125m": {
+            "url": "https://www.dropbox.com/scl/fi/3dedmlzi36jngj74iskr6/OPT_125m.zip?rlkey=hy7z46cwfbr4dlz9bcs1mtx5b&dl=1",  # noqa: E501
+            "md5sum": "2b42c3866c54642557046140367217fa",
+        },
     },
     "QM_x86": {
         "LLaMA_7B_AWQ": {
@@ -83,6 +95,18 @@ Qmodels = {
         "LLaMA_13B_2_chat": {
             "url": "https://www.dropbox.com/scl/fi/t4u1jkp7gav8om4m6xjjv/LLaMA_13B_2_chat.zip?rlkey=tahltmq9bqu3ofx03r4mrsk2r&dl=1",  # noqa: E501
             "md5sum": "3684e5740f44ed05e213d6d807a1f136",
+        },
+        "OPT_6.7B": {
+            "url": "https://www.dropbox.com/scl/fi/uj4z3kp5wd3cvaaiyppvs/OPT_6.7B.zip?rlkey=yw5dxd18ajsc20g3mr2rqvnnt&dl=1",  # noqa: E501
+            "md5sum": "4aba1bee864029d06d1fec67f4d95a22",
+        },
+        "OPT_1.3B": {
+            "url": "https://www.dropbox.com/scl/fi/t2t81kgskmpzzad985v72/OPT_1.3B.zip?rlkey=va6y8hqez7lxijdioigepjish&dl=1",  # noqa: E501
+            "md5sum": "dd4801d7b65915a70a29d1d304ce5783",
+        },
+        "OPT_125m": {
+            "url": "https://www.dropbox.com/scl/fi/sl6kc1ql0877w550e4v17/OPT_125m.zip?rlkey=fsdqf3bc0vktl7iv6pfi6bbyx&dl=1",  # noqa: E501
+            "md5sum": "c9c26bb5c8bf9867e21e525da744ef19",
         },
     },
     "QM_CUDA": {
