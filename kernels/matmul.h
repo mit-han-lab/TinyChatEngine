@@ -28,6 +28,7 @@ typedef uint16_t float16_t;
 static inline int32x4_t my_vdotq_s32(int32x4_t accum, int8x16_t a, int8x16_t b) { return vdotq_s32(accum, a, b); }
 
 #else
+#include <arm_neon.h>
 // Fallback implementation when vdotq_s32 is not available
 static inline int32x4_t my_vdotq_s32(int32x4_t accum, int8x16_t a, int8x16_t b) {
     // Multiply and widen results to 16-bit integers
