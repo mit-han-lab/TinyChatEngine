@@ -2,5 +2,5 @@
 	path = json
 	url = https://github.com/nlohmann/json
 [submodule "transformer/json"]
-	path = transformer/json
+	path = llm/json
 	url = https://github.com/nlohmann/json
