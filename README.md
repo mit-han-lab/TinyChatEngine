@@ -35,7 +35,6 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
 - Download the repo.
   ```bash
-  # pull repo
   git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git
   ```
 - Download the quantized LLaMA2-7B-chat model from our model zoo.
@@ -89,7 +88,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
 ## Quantization and Model Support
 
-The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). Before converting and quatizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve a better accuracy. We are currently working on supporting more models, please stay tune!
+The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). Before converting and quantizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve better accuracy. We are currently working on supporting more models, please stay tuned!
 
 ### Device-specific int4 Weight Reordering
 
