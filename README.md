@@ -76,9 +76,9 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
   ```
 
-## Kernel support
+## Backend support
 
-| Kernel precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |
+| Precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |
 | ------ | --------------------------- | --------- | --------- | --------- |
 | FP32   |  ✅    |    ✅  |         |
 | FP16   |     |      |         |
@@ -103,7 +103,7 @@ To mitigate the runtime overheads associated with weight reordering, TinyChatEng
 
 - Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, \[w0, w1, ... , w30, w31\], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence  \[w0, w16, w1, w17, ..., w15, w31\] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.
 
-### Download and deploy models from our Model Zoo
+## Download and deploy models from our Model Zoo
 
 We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
 
@@ -113,6 +113,9 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
             <th>Models</th>
             <th>Precisions</th>
             <th>ID</th>
+            <th>x86 backend</th>
+            <th>ARM backend</th>
+            <th>CUDA backend</th>
         </tr>
     </thead>
     <tbody>
@@ -120,76 +123,121 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
             <td rowspan="2">LLaMA2_13B_chat</td>
             <td> fp32</td>
             <td> LLaMA2_13B_chat_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td>int4</td>
             <td>LLaMA2_13B_chat_awq_int4</td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+            <td> ✅ </td>
         </tr>
         <tr>
             <td rowspan="2">LLaMA2_7B_chat</td>
             <td>fp32</td>
             <td>LLaMA2_7B_chat_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td> int4</td>
             <td> LLaMA2_7B_chat_awq_int4</td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+            <td> ✅ </td>
         </tr>
         <tr>
             <td rowspan="2">LLaMA_7B</td>
             <td> fp32</td>
             <td> LLaMA_7B_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td>int4</td>
             <td>LLaMA_7B_awq_int4</td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+            <td> ✅ </td>
         </tr>
         <tr>
             <td rowspan="3">opt-6.7B</td>
             <td>fp32</td>
             <td>opt_6.7B_fp32</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td>int8</td>
             <td>opt_6.7B_smooth_int8</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td> int4</td>
             <td> opt_6.7B_awq_int4</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <td rowspan="3">opt-1.3B</td>
             <td>fp32</td>
             <td>opt_1.3B_fp32</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td>int8</td>
             <td>opt_1.3B_smooth_int8</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td> int4</td>
             <td> opt_1.3B_awq_int4</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <td rowspan="3">opt-125m</td>
             <td>fp32</td>
             <td>opt_125m_fp32</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td>int8</td>
             <td>opt_125m_smooth_int8</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
             <td> int4</td>
             <td> opt_125m_awq_int4</td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
         </tr>
     </tbody>
 </table>

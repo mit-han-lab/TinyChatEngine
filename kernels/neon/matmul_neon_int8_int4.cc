@@ -139,14 +139,14 @@ void matmul_int8_int4_no_offset(struct matmul_params* params) {
                 a_start += 128;
 
                 // dot product into int32x4_t
-                int_sum0 = vdotq_s32(int_sum0, w0_low, a0);
-                int_sum0 = vdotq_s32(int_sum0, w0_high, a1);
-                int_sum1 = vdotq_s32(int_sum1, w1_low, a2);
-                int_sum1 = vdotq_s32(int_sum1, w1_high, a3);
-                int_sum2 = vdotq_s32(int_sum2, w2_low, a4);
-                int_sum2 = vdotq_s32(int_sum2, w2_high, a5);
-                int_sum3 = vdotq_s32(int_sum3, w3_low, a6);
-                int_sum3 = vdotq_s32(int_sum3, w3_high, a7);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_low, a0);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_high, a1);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_low, a2);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_high, a3);
+                int_sum2 = my_vdotq_s32(int_sum2, w2_low, a4);
+                int_sum2 = my_vdotq_s32(int_sum2, w2_high, a5);
+                int_sum3 = my_vdotq_s32(int_sum3, w3_low, a6);
+                int_sum3 = my_vdotq_s32(int_sum3, w3_high, a7);
 
                 sumv0 = vmlaq_n_f32(sumv0, vcvtq_f32_s32(int_sum0), s_0);
                 sumv1 = vmlaq_n_f32(sumv1, vcvtq_f32_s32(int_sum1), s_1);
@@ -215,10 +215,10 @@ static void* matmul_int8_int4_no_offset_over_column(void* args) {
                 w1_high = vsubq_s8(w1_high, offsets);
 
                 // dot product into int32x4_t
-                int_sum0 = vdotq_s32(int_sum0, w0_low, a0);
-                int_sum1 = vdotq_s32(int_sum1, w1_low, a2);
-                int_sum0 = vdotq_s32(int_sum0, w0_high, a1);
-                int_sum1 = vdotq_s32(int_sum1, w1_high, a3);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_low, a0);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_low, a2);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_high, a1);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_high, a3);
 
                 sumv0 = vmlaq_n_f32(sumv0, vcvtq_f32_s32(int_sum0), s_0);
                 sumv1 = vmlaq_n_f32(sumv1, vcvtq_f32_s32(int_sum1), s_1);
@@ -301,14 +301,14 @@ static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
                 a_start += 128;
 
                 // dot product into int32x4_t
-                int_sum0 = vdotq_s32(int_sum0, w0_low, a0);
-                int_sum0 = vdotq_s32(int_sum0, w0_high, a1);
-                int_sum1 = vdotq_s32(int_sum1, w1_low, a2);
-                int_sum1 = vdotq_s32(int_sum1, w1_high, a3);
-                int_sum2 = vdotq_s32(int_sum2, w2_low, a4);
-                int_sum2 = vdotq_s32(int_sum2, w2_high, a5);
-                int_sum3 = vdotq_s32(int_sum3, w3_low, a6);
-                int_sum3 = vdotq_s32(int_sum3, w3_high, a7);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_low, a0);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_high, a1);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_low, a2);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_high, a3);
+                int_sum2 = my_vdotq_s32(int_sum2, w2_low, a4);
+                int_sum2 = my_vdotq_s32(int_sum2, w2_high, a5);
+                int_sum3 = my_vdotq_s32(int_sum3, w3_low, a6);
+                int_sum3 = my_vdotq_s32(int_sum3, w3_high, a7);
 
                 sumv0 = vmlaq_n_f32(sumv0, vcvtq_f32_s32(int_sum0), s_0);
                 sumv1 = vmlaq_n_f32(sumv1, vcvtq_f32_s32(int_sum1), s_1);
@@ -381,10 +381,10 @@ static void* matmul_int8_int4_no_offset_over_column_packed(void* args) {
                 w1_high = vsubq_s8(w1_high, offsets);
 
                 // dot product into int32x4_t
-                int_sum0 = vdotq_s32(int_sum0, w0_low, a0);
-                int_sum1 = vdotq_s32(int_sum1, w1_low, a2);
-                int_sum0 = vdotq_s32(int_sum0, w0_high, a1);
-                int_sum1 = vdotq_s32(int_sum1, w1_high, a3);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_low, a0);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_low, a2);
+                int_sum0 = my_vdotq_s32(int_sum0, w0_high, a1);
+                int_sum1 = my_vdotq_s32(int_sum1, w1_high, a3);
 
                 sumv0 = vmlaq_n_f32(sumv0, vcvtq_f32_s32(int_sum0), s_0);
                 sumv1 = vmlaq_n_f32(sumv1, vcvtq_f32_s32(int_sum1), s_1);
