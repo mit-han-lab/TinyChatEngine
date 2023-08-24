@@ -101,6 +101,10 @@ int main(int argc, char* argv[]) {
         int model_id = model_config[target_model];
         std::string m_path = model_path[target_model];
 
+        #ifdef MODEL_PREFIX
+        m_path = MODEL_PREFIX + m_path;
+        #endif
+
         struct opt_params generation_config;
         generation_config.n_predict = 512;
         generation_config.n_vocab = 32000;
