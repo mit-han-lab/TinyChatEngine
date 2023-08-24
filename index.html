@@ -96,8 +96,7 @@ Windows</h2>
 Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <p>Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.</p>
 <ul>
-<li>Download the repo. <div class="fragment"><div class="line"># pull repo</div>
-<div class="line">git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git</div>
+<li>Download the repo. <div class="fragment"><div class="line">git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git</div>
 </div><!-- fragment --></li>
 <li><p class="startli">Download the quantized LLaMA2-7B-chat model from our model zoo. </p><div class="fragment"><div class="line">cd TinyChatEngine/transformer</div>
 </div><!-- fragment --><ul>
@@ -126,7 +125,7 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <div class="line"> </div>
 <div class="line">## Quantization and Model Support</div>
 <div class="line"> </div>
-<div class="line">The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). Before converting and quatizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve a better accuracy. We are currently working on supporting more models, please stay tune!</div>
+<div class="line">The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). Before converting and quantizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve better accuracy. We are currently working on supporting more models, please stay tuned!</div>
 <div class="line"> </div>
 <div class="line">### Device-specific int4 Weight Reordering</div>
 <div class="line"> </div>
