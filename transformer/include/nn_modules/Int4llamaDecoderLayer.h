@@ -71,7 +71,6 @@ class Int4llamaDecoderLayer {
     void free_cuda_memory();
     LlamaRMSNorm_cuda input_layernorm, post_attention_layernorm;
     Linear_half_int4 gate_proj, down_proj, up_proj;
-    // float16_t* split_8_buffer;
     int *gate_proj_weight = nullptr, *down_proj_weight = nullptr, *up_proj_weight = nullptr;
 
 #else

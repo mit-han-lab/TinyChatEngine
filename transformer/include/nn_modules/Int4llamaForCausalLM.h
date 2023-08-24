@@ -40,7 +40,6 @@ class Int4LlamaForCausalLM {
     void free_cuda_memory();
     int* lm_head_weight = nullptr;
     float16_t* logits_output_half = nullptr;
-    // float16_t* split_8_buffer;
 #else
     uint8_t* lm_head_weight;
 #endif

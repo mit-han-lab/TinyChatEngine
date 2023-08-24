@@ -1,3 +1,10 @@
+/*
+
+Adapted from llama.cpp:
+https://github.com/ggerganov/llama.cpp
+
+*/
+
 #include "LLaMATokenizer.h"
 
 /*
@@ -35,8 +42,6 @@ struct llama_file {
     }
 };
 
-// TODO: Change the dependency on the vocab file in the future. 
-// TODO: Remove ggml-vocab.bin, use tokenizer.model in LLaMA repo on Huggingface instead.
 llama_vocab llama_init_vocab(const char * vocab_file) {
     llama_vocab vocab;
     int n_vocab = 32000;

@@ -92,12 +92,13 @@ The goal of TinyChatEngine is to support various quantization methods on various
 
 ### Device-specific int4 Weight Reordering
 
-To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively.
+To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively. We also support QM_CUDA for Nvidia GPUs, including server and edge GPUs.
 
 | Platforms  | ISA | Quantization methods |
 | ------------- | ------------- |  ------------- |
 | Intel/AMD |  x86-64  | QM_x86  |
-| M1/M2 Mac | arm | QM_ARM  |
+| Apple M1/M2 Mac | arm | QM_ARM  |
+| Nvidia GPU| CUDA | QM_CUDA  |
 
 - Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, \[w0, w1, ... , w30, w31\], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence  \[w0, w16, w1, w17, ..., w15, w31\] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.
 
@@ -194,13 +195,17 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
 
 For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models, use --QM  to choose the quantized model for your device)
 
-- On a Intel/AMD latptop:
+- On an Intel/AMD latptop:
   ```bash
   python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
   ```
-- On a M1/M2 Macbook:
+- On an M1/M2 Macbook:
   ```bash
   python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+  ```
+- On an Nvidia GPU:
+  ```bash
+  python download_model.py --model LLaMA_7B_2_chat --QM QM_CUDA
   ```
 
 To deploy a quantized model with TinyChatEngine, compile and run the chat program.

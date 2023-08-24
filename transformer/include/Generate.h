@@ -1,3 +1,10 @@
+/*
+
+Adapted from llama.cpp:
+https://github.com/ggerganov/llama.cpp
+
+*/
+
 #include <algorithm>
 #include <cassert>
 #include <cstdio>

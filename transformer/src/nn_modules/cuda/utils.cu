@@ -3,10 +3,10 @@
 #include <stdio.h>
 
 #include <cassert>
-#include <cerrno>  // for errno
+#include <cerrno>
 #include <cmath>
 #include <cstdlib>
-#include <cstring>  // for strerror
+#include <cstring>
 #include <iostream>
 
 half *split_8_buffer = nullptr;
@@ -34,7 +34,6 @@ bool check_two_equal_cpu_gpu(half_float::half* array, half* array2, int size, fl
 
     for (int i = 0; i < size; i++) {
         float diff = static_cast<float>(array[i]) - __half2float(array2[i]);
-        // printf("diff: %f\n, array[i]: %f\n, array2[i]: %f\n", diff, static_cast<float>(array[i]), __half2float(array2[i]));
 
         sq_diff += diff * diff;
         if (diff * diff > max_sqdiff) {
@@ -138,7 +137,6 @@ __global__ void merge_k_iters(half *input, half *output, int N, int split_k_iter
     if (index < N) {
         half sum = 0;
         for (int j = 0; j < split_k_iters; j++) {
-            // sum += input[index + j * N];
             sum = __hadd(sum, input[index + j * N]);
         }
 

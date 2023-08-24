@@ -53,7 +53,6 @@ class Int4llamaAttention {
     Int4llamaAttention(std::string param_path, const struct model_config config);
     Int4llamaAttention() {}
     static void initialized_memory(const struct model_config config);
-    // void initialized_memory(const struct model_config config);
     struct Int4llamaAttention_output forward(const struct Int4llamaAttention_input &input);
 
     int *q_weight = nullptr, *k_weight = nullptr, *v_weight = nullptr, *o_weight = nullptr;

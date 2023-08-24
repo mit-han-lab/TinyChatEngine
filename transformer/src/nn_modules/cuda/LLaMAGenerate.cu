@@ -3,26 +3,6 @@
 #include "common.h"
 #include "utils.h"
 
-static void LLaMAFreeMemory() {
-    // llamaForCausalLM
-    Int4LlamaForCausalLM LlamaForCausalLM;
-    LlamaForCausalLM.free_cuda_memory();
-
-    // llamaDecoder
-    Int4llamaDecoder llamaDecoder;
-    llamaDecoder.free_cuda_memory();
-
-    // llamaDecoderLayer
-    Int4llamaDecoderLayer llamaDecoderLayer;
-    llamaDecoderLayer.free_cuda_memory();
-
-    // llamaAttention
-    Int4llamaAttention llamaAttention;
-    llamaAttention.free_cuda_memory();
-
-    free_aligned_memory_gpu(split_8_buffer);
-}
-
 std::string LLaMAGenerate(void *model_ptr, int model_type, std::string text,
                                const struct opt_params generation_config, std::string voc_path, bool interactive, bool voicechat) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
@@ -197,8 +177,6 @@ std::string LLaMAGenerate(void *model_ptr, int model_type, std::string text,
 
     if (!voicechat) Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
-
-    // LLaMAFreeMemory();
 
     return output;
 }
