@@ -2,7 +2,7 @@
 
 - Follow the [instructions](../../README.md) to download and deploy LLaMA2-7B-chat.
 
-- Configure whisper.cpp (Note)
+- Configure whisper.cpp
 
   ```bash
   # Get whisper.cpp for speech recognition
