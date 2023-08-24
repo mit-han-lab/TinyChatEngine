@@ -43,15 +43,15 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   ```
   - On an x86 device (e.g., Intel/AMD laptop)
     ```bash
-    python tools/download_model.py --model LLaMA_7B_2_chat_awq_int4 --QM QM_x86
+    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_x86
     ```
   - On an ARM device (e.g., M1/M2 Macbook)
     ```bash
-    python tools/download_model.py --model LLaMA_7B_2_chat_awq_int4 --QM QM_ARM
+    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_ARM
     ```
   - On a CUDA device (e.g., Jetson AGX Orin)
     ```bash
-    python tools/download_model.py --model LLaMA_7B_2_chat_awq_int4 --QM QM_CUDA
+    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
     ```
 - Compile and start the chat locally.
   ```bash
@@ -198,15 +198,15 @@ For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models,
 
 - On an Intel/AMD latptop:
   ```bash
-  python tools/download_model.py --model LLaMA_7B_2_chat_awq_int4 --QM QM_x86
+  python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_x86
   ```
 - On an M1/M2 Macbook:
   ```bash
-  python tools/download_model.py --model LLaMA_7B_2_chat_awq_int4 --QM QM_ARM
+  python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_ARM
   ```
 - On an Nvidia GPU:
   ```bash
-  python tools/download_model.py --model LLaMA_7B_2_chat_awq_int4 --QM QM_CUDA
+  python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
   ```
 
 To deploy a quantized model with TinyChatEngine, compile and run the chat program.
@@ -216,7 +216,7 @@ make chat -j
 ./chat <model_name> <precision>
 ```
 
-## Experimental Features
+## Experimental features
 
 TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Explore our step-by-step guide [here](llm/application/README.md) to seamlessly deploy a chatbot locally on your device!
 
