@@ -118,20 +118,19 @@ $(function() {
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="keywordtype">void</span> free_cuda_memory();</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keywordtype">int</span>* lm_head_weight = <span class="keyword">nullptr</span>;</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    float16_t* logits_output_half = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="comment">// float16_t* split_8_buffer;</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    uint8_t* lm_head_weight;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>   <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    std::string profile_name = <span class="stringliteral">&quot;Int4LlamaForCausalLM&quot;</span>;</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <a class="code hl_class" href="classInt4llamaDecoder.html">Int4llamaDecoder</a> decoder;</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="preprocessor">#ifdef QM_CUDA</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    Linear_half_int4 lm_head;</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <a class="code hl_class" href="classLinear__FP__int4.html">Linear_FP_int4</a> lm_head;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>};</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    uint8_t* lm_head_weight;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>   <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    std::string profile_name = <span class="stringliteral">&quot;Int4LlamaForCausalLM&quot;</span>;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <a class="code hl_class" href="classInt4llamaDecoder.html">Int4llamaDecoder</a> decoder;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#ifdef QM_CUDA</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    Linear_half_int4 lm_head;</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <a class="code hl_class" href="classLinear__FP__int4.html">Linear_FP_int4</a> lm_head;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>};</div>
 <div class="ttc" id="aclassInt4LlamaForCausalLM_html"><div class="ttname"><a href="classInt4LlamaForCausalLM.html">Int4LlamaForCausalLM</a></div><div class="ttdef"><b>Definition</b> Int4llamaForCausalLM.h:33</div></div>
 <div class="ttc" id="aclassInt4llamaDecoder_html"><div class="ttname"><a href="classInt4llamaDecoder.html">Int4llamaDecoder</a></div><div class="ttdef"><b>Definition</b> Int4llamaDecoder.h:39</div></div>
 <div class="ttc" id="aclassLinear__FP__int4_html"><div class="ttname"><a href="classLinear__FP__int4.html">Linear_FP_int4</a></div><div class="ttdef"><b>Definition</b> linear.h:27</div></div>

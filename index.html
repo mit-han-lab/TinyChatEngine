@@ -100,9 +100,9 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 </div><!-- fragment --></li>
 <li><p class="startli">Download the quantized LLaMA2-7B-chat model from our model zoo. </p><div class="fragment"><div class="line">cd TinyChatEngine/transformer</div>
 </div><!-- fragment --><ul>
-<li>On a x86 device (e.g., Intel/AMD laptop) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_x86</div>
+<li>On an x86 device (e.g., Intel/AMD laptop) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_x86</div>
 </div><!-- fragment --></li>
-<li>On a ARM device (e.g., M1/M2 Macbook) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM</div>
+<li>On an ARM device (e.g., M1/M2 Macbook) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM</div>
 </div><!-- fragment --></li>
 <li>On a CUDA device (e.g., Jetson AGX Orin) ```bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_CUDA <div class="fragment"><div class="line">- Compile and start the chat locally.</div>
 </div><!-- fragment --> bash make chat -j ./chat Using model: LLaMA7B_2_chat Using LLaMA's default data format: INT4 Loading model... Finished! USER: Write a syllabus for Operating Systems. ASSISTANT: Of course! Here is a sample syllabus for a college-level course on operating systems: Course Title: Introduction to Operating Systems Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer. Course Objectives:</li>
@@ -129,12 +129,13 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <div class="line"> </div>
 <div class="line">### Device-specific int4 Weight Reordering</div>
 <div class="line"> </div>
-<div class="line">To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively.</div>
+<div class="line">To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively. We also support QM_CUDA for Nvidia GPUs, including server and edge GPUs.</div>
 <div class="line"> </div>
 <div class="line">| Platforms  | ISA | Quantization methods |</div>
 <div class="line">| ------------- | ------------- |  ------------- |</div>
 <div class="line">| Intel/AMD |  x86-64  | QM_x86  |</div>
-<div class="line">| M1/M2 Mac | arm | QM_ARM  |</div>
+<div class="line">| Apple M1/M2 Mac | arm | QM_ARM  |</div>
+<div class="line">| Nvidia GPU| CUDA | QM_CUDA  |</div>
 <div class="line"> </div>
 <div class="line">- Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, \[w0, w1, ... , w30, w31\], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence  \[w0, w16, w1, w17, ..., w15, w31\] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.</div>
 <div class="line"> </div>
@@ -231,9 +232,10 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <div class="line"> </div>
 <div class="line">For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models, use --QM  to choose the quantized model for your device)</div>
 <div class="line"> </div>
-<div class="line">- On a Intel/AMD latptop:</div>
-</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_x86 </p><div class="fragment"><div class="line">- On a M1/M2 Macbook:</div>
-</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_ARM </p><div class="fragment"><div class="line">To deploy a quantized model with TinyChatEngine, compile and run the chat program.</div>
+<div class="line">- On an Intel/AMD latptop:</div>
+</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_x86 </p><div class="fragment"><div class="line">- On an M1/M2 Macbook:</div>
+</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_ARM </p><div class="fragment"><div class="line">- On an Nvidia GPU:</div>
+</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_CUDA </p><div class="fragment"><div class="line">To deploy a quantized model with TinyChatEngine, compile and run the chat program.</div>
 </div><!-- fragment --><p> make chat -j ./chat LLaMA_7B_2_chat INT4 </p><div class="fragment"><div class="line">## Instructions to run a speech-to-speech chatbot demo</div>
 <div class="line"> </div>
 <div class="line">- Follow instructions above to deploy LLaMA2-7B-chat</div>
