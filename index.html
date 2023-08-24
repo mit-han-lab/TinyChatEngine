@@ -92,107 +92,185 @@ Windows</h2>
 </div><!-- fragment --><ul>
 <li>Add binary directories (e.g., C:\msys64\mingw64\bin and C:\msys64\usr\bin) to the environment path</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md4"></a>
-Kernel support list</h2>
-<p>| Kernel precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU | | ---&mdash; | ------------------------&mdash; | ------&mdash; | ------&mdash; | ------&mdash; | | FP16/FP32 | ✅ | ✅ | | | W4A16 | | | ✅ | ✅ | W4A32 | ✅ | ✅ | | ✅ | W4A8 | ✅ | ✅ | | | W8A8 | ✅ | ✅ | |</p>
-<h2><a class="anchor" id="autotoc_md5"></a>
-Model and quantization method support list</h2>
-<p>| Models | AWQ (INT4) | SmoothQuant (INT8) | | ---&mdash; | ------&mdash; | ------&mdash; | | LLaMA-2 | ✅ | | LLaMA | ✅ | | Vicuna | ✅ | | OPT | ✅ | ✅ | MPT | | | Falcon | |</p>
-<h1><a class="anchor" id="autotoc_md6"></a>
-Quantization and Model Support</h1>
-<p>The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 OPT models that originate from <a href="https://github.com/mit-han-lab/smoothquant">smoothquant</a> and can be converted to TinyChatEngine format using the provided conversion script <a href="transformer/opt_smooth_exporter.py">opt_smooth_exporter.py</a>. For LLaMA models, scripts are available for converting Huggingface format checkpoints to our <a href="transformer/llama_exporter.py">format</a>, and for quantizing them to specific methods <a href="transformer/model_quantizer.py">based on your device</a>. We also plan to more models.</p>
-<h2><a class="anchor" id="autotoc_md7"></a>
-Device-specific Quantization Methods</h2>
-<p>Different target devices require different quantization methods due to the variants of kernel implementation that suit the SIMD bit-width and instructions supported by your device. To quantize your LLaMA model to int4, please consult the following table:</p>
-<table class="markdownTable">
-<tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Platforms   </th><th class="markdownTableHeadNone">ISA   </th><th class="markdownTableHeadNone">Quantization methods    </th></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Intel/AMD   </td><td class="markdownTableBodyNone">x86-64   </td><td class="markdownTableBodyNone">QM_x86    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">M1/M2 Mac   </td><td class="markdownTableBodyNone">arm   </td><td class="markdownTableBodyNone">QM_ARM   </td></tr>
-</table>
-<p>Example of quantizing a LLaMA model for an Intel/AMD laptop:</p>
-<div class="fragment"><div class="line">python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86 --output_path INT4/</div>
-</div><!-- fragment --><p>Example of quantizing a LLaMA model for an M1/M2 Macbook:</p>
-<div class="fragment"><div class="line">python model_quantizer.py --model_path models/LLaMA_7B --method QM_ARM --output_path INT4/</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md8"></a>
-Download and deploy models from our Model Zoo</h2>
-<p>We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.</p>
-<table class="markdownTable">
-<tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Models   </th><th class="markdownTableHeadNone">Size   </th><th class="markdownTableHeadNone">ID   </th><th class="markdownTableHeadNone">Supported Precision    </th></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">LLaMA-2   </td><td class="markdownTableBodyNone">7B/13B   </td><td class="markdownTableBodyNone">LLaMA_7B_2_chat/LLaMA_13B_2_chat   </td><td class="markdownTableBodyNone">INT4/FP32    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">OPT   </td><td class="markdownTableBodyNone">125m/1.3B/6.7B   </td><td class="markdownTableBodyNone">OPT_125/OPT_1.3B/OPT_6.7B   </td><td class="markdownTableBodyNone">INT4/INT8/FP32   </td></tr>
-</table>
-<p>For instance, to download the quantized LLaMA-2-7B-chat model:</p>
-<ul>
-<li>On a Intel/AMD latptop: <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_x86</div>
-</div><!-- fragment --></li>
-<li>On a M1/M2 Macbook: <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM</div>
-</div><!-- fragment --></li>
-</ul>
-<p>To deploy the quantized model with TinyChatEngine, compile the chat program and run it with the model ID and precision.</p>
-<div class="fragment"><div class="line">make chat -j</div>
-<div class="line">./chat LLaMA_7B_2_chat INT4</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md9"></a>
+<h1><a class="anchor" id="autotoc_md4"></a>
 Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <p>Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.</p>
 <ul>
 <li>Download the repo. <div class="fragment"><div class="line"># pull repo</div>
 <div class="line">git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git</div>
 </div><!-- fragment --></li>
-<li>Download the quantized LLaMA2-7B-chat model from our model zoo. <div class="fragment"><div class="line">cd TinyChatEngine/transformer</div>
+<li><p class="startli">Download the quantized LLaMA2-7B-chat model from our model zoo. </p><div class="fragment"><div class="line">cd TinyChatEngine/transformer</div>
 </div><!-- fragment --><ul>
 <li>On a x86 device (e.g., Intel/AMD laptop) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_x86</div>
 </div><!-- fragment --></li>
 <li>On a ARM device (e.g., M1/M2 Macbook) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM</div>
 </div><!-- fragment --></li>
 <li>On a CUDA device (e.g., Jetson AGX Orin) ```bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_CUDA <div class="fragment"><div class="line">- Compile and start the chat locally.</div>
-</div><!-- fragment --> bash make chat -j ./chat # chat.exe on Windows Using model: LLaMA7B_2_chat Using LLaMA's default data format: INT4 Loading model... Finished! USER: Write a syllabus for Operating Systems. ASSISTANT: Of course! Here is a sample syllabus for a college-level course on operating systems: Course Title: Introduction to Operating Systems Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer. Course Objectives:</li>
+</div><!-- fragment --> bash make chat -j ./chat Using model: LLaMA7B_2_chat Using LLaMA's default data format: INT4 Loading model... Finished! USER: Write a syllabus for Operating Systems. ASSISTANT: Of course! Here is a sample syllabus for a college-level course on operating systems: Course Title: Introduction to Operating Systems Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer. Course Objectives:</li>
 <li>Understand the basic architecture of an operating system</li>
 <li>Learn about processes, threads, and process scheduling algorithms</li>
 <li>Study memory management techniques such as paging and segmentation</li>
 <li>Explore file systems including file organization, storage devices, and file access methods</li>
 <li>Investigate security mechanisms to protect against malicious software attacks</li>
-<li>Analyze input/output (I/O) operations and their handling by the operating system ... <div class="fragment"><div class="line">## Instructions to run a speech-to-speech chatbot demo</div>
+<li>Analyze input/output (I/O) operations and their handling by the operating system ...</li>
+</ul>
+<div class="fragment"><div class="line">### Kernel support list</div>
+<div class="line"> </div>
+<div class="line">| Kernel precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |</div>
+<div class="line">| ------ | --------------------------- | --------- | --------- | --------- |</div>
+<div class="line">| FP16/FP32   |  ✅    |    ✅  |         |</div>
+<div class="line">| W4A16  |      |      |  ✅  | ✅</div>
+<div class="line">| W4A32  |  ✅  |  ✅  |      | ✅</div>
+<div class="line">| W4A8   |  ✅  |  ✅  |      |</div>
+<div class="line">| W8A8   |  ✅  |  ✅  |      |</div>
+<div class="line"> </div>
+<div class="line">## Quantization and Model Support</div>
+<div class="line"> </div>
+<div class="line">The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). Before converting and quatizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve a better accuracy. We are currently working on supporting more models, please stay tune!</div>
+<div class="line"> </div>
+<div class="line">### Device-specific int4 Weight Reordering</div>
+<div class="line"> </div>
+<div class="line">To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively.</div>
+<div class="line"> </div>
+<div class="line">| Platforms  | ISA | Quantization methods |</div>
+<div class="line">| ------------- | ------------- |  ------------- |</div>
+<div class="line">| Intel/AMD |  x86-64  | QM_x86  |</div>
+<div class="line">| M1/M2 Mac | arm | QM_ARM  |</div>
+<div class="line"> </div>
+<div class="line">- Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, \[w0, w1, ... , w30, w31\], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence  \[w0, w16, w1, w17, ..., w15, w31\] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.</div>
+<div class="line"> </div>
+<div class="line">### Download and deploy models from our Model Zoo</div>
+<div class="line"> </div>
+<div class="line">We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model&#39;s ID in the table below and use the associated script.</div>
+<div class="line"> </div>
+<div class="line">&lt;table&gt;</div>
+<div class="line">    &lt;thead&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;th&gt;Models&lt;/th&gt;</div>
+<div class="line">            &lt;th&gt;Precisions&lt;/th&gt;</div>
+<div class="line">            &lt;th&gt;ID&lt;/th&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">    &lt;/thead&gt;</div>
+<div class="line">    &lt;tbody&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA-7B&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; LLaMA_7B&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;LLaMA_7B_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA-2-7B-chat&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; LLaMA_7B_2_chat&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;LLaMA_7B_2_chat_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA-2-13B-chat&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; LLaMA_13B_2_chat&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;LLaMA_13B_2_chat_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-125m&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; opt_125m_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;int8&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_125m_smooth_int8&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_125m&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-1.3B&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; opt_1.3B_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;int8&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_1.3B_smooth_int8&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_1.3B&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-6.7B&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; opt_6.7B_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;int8&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_6.7B_smooth_int8&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_6.7B&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">    &lt;/tbody&gt;</div>
+<div class="line">&lt;/table&gt;</div>
+<div class="line"> </div>
+<div class="line">For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models, use --QM  to choose the quantized model for your device)</div>
+<div class="line"> </div>
+<div class="line">- On a Intel/AMD latptop:</div>
+</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_x86 </p><div class="fragment"><div class="line">- On a M1/M2 Macbook:</div>
+</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_ARM </p><div class="fragment"><div class="line">To deploy a quantized model with TinyChatEngine, compile and run the chat program.</div>
+</div><!-- fragment --><p> make chat -j ./chat LLaMA_7B_2_chat INT4 </p><div class="fragment"><div class="line">## Instructions to run a speech-to-speech chatbot demo</div>
 <div class="line"> </div>
 <div class="line">- Follow instructions above to deploy LLaMA2-7B-chat</div>
 <div class="line"> </div>
 <div class="line">- Configure whisper.cpp (Note)</div>
-</div><!-- fragment --> bash cd whisper.cpp</li>
-</ul>
+</div><!-- fragment --><p> bash cd transformer git clone <a href="https://github.com/ggerganov/whisper.cpp">https://github.com/ggerganov/whisper.cpp</a> cd whisper.cpp git checkout a4bb2df</p>
 </li>
 </ul>
-<h1><a class="anchor" id="autotoc_md10"></a>
+<h1><a class="anchor" id="autotoc_md5"></a>
 Install SDL2 on Linux</h1>
 <p>sudo apt-get install libsdl2-dev </p>
-<h1><a class="anchor" id="autotoc_md11"></a>
+<h1><a class="anchor" id="autotoc_md6"></a>
 Install SDL2 on Mac OS</h1>
 <p>brew install sdl2</p>
-<p>git apply ./../clean_up_patch bash ./models/download-ggml-model.sh base.en </p>
-<h1><a class="anchor" id="autotoc_md12"></a>
+<p>git apply ../application/sts_utils/clean_up.patch bash ./models/download-ggml-model.sh base.en </p>
+<h1><a class="anchor" id="autotoc_md7"></a>
 NVIDIA GPU (Note: you may need to change the Makefile of whisper.cpp depending on your environment or device)</h1>
 <p>WHISPER_CUBLAS=1 make -j stream </p>
-<h1><a class="anchor" id="autotoc_md13"></a>
+<h1><a class="anchor" id="autotoc_md8"></a>
 Otherwise</h1>
 <p>make stream cd ../ </p><div class="fragment"><div class="line">- If you have an edge device and want a better TTS program than espeak, download [piper](https://github.com/rhasspy/piper)</div>
 </div><!-- fragment --><p> bash mkdir TTS wget <a href="https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz">https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz</a> tar -xvzf piper_arm64.tar.gz </p><div class="fragment"><div class="line">  - Download your preferred voice from the [huggingface repo](https://huggingface.co/rhasspy/piper-voices/tree/v1.0.0) and drag both the .onxx and .onnx.json files into the TTS directory</div>
 <div class="line"> </div>
 <div class="line">- Edit the listen shell file in the transformers directory so whisper.cpp is using your preferred parameters.</div>
-</div><!-- fragment --><p> bash nano listen </p><div class="fragment"><div class="line">- Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.</div>
-</div><!-- fragment --><p> bash nano speak </p><div class="fragment"><div class="line">- Compile and start the voicechat locally.</div>
+</div><!-- fragment --><p> bash nano application/sts_utils/listen </p><div class="fragment"><div class="line">- Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.</div>
+</div><!-- fragment --><p> bash nano application/sts_utils/speak </p><div class="fragment"><div class="line">- Compile and start the voicechat locally.</div>
 </div><!-- fragment --><p> bash make -j voicechat ./voicechat # voicechat.exe on Windows ```</p>
-<h2><a class="anchor" id="autotoc_md14"></a>
+<h2><a class="anchor" id="autotoc_md9"></a>
 Related Projects</h2>
 <p><a href="https://github.com/mit-han-lab/tinyengine">TinyEngine</a></p>
 <p><a href="https://github.com/mit-han-lab/smoothquant">Smoothquant</a></p>
 <p><a href="https://github.com/mit-han-lab/llm-awq">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></p>
-<h2><a class="anchor" id="autotoc_md15"></a>
+<h2><a class="anchor" id="autotoc_md10"></a>
 Acknowledgement</h2>
 <p><a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a></p>
+<p><a href="https://github.com/ggerganov/whisper.cpp">whisper.cpp</a></p>
 <p><a href="https://github.com/huggingface/transformers">transformers</a> </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
