@@ -53,6 +53,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
     ```bash
     python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
     ```
+  - Check this [table](#download-and-deploy-models-from-our-model-zoo) for the detailed list of supported models
 - Compile and start the chat locally.
   ```bash
   make chat -j
