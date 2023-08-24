@@ -35,7 +35,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
 - Download the repo.
   ```bash
-  git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git
+  git clone --recursive git@github.com:mit-han-lab/TinyChatEngine.git
   ```
 - Download the quantized LLaMA2-7B-chat model from our model zoo.
   ```bash
