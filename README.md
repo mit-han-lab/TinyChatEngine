@@ -93,24 +93,15 @@ The goal of TinyChatEngine is to support various quantization methods on various
 
 ### Device-specific int4 Weight Reordering
 
-Different target devices require different quantization methods due to the variants of kernel implementation that suit the SIMD bit-width and instructions supported by your device. To quantize your LLaMA model to int4, please consult the following table:
+To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively.
 
 | Platforms  | ISA | Quantization methods |
 | ------------- | ------------- |  ------------- |
 | Intel/AMD |  x86-64  | QM_x86  |
 | M1/M2 Mac | arm | QM_ARM  |
 
-Example of quantizing a LLaMA model for an Intel/AMD laptop:
 
-```bash
-python model_quantizer.py --model_path models/LLaMA_7B --method QM_x86 --output_path INT4/
-```
-
-Example of quantizing a LLaMA model for an M1/M2 Macbook:
-
-```bash
-python model_quantizer.py --model_path models/LLaMA_7B --method QM_ARM --output_path INT4/
-```
+- Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, [w0, w1, ... , w30, w31], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence  [w0, w16, w1, w17, ..., w15, w31] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.
 
 ### Download and deploy models from our Model Zoo
 
