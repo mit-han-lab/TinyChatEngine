@@ -4,25 +4,20 @@
 #include "Generate.h"
 
 std::map<std::string, int> model_config = {
-    {"OPT_125m", OPT_125M},     {"OPT_1.3B", OPT_1_3B},        {"OPT_6.7B", OPT_6_7B},         {"LLaMA_7B", LLaMA_7B},
-    {"LLaMA_7B_AWQ", LLaMA_7B}, {"LLaMA_7B_2_chat", LLaMA_7B}, {"7b", LLaMA_7B}, {"LLaMA_13B_2_chat", LLaMA_13B}, {"13b", LLaMA_13B}};
+    {"OPT_125m", OPT_125M},        {"OPT_1.3B", OPT_1_3B}, {"OPT_6.7B", OPT_6_7B},          {"LLaMA_7B", LLaMA_7B},
+    {"LLaMA_7B_2_chat", LLaMA_7B}, {"7b", LLaMA_7B},       {"LLaMA_13B_2_chat", LLaMA_13B}, {"13b", LLaMA_13B}};
 
 std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"},
                                                  {"OPT_1.3B", "models/OPT_1.3B"},
                                                  {"OPT_6.7B", "models/OPT_6.7B"},
                                                  {"LLaMA_7B", "models/LLaMA_7B"},
-                                                 {"LLaMA_7B_AWQ", "models/LLaMA_7B_AWQ"},
                                                  {"LLaMA_7B_2_chat", "models/LLaMA_7B_2_chat"},
-                                                 {"7b", "models/LLaMA_7B_2_chat"},
                                                  {"LLaMA_13B_2_chat", "models/LLaMA_13B_2_chat"},
+                                                 {"7b", "models/LLaMA_7B_2_chat"},
                                                  {"13b", "models/LLaMA_13B_2_chat"}};
 
 std::map<std::string, int> data_format_list = {
-    {"FP32", FP32},
-    {"INT8", INT8},
-    {"INT4", INT4},
-    {"int4", INT4},
-    {"fp32", FP32},
+    {"FP32", FP32}, {"INT8", INT8}, {"INT4", INT4}, {"int4", INT4}, {"fp32", FP32},
 };
 
 bool isLLaMA(std::string s) {
@@ -65,7 +60,7 @@ int main(int argc, char* argv[]) {
         }
         std::cout << "Data format: " << argv[2] << " selected" << std::endl;
         target_data_format = argv[2];
-    } else if (argc == 2){
+    } else if (argc == 2) {
         auto target_str = argv[1];
         target_model = argv[1];
         if (model_config.count(target_model) == 0) {
@@ -80,8 +75,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Model: " << argv[1] << " selected" << std::endl;
 
         auto data_format_input = "INT4";
-    }
-    else {
+    } else {
         if (isLLaMA(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
             std::cout << "Using LLaMA's default data format: " + target_data_format << std::endl;
@@ -139,10 +133,10 @@ int main(int argc, char* argv[]) {
             std::cerr << "At this time, we only support FP32 and INT4 for LLaMA7B." << std::endl;
         }
     } else {  // OPT
-    #ifdef QM_CUDA
+#ifdef QM_CUDA
         printf("OPT is not supported with CUDA backend yet.");
         exit(-1);
-    #else
+#else
         // Load model
         std::cout << "Loading model... " << std::flush;
         int model_id = model_config[target_model];
@@ -200,6 +194,6 @@ int main(int argc, char* argv[]) {
             std::vector<int> generated_ids =
                 OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true);
         }
-    #endif // QN_CUDA
+#endif  // QN_CUDA
     }
 };
