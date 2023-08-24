@@ -58,8 +58,11 @@ int main(int argc, char* argv[]) {
             std::cerr << std::endl;
             throw("Unsupported data format\n");
         }
-        std::cout << "Data format: " << argv[2] << " selected" << std::endl;
         target_data_format = argv[2];
+        if (target_data_format == "INT4" || target_data_format == "int4")
+            std::cout << "Data format: " << "AWQ " << argv[2] << " selected" << std::endl;
+        else
+            std::cout << "Data format: " << argv[2] << " selected" << std::endl;
     } else if (argc == 2) {
         auto target_str = argv[1];
         target_model = argv[1];
@@ -78,12 +81,15 @@ int main(int argc, char* argv[]) {
     } else {
         if (isLLaMA(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
-            std::cout << "Using LLaMA's default data format: " + target_data_format << std::endl;
+            if (target_data_format == "INT4" || target_data_format == "int4")
+                std::cout << "Using data format: " << "AWQ " << target_data_format << std::endl;
+            else
+                std::cout << "Using data format: " << target_data_format << std::endl;
         } else {  // OPT
             target_model = "OPT6.7B";
             target_data_format = "INT8";
             std::cout << "Using model: " + target_model << std::endl;
-            std::cout << "Using OPT's default data format: " + target_data_format << std::endl;
+            std::cout << "Using data format: " + target_data_format << std::endl;
         }
     }
 
