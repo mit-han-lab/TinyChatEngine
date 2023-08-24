@@ -1,3 +1,10 @@
+/*
+
+Adapted from llama.cpp:
+https://github.com/ggerganov/llama.cpp
+
+*/
+
 #ifndef LLaMA_TOKENIZER_H
 #define LLaMA_TOKENIZER_H
 

@@ -47,7 +47,6 @@ class Int4llamaDecoder {
     std::string profile_name = "Int4llamaDecoder";
 #ifdef QM_CUDA
     void free_cuda_memory();
-    // Embedding_cuda embed_tokens;
     Embedding embed_tokens;
     LlamaRMSNorm_cuda norm;
 
@@ -55,7 +54,6 @@ class Int4llamaDecoder {
     float16_t* last_hidden_states_buf = nullptr;
     float* hidden_states_buf = nullptr;
     float16_t* hidden_states_half_buf = nullptr;
-    // float* embweight_buf = nullptr;
 #else
     Embedding embed_tokens;
     LlamaRMSNorm norm;

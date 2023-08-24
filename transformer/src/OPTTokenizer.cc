@@ -1,10 +1,5 @@
 #include "OPTTokenizer.h"
 
-/*std::vector<int> OPT_tokenize(const OPT_vocab & vocab, const std::string & text, bool add_bos) {
-    std::vector<int> res(text.size() + (int) add_bos);
-    return res;
-}*/
-
 /*
  *  Tokenizer
  */

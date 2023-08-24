@@ -2,7 +2,6 @@
 #include "common.h"
 #include "utils.h"
 
-#ifndef QM_CUDA // not support yet
 // OPTGenerate function
 std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder *encoder, bool interactive) {
@@ -109,13 +108,6 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
         const float mirostat_eta = generation_config.mirostat_eta;
         const int n_vocab = generation_config.n_vocab;
 
-        // Apply generation_config.logit_bias map
-        /*  // TODO: Enable logit_bias here
-        for (auto it = generation_config.logit_bias.begin(); it != generation_config.logit_bias.end(); it++) {
-            logits[it->first] += it->second;
-        }
-        */
-
         std::vector<OPT_token_data> candidates;
         candidates.reserve(n_vocab);
         for (int token_id = 0; token_id < n_vocab; token_id++) {
@@ -176,4 +168,3 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
 
     return generate_ids;
 }
-#endif
