@@ -46,7 +46,7 @@ class Profiler {
                        counts.at(entry.first));
             }
         } else {
-            std::cout << "Section, Total time(us), Average time(us), Count, GOPs" << std::endl;
+            std::cout << "Section, Total time(us), Average time(us), Count, GOPs:" << std::endl;
             for (const auto& entry : durations) {
                 std::string row;
                 row += entry.first + ", ";
