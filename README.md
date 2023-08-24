@@ -41,11 +41,11 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   ```bash
   cd TinyChatEngine/transformer
   ```
-  - On a x86 device (e.g., Intel/AMD laptop)
+  - On an x86 device (e.g., Intel/AMD laptop)
     ```bash
     python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
     ```
-  - On a ARM device (e.g., M1/M2 Macbook)
+  - On an ARM device (e.g., M1/M2 Macbook)
     ```bash
     python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
     ```
