@@ -35,23 +35,23 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
 - Download the repo.
   ```bash
-  git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git
+  git clone --recursive git@github.com:mit-han-lab/TinyChatEngine.git
   ```
 - Download the quantized LLaMA2-7B-chat model from our model zoo.
   ```bash
-  cd TinyChatEngine/transformer
+  cd TinyChatEngine/llm
   ```
   - On an x86 device (e.g., Intel/AMD laptop)
     ```bash
-    python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
+    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_x86
     ```
   - On an ARM device (e.g., M1/M2 Macbook)
     ```bash
-    python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_ARM
     ```
   - On a CUDA device (e.g., Jetson AGX Orin)
     ```bash
-    python download_model.py --model LLaMA_7B_2_chat --QM QM_CUDA
+    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
     ```
 - Compile and start the chat locally.
   ```bash
@@ -76,11 +76,12 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
   ```
 
-### Kernel support list
+## Kernel support
 
 | Kernel precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |
 | ------ | --------------------------- | --------- | --------- | --------- |
-| FP16/FP32   |  ✅    |    ✅  |         |
+| FP32   |  ✅    |    ✅  |         |
+| FP16   |     |      |         |
 | W4A16  |      |      |  ✅  | ✅
 | W4A32  |  ✅  |  ✅  |      | ✅
 | W4A8   |  ✅  |  ✅  |      |
@@ -88,7 +89,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 
 ## Quantization and Model Support
 
-The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). Before converting and quantizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve better accuracy. We are currently working on supporting more models, please stay tuned!
+The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](llm/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](llm/llama_exporter.py), and for quantizing them to specific methods [based on your device](llm/model_quantizer.py). Before converting and quantizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve better accuracy. We are currently working on supporting more models, please stay tuned!
 
 ### Device-specific int4 Weight Reordering
 
@@ -116,69 +117,39 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
     </thead>
     <tbody>
         <tr>
-            <td rowspan="2">LLaMA-7B</td>
-            <td> int4</td>
-            <td> LLaMA_7B</td>
+            <td rowspan="2">LLaMA2_13B_chat</td>
+            <td> fp32</td>
+            <td> LLaMA2_13B_chat_fp32 </td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
+            <td>int4</td>
+            <td>LLaMA2_13B_chat_awq_int4</td>
+        </tr>
+        <tr>
+            <td rowspan="2">LLaMA2_7B_chat</td>
             <td>fp32</td>
+            <td>LLaMA2_7B_chat_fp32 </td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td> int4</td>
+            <td> LLaMA2_7B_chat_awq_int4</td>
+        </tr>
+        <tr>
+            <td rowspan="2">LLaMA_7B</td>
+            <td> fp32</td>
+            <td> LLaMA_7B_fp32 </td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td>int4</td>
             <td>LLaMA_7B_awq_int4</td>
         </tr>
         <tr>
-            <td rowspan="2">LLaMA-2-7B-chat</td>
-            <td> int4</td>
-            <td> LLaMA_7B_2_chat</td>
-        </tr>
-        <tr>
-            <!-- No data for the first column here because it's merged with data1 -->
-            <td>fp32</td>
-            <td>LLaMA_7B_2_chat_awq_int4</td>
-        </tr>
-        <tr>
-            <td rowspan="2">LLaMA-2-13B-chat</td>
-            <td> int4</td>
-            <td> LLaMA_13B_2_chat</td>
-        </tr>
-        <tr>
-            <!-- No data for the first column here because it's merged with data1 -->
-            <td>fp32</td>
-            <td>LLaMA_13B_2_chat_awq_int4</td>
-        </tr>
-        <tr>
-            <td rowspan="3">opt-125m</td>
-            <td> int4</td>
-            <td> opt_125m_awq_int4</td>
-        </tr>
-        <tr>
-            <!-- No data for the first column here because it's merged with data1 -->
-            <td>int8</td>
-            <td>opt_125m_smooth_int8</td>
-        </tr>
-        <tr>
-            <!-- No data for the first column here because it's merged with data1 -->
-            <td>fp32</td>
-            <td>opt_125m</td>
-        </tr>
-        <tr>
-            <td rowspan="3">opt-1.3B</td>
-            <td> int4</td>
-            <td> opt_1.3B_awq_int4</td>
-        </tr>
-        <tr>
-            <!-- No data for the first column here because it's merged with data1 -->
-            <td>int8</td>
-            <td>opt_1.3B_smooth_int8</td>
-        </tr>
-        <tr>
-            <!-- No data for the first column here because it's merged with data1 -->
-            <td>fp32</td>
-            <td>opt_1.3B</td>
-        </tr>
-        <tr>
             <td rowspan="3">opt-6.7B</td>
-            <td> int4</td>
-            <td> opt_6.7B_awq_int4</td>
+            <td>fp32</td>
+            <td>opt_6.7B_fp32</td>
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
@@ -187,8 +158,38 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
         </tr>
         <tr>
             <!-- No data for the first column here because it's merged with data1 -->
+            <td> int4</td>
+            <td> opt_6.7B_awq_int4</td>
+        </tr>
+        <tr>
+            <td rowspan="3">opt-1.3B</td>
             <td>fp32</td>
-            <td>opt_6.7B</td>
+            <td>opt_1.3B_fp32</td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td>int8</td>
+            <td>opt_1.3B_smooth_int8</td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td> int4</td>
+            <td> opt_1.3B_awq_int4</td>
+        </tr>
+        <tr>
+            <td rowspan="3">opt-125m</td>
+            <td>fp32</td>
+            <td>opt_125m_fp32</td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td>int8</td>
+            <td>opt_125m_smooth_int8</td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td> int4</td>
+            <td> opt_125m_awq_int4</td>
         </tr>
     </tbody>
 </table>
@@ -197,78 +198,27 @@ For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models,
 
 - On an Intel/AMD latptop:
   ```bash
-  python download_model.py --model LLaMA_7B_2_chat --QM QM_x86
+  python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_x86
   ```
 - On an M1/M2 Macbook:
   ```bash
-  python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
+  python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_ARM
   ```
 - On an Nvidia GPU:
   ```bash
-  python download_model.py --model LLaMA_7B_2_chat --QM QM_CUDA
+  python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
   ```
 
 To deploy a quantized model with TinyChatEngine, compile and run the chat program.
 
 ```
 make chat -j
-./chat LLaMA_7B_2_chat INT4
+./chat <model_name> <precision>
 ```
 
-## Instructions to run a speech-to-speech chatbot demo
+## Experimental features
 
-- Follow instructions above to deploy LLaMA2-7B-chat
-
-- Configure whisper.cpp (Note)
-
-  ```bash
-  cd transformer
-  git clone https://github.com/ggerganov/whisper.cpp
-  cd whisper.cpp
-  git checkout a4bb2df
-
-  # Install SDL2 on Linux
-  sudo apt-get install libsdl2-dev
-  # Install SDL2 on Mac OS
-  brew install sdl2
-
-  git apply ../application/sts_utils/clean_up.patch
-  bash ./models/download-ggml-model.sh base.en
-  # NVIDIA GPU (Note: you may need to change the Makefile of whisper.cpp depending on your environment or device)
-  WHISPER_CUBLAS=1 make -j stream
-  # Otherwise
-  make stream
-  cd ../
-  ```
-
-- If you have an edge device and want a better TTS program than espeak, download [piper](https://github.com/rhasspy/piper)
-
-  ```bash
-    mkdir TTS
-    wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
-    tar -xvzf piper_arm64.tar.gz
-  ```
-
-  - Download your preferred voice from the [huggingface repo](https://huggingface.co/rhasspy/piper-voices/tree/v1.0.0) and drag both the .onxx and .onnx.json files into the TTS directory
-
-- Edit the listen shell file in the transformers directory so whisper.cpp is using your preferred parameters.
-
-  ```bash
-  nano application/sts_utils/listen
-  ```
-
-- Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.
-
-  ```bash
-  nano application/sts_utils/speak
-  ```
-
-- Compile and start the voicechat locally.
-
-  ```bash
-  make -j voicechat
-  ./voicechat # voicechat.exe on Windows
-  ```
+TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Explore our step-by-step guide [here](llm/application/README.md) to seamlessly deploy a chatbot locally on your device!
 
 ## Related Projects
 
