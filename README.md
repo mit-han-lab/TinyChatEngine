@@ -2,7 +2,7 @@
 
 TinyChatEngine is a powerful neural network library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
 
-![demo](assets/figures/chat.gif)
+![chat_demo](assets/figures/chat_demo.gif)
 
 ## Prerequisites
 
