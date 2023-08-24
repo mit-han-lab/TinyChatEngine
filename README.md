@@ -4,6 +4,8 @@ TinyChatEngine is a powerful neural network library specifically designed for th
 
 ![demo](assets/figures/chat.gif)
 
+Feel free to check out our [slides](assets/slides.pdf) for more details!
+
 ## Prerequisites
 
 ### MacOS
@@ -45,11 +47,11 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
     ```bash
     python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_x86
     ```
-  - On an ARM device (e.g., M1/M2 Macbook)
+  - On an ARM device (e.g., M1/M2 Macbook, Raspberry Pi)
     ```bash
     python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_ARM
     ```
-  - On a CUDA device (e.g., Jetson AGX Orin)
+  - On a CUDA device (e.g., Jetson AGX Orin, PC/Server)
     ```bash
     python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
     ```
