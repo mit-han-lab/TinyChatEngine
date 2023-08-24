@@ -96,15 +96,15 @@ Windows</h2>
 Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <p>Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.</p>
 <ul>
-<li>Download the repo. <div class="fragment"><div class="line">git clone --recursive https://github.com/mit-han-lab/TinyChatEngine.git</div>
+<li>Download the repo. <div class="fragment"><div class="line">git clone --recursive git@github.com:mit-han-lab/TinyChatEngine.git</div>
 </div><!-- fragment --></li>
-<li><p class="startli">Download the quantized LLaMA2-7B-chat model from our model zoo. </p><div class="fragment"><div class="line">cd TinyChatEngine/transformer</div>
+<li><p class="startli">Download the quantized LLaMA2-7B-chat model from our model zoo. </p><div class="fragment"><div class="line">cd TinyChatEngine/llm</div>
 </div><!-- fragment --><ul>
-<li>On an x86 device (e.g., Intel/AMD laptop) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_x86</div>
+<li>On an x86 device (e.g., Intel/AMD laptop) <div class="fragment"><div class="line">python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_x86</div>
 </div><!-- fragment --></li>
-<li>On an ARM device (e.g., M1/M2 Macbook) <div class="fragment"><div class="line">python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM</div>
+<li>On an ARM device (e.g., M1/M2 Macbook) <div class="fragment"><div class="line">python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_ARM</div>
 </div><!-- fragment --></li>
-<li>On a CUDA device (e.g., Jetson AGX Orin) ```bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_CUDA <div class="fragment"><div class="line">- Compile and start the chat locally.</div>
+<li>On a CUDA device (e.g., Jetson AGX Orin) ```bash python tools/download_model.py &ndash;model LLaMA2_7B_chat_awq_int4 &ndash;QM QM_CUDA <div class="fragment"><div class="line">- Compile and start the chat locally.</div>
 </div><!-- fragment --> bash make chat -j ./chat Using model: LLaMA7B_2_chat Using LLaMA's default data format: INT4 Loading model... Finished! USER: Write a syllabus for Operating Systems. ASSISTANT: Of course! Here is a sample syllabus for a college-level course on operating systems: Course Title: Introduction to Operating Systems Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer. Course Objectives:</li>
 <li>Understand the basic architecture of an operating system</li>
 <li>Learn about processes, threads, and process scheduling algorithms</li>
@@ -113,11 +113,12 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <li>Investigate security mechanisms to protect against malicious software attacks</li>
 <li>Analyze input/output (I/O) operations and their handling by the operating system ...</li>
 </ul>
-<div class="fragment"><div class="line">### Kernel support list</div>
+<div class="fragment"><div class="line">## Kernel support</div>
 <div class="line"> </div>
 <div class="line">| Kernel precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |</div>
 <div class="line">| ------ | --------------------------- | --------- | --------- | --------- |</div>
-<div class="line">| FP16/FP32   |  ✅    |    ✅  |         |</div>
+<div class="line">| FP32   |  ✅    |    ✅  |         |</div>
+<div class="line">| FP16   |     |      |         |</div>
 <div class="line">| W4A16  |      |      |  ✅  | ✅</div>
 <div class="line">| W4A32  |  ✅  |  ✅  |      | ✅</div>
 <div class="line">| W4A8   |  ✅  |  ✅  |      |</div>
@@ -125,7 +126,7 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <div class="line"> </div>
 <div class="line">## Quantization and Model Support</div>
 <div class="line"> </div>
-<div class="line">The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](transformer/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](transformer/llama_exporter.py), and for quantizing them to specific methods [based on your device](transformer/model_quantizer.py). Before converting and quantizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve better accuracy. We are currently working on supporting more models, please stay tuned!</div>
+<div class="line">The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from [smoothquant](https://github.com/mit-han-lab/smoothquant) using the provided conversion script [opt_smooth_exporter.py](llm/opt_smooth_exporter.py). For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht [format](llm/llama_exporter.py), and for quantizing them to specific methods [based on your device](llm/model_quantizer.py). Before converting and quantizing your models, it is recommended to apply the fake quantization from [AWQ](https://github.com/mit-han-lab/llm-awq) to achieve better accuracy. We are currently working on supporting more models, please stay tuned!</div>
 <div class="line"> </div>
 <div class="line">### Device-specific int4 Weight Reordering</div>
 <div class="line"> </div>
@@ -153,69 +154,39 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <div class="line">    &lt;/thead&gt;</div>
 <div class="line">    &lt;tbody&gt;</div>
 <div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA-7B&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; LLaMA_7B&lt;/td&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA2_13B_chat&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; LLaMA2_13B_chat_fp32 &lt;/td&gt;</div>
 <div class="line">        &lt;/tr&gt;</div>
 <div class="line">        &lt;tr&gt;</div>
 <div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;LLaMA2_13B_chat_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA2_7B_chat&lt;/td&gt;</div>
 <div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;LLaMA2_7B_chat_fp32 &lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; LLaMA2_7B_chat_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA_7B&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; LLaMA_7B_fp32 &lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;int4&lt;/td&gt;</div>
 <div class="line">            &lt;td&gt;LLaMA_7B_awq_int4&lt;/td&gt;</div>
 <div class="line">        &lt;/tr&gt;</div>
 <div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA-2-7B-chat&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; LLaMA_7B_2_chat&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
-<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt;LLaMA_7B_2_chat_awq_int4&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;td rowspan=&quot;2&quot;&gt;LLaMA-2-13B-chat&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; LLaMA_13B_2_chat&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
-<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt;LLaMA_13B_2_chat_awq_int4&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-125m&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; opt_125m_awq_int4&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
-<div class="line">            &lt;td&gt;int8&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt;opt_125m_smooth_int8&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
-<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt;opt_125m&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-1.3B&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; opt_1.3B_awq_int4&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
-<div class="line">            &lt;td&gt;int8&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt;opt_1.3B_smooth_int8&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
-<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
-<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt;opt_1.3B&lt;/td&gt;</div>
-<div class="line">        &lt;/tr&gt;</div>
-<div class="line">        &lt;tr&gt;</div>
 <div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-6.7B&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt; opt_6.7B_awq_int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_6.7B_fp32&lt;/td&gt;</div>
 <div class="line">        &lt;/tr&gt;</div>
 <div class="line">        &lt;tr&gt;</div>
 <div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
@@ -224,8 +195,38 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <div class="line">        &lt;/tr&gt;</div>
 <div class="line">        &lt;tr&gt;</div>
 <div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; opt_6.7B_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-1.3B&lt;/td&gt;</div>
 <div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
-<div class="line">            &lt;td&gt;opt_6.7B&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_1.3B_fp32&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;int8&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_1.3B_smooth_int8&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; opt_1.3B_awq_int4&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;td rowspan=&quot;3&quot;&gt;opt-125m&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;fp32&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_125m_fp32&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt;int8&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt;opt_125m_smooth_int8&lt;/td&gt;</div>
+<div class="line">        &lt;/tr&gt;</div>
+<div class="line">        &lt;tr&gt;</div>
+<div class="line">            &lt;!-- No data for the first column here because it&#39;s merged with data1 --&gt;</div>
+<div class="line">            &lt;td&gt; int4&lt;/td&gt;</div>
+<div class="line">            &lt;td&gt; opt_125m_awq_int4&lt;/td&gt;</div>
 <div class="line">        &lt;/tr&gt;</div>
 <div class="line">    &lt;/tbody&gt;</div>
 <div class="line">&lt;/table&gt;</div>
@@ -233,43 +234,22 @@ Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine</h1>
 <div class="line">For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models, use --QM  to choose the quantized model for your device)</div>
 <div class="line"> </div>
 <div class="line">- On an Intel/AMD latptop:</div>
-</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_x86 </p><div class="fragment"><div class="line">- On an M1/M2 Macbook:</div>
-</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_ARM </p><div class="fragment"><div class="line">- On an Nvidia GPU:</div>
-</div><!-- fragment --><p> bash python download_model.py &ndash;model LLaMA_7B_2_chat &ndash;QM QM_CUDA </p><div class="fragment"><div class="line">To deploy a quantized model with TinyChatEngine, compile and run the chat program.</div>
-</div><!-- fragment --><p> make chat -j ./chat LLaMA_7B_2_chat INT4 </p><div class="fragment"><div class="line">## Instructions to run a speech-to-speech chatbot demo</div>
-<div class="line"> </div>
-<div class="line">- Follow instructions above to deploy LLaMA2-7B-chat</div>
-<div class="line"> </div>
-<div class="line">- Configure whisper.cpp (Note)</div>
-</div><!-- fragment --><p> bash cd transformer git clone <a href="https://github.com/ggerganov/whisper.cpp">https://github.com/ggerganov/whisper.cpp</a> cd whisper.cpp git checkout a4bb2df</p>
+</div><!-- fragment --><p> bash python tools/download_model.py &ndash;model LLaMA2_7B_chat_awq_int4 &ndash;QM QM_x86 </p><div class="fragment"><div class="line">- On an M1/M2 Macbook:</div>
+</div><!-- fragment --><p> bash python tools/download_model.py &ndash;model LLaMA2_7B_chat_awq_int4 &ndash;QM QM_ARM </p><div class="fragment"><div class="line">- On an Nvidia GPU:</div>
+</div><!-- fragment --><p> bash python tools/download_model.py &ndash;model LLaMA2_7B_chat_awq_int4 &ndash;QM QM_CUDA </p><div class="fragment"><div class="line">To deploy a quantized model with TinyChatEngine, compile and run the chat program.</div>
+</div><!-- fragment --><p> make chat -j ./chat &lt;model_name&gt; &lt;precision&gt; ```</p>
 </li>
 </ul>
 <h1><a class="anchor" id="autotoc_md5"></a>
-Install SDL2 on Linux</h1>
-<p>sudo apt-get install libsdl2-dev </p>
+Experimental features</h1>
+<p>TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Explore our step-by-step guide here to seamlessly deploy a chatbot locally on your device!</p>
 <h1><a class="anchor" id="autotoc_md6"></a>
-Install SDL2 on Mac OS</h1>
-<p>brew install sdl2</p>
-<p>git apply ../application/sts_utils/clean_up.patch bash ./models/download-ggml-model.sh base.en </p>
-<h1><a class="anchor" id="autotoc_md7"></a>
-NVIDIA GPU (Note: you may need to change the Makefile of whisper.cpp depending on your environment or device)</h1>
-<p>WHISPER_CUBLAS=1 make -j stream </p>
-<h1><a class="anchor" id="autotoc_md8"></a>
-Otherwise</h1>
-<p>make stream cd ../ </p><div class="fragment"><div class="line">- If you have an edge device and want a better TTS program than espeak, download [piper](https://github.com/rhasspy/piper)</div>
-</div><!-- fragment --><p> bash mkdir TTS wget <a href="https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz">https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz</a> tar -xvzf piper_arm64.tar.gz </p><div class="fragment"><div class="line">  - Download your preferred voice from the [huggingface repo](https://huggingface.co/rhasspy/piper-voices/tree/v1.0.0) and drag both the .onxx and .onnx.json files into the TTS directory</div>
-<div class="line"> </div>
-<div class="line">- Edit the listen shell file in the transformers directory so whisper.cpp is using your preferred parameters.</div>
-</div><!-- fragment --><p> bash nano application/sts_utils/listen </p><div class="fragment"><div class="line">- Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.</div>
-</div><!-- fragment --><p> bash nano application/sts_utils/speak </p><div class="fragment"><div class="line">- Compile and start the voicechat locally.</div>
-</div><!-- fragment --><p> bash make -j voicechat ./voicechat # voicechat.exe on Windows ```</p>
-<h2><a class="anchor" id="autotoc_md9"></a>
-Related Projects</h2>
+Related Projects</h1>
 <p><a href="https://github.com/mit-han-lab/tinyengine">TinyEngine</a></p>
 <p><a href="https://github.com/mit-han-lab/smoothquant">Smoothquant</a></p>
 <p><a href="https://github.com/mit-han-lab/llm-awq">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></p>
-<h2><a class="anchor" id="autotoc_md10"></a>
-Acknowledgement</h2>
+<h1><a class="anchor" id="autotoc_md7"></a>
+Acknowledgement</h1>
 <p><a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a></p>
 <p><a href="https://github.com/ggerganov/whisper.cpp">whisper.cpp</a></p>
 <p><a href="https://github.com/huggingface/transformers">transformers</a> </p>
