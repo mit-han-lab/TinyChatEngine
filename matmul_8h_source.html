@@ -100,109 +100,124 @@ $(function() {
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">typedef</span> uint16_t float16_t;</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment">// TODO: deprecate this</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment">// #define MAX_TRANSPOSE_BUFFER 2048 * 2048</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment">// #define RUNS 1</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment">// static float transpose_tmp[MAX_TRANSPOSE_BUFFER];</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#ifdef __ARM_FEATURE_DOTPROD</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#include &lt;arm_neon.h&gt;</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment">// Native implementation using vdotq_s32 when available</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">static</span> <span class="keyword">inline</span> int32x4_t my_vdotq_s32(int32x4_t accum, int8x16_t a, int8x16_t b) { <span class="keywordflow">return</span> vdotq_s32(accum, a, b); }</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="comment">// Data structures</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="structquantization__params.html">   31</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structquantization__params.html">quantization_params</a> {</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordtype">float</span> scale;</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">bool</span> per_channel = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    int32_t zero_point;</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    int8_t q_min = -128, q_max = 127;</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>};</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">#include &lt;arm_neon.h&gt;</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment">// Fallback implementation when vdotq_s32 is not available</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="keyword">static</span> <span class="keyword">inline</span> int32x4_t my_vdotq_s32(int32x4_t accum, int8x16_t a, int8x16_t b) {</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="comment">// Multiply and widen results to 16-bit integers</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    int16x8_t result_low = vmull_s8(vget_low_s8(a), vget_low_s8(b));</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    int16x8_t result_high = vmull_s8(vget_high_s8(a), vget_high_s8(b));</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="structmatrix.html">   38</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> {</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordtype">int</span> row;</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="keywordtype">int</span> column;</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keywordtype">float</span> *data_ptr;</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    float16_t *half_data_ptr;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    naive_float16_t *fp16_data_ptr;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    int32_t *int32_data_ptr;</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    int8_t *int8_data_ptr;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    uint8_t *uint8_data_ptr;</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    uint8_t *int4_data_ptr;</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structquantization__params.html">quantization_params</a> qparams;</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">int</span> length() { <span class="keywordflow">return</span> row * column; }</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>};</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="structoptimization__params.html">   52</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structoptimization__params.html">optimization_params</a> {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordtype">int</span> blk_size;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keywordtype">int</span> num_thread = 8;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>};</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="structmatmul__params.html">   57</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> {</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> A, B, C, bias;</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structoptimization__params.html">optimization_params</a> opt_params;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordtype">float</span> alpha, beta;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    float16_t half_alpha;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="comment">// for int4</span></div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordtype">float</span> *scales, *offset, *zero_point;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    float16_t *half_scales;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    naive_float16_t *fp16_scales;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="keywordtype">int</span> *int32_zero_point;</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keywordtype">int</span> block_size;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="comment">// for int8 activation</span></div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keywordtype">float</span> *A_scales;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    int8_t A_zero_point;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>};</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="structthread__args.html">   73</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structthread__args.html">thread_args</a> {</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> *A;</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> *B;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> *C;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keywordtype">int</span> start_i, end_i, blk_size;</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>};</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="preprocessor">#define MAX(A, B) ((A) &gt; (B) ? (A) : (B))</span></div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="preprocessor">#define MIN(A, B) ((A) &lt; (B) ? (A) : (B))</span></div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="keyword">namespace </span>matmul {</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno"><a class="line" href="classmatmul_1_1MatmulOperator.html">   84</a></span><span class="keyword">class </span><a class="code hl_class" href="classmatmul_1_1MatmulOperator.html">MatmulOperator</a> {</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>   <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keywordtype">void</span> mat_mul_transposed(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">void</span> mat_mul_accelerator_transposed_fastover_column(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordtype">void</span> mat_mul_accelerator_transposed_fastover_column_bias(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="comment">// int8</span></div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keywordtype">void</span> naive_mat_mul_int8(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_32unroll_over_column(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_batch(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32_batch(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="comment">// void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);</span></div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="comment">// int4</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int4_fast(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int4_fast_no_offset(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_int4_fast_no_offset(<span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordtype">void</span> naive_mat_mul_int4(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordtype">void</span> naive_mat_mul_int4_with_offset(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="comment">// cuda</span></div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keywordtype">void</span> naive_mat_mul_fp16_int4(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordtype">void</span> mat_mul_cuda(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordtype">void</span> gemm_forward_cuda(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, <span class="keywordtype">int</span> split_k_iters);</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    <span class="keywordtype">void</span> gemm_forward_cuda_8splits(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, float16_t *split_8_buffer);</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordtype">void</span> gemm_forward_cuda_half(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, <span class="keywordtype">int</span> split_k_iters);</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordtype">void</span> gemm_forward_cuda_half_test(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, <span class="keywordtype">int</span> split_k_iters);</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>   <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keywordtype">float</span> interval_to_us(<span class="keyword">struct</span> timeval *start, <span class="keyword">struct</span> timeval *end);</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keywordtype">void</span> CHECK_MATRICES(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *A, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *B, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *C);</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="keywordtype">void</span> CHECK_MATRICES_int4weight(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *A, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *B, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *C);</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>};</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>}  <span class="comment">// namespace matmul</span></div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aclassmatmul_1_1MatmulOperator_html"><div class="ttname"><a href="classmatmul_1_1MatmulOperator.html">matmul::MatmulOperator</a></div><div class="ttdef"><b>Definition</b> matmul.h:84</div></div>
-<div class="ttc" id="astructmatmul__params_html"><div class="ttname"><a href="structmatmul__params.html">matmul_params</a></div><div class="ttdef"><b>Definition</b> matmul.h:57</div></div>
-<div class="ttc" id="astructmatrix_html"><div class="ttname"><a href="structmatrix.html">matrix</a></div><div class="ttdef"><b>Definition</b> matmul.h:38</div></div>
-<div class="ttc" id="astructoptimization__params_html"><div class="ttname"><a href="structoptimization__params.html">optimization_params</a></div><div class="ttdef"><b>Definition</b> matmul.h:52</div></div>
-<div class="ttc" id="astructquantization__params_html"><div class="ttname"><a href="structquantization__params.html">quantization_params</a></div><div class="ttdef"><b>Definition</b> matmul.h:31</div></div>
-<div class="ttc" id="astructthread__args_html"><div class="ttname"><a href="structthread__args.html">thread_args</a></div><div class="ttdef"><b>Definition</b> matmul.h:73</div></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="comment">// Sum pairs of 16-bit values and accumulate into 32-bit integers</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">return</span> vaddq_s32(accum, vaddq_s32(vaddl_s16(vget_low_s16(result_low), vget_high_s16(result_low)),</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>                                      vaddl_s16(vget_low_s16(result_high), vget_high_s16(result_high))));</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>}</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="comment">// Data structures</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="structquantization__params.html">   46</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structquantization__params.html">quantization_params</a> {</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keywordtype">float</span> scale;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordtype">bool</span> per_channel = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    int32_t zero_point;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    int8_t q_min = -128, q_max = 127;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>};</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno"><a class="line" href="structmatrix.html">   53</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> {</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keywordtype">int</span> row;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="keywordtype">int</span> column;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordtype">float</span> *data_ptr;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    float16_t *half_data_ptr;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    naive_float16_t *fp16_data_ptr;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    int32_t *int32_data_ptr;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    int8_t *int8_data_ptr;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    uint8_t *uint8_data_ptr;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    uint8_t *int4_data_ptr;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structquantization__params.html">quantization_params</a> qparams;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordtype">int</span> length() { <span class="keywordflow">return</span> row * column; }</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>};</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="structoptimization__params.html">   67</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structoptimization__params.html">optimization_params</a> {</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordtype">int</span> blk_size;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keywordtype">int</span> num_thread = 8;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>};</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno"><a class="line" href="structmatmul__params.html">   72</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> {</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> A, B, C, bias;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structoptimization__params.html">optimization_params</a> opt_params;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keywordtype">float</span> alpha, beta;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    float16_t half_alpha;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="comment">// for int4</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keywordtype">float</span> *scales, *offset, *zero_point;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    float16_t *half_scales;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    naive_float16_t *fp16_scales;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keywordtype">int</span> *int32_zero_point;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keywordtype">int</span> block_size;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="comment">// for int8 activation</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keywordtype">float</span> *A_scales;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    int8_t A_zero_point;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>};</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno"><a class="line" href="structthread__args.html">   88</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structthread__args.html">thread_args</a> {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> *A;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> *B;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatrix.html">matrix</a> *C;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keyword">const</span> <span class="keyword">struct </span><a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordtype">int</span> start_i, end_i, blk_size;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>};</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#define MAX(A, B) ((A) &gt; (B) ? (A) : (B))</span></div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="preprocessor">#define MIN(A, B) ((A) &lt; (B) ? (A) : (B))</span></div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="keyword">namespace </span>matmul {</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno"><a class="line" href="classmatmul_1_1MatmulOperator.html">   99</a></span><span class="keyword">class </span><a class="code hl_class" href="classmatmul_1_1MatmulOperator.html">MatmulOperator</a> {</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>   <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordtype">void</span> mat_mul_transposed(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordtype">void</span> mat_mul_accelerator_transposed_fastover_column(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">void</span> mat_mul_accelerator_transposed_fastover_column_bias(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="comment">// int8</span></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordtype">void</span> naive_mat_mul_int8(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_32unroll_over_column(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_batch(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32_batch(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="comment">// void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="comment">// int4</span></div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int4_fast(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int4_fast_no_offset(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keywordtype">void</span> mat_mul_accelerator_int8_int4_fast_no_offset(<span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordtype">void</span> naive_mat_mul_int4(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">void</span> naive_mat_mul_int4_with_offset(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="comment">// cuda</span></div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordtype">void</span> naive_mat_mul_fp16_int4(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordtype">void</span> mat_mul_cuda(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params);</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keywordtype">void</span> gemm_forward_cuda(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, <span class="keywordtype">int</span> split_k_iters);</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <span class="keywordtype">void</span> gemm_forward_cuda_8splits(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, float16_t *split_8_buffer);</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordtype">void</span> gemm_forward_cuda_half(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, <span class="keywordtype">int</span> split_k_iters);</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordtype">void</span> gemm_forward_cuda_half_test(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatmul__params.html">matmul_params</a> *params, <span class="keywordtype">int</span> split_k_iters);</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>   <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keywordtype">float</span> interval_to_us(<span class="keyword">struct</span> timeval *start, <span class="keyword">struct</span> timeval *end);</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    <span class="keywordtype">void</span> CHECK_MATRICES(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *A, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *B, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *C);</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    <span class="keywordtype">void</span> CHECK_MATRICES_int4weight(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *A, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *B, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code hl_struct" href="structmatrix.html">matrix</a> *C);</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>};</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>}  <span class="comment">// namespace matmul</span></div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="aclassmatmul_1_1MatmulOperator_html"><div class="ttname"><a href="classmatmul_1_1MatmulOperator.html">matmul::MatmulOperator</a></div><div class="ttdef"><b>Definition</b> matmul.h:99</div></div>
+<div class="ttc" id="astructmatmul__params_html"><div class="ttname"><a href="structmatmul__params.html">matmul_params</a></div><div class="ttdef"><b>Definition</b> matmul.h:72</div></div>
+<div class="ttc" id="astructmatrix_html"><div class="ttname"><a href="structmatrix.html">matrix</a></div><div class="ttdef"><b>Definition</b> matmul.h:53</div></div>
+<div class="ttc" id="astructoptimization__params_html"><div class="ttname"><a href="structoptimization__params.html">optimization_params</a></div><div class="ttdef"><b>Definition</b> matmul.h:67</div></div>
+<div class="ttc" id="astructquantization__params_html"><div class="ttname"><a href="structquantization__params.html">quantization_params</a></div><div class="ttdef"><b>Definition</b> matmul.h:46</div></div>
+<div class="ttc" id="astructthread__args_html"><div class="ttname"><a href="structthread__args.html">thread_args</a></div><div class="ttdef"><b>Definition</b> matmul.h:88</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
