@@ -41,7 +41,6 @@ __global__ void mat_mul_transposed_cuda(Matrix3D<half> A, Matrix3D<half> B, Matr
         }
 
         data_C[i * C.m_dim_z + j] = __hmul(alpha, acc);
-        // data_C[i * C.m_dim_z + j] = acc;
     }
 }
 
@@ -51,8 +50,6 @@ BMM_F16T::BMM_F16T(half _alpha) { this->alpha = _alpha; }
 
 void BMM_F16T::forward(const Matrix3D<half> &a, const Matrix3D<half> &weight, Matrix3D<half> &c) {
     const Matrix3D<half> b = weight;
-    // const int m = a.m_dim_y, n = b.m_dim_y, k = a.m_dim_z, b_size = b.m_dim_x;
-    // const long long ops = (long long)b_size * 2 * (long long)m * (long long)n * (long long)k;
     PROFILE_START(profile_name);
 
     // a: m x k   b: n x k   c: m x n
@@ -72,11 +69,6 @@ void BMM_F16T::forward(const Matrix3D<half> &a, const Matrix3D<half> &weight, Ma
     params.C.column = c.m_dim_z;
     params.C.half_data_ptr = c.m_data;
     params.half_alpha = alpha;
-
-    // dim3 block(32, 32);
-    // dim3 grid((params.C.row + block.x - 1) / block.x, (params.C.column + block.y - 1) / block.y);
-    // mat_mul_transposed_cuda<<<grid, block>>>(a, weight, c, params.half_alpha);
-
 
     dim3 block(8, 8, 16);
     dim3 grid((params.C.row + block.x - 1) / block.x, (params.C.column + block.y - 1) / block.y, (a.m_dim_x + block.z - 1) / block.z);
