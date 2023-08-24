@@ -82,9 +82,9 @@ int main(int argc, char* argv[]) {
         if (isLLaMA(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
             if (target_data_format == "INT4" || target_data_format == "int4")
-                std::cout << "Using data format: " + "AWQ" target_data_format << std::endl;
+                std::cout << "Using data format: " << "AWQ" target_data_format << std::endl;
             else
-                std::cout << "Using data format: " + target_data_format << std::endl;
+                std::cout << "Using data format: " << target_data_format << std::endl;
         } else {  // OPT
             target_model = "OPT6.7B";
             target_data_format = "INT8";
