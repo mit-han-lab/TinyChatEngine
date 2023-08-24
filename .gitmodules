@@ -4,6 +4,3 @@
 [submodule "transformer/json"]
 	path = transformer/json
 	url = https://github.com/nlohmann/json
-[submodule "transformer/whisper.cpp"]
-	path = transformer/whisper.cpp
-	url = https://github.com/ggerganov/whisper.cpp.git

@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
                 std::string input;
                 std::string output;
                 std::string model_input;
-                std::system("./listen");
+                std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
                 std::system("rm tmpfile");
@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
                 output.erase(std::remove(output.begin(), output.end(), '\"'), output.end());
                 // Remove hashtags
                 output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
-                output = "./speak \"" + output + "\"";
+                output = "./application/sts_utils/speak \"" + output + "\"";
                 std::system(output.c_str());
             }
         } else {
