@@ -31,7 +31,7 @@ void test_Decoder() {
     input_ids.load("assets/llama/tests/decoder/1st_input_ids.bin");
     struct Int4llamaDecoder_input input_1st = {input_ids};
     
-    Int4llamaDecoder decoder = Int4llamaDecoder("models/LLaMA_7B/decoder/", llama7B);
+    Int4llamaDecoder decoder = Int4llamaDecoder("INT4/models/LLaMA_7B_2_chat/decoder/", llama7B);
     struct Int4llamaDecoder_output output_1st = decoder.forward(input_1st);
     cudaDeviceSynchronize();
 

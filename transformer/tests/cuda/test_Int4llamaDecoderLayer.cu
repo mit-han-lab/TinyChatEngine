@@ -19,7 +19,7 @@ void test_Int4llamaDecoderLayer() {
     const struct model_config llama7B = llama_7B;
     const int sqlen = 9, b = 1, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads;
 
-    Int4llamaDecoderLayer layer = Int4llamaDecoderLayer("models/LLaMA_7B/decoder/layer0", llama7B, 0);
+    Int4llamaDecoderLayer layer = Int4llamaDecoderLayer("INT4/models/LLaMA_7B_2_chat/decoder/layer0", llama7B, 0);
 
     half* buffer_1;
     cudaMallocManaged(&buffer_1, sizeof(half) * embed_dim * sqlen * b);
@@ -38,10 +38,12 @@ void test_Int4llamaDecoderLayer() {
     cudaMallocManaged(&buffer_3, sizeof(half) * embed_dim * sqlen * b);
     Matrix3D<half> outputGT(buffer_3, b, sqlen, embed_dim);
     read_to_array_half("assets/llama/tests/layer0/sqlen9/output_hidden_states_half.bin", outputGT.m_data, outputGT.length());
+
     half* buffer_4;
     cudaMallocManaged(&buffer_4, sizeof(half) * embed_dim * sqlen * b);
     Matrix3D<half> key_statesGT(buffer_4, num_heads, sqlen, embed_dim / num_heads);
     read_to_array_half("assets/llama/tests/layer0/sqlen9/present_key_half.bin", key_statesGT.m_data, key_statesGT.length());
+
     half* buffer_5;
     cudaMallocManaged(&buffer_5, sizeof(half) * embed_dim * sqlen * b);
     Matrix3D<half> value_statesGT(buffer_5, num_heads, sqlen, embed_dim / num_heads);
@@ -70,7 +72,7 @@ void test_Int4llamaDecoderLayer_gen() {
               head_dim = embed_dim / num_heads;
     const int tgz = (sqlen + past_sqlen);
 
-    Int4llamaDecoderLayer layer = Int4llamaDecoderLayer("models/LLaMA_7B/decoder/layer0", llama7B, 0);
+    Int4llamaDecoderLayer layer = Int4llamaDecoderLayer("INT4/models/LLaMA_7B_2_chat/decoder/layer0", llama7B, 0);
 
     half* buffer_1;
     cudaMallocManaged(&buffer_1, sizeof(half) * embed_dim * sqlen * b);
@@ -97,10 +99,12 @@ void test_Int4llamaDecoderLayer_gen() {
     cudaMallocManaged(&buffer_5, sizeof(half) * embed_dim * sqlen * b);
     Matrix3D<half> outputGT(buffer_5, b, sqlen, embed_dim);
     read_to_array_half("assets/llama/tests/layer0/sqlen1/output_hidden_states_half.bin", outputGT.m_data, outputGT.length());
+
     half* buffer_6;
     cudaMallocManaged(&buffer_6, sizeof(half) * embed_dim * sqlen * b);
     Matrix3D<half> key_statesGT(buffer_6, num_heads, sqlen, embed_dim / num_heads);
     read_to_array_half("assets/llama/tests/layer0/sqlen1/present_key_half.bin", key_statesGT.m_data, key_statesGT.length());
+
     half* buffer_7;
     cudaMallocManaged(&buffer_7, sizeof(half) * embed_dim * sqlen * b);
     Matrix3D<half> value_statesGT(buffer_7, num_heads, sqlen, embed_dim / num_heads);

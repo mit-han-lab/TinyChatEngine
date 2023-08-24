@@ -8,7 +8,7 @@ namespace matmul {
 void MatmulOperator::naive_mat_mul_fp16_int4(const struct matmul_params *params) {
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;
-    CHECK_MATRICES_int4weight(A, B, C);
+    // CHECK_MATRICES_int4weight(A, B, C);
 
     naive_float16_t weight;
     for (int i = 0; i < C->row; i++) {

@@ -36,7 +36,7 @@ void test_Int4LlamaForCausalLM() {
     input_ids.load("assets/llama/tests/model/1st_input_ids.bin");
     struct Int4LlamaForCausalLM_input input_1st = {input_ids};
 
-    Int4LlamaForCausalLM model = Int4LlamaForCausalLM("models/LLaMA_7B", config);
+    Int4LlamaForCausalLM model = Int4LlamaForCausalLM("INT4/models/LLaMA_7B_2_chat", config);
     struct Int4LlamaForCausalLM_output output_1st = model.forward(input_1st);
 
     float* buffer_2;
