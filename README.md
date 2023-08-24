@@ -214,7 +214,7 @@ For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models,
   python download_model.py --model LLaMA_7B_2_chat --QM QM_ARM
   ```
 
-To deploy the quantized model with TinyChatEngine, compile the chat program and run it with the model ID and precision.
+To deploy a quantized model with TinyChatEngine, compile and run the chat program.
 
 ```
 make chat -j
@@ -228,14 +228,17 @@ make chat -j
 - Configure whisper.cpp (Note)
 
   ```bash
+  cd transformer
+  git clone https://github.com/ggerganov/whisper.cpp
   cd whisper.cpp
+  git checkout a4bb2df
 
   # Install SDL2 on Linux
   sudo apt-get install libsdl2-dev
   # Install SDL2 on Mac OS
   brew install sdl2
 
-  git apply ./../clean_up_patch
+  git apply ../application/sts_utils/clean_up.patch
   bash ./models/download-ggml-model.sh base.en
   # NVIDIA GPU (Note: you may need to change the Makefile of whisper.cpp depending on your environment or device)
   WHISPER_CUBLAS=1 make -j stream
@@ -257,13 +260,13 @@ make chat -j
 - Edit the listen shell file in the transformers directory so whisper.cpp is using your preferred parameters.
 
   ```bash
-  nano listen
+  nano application/sts_utils/listen
   ```
 
 - Edit the speak shell file in the transformers directory so the demo uses your preferred TTS program.
 
   ```bash
-  nano speak
+  nano application/sts_utils/speak
   ```
 
 - Compile and start the voicechat locally.
@@ -284,5 +287,7 @@ make chat -j
 ## Acknowledgement
 
 [llama.cpp](https://github.com/ggerganov/llama.cpp)
+
+[whisper.cpp](https://github.com/ggerganov/whisper.cpp)
 
 [transformers](https://github.com/huggingface/transformers)
