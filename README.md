@@ -2,11 +2,34 @@
 
 # TinyChatEngine: On-Device LLM Inference Library
 
-TinyChatEngine is a powerful LLM inference library specifically designed for the efficient deployment of quantized large language models (LLMs) on edge devices.
+Running large language models (LLMs) on the edge is useful: running copilot services (coding, office, smart reply) on laptops, in-car entertainment systems, vision-language assistants in robots or spaceships. Users can get instant responses without transmitting any local data to the internet, addressing privacy concerns, as sensitive data remains localized and reduces the risk of potential breaches. 
+
+TinyChat project consists of LLM model compression algorithms and TinyChatEngine, the inference engine that implements the compressed LLM targeting edge devices.
+
 
 ![chat_demo](assets/figures/chat_demo.gif)
 
 Feel free to check out our [slides](assets/slides.pdf) for more details!
+
+
+## Overview
+### LLM Compression: SmoothQuant and AWQ
+SmoothQuant: Smooth the activation outliers by migrating the quantization difficulty from activations to weights, with a mathematically equal transformation (100\*1 = 10\*10).
+
+![smoothquant_intuition](assets/figures/smoothquant_intuition.png)
+
+AWQ (Activation-aware Weight Quantization): Protect salient weight channels by analyzing activation magnitude as opposed to the weights.
+
+### LLM Inference Engine: TinyChatEngine
+- **Universal**: x86 (Intel/AMD), ARM (Apple M1), CUDA (Nvidia GPU).
+- **No library dependency**: From-scratch C/C++ implementation.
+- **High performance**: Real-time on Macbook & GeForce laptop.
+- **Easy to use**: Download and compile, then ready to go!
+
+![overview](assets/figures/overview.png)
+
+![overview_transparent](assets/figures/overview_transparent.png)
+
 
 ## Prerequisites
 
@@ -275,9 +298,9 @@ TinyChatEngine offers versatile capabilities suitable for various applications. 
 
 ## Related Projects
 
-[TinyEngine](https://github.com/mit-han-lab/tinyengine)
+[TinyEngine: Memory-efficient and High-performance Neural Network Library for Microcontrollers](https://github.com/mit-han-lab/tinyengine)
 
-[Smoothquant](https://github.com/mit-han-lab/smoothquant)
+[SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models](https://github.com/mit-han-lab/smoothquant)
 
 [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
 
