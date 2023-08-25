@@ -14,21 +14,19 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 
 ## Overview
 ### LLM Compression: SmoothQuant and AWQ
-SmoothQuant: Smooth the activation outliers by migrating the quantization difficulty from activations to weights, with a mathematically equal transformation (100\*1 = 10\*10).
+[SmoothQuant](https://github.com/mit-han-lab/smoothquant): Smooth the activation outliers by migrating the quantization difficulty from activations to weights, with a mathematically equal transformation (100\*1 = 10\*10).
 
 ![smoothquant_intuition](assets/figures/smoothquant_intuition.png)
 
-AWQ (Activation-aware Weight Quantization): Protect salient weight channels by analyzing activation magnitude as opposed to the weights.
+[AWQ (Activation-aware Weight Quantization)](https://github.com/mit-han-lab/llm-awq): Protect salient weight channels by analyzing activation magnitude as opposed to the weights.
 
 ### LLM Inference Engine: TinyChatEngine
-- **Universal**: x86 (Intel/AMD), ARM (Apple M1), CUDA (Nvidia GPU).
+- **Universal**: x86 (Intel/AMD), ARM (Apple M1/M2), CUDA (Nvidia GPU).
 - **No library dependency**: From-scratch C/C++ implementation.
 - **High performance**: Real-time on Macbook & GeForce laptop.
 - **Easy to use**: Download and compile, then ready to go!
 
 ![overview](assets/figures/overview.png)
-
-![overview_transparent](assets/figures/overview_transparent.png)
 
 
 ## Prerequisites
