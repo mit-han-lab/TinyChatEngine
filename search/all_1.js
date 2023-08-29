@@ -1,8 +1,4 @@
 var searchData=
 [
-  ['bmm_5ff32t_0',['BMM_F32T',['../classBMM__F32T.html',1,'']]],
-  ['bmm_5fs8t_5fs8n_5ff32t_1',['BMM_S8T_S8N_F32T',['../classBMM__S8T__S8N__F32T.html',1,'']]],
-  ['bmm_5fs8t_5fs8n_5ff32t_5fparams_2',['BMM_S8T_S8N_F32T_params',['../structBMM__S8T__S8N__F32T__params.html',1,'']]],
-  ['bmm_5fs8t_5fs8n_5fs8t_3',['BMM_S8T_S8N_S8T',['../classBMM__S8T__S8N__S8T.html',1,'']]],
-  ['bmm_5fs8t_5fs8n_5fs8t_5fparams_4',['BMM_S8T_S8N_S8T_params',['../structBMM__S8T__S8N__S8T__params.html',1,'']]]
+  ['4070_20laptop_3a_0',['Demo on an NVIDIA GeForce RTX 4070 laptop:',['../index.html#autotoc_md1',1,'']]]
 ];
