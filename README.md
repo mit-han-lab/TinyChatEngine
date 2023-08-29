@@ -9,7 +9,7 @@ TinyChat project consists of LLM model compression algorithms and TinyChatEngine
 ### Demo on an NVIDIA GeForce RTX 4070 laptop:
 ![chat_demo_gpu](assets/figures/chat_demo_gpu.gif)
 
-### Demo on an Apple MacBook M1 Air:
+### Demo on an Apple MacBook Air (M1, 2020):
 ![chat_demo_m1](assets/figures/chat_demo_m1.gif)
 
 Feel free to check out our [slides](assets/slides.pdf) for more details!
