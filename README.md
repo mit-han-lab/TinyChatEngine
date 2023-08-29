@@ -6,8 +6,11 @@ Running large language models (LLMs) on the edge is useful: running copilot serv
 
 TinyChat project consists of LLM model compression algorithms and TinyChatEngine, the inference engine that implements the compressed LLM targeting edge devices.
 
+### Demo on an NVIDIA GeForce RTX 4070 laptop:
+![chat_demo_gpu](assets/figures/chat_demo_gpu.gif)
 
-![chat_demo](assets/figures/chat_demo.gif)
+### Demo on an Apple MacBook Air (M1, 2020):
+![chat_demo_m1](assets/figures/chat_demo_m1.gif)
 
 Feel free to check out our [slides](assets/slides.pdf) for more details!
 
