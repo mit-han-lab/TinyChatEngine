@@ -2,9 +2,10 @@
 
 # TinyChatEngine: On-Device LLM Inference Library
 
-Running large language models (LLMs) on the edge is useful: running copilot services (coding, office, smart reply) on laptops, in-car entertainment systems, vision-language assistants in robots or spaceships. Users can get instant responses without transmitting any local data to the internet, addressing privacy concerns, as sensitive data remains localized and reduces the risk of potential breaches. 
+Running large language models (LLMs) on the edge is useful: running copilot services (coding, office, smart reply) on laptops, cars, robots, and more. Users can get instant responses  with better privacy, as the data is local.
 
-TinyChat project consists of LLM model compression algorithms and TinyChatEngine, the inference engine that implements the compressed LLM targeting edge devices.
+This is enabled by LLM model compression technique: SmoothQuant and activation-aware weight quantization, co-designed with TinyChatEngine that implements the compressed low-precision model. 
+
 
 ### Demo on an NVIDIA GeForce RTX 4070 laptop:
 ![chat_demo_gpu](assets/figures/chat_demo_gpu.gif)
