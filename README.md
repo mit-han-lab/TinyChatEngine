@@ -4,7 +4,7 @@
 
 Running large language models (LLMs) on the edge is useful: running copilot services (coding, office, smart reply) on laptops, cars, robots, and more. Users can get instant responses  with better privacy, as the data is local.
 
-This is enabled by LLM model compression technique: SmoothQuant and activation-aware weight quantization, co-designed with TinyChatEngine that implements the compressed low-precision model. 
+This is enabled by LLM model compression technique: [SmoothQuant](https://github.com/mit-han-lab/smoothquant) and [AWQ (Activation-aware Weight Quantization)](https://github.com/mit-han-lab/llm-awq), co-designed with TinyChatEngine that implements the compressed low-precision model. 
 
 
 ### Demo on an NVIDIA GeForce RTX 4070 laptop:
