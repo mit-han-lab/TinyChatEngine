@@ -18,7 +18,7 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
 
 std::map<std::string, int> data_format_list = {
     {"FP32", FP32},
-    {"INT8", INT8},
+    {"INT8", QINT8},
     {"INT4", INT4},
 };
 

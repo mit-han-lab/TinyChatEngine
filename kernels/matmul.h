@@ -1,7 +1,12 @@
 #ifndef MATMUL_H
 #define MATMUL_H
 #include <stdint.h>
+#ifdef _WIN32
+#define NOMINMAX
+#include <winsock2.h>
+#else
 #include <sys/time.h>
+#endif
 
 #include "half.hpp"  // Third-party header
 typedef half_float::half naive_float16_t;
@@ -93,6 +98,7 @@ struct thread_args {
     const struct matmul_params *params;
     int start_i, end_i, blk_size;
 };
+
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 #define MIN(A, B) ((A) < (B) ? (A) : (B))

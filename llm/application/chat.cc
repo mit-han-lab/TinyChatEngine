@@ -17,7 +17,7 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
                                                  {"13b", "models/LLaMA_13B_2_chat"}};
 
 std::map<std::string, int> data_format_list = {
-    {"FP32", FP32}, {"INT8", INT8}, {"INT4", INT4}, {"int4", INT4}, {"fp32", FP32},
+    {"FP32", FP32}, {"INT8", QINT8}, {"INT4", INT4}, {"int4", INT4}, {"fp32", FP32},
 };
 
 bool isLLaMA(std::string s) {
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
 
         struct opt_params generation_config;
         generation_config.n_predict = 512;
-        if (format_id == INT8) {
+        if (format_id == QINT8) {
             OPTForCausalLM model = OPTForCausalLM("INT8/" + m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
 

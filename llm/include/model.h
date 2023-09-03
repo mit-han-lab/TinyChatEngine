@@ -27,7 +27,7 @@ struct model_config {
 };
 
 enum { OPT_125M, OPT_1_3B, OPT_6_7B, LLaMA_7B, LLaMA_13B };
-enum { FP32, INT8, INT4 };
+enum { FP32, QINT8, INT4 };
 
 const struct model_config opt_6_7B(1, 32, 32, 2048, 4096, 16384, 50272, 1);
 const struct model_config opt_1_3B(1, 32, 24, 2048, 2048, 8192, 50272, 1);
