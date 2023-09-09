@@ -34,6 +34,8 @@ int main(int argc, char* argv[]) {
     std::string target_data_format = "INT4";
     Profiler::getInstance().for_demo = true;
 
+    std::cout << "TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine" << std::endl;
+
     if (argc == 3) {
         auto target_str = argv[1];
         target_model = argv[1];
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
             std::cerr << std::endl;
             throw("Unsupported model\n");
         }
-        std::cout << "Model: " << argv[1] << " selected" << std::endl;
+        std::cout << "Using model: " << argv[1] << std::endl;
 
         auto data_format_input = argv[2];
         if (data_format_list.count(data_format_input) == 0) {
@@ -60,9 +62,9 @@ int main(int argc, char* argv[]) {
         }
         target_data_format = argv[2];
         if (target_data_format == "INT4" || target_data_format == "int4")
-            std::cout << "Data format: " << "AWQ " << argv[2] << " selected" << std::endl;
+            std::cout << "Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq" << std::endl;
         else
-            std::cout << "Data format: " << argv[2] << " selected" << std::endl;
+            std::cout << "Using data format: " << argv[2] << std::endl;
     } else if (argc == 2) {
         auto target_str = argv[1];
         target_model = argv[1];
@@ -75,14 +77,14 @@ int main(int argc, char* argv[]) {
             std::cerr << std::endl;
             throw("Unsupported model\n");
         }
-        std::cout << "Model: " << argv[1] << " selected" << std::endl;
+        std::cout << "Using model: " << argv[1] << std::endl;
 
         auto data_format_input = "INT4";
     } else {
         if (isLLaMA(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
             if (target_data_format == "INT4" || target_data_format == "int4")
-                std::cout << "Using data format: " << "AWQ " << target_data_format << std::endl;
+                std::cout << "Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq" << std::endl;
             else
                 std::cout << "Using data format: " << target_data_format << std::endl;
         } else {  // OPT
