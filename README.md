@@ -87,8 +87,10 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   ```bash
   make chat -j
   ./chat
-  Using model: LLaMA7B_2_chat
-  Using LLaMA's default data format: INT4
+
+  TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine
+  Using model: LLaMA2_7B_chat
+  Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq
   Loading model... Finished!
   USER: Write a syllabus for Operating Systems.
   ASSISTANT:
@@ -103,7 +105,6 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   * Investigate security mechanisms to protect against malicious software attacks
   * Analyze input/output (I/O) operations and their handling by the operating system
   ...
-
   ```
 
 ## Backend support
