@@ -1,3 +1,7 @@
+## Demo video of our speech-to-speech chatbot
+
+- Please find the speech-to-speech demo video using TinyChatEngine [here](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC).
+
 ## Instructions to run a speech-to-speech chatbot demo
 
 - Follow the [instructions](../../README.md) to download and deploy LLaMA2-7B-chat.
