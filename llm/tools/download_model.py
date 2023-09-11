@@ -185,19 +185,14 @@ def _main():
 
     args = parser.parse_args()
 
-    if args.model.startswith("LLaMA"):
-        if args.QM == "fp32":
-            model_table = models
-            model_dir = MODEL_DIR
-        elif args.QM in Qmodels:
-            model_table = Qmodels[args.QM]
-            model_dir = "."
-        else:
-            raise NotImplementedError(f"{args.QM} is not supported.")
-    else:
-        # OPT
+    if args.QM == "fp32":
         model_table = models
         model_dir = MODEL_DIR
+    elif args.QM in Qmodels:
+        model_table = Qmodels[args.QM]
+        model_dir = "."
+    else:
+        raise NotImplementedError(f"{args.QM} is not supported.")
 
     if args.model in model_table:
         url = model_table[args.model]["url"]
