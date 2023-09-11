@@ -4,6 +4,7 @@ CXXFLAGS = -std=c++11 -pthread -Ofast
 
 # CUDA flag
 DISABLE_CUDA ?= 0
+DEC_SHARED_MEM ?= 0
 
 # customize define
 DEFINE =
@@ -25,6 +26,11 @@ LIB_SRC = $(wildcard $(LIB_DIR)/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./include/nn_modules -I./json/single_include/ -I./half-2.2.0/include/
 LIB =
 LDFLAGS =
+
+ifeq ($(DEC_SHARED_MEM), 1)
+$(info Shared memory allocation for decoder layers is enabled! (Currently only for CPU, not for CUDA))
+	CXXFLAGS += -DDEC_SHARED_MEM
+endif
 
 # Check if CUDA is available
 ifeq ($(DISABLE_CUDA), 0)

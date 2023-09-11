@@ -35,7 +35,7 @@ class Int4LlamaForCausalLM {
    public:
     Int4LlamaForCausalLM(std::string param_path, const struct model_config config);
     Int4LlamaForCausalLM(){};
-    struct Int4LlamaForCausalLM_output forward(const struct Int4LlamaForCausalLM_input& input);
+    struct Int4LlamaForCausalLM_output forward(std::string param_path, const struct Int4LlamaForCausalLM_input& input);
     float* logits_output = nullptr;
 #ifdef QM_CUDA
     void free_cuda_memory();
