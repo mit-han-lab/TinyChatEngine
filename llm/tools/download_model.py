@@ -85,16 +85,16 @@ Qmodels = {
             "md5sum": "3684e5740f44ed05e213d6d807a1f136",
         },
         "opt_125m_awq_int4": {
-            "url": "https://www.dropbox.com/scl/fi/onoifsya2o96vb22mo0zq/OPT_125m.zip?rlkey=cuzmajx96v6nvfq3qctf3ke4u&dl=1",  # noqa: E501
-            "md5sum": "e3bf0b7f13f393aa054de00a8433f232",
+            "url": "https://www.dropbox.com/scl/fi/sl6kc1ql0877w550e4v17/OPT_125m.zip?rlkey=fsdqf3bc0vktl7iv6pfi6bbyx&dl=1",  # noqa: E501
+            "md5sum": "c9c26bb5c8bf9867e21e525da744ef19",
         },
         "opt_1.3B_awq_int4": {
-            "url": "https://www.dropbox.com/scl/fi/6a2lt28o37m0n5stpzj3q/OPT_1.3B.zip?rlkey=yzhj4pvo5y1dtvyh90ur0kotj&dl=1",  # noqa: E501
-            "md5sum": "d40d797f32d7b8a0a8648e9395575b12",
+            "url": "https://www.dropbox.com/scl/fi/t2t81kgskmpzzad985v72/OPT_1.3B.zip?rlkey=va6y8hqez7lxijdioigepjish&dl=1",  # noqa: E501
+            "md5sum": "dd4801d7b65915a70a29d1d304ce5783",
         },
         "opt_6.7B_awq_int4": {
-            "url": "https://www.dropbox.com/scl/fi/jetyhj4rlhgsxz4qsizpc/OPT_6.7B.zip?rlkey=nuey04ta87hq80fupkduzsgjz&dl=1",  # noqa: E501
-            "md5sum": "635994471bc6e56857cfa75f9949a090",
+            "url": "https://www.dropbox.com/scl/fi/uj4z3kp5wd3cvaaiyppvs/OPT_6.7B.zip?rlkey=yw5dxd18ajsc20g3mr2rqvnnt&dl=1",  # noqa: E501
+            "md5sum": "4aba1bee864029d06d1fec67f4d95a22",
         },
     },
     "QM_CUDA": {
@@ -185,19 +185,14 @@ def _main():
 
     args = parser.parse_args()
 
-    if args.model.startswith("LLaMA"):
-        if args.QM == "fp32":
-            model_table = models
-            model_dir = MODEL_DIR
-        elif args.QM in Qmodels:
-            model_table = Qmodels[args.QM]
-            model_dir = "."
-        else:
-            raise NotImplementedError(f"{args.QM} is not supported.")
-    else:
-        # OPT
+    if args.QM == "fp32":
         model_table = models
         model_dir = MODEL_DIR
+    elif args.QM in Qmodels:
+        model_table = Qmodels[args.QM]
+        model_dir = "."
+    else:
+        raise NotImplementedError(f"{args.QM} is not supported.")
 
     if args.model in model_table:
         url = model_table[args.model]["url"]
