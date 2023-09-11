@@ -58,6 +58,7 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 - Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the environment path
 
+
 ## Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine
 
 Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.
@@ -65,10 +66,19 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 - Download the repo.
   ```bash
   git clone --recursive https://github.com/mit-han-lab/TinyChatEngine
+  cd TinyChatEngine
   ```
+
+- Install Python Packages
+  - The primary codebase of TinyChatEngine is written in pure C/C++. The Python packages are only used for downloading (and converting) models from our model zoo.
+    ```bash
+    conda create -n TinyChatEngine python=3.10 pip -y
+    conda activate TinyChatEngine
+    pip install -r requirements.txt
+    ```
 - Download the quantized LLaMA2-7B-chat model from our model zoo.
   ```bash
-  cd TinyChatEngine/llm
+  cd llm
   ```
   - On an x86 device (e.g., Intel/AMD laptop)
     ```bash
