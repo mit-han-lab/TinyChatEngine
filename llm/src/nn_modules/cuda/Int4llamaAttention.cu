@@ -65,7 +65,7 @@ __global__ void unshape_cuda(Matrix3D<T> shaped, Matrix3D<T> unshape, int num_he
     }
 }
 
-Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config) {
+Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config, int layer_idx) {
     allocate_aligned_memory_gpu(q_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(k_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(v_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
@@ -122,7 +122,7 @@ __global__ void check_inf_half(Matrix3D<float16_t> a) {
     }
 }
 
-struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4llamaAttention_input &input) {
+struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_path, const struct Int4llamaAttention_input &input) {
     PROFILE_START(profile_name);
 
     struct Int4llamaAttention_output output;
