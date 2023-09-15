@@ -128,7 +128,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 | W4A8   |  ✅  |  ✅  |      |
 | W8A8   |  ✅  |  ✅  |      |
 
-- For Raspberry Pi, we recommend using the board with 8GB RAM. Our testing was primarily conducted on Raspberry Pi 4 Model B Rev 1.4. For other versions, please feel free to try it out and let us know if you encounter any issues.
+- For Raspberry Pi, we recommend using the board with 8GB RAM. Our testing was primarily conducted on Raspberry Pi 4 Model B Rev 1.4 with aarch64. For other versions, please feel free to try it out and let us know if you encounter any issues.
 - For Nvidia GPU, our CUDA backend may not support Nvidia GPUs with compute capability <= 7.5. We will release a new version to support Nvidia GPUs with lower compute capability soon, please stay tuned!
 
 ## Quantization and Model Support

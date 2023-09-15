@@ -75,7 +75,7 @@ else ifeq ($(shell uname -m),aarch64)
 # For ARM aarch64 platforms with NEON
 		LIB_NEON_SRC = $(wildcard $(LIB_DIR)/neon/*.cc)
 		LIB_SRC += $(LIB_NEON_SRC)
-		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
+		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC
 	endif
 else ifeq ($(shell uname -p),arm)
 	CXX = /opt/homebrew/opt/llvm/bin/clang++
@@ -94,6 +94,10 @@ else ifeq ($(shell uname -p),arm)
 		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
 		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	endif
+else ifneq ($(or $(filter armv6%,$(UNAME_M)), $(filter armv7%,$(UNAME_M)), $(filter armv8%,$(UNAME_M))),)
+	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/neon/*.cc)
+	LIB_SRC += $(LIB_NEON_SRC)
+	CXXFLAGS += -mfpu=neon-fp-armv8 -mfp16-format=ieee -mno-unaligned-access -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
