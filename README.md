@@ -2,7 +2,7 @@
 
 # TinyChatEngine: On-Device LLM Inference Library
 
-Running large language models (LLMs) on the edge is useful: running copilot services (coding, office, smart reply) on laptops, cars, robots, and more. Users can get instant responses  with better privacy, as the data is local.
+Running large language models (LLMs) on the edge is useful: copilot services (coding, office, smart reply) on laptops, cars, robots, and more. Users can get instant responses  with better privacy, as the data is local.
 
 This is enabled by LLM model compression technique: [SmoothQuant](https://github.com/mit-han-lab/smoothquant) and [AWQ (Activation-aware Weight Quantization)](https://github.com/mit-han-lab/llm-awq), co-designed with TinyChatEngine that implements the compressed low-precision model. 
 
@@ -25,7 +25,7 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 [AWQ (Activation-aware Weight Quantization)](https://github.com/mit-han-lab/llm-awq): Protect salient weight channels by analyzing activation magnitude as opposed to the weights.
 
 ### LLM Inference Engine: TinyChatEngine
-- **Universal**: x86 (Intel/AMD), ARM (Apple M1/M2), CUDA (Nvidia GPU).
+- **Universal**: x86 (Intel/AMD), ARM (Apple M1/M2, Raspberry Pi), CUDA (Nvidia GPU).
 - **No library dependency**: From-scratch C/C++ implementation.
 - **High performance**: Real-time on Macbook & GeForce laptop.
 - **Easy to use**: Download and compile, then ready to go!
@@ -59,7 +59,7 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 - Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the environment path
 
 
-## Step-by-step to deploy LLaMA2-7B-chat with TinyChatEngine
+## Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine
 
 Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.
 
@@ -93,6 +93,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
     python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
     ```
   - Check this [table](#download-and-deploy-models-from-our-model-zoo) for the detailed list of supported models
+- *(CUDA only)* Modify `-arch=sm_xx` in [Line 59](llm/Makefile#L59) or [Line 73](llm/Makefile#L73) in Makefile, according to the platform you are using and the compute capability of your GPU.
 - Compile and start the chat locally.
   ```bash
   make chat -j
@@ -117,16 +118,18 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   ...
   ```
 
-## Backend support
+## Backend Support
 
-| Precision | x86 (Intel/AMD CPU) | ARM (Apple M1/M2) | Nvidia GPU | Apple GPU |
+| Precision | x86<br /> (Intel/AMD CPU) | ARM<br /> (Apple M1/M2 & RPi) | Nvidia GPU | Apple GPU |
 | ------ | --------------------------- | --------- | --------- | --------- |
 | FP32   |  ✅    |    ✅  |         |
-| FP16   |     |      |         |
 | W4A16  |      |      |  ✅  | ✅
 | W4A32  |  ✅  |  ✅  |      | ✅
 | W4A8   |  ✅  |  ✅  |      |
 | W8A8   |  ✅  |  ✅  |      |
+
+- For Raspberry Pi, we only tested on Raspberry Pi 4 Model B with 8GB RAM. For other versions, please feel free to try it out and let us know if you encounter any issues.
+- For Nvidia GPU, our CUDA backend may not support Nvidia GPUs with compute capability <= 7.5. We will release a new version to support Nvidia GPUs with lower compute capability soon, please stay tuned!
 
 ## Quantization and Model Support
 
@@ -138,13 +141,13 @@ To mitigate the runtime overheads associated with weight reordering, TinyChatEng
 
 | Platforms  | ISA | Quantization methods |
 | ------------- | ------------- |  ------------- |
-| Intel/AMD |  x86-64  | QM_x86  |
-| Apple M1/M2 Mac | arm | QM_ARM  |
+| Intel & AMD |  x86-64  | QM_x86  |
+| Apple M1/M2 Mac & Raspberry Pi | ARM | QM_ARM  |
 | Nvidia GPU| CUDA | QM_CUDA  |
 
 - Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, \[w0, w1, ... , w30, w31\], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence  \[w0, w16, w1, w17, ..., w15, w31\] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.
 
-## Download and deploy models from our Model Zoo
+## Download and Deploy Models from our Model Zoo
 
 We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
 
@@ -305,7 +308,10 @@ make chat -j
 ./chat <model_name> <precision>
 ```
 
-## Experimental features
+
+## Experimental Features
+
+### Voice Chatbot
 
 TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Please find the speech-to-speech demo video using TinyChatEngine [here](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC). Explore our step-by-step guide [here](llm/application/README.md) to seamlessly deploy a chatbot locally on your device!
 
