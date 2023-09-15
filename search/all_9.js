@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['features_0',['Experimental features',['../index.html#autotoc_md14',1,'']]],
+  ['features_0',['Experimental Features',['../index.html#autotoc_md14',1,'']]],
   ['fp32llamaattention_1',['Fp32llamaAttention',['../classFp32llamaAttention.html',1,'']]],
   ['fp32llamaattention_5finput_2',['Fp32llamaAttention_input',['../structFp32llamaAttention__input.html',1,'']]],
   ['fp32llamaattention_5foutput_3',['Fp32llamaAttention_output',['../structFp32llamaAttention__output.html',1,'']]],
@@ -25,5 +25,5 @@ var searchData=
   ['fp32optforcausallm_22',['Fp32OPTForCausalLM',['../classFp32OPTForCausalLM.html',1,'']]],
   ['fp32optforcausallm_5finput_23',['Fp32OPTForCausalLM_input',['../structFp32OPTForCausalLM__input.html',1,'']]],
   ['fp32optforcausallm_5foutput_24',['Fp32OPTForCausalLM_output',['../structFp32OPTForCausalLM__output.html',1,'']]],
-  ['from_20our_20model_20zoo_25',['Download and deploy models from our Model Zoo',['../index.html#autotoc_md13',1,'']]]
+  ['from_20our_20model_20zoo_25',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md13',1,'']]]
 ];

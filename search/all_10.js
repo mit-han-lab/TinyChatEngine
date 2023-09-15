@@ -1,9 +1,15 @@
 var searchData=
 [
-  ['pack_5fq4_5ftensor_0',['pack_q4_tensor',['../structpack__q4__tensor.html',1,'']]],
-  ['pack_5fq8_5ftensor_1',['pack_q8_tensor',['../structpack__q8__tensor.html',1,'']]],
-  ['pair_5fhash_2',['pair_hash',['../structpair__hash.html',1,'']]],
-  ['prerequisites_3',['Prerequisites',['../index.html#autotoc_md6',1,'']]],
-  ['profiler_4',['Profiler',['../classProfiler.html',1,'']]],
-  ['projects_5',['Related Projects',['../index.html#autotoc_md15',1,'']]]
+  ['on_20an_20apple_20macbook_20air_20m1_202020_20_3a_0',['Demo on an Apple MacBook Air (M1, 2020):',['../index.html#autotoc_md2',1,'']]],
+  ['on_20an_20nvidia_20geforce_20rtx_204070_20laptop_3a_1',['Demo on an NVIDIA GeForce RTX 4070 laptop:',['../index.html#autotoc_md1',1,'']]],
+  ['on_20device_20llm_20inference_20library_2',['TinyChatEngine: On-Device LLM Inference Library',['../index.html#autotoc_md0',1,'']]],
+  ['opt_5fparams_3',['opt_params',['../structopt__params.html',1,'']]],
+  ['opt_5ftoken_5fdata_4',['OPT_token_data',['../structOPT__token__data.html',1,'']]],
+  ['opt_5ftoken_5fdata_5farray_5',['OPT_token_data_array',['../structOPT__token__data__array.html',1,'']]],
+  ['optforcausallm_6',['OPTForCausalLM',['../classOPTForCausalLM.html',1,'']]],
+  ['optforcausallm_5finput_7',['OPTForCausalLM_input',['../structOPTForCausalLM__input.html',1,'']]],
+  ['optforcausallm_5foutput_8',['OPTForCausalLM_output',['../structOPTForCausalLM__output.html',1,'']]],
+  ['optimization_5fparams_9',['optimization_params',['../structoptimization__params.html',1,'']]],
+  ['our_20model_20zoo_10',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md13',1,'']]],
+  ['overview_11',['Overview',['../index.html#autotoc_md3',1,'']]]
 ];
