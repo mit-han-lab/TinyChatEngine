@@ -55,7 +55,7 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     this->hidden_dim = config.hidden_dim;
     this->layer_idx = layer_idx;
 
-    this->attn = Int4llamaAttention(param_path + "/self_attn", config);
+    this->attn = Int4llamaAttention(param_path + "/self_attn", config, layer_idx);
 
     allocate_aligned_memory_gpu(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8);
@@ -68,7 +68,7 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
                                    (param_path + "/up_proj"));
 }
 
-struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct Int4llamaDecoderLayer_input &input) {
+struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string param_path, const struct Int4llamaDecoderLayer_input &input, int layer_idx) {
     PROFILE_START(profile_name);
 
     Matrix3D<float16_t> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
@@ -77,7 +77,7 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct 
 
     struct Int4llamaAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
                                                input.has_past_key_value, this->layer_idx);
-    struct Int4llamaAttention_output attn_output = this->attn.forward(attn_param);
+    struct Int4llamaAttention_output attn_output = this->attn.forward(param_path + "/self_attn", attn_param);
 
     Matrix3D<float16_t> residual_add(hidden_states_half_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                  input.hidden_states.m_dim_z);

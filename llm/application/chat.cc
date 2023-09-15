@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
                 std::getline(std::cin, input);
                 input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
 
-                LLaMAGenerate(&model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
+                LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
                 std::getline(std::cin, input);
                 input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
 
-                LLaMAGenerate(&model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false);
+                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false);
             }
         } else {
             std::cout << std::endl;

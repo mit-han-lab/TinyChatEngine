@@ -22,6 +22,14 @@ static float *value_states_arr;
 static float *query_states_arr;
 static float *value_states_transpose_arr;
 
+#if DEC_SHARED_MEM
+static uint8_t *q_weight, *k_weight, *v_weight, *o_weight;
+static float *q_scale_ptr, *q_offset_ptr, *q_zero_point_ptr;
+static float *k_scale_ptr, *k_offset_ptr, *k_zero_point_ptr;
+static float *v_scale_ptr, *v_offset_ptr, *v_zero_point_ptr;
+static float *o_scale_ptr, *o_offset_ptr, *o_zero_point_ptr;
+#endif
+
 void Int4llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float));
     allocate_aligned_memory(attn_output_fp_arr, config.max_sqlen * config.embed_dim * sizeof(float));
@@ -50,6 +58,30 @@ void Int4llamaAttention::initialized_memory(const struct model_config config) {
             allocate_aligned_memory(value_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(float));
         }
     }
+
+#if DEC_SHARED_MEM
+    int weight_length = config.embed_dim * config.embed_dim * sizeof(uint8_t) / 2;
+    // q_proj
+    allocate_aligned_memory(q_weight, weight_length);
+    allocate_aligned_memory(q_scale_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(q_offset_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(q_zero_point_ptr, 1 * sizeof(float));
+    // k_proj
+    allocate_aligned_memory(k_weight, weight_length);
+    allocate_aligned_memory(k_scale_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(k_offset_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(k_zero_point_ptr, 1 * sizeof(float));
+    // v_proj
+    allocate_aligned_memory(v_weight, weight_length);
+    allocate_aligned_memory(v_scale_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(v_offset_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(v_zero_point_ptr, 1 * sizeof(float));
+    // o_proj
+    allocate_aligned_memory(o_weight, weight_length);
+    allocate_aligned_memory(o_scale_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(o_offset_ptr, (weight_length * 2 * sizeof(float)) / QK);
+    allocate_aligned_memory(o_zero_point_ptr, 1 * sizeof(float));
+#endif
 }
 
 inline void Int4llamaAttention::shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen) {
@@ -90,7 +122,8 @@ inline void Int4llamaAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> 
     PROFILE_END("Int4llamaAttention::unshape");
 }
 
-Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config) {
+Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config, int layer_idx) {
+#if !(DEC_SHARED_MEM)
     uint8_t *q_weight, *k_weight, *v_weight, *o_weight;
     allocate_aligned_memory(q_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
     allocate_aligned_memory(k_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
@@ -104,6 +137,7 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
         Linear_FP_int4(Matrix3D<uint8_t>(v_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/v_proj");
     this->o_proj =
         Linear_FP_int4(Matrix3D<uint8_t>(o_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/o_proj");
+#endif
 
     float *cos_buf, *sin_buf;
     allocate_aligned_memory(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(float));
@@ -182,8 +216,25 @@ static inline void transpose_1_2idx_float_threads(Matrix3D<float> &input, Matrix
     PROFILE_END("Int4llamaAttention::transpose_1_2idx_float");
 }
 
-struct Int4llamaAttention_output Int4llamaAttention::forward(const struct Int4llamaAttention_input &input) {
+struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_path, const struct Int4llamaAttention_input &input) {
     PROFILE_START(profile_name);
+
+#if DEC_SHARED_MEM
+    int x = 1, y = this->embed_dim, z = this->embed_dim / 2;
+    this->q_proj =
+        Linear_FP_int4(Matrix3D<uint8_t>(q_weight, x, y, z), param_path + "/q_proj", Matrix3D<float>(q_scale_ptr, x, y, z * 2 / QK), 
+        Matrix3D<float>(q_offset_ptr, x, y, z * 2 / QK), Matrix3D<float>(q_zero_point_ptr, 1, 1, 1));
+    this->k_proj =
+        Linear_FP_int4(Matrix3D<uint8_t>(k_weight, x, y, z), param_path + "/k_proj", Matrix3D<float>(k_scale_ptr, x, y, z * 2 / QK),
+        Matrix3D<float>(k_offset_ptr, x, y, z * 2 / QK), Matrix3D<float>(k_zero_point_ptr, 1, 1, 1));
+    this->v_proj =
+        Linear_FP_int4(Matrix3D<uint8_t>(v_weight, x, y, z), param_path + "/v_proj", Matrix3D<float>(v_scale_ptr, x, y, z * 2 / QK),
+        Matrix3D<float>(v_offset_ptr, x, y, z * 2 / QK), Matrix3D<float>(v_zero_point_ptr, 1, 1, 1));
+    this->o_proj =
+        Linear_FP_int4(Matrix3D<uint8_t>(o_weight, x, y, z), param_path + "/o_proj", Matrix3D<float>(o_scale_ptr, x, y, z * 2 / QK),
+        Matrix3D<float>(o_offset_ptr, x, y, z * 2 / QK), Matrix3D<float>(o_zero_point_ptr, 1, 1, 1));
+#endif
+
     struct Int4llamaAttention_output output;
     const int sqlen = input.hidden_states.m_dim_y, b = input.hidden_states.m_dim_x;
     assert(b == 1);

@@ -3,8 +3,8 @@
 #include "common.h"
 #include "utils.h"
 
-std::string LLaMAGenerate(void *model_ptr, int model_type, std::string text,
-                               const struct opt_params generation_config, std::string voc_path, bool interactive, bool voicechat) {
+std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
+                          std::string voc_path, bool interactive, bool voicechat) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -57,7 +57,7 @@ std::string LLaMAGenerate(void *model_ptr, int model_type, std::string text,
                 model_input = {input_ids_mat};
             }
             if (has_past_kv) STATS_START("Inference latency");
-            model_output = model->forward(model_input);
+            model_output = model->forward(param_path, model_input);
             if (has_past_kv) STATS_END("Inference latency");
             past_keys = model_output.past_keys;
             past_values = model_output.past_values;

@@ -58,17 +58,17 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/rb7el1reycad98xrzif9a/LLaMA_13B_2_chat.zip?rlkey=wwd400no2uelcthvqxut3ojvj&dl=1",  # noqa: E501
             "md5sum": "f1f7693da630bb7aa269ecae5bcc397a",
         },
-        "opt_6.7B_awq_int4": {
-            "url": "https://www.dropbox.com/scl/fi/uj4z3kp5wd3cvaaiyppvs/OPT_6.7B.zip?rlkey=yw5dxd18ajsc20g3mr2rqvnnt&dl=1",  # noqa: E501
-            "md5sum": "4aba1bee864029d06d1fec67f4d95a22",
+        "opt_125m_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/3dedmlzi36jngj74iskr6/OPT_125m.zip?rlkey=hy7z46cwfbr4dlz9bcs1mtx5b&dl=1",  # noqa: E501
+            "md5sum": "2b42c3866c54642557046140367217fa",
         },
         "opt_1.3B_awq_int4": {
-            "url": "https://www.dropbox.com/scl/fi/t2t81kgskmpzzad985v72/OPT_1.3B.zip?rlkey=va6y8hqez7lxijdioigepjish&dl=1",  # noqa: E501
-            "md5sum": "dd4801d7b65915a70a29d1d304ce5783",
+            "url": "https://www.dropbox.com/scl/fi/1gzynks9u5j9bv5k2a0zj/OPT_1.3B.zip?rlkey=amtwlxypce84lvauo62on1601&dl=1",  # noqa: E501
+            "md5sum": "1fb1296184c8c61e4066775ba59573b9",
         },
-        "opt_125m_awq_int4": {
-            "url": "https://www.dropbox.com/scl/fi/sl6kc1ql0877w550e4v17/OPT_125m.zip?rlkey=fsdqf3bc0vktl7iv6pfi6bbyx&dl=1",  # noqa: E501
-            "md5sum": "c9c26bb5c8bf9867e21e525da744ef19",
+        "opt_6.7B_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/7lu8rz8z5npe2nccfr66n/OPT_6.7B.zip?rlkey=5dtie29ncqscifs2g4ylpwnz7&dl=1",  # noqa: E501
+            "md5sum": "6d061dc64ccc60864391f484b5e564d0",
         },
     },
     "QM_x86": {

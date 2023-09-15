@@ -11,6 +11,14 @@ static float *down_proj_arr;
 static float *temp;
 static float *hidden_states_arr;
 
+// Shared memory space across all layers for projection weights
+#if DEC_SHARED_MEM
+static uint8_t *gate_proj_weight, *down_proj_weight, *up_proj_weight;
+static float *gate_scale_ptr, *gate_offset_ptr, *gate_zero_point_ptr;
+static float *down_scale_ptr, *down_offset_ptr, *down_zero_point_ptr;
+static float *up_scale_ptr, *up_offset_ptr, *up_zero_point_ptr;
+#endif
+
 template <typename T>
 static void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
     PROFILE_START("Int4llamaDecoderLayer::add");
@@ -32,8 +40,24 @@ static void SiLuMul(Matrix3D<float> a, Matrix3D<float> b) {
     PROFILE_END("Int4llamaDecoderLayer::MulSiLu");
 }
 
-struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct Int4llamaDecoderLayer_input &input) {
+struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string param_path, const struct Int4llamaDecoderLayer_input &input, int layer_idx) {
     PROFILE_START(profile_name);
+
+#if DEC_SHARED_MEM
+    int x = 1, y = this->hidden_dim, z = this->embed_dim / 2;
+    this->gate_proj = Linear_FP_int4(Matrix3D<uint8_t>(gate_proj_weight, x, y, z), param_path + "/gate_proj", 
+        Matrix3D<float>(gate_scale_ptr, x, y, z * 2 / QK), Matrix3D<float>(gate_offset_ptr, x, y, z * 2 / QK), 
+        Matrix3D<float>(gate_zero_point_ptr, 1, 1, 1));
+    y = this->embed_dim, z = this->hidden_dim / 2;
+    this->down_proj = Linear_FP_int4(Matrix3D<uint8_t>(down_proj_weight, x, y, z), param_path + "/down_proj", 
+        Matrix3D<float>(down_scale_ptr, x, y, z * 2 / QK), Matrix3D<float>(down_offset_ptr, x, y, z * 2 / QK), 
+        Matrix3D<float>(down_zero_point_ptr, 1, 1, 1));
+    y = this->hidden_dim, z = this->embed_dim / 2;
+    this->up_proj = Linear_FP_int4(Matrix3D<uint8_t>(up_proj_weight, x, y, z), param_path + "/up_proj", 
+        Matrix3D<float>(up_scale_ptr, x, y, z * 2 / QK), Matrix3D<float>(up_offset_ptr, x, y, z * 2 / QK), 
+        Matrix3D<float>(up_zero_point_ptr, 1, 1, 1));
+#endif
+
     // Layernorm
     Matrix3D<float> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                   input.hidden_states.m_dim_z);
@@ -42,7 +66,7 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(const struct 
     // Attention
     struct Int4llamaAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
                                                input.has_past_key_value, this->layer_idx);
-    struct Int4llamaAttention_output attn_output = this->attn.forward(attn_param);
+    struct Int4llamaAttention_output attn_output = this->attn.forward(param_path + "/self_attn", attn_param);
 
     // Residual add
     Matrix3D<float> residual_add(hidden_states_float_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
@@ -88,6 +112,27 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
         allocate_aligned_memory(down_proj_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         allocate_aligned_memory(hidden_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         Int4llamaAttention::initialized_memory(config);
+
+#if DEC_SHARED_MEM
+        // gate_proj
+        int gate_weight_length = config.embed_dim * config.hidden_dim * sizeof(uint8_t) / 2;
+        allocate_aligned_memory(gate_proj_weight, gate_weight_length);
+        allocate_aligned_memory(gate_scale_ptr, (gate_weight_length * 2 * sizeof(float)) / QK);
+        allocate_aligned_memory(gate_offset_ptr, (gate_weight_length * 2 * sizeof(float)) / QK);
+        allocate_aligned_memory(gate_zero_point_ptr, 1 * sizeof(float));
+        // down_proj
+        int down_weight_length = config.hidden_dim * config.embed_dim * sizeof(uint8_t) / 2;
+        allocate_aligned_memory(down_proj_weight, down_weight_length);
+        allocate_aligned_memory(down_scale_ptr, (down_weight_length * 2 * sizeof(float)) / QK);
+        allocate_aligned_memory(down_offset_ptr, (down_weight_length * 2 * sizeof(float)) / QK);
+        allocate_aligned_memory(down_zero_point_ptr, 1 * sizeof(float));
+        // up_proj
+        int up_weight_length = config.embed_dim * config.hidden_dim * sizeof(uint8_t) / 2;
+        allocate_aligned_memory(up_proj_weight, up_weight_length);
+        allocate_aligned_memory(up_scale_ptr, (up_weight_length * 2 * sizeof(float)) / QK);
+        allocate_aligned_memory(up_offset_ptr, (up_weight_length * 2 * sizeof(float)) / QK);
+        allocate_aligned_memory(up_zero_point_ptr, 1 * sizeof(float));
+#endif
     }
 
     float *input_layernorm_weight_ptr;
@@ -107,8 +152,9 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     this->hidden_dim = config.hidden_dim;
     this->layer_idx = layer_idx;
 
-    this->attn = Int4llamaAttention(param_path + "/self_attn", config);
+    this->attn = Int4llamaAttention(param_path + "/self_attn", config, layer_idx);
 
+#if !(DEC_SHARED_MEM)
     uint8_t *gate_proj_weight, *down_proj_weight, *up_proj_weight;
     allocate_aligned_memory(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(uint8_t)) / 2);
     allocate_aligned_memory(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(uint8_t)) / 2);
@@ -119,4 +165,5 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
                                      (param_path + "/down_proj"));
     this->up_proj = Linear_FP_int4(Matrix3D<uint8_t>(up_proj_weight, 1, config.hidden_dim, config.embed_dim / 2),
                                    (param_path + "/up_proj"));
+#endif
 }

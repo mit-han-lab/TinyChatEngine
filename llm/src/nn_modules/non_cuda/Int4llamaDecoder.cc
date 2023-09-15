@@ -60,7 +60,7 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
 };
 
 // Int4llamaDecoder:
-struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaDecoder_input &input) {
+struct Int4llamaDecoder_output Int4llamaDecoder::forward(std::string param_path, const struct Int4llamaDecoder_input &input) {
     PROFILE_START(profile_name);
     int sqlen = input.input_ids.m_dim_z, batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
 
@@ -81,16 +81,18 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(const struct Int4llamaD
     Matrix3D<float> hidden_states = inputs_embeds;
     std::vector<Matrix3D<float>> past_keys, past_values;
     for (int i = 0; i < this->layers.size(); i++) {
+        std::string path = param_path + "/layer" + std::to_string(i);
+
         if (!input.has_past_keys_values) {
             struct Int4llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask};
-            struct Int4llamaDecoderLayer_output l_o = this->layers[i].forward(l_i);
+            struct Int4llamaDecoderLayer_output l_o = this->layers[i].forward(path, l_i, i);
             hidden_states = l_o.hidden_states;
             past_keys.push_back(l_o.past_key_value.first);
             past_values.push_back(l_o.past_key_value.second);
         } else {
             struct Int4llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask, input.past_keys[i],
                                                       input.past_values[i]};
-            struct Int4llamaDecoderLayer_output l_o = this->layers[i].forward(l_i);
+            struct Int4llamaDecoderLayer_output l_o = this->layers[i].forward(path, l_i, i);
             hidden_states = l_o.hidden_states;
             past_keys.push_back(l_o.past_key_value.first);
             past_values.push_back(l_o.past_key_value.second);
