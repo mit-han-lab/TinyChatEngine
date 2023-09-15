@@ -311,9 +311,9 @@ make chat -j
 
 ## Experimental Features
 
-### Voice Chatbot
+### Voice Chatbot [[Demo]](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC)
 
-TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Please find the speech-to-speech demo video using TinyChatEngine [here](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC). Explore our step-by-step guide [here](llm/application/README.md) to seamlessly deploy a chatbot locally on your device!
+TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Explore our step-by-step guide [here](llm/application/README.md) to seamlessly deploy a speech-to-speech chatbot locally on your device!
 
 ## Related Projects
 
