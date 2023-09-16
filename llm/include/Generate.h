@@ -95,5 +95,5 @@ std::vector<int> OPTGenerate(void* model, int model_type, std::vector<int> input
                              bool interactive = false);
 
 enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4 };
-std::string LLaMAGenerate(void* model, int model_type, std::string text, const struct opt_params generation_config,
+std::string LLaMAGenerate(std::string param_path, void* model, int model_type, std::string text, const struct opt_params generation_config,
                           std::string voc_path, bool interactive, bool voicechat);

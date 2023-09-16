@@ -63,7 +63,7 @@ class Int4llamaDecoderLayer {
    public:
     Int4llamaDecoderLayer(std::string param_path, const struct model_config config, int layer_idx);
     Int4llamaDecoderLayer(){};
-    struct Int4llamaDecoderLayer_output forward(const struct Int4llamaDecoderLayer_input &input);
+    struct Int4llamaDecoderLayer_output forward(std::string param_path, const struct Int4llamaDecoderLayer_input &input, int layer_idx);
 
     std::string profile_name = "Int4llamaDecoderLayer";
     int embed_dim, num_attention_heads, hidden_dim, layer_idx;
@@ -72,7 +72,10 @@ class Int4llamaDecoderLayer {
     void free_cuda_memory();
     LlamaRMSNorm_cuda input_layernorm, post_attention_layernorm;
     Linear_half_int4 gate_proj, down_proj, up_proj;
+
+#if !(DEC_SHARED_MEM)
     int *gate_proj_weight = nullptr, *down_proj_weight = nullptr, *up_proj_weight = nullptr;
+#endif
 
 #else
     LlamaRMSNorm input_layernorm, post_attention_layernorm;  // from torch_int.nn

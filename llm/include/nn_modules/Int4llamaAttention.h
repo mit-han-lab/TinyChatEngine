@@ -53,12 +53,14 @@ struct Int4llamaAttention_input {
 
 class Int4llamaAttention {
    public:
-    Int4llamaAttention(std::string param_path, const struct model_config config);
+    Int4llamaAttention(std::string param_path, const struct model_config config, int layer_idx);
     Int4llamaAttention() {}
     static void initialized_memory(const struct model_config config);
-    struct Int4llamaAttention_output forward(const struct Int4llamaAttention_input &input);
+    struct Int4llamaAttention_output forward(std::string param_path, const struct Int4llamaAttention_input &input);
 
+#if !(DEC_SHARED_MEM)
     int *q_weight = nullptr, *k_weight = nullptr, *v_weight = nullptr, *o_weight = nullptr;
+#endif
 
 #ifdef QM_CUDA
     void free_cuda_memory();

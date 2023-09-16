@@ -4,6 +4,7 @@ CXXFLAGS = -std=c++11 -pthread -Ofast
 
 # CUDA flag
 DISABLE_CUDA ?= 0
+DEC_SHARED_MEM ?= 0
 
 # customize define
 DEFINE =
@@ -25,6 +26,11 @@ LIB_SRC = $(wildcard $(LIB_DIR)/*.cc)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./include/nn_modules -I./json/single_include/ -I./half-2.2.0/include/
 LIB =
 LDFLAGS =
+
+ifeq ($(DEC_SHARED_MEM), 1)
+$(info Shared memory allocation for decoder layers is enabled! (Currently only for CPU, not for CUDA))
+	CXXFLAGS += -DDEC_SHARED_MEM
+endif
 
 # Check if CUDA is available
 ifeq ($(DISABLE_CUDA), 0)
@@ -90,7 +96,7 @@ else ifeq ($(shell uname -m),aarch64)
 # For ARM aarch64 platforms with NEON
 		LIB_NEON_SRC = $(wildcard $(LIB_DIR)/neon/*.cc)
 		LIB_SRC += $(LIB_NEON_SRC)
-		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
+		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC
 	endif
 else ifeq ($(shell uname -p),arm)
 	CXX = /opt/homebrew/opt/llvm/bin/clang++
@@ -109,6 +115,10 @@ else ifeq ($(shell uname -p),arm)
 		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
 		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	endif
+else ifneq ($(or $(filter armv6%,$(UNAME_M)), $(filter armv7%,$(UNAME_M)), $(filter armv8%,$(UNAME_M))),)
+	LIB_NEON_SRC = $(wildcard $(LIB_DIR)/neon/*.cc)
+	LIB_SRC += $(LIB_NEON_SRC)
+	CXXFLAGS += -mfpu=neon-fp-armv8 -mfp16-format=ieee -mno-unaligned-access -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC
 else
 	# Use paltform independent implementation
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
