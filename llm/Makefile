@@ -30,6 +30,14 @@ LDFLAGS =
 ifeq ($(DISABLE_CUDA), 0)
 	ifeq ($(OS),Windows_NT)
 		CUDA_AVAILABLE := $(shell command -v nvcc 2> /dev/null)
+	else
+		CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
+	endif
+endif
+
+ifdef CUDA_AVAILABLE
+$(info CUDA is available!)
+	ifeq ($(OS),Windows_NT)
 		CUDA_HOME ?= $(CUDA_PATH)
 $(info Detected CUDA_PATH: $(CUDA_HOME))
 		ifeq ($(CUDA_HOME),)
@@ -37,23 +45,15 @@ $(info Detected CUDA_PATH: $(CUDA_HOME))
 		endif
 		CXX = nvcc
 		CXXFLAGS = -std=c++17 -O3 -DQM_CUDA
-		LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc)
-		LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
-		INCLUDE_DIRS += -I./include/ops/cuda
 		PATH_BRACKET = "
 	else
-		CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
 		CUDA_HOME = /usr/local/cuda
 		CXX = $(CUDA_HOME)/bin/nvcc
 		CXXFLAGS =  -std=c++17 -Xptxas -O3 -use_fast_math -Xcompiler "-pthread" -DQM_CUDA
-		LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc)
-		LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
-		INCLUDE_DIRS += -I./include/ops/cuda
 	endif
-endif
-
-ifdef CUDA_AVAILABLE
-$(info CUDA is available!)
+	LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc)
+	LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
+	INCLUDE_DIRS += -I./include/ops/cuda
 else
 $(info CUDA is unavailable!)
 	LIB_SRC += $(wildcard src/nn_modules/non_cuda/*.cc)
