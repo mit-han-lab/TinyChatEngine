@@ -46,7 +46,7 @@ brew install llvm
 
 For M1/M2 users, install Xcode from AppStore to enable the metal compiler for GPU support.
 
-### Windows
+### Windows with CPU
 
 For Windows, download and install the GCC compiler with MSYS2. Follow this tutorial: https://code.visualstudio.com/docs/cpp/config-mingw for installation.
 
@@ -57,6 +57,14 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 ```
 
 - Add binary directories (e.g., C:\\msys64\\mingw64\\bin and C:\\msys64\\usr\\bin) to the environment path
+
+### Windows with Nvidia GPU (Experimental)
+
+- Install CUDA toolkit for Windows ([link](https://developer.nvidia.com/cuda-toolkit)). When installing CUDA on your PC, please change the installzation path to another one that does not includes "spaces".
+
+- Install Visual Studio with C and C++ support: Follow the [Instruction](https://learn.microsoft.com/en-us/cpp/build/vscpp-step-0-installation?view=msvc-170).
+
+- Follow the iunstructions below and use x64 Native Tools Command Prompt from Visual Studio to compile TinyChatEngine. 
 
 
 ## Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine
@@ -93,7 +101,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
     python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_CUDA
     ```
   - Check this [table](#download-and-deploy-models-from-our-model-zoo) for the detailed list of supported models
-- *(CUDA only)* Modify `-arch=sm_xx` in [Line 59](llm/Makefile#L59) or [Line 73](llm/Makefile#L73) in Makefile, according to the platform you are using and the compute capability of your GPU.
+- *(CUDA only)* Modify `-arch=sm_xx` in [Line 72](llm/Makefile#L72), [Line 77](llm/Makefile#L77) or [Line 94](llm/Makefile#L94) in Makefile, according to the platform you are using and the compute capability of your GPU.
 - Compile and start the chat locally.
   ```bash
   make chat -j

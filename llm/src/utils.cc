@@ -207,7 +207,7 @@ void allocate_aligned_memory(T*& ptr, size_t size) {
 
 #ifdef _WIN32
     // Windows version
-    ptr = _aligned_malloc(size, alignment);
+    ptr = (T*)_aligned_malloc(size, alignment);
     int ret = (ptr != NULL) ? 0 : -1;
 #else
     // POSIX compliant OS version

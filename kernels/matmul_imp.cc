@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <math.h>
-#include <pthread.h>
 #include <stdio.h>
 
 #include <iostream>

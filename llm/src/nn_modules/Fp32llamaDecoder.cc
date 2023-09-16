@@ -65,7 +65,12 @@ struct Fp32llamaDecoder_output Fp32llamaDecoder::forward(const struct Fp32llamaD
     int sqlen = input.input_ids.m_dim_z, batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
 
     // Input token -> Embedding
+#ifdef _WIN32
+    std::vector<float> inputs_embeds_buf_vec(sqlen * this->embed_dim);
+    float *inputs_embeds_buf = &inputs_embeds_buf_vec.front();
+#else
     float inputs_embeds_buf[sqlen * this->embed_dim];
+#endif
     Matrix3D<float> inputs_embeds(inputs_embeds_buf, 1, sqlen, this->embed_dim);
     this->embed_tokens.forward(input.input_ids, inputs_embeds);
 

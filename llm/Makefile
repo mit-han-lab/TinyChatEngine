@@ -34,14 +34,29 @@ endif
 
 # Check if CUDA is available
 ifeq ($(DISABLE_CUDA), 0)
-CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
+	ifeq ($(OS),Windows_NT)
+		CUDA_AVAILABLE := $(shell command -v nvcc 2> /dev/null)
+	else
+		CUDA_AVAILABLE := $(shell command -v /usr/local/cuda/bin/nvcc 2> /dev/null)
+	endif
 endif
 
 ifdef CUDA_AVAILABLE
 $(info CUDA is available!)
-	CUDA_HOME = /usr/local/cuda
-	CXX = $(CUDA_HOME)/bin/nvcc
-	CXXFLAGS =  -std=c++17 -Xptxas -O3 -use_fast_math -Xcompiler "-pthread" -DQM_CUDA
+	ifeq ($(OS),Windows_NT)
+		CUDA_HOME ?= $(CUDA_PATH)
+$(info Detected CUDA_PATH: $(CUDA_HOME))
+		ifeq ($(CUDA_HOME),)
+			$(error CUDA_PATH is not set. Please set it to your CUDA installation path)
+		endif
+		CXX = nvcc
+		CXXFLAGS = -std=c++17 -O3 -DQM_CUDA
+		PATH_BRACKET = "
+	else
+		CUDA_HOME = /usr/local/cuda
+		CXX = $(CUDA_HOME)/bin/nvcc
+		CXXFLAGS =  -std=c++17 -Xptxas -O3 -use_fast_math -Xcompiler "-pthread" -DQM_CUDA
+	endif
 	LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc)
 	LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
 	INCLUDE_DIRS += -I./include/ops/cuda
@@ -52,17 +67,23 @@ endif
 
 ifeq ($(shell uname -m),x86_64)
 	ifdef CUDA_AVAILABLE
-# For x86_64 platforms with CUDA
-		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I/usr/include/x86_64-linux-gnu
-		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L/usr/lib/x86_64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=/usr/lib/x86_64-linux-gnu
+		ifeq ($(OS),Windows_NT)
+# For Windows platforms with CUDA
+			CXXFLAGS += -arch=sm_86
+			INCLUDE_DIRS += -I"$(CUDA_HOME)/include" -I"$(CUDA_HOME)/targets/x86_64-linux/include"
+			LDFLAGS += -lcublas -lcudart -lcublasLt -lnvrtc -lcuda -lcurand -lcusolver -L"$(CUDA_HOME)/lib64" -L"$(CUDA_HOME)/targets/x86_64-linux/lib" -Xlinker -rpath="$(CUDA_HOME)/lib64" -Xlinker -rpath="$(CUDA_HOME)/targets/x86_64-linux/lib"
+		else
 # Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-		CXXFLAGS += -arch=sm_86 --forward-unknown-to-host-compiler -Xcompiler "-mavx2" -mfma -ffast-math -fpermissive -DQM_x86
+			CXXFLAGS += -arch=sm_86 --forward-unknown-to-host-compiler -Xcompiler "-mavx2" -mfma -ffast-math -fpermissive
+			INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I/usr/include/x86_64-linux-gnu
+			LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L/usr/lib/x86_64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=/usr/lib/x86_64-linux-gnu
+		endif
 	else
-# For x86_64 platforms with NEON
-	# For Intel machines with AVX
-	LIB_AVX_SRC = $(wildcard $(LIB_DIR)/avx/*.cc)
-	LIB_SRC += $(LIB_AVX_SRC)
-	CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
+# For x86_64 platforms with AVX2
+		# For Intel machines with AVX
+		LIB_AVX_SRC = $(wildcard $(LIB_DIR)/avx/*.cc)
+		LIB_SRC += $(LIB_AVX_SRC)
+		CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
 	endif
 else ifeq ($(shell uname -m),aarch64)
 	ifdef CUDA_AVAILABLE

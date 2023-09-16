@@ -77,5 +77,5 @@ template<>
 __device__ __forceinline__ half clamp_inf_for_half(const float input)
 {
     // clamp inf values to enable fp16 training
-    return input > 0.0f ? __float2half(min(input, HALF_FLT_MAX - 1000)) : __float2half(max(input, -HALF_FLT_MAX + 1000));
+    return input > 0.0f ? __float2half(min(input, 65504.F - 1000)) : __float2half(max(input, -65504.F + 1000));
 }
