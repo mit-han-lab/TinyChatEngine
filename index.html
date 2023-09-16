@@ -115,7 +115,7 @@ MacOS</h3>
 <div class="line">brew install llvm</div>
 </div><!-- fragment --><p>For M1/M2 users, install Xcode from AppStore to enable the metal compiler for GPU support.</p>
 <h3><a class="anchor" id="autotoc_md8"></a>
-Windows</h3>
+Windows with CPU</h3>
 <p>For Windows, download and install the GCC compiler with MSYS2. Follow this tutorial: <a href="https://code.visualstudio.com/docs/cpp/config-mingw">https://code.visualstudio.com/docs/cpp/config-mingw</a> for installation.</p>
 <ul>
 <li>Install required dependencies with MSYS2</li>
@@ -124,7 +124,14 @@ Windows</h3>
 </div><!-- fragment --><ul>
 <li>Add binary directories (e.g., C:\msys64\mingw64\bin and C:\msys64\usr\bin) to the environment path</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h3><a class="anchor" id="autotoc_md9"></a>
+Windows with Nvidia GPU (Experimental)</h3>
+<ul>
+<li>Install CUDA toolkit for Windows (<a href="https://developer.nvidia.com/cuda-toolkit">link</a>). When installing CUDA on your PC, please change the installzation path to another one that does not includes "spaces".</li>
+<li>Install Visual Studio with C and C++ support: Follow the <a href="https://learn.microsoft.com/en-us/cpp/build/vscpp-step-0-installation?view=msvc-170">Instruction</a>.</li>
+<li>Follow the iunstructions below and use x64 Native Tools Command Prompt from Visual Studio to compile TinyChatEngine.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md10"></a>
 Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine</h2>
 <p>Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.</p>
 <ul>
@@ -148,7 +155,7 @@ Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine</h2>
 <li>Check this table for the detailed list of supported models</li>
 </ul>
 </li>
-<li>*(CUDA only)* Modify <code>-arch=sm_xx</code> in <a href="llm/Makefile#L59">Line 59</a> or <a href="llm/Makefile#L73">Line 73</a> in Makefile, according to the platform you are using and the compute capability of your GPU.</li>
+<li>*(CUDA only)* Modify <code>-arch=sm_xx</code> in <a href="llm/Makefile#L72">Line 72</a>, <a href="llm/Makefile#L77">Line 77</a> or <a href="llm/Makefile#L94">Line 94</a> in Makefile, according to the platform you are using and the compute capability of your GPU.</li>
 <li>Compile and start the chat locally. <div class="fragment"><div class="line">make chat -j</div>
 <div class="line">./chat</div>
 <div class="line"> </div>
@@ -171,7 +178,7 @@ Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine</h2>
 <div class="line">...</div>
 </div><!-- fragment --></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md10"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 Backend Support</h2>
 <p>| Precision | x86<br  />
  (Intel/AMD CPU) | ARM<br  />
@@ -180,10 +187,10 @@ Backend Support</h2>
 <li>For Raspberry Pi, we recommend using the board with 8GB RAM. Our testing was primarily conducted on Raspberry Pi 4 Model B Rev 1.4 with aarch64. For other versions, please feel free to try it out and let us know if you encounter any issues.</li>
 <li>For Nvidia GPU, our CUDA backend may not support Nvidia GPUs with compute capability &lt;= 7.5. We will release a new version to support Nvidia GPUs with lower compute capability soon, please stay tuned!</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Quantization and Model Support</h2>
 <p>The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from <a href="https://github.com/mit-han-lab/smoothquant">smoothquant</a> using the provided conversion script <a href="llm/tools/opt_smooth_exporter.py">opt_smooth_exporter.py</a>. For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht <a href="llm/tools/llama_exporter.py">format</a>, and for quantizing them to specific methods <a href="llm/tools/model_quantizer.py">based on your device</a>. Before converting and quantizing your models, it is recommended to apply the fake quantization from <a href="https://github.com/mit-han-lab/llm-awq">AWQ</a> to achieve better accuracy. We are currently working on supporting more models, please stay tuned!</p>
-<h3><a class="anchor" id="autotoc_md12"></a>
+<h3><a class="anchor" id="autotoc_md13"></a>
 Device-specific int4 Weight Reordering</h3>
 <p>To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively. We also support QM_CUDA for Nvidia GPUs, including server and edge GPUs.</p>
 <table class="markdownTable">
@@ -199,7 +206,7 @@ Device-specific int4 Weight Reordering</h3>
 <ul>
 <li>Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, [w0, w1, ... , w30, w31], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence [w0, w16, w1, w17, ..., w15, w31] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md14"></a>
 Download and Deploy Models from our Model Zoo</h2>
 <p>We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.</p>
 <table class="doxtable">
@@ -248,17 +255,17 @@ Download and Deploy Models from our Model Zoo</h2>
 <p>To deploy a quantized model with TinyChatEngine, compile and run the chat program.</p>
 <div class="fragment"><div class="line">make chat -j</div>
 <div class="line">./chat &lt;model_name&gt; &lt;precision&gt;</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md14"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md15"></a>
 Experimental Features</h2>
-<h3><a class="anchor" id="autotoc_md15"></a>
+<h3><a class="anchor" id="autotoc_md16"></a>
 Voice Chatbot &lt;a href="https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC" &gt;[Demo]&lt;/a&gt;</h3>
 <p>TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Explore our step-by-step guide here to seamlessly deploy a speech-to-speech chatbot locally on your device!</p>
-<h2><a class="anchor" id="autotoc_md16"></a>
+<h2><a class="anchor" id="autotoc_md17"></a>
 Related Projects</h2>
 <p><a href="https://github.com/mit-han-lab/tinyengine">TinyEngine: Memory-efficient and High-performance Neural Network Library for Microcontrollers</a></p>
 <p><a href="https://github.com/mit-han-lab/smoothquant">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></p>
 <p><a href="https://github.com/mit-han-lab/llm-awq">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></p>
-<h2><a class="anchor" id="autotoc_md17"></a>
+<h2><a class="anchor" id="autotoc_md18"></a>
 Acknowledgement</h2>
 <p><a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a></p>
 <p><a href="https://github.com/ggerganov/whisper.cpp">whisper.cpp</a></p>

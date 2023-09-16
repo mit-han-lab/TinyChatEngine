@@ -16,8 +16,8 @@ var searchData=
   ['metalmatmulint4_13',['MetalMatmulInt4',['../classMetalMatmulInt4.html',1,'']]],
   ['metalmatmulint4imp_14',['MetalMatmulInt4IMP',['../classMetalMatmulInt4IMP.html',1,'']]],
   ['metalmatmulparams_15',['MetalMatMulParams',['../structMetalMatMulParams.html',1,'']]],
-  ['model_20support_16',['Quantization and Model Support',['../index.html#autotoc_md11',1,'']]],
-  ['model_20zoo_17',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md13',1,'']]],
+  ['model_20support_16',['Quantization and Model Support',['../index.html#autotoc_md12',1,'']]],
+  ['model_20zoo_17',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md14',1,'']]],
   ['model_5fconfig_18',['model_config',['../structmodel__config.html',1,'']]],
-  ['models_20from_20our_20model_20zoo_19',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md13',1,'']]]
+  ['models_20from_20our_20model_20zoo_19',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md14',1,'']]]
 ];
