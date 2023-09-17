@@ -11,7 +11,8 @@
 // Function to speak in the background
 void sayInBackground(const std::string& text) {
     std::string command = "./application/sts_utils/speak \"" + text + "\"";
-    std::system(command.c_str());
+    int result = std::system(command.c_str());
+    (void)result;
 }
 
 std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
