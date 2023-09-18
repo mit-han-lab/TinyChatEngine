@@ -128,10 +128,11 @@ int main(int argc, char* argv[]) {
                 std::string output;
                 std::string model_input;
 
-                std::system("./application/sts_utils/listen");
+                int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
-                std::system("rm tmpfile");
+                result = std::system("rm tmpfile");
+                (void)result;
 
                 std::cout << input << std::endl;
                 model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";

@@ -31,7 +31,7 @@ void test_Int4llamaDecoderLayer() {
     read_to_array_half("assets/llama/tests/layer0/sqlen9/attention_mask_half.bin", attention_mask.m_data, attention_mask.length());
 
     struct Int4llamaDecoderLayer_input input(hidden_states, attention_mask);
-    struct Int4llamaDecoderLayer_output output = layer.forward(input);
+    struct Int4llamaDecoderLayer_output output = layer.forward("INT4/models/LLaMA_7B_2_chat/decoder/layer0", input, 0);
     cudaDeviceSynchronize();
 
     half* buffer_3;
@@ -92,7 +92,7 @@ void test_Int4llamaDecoderLayer_gen() {
     read_to_array_half("assets/llama/tests/atten/sqlen9/past_value_half.bin", past_value.m_data, past_value.length());
 
     struct Int4llamaDecoderLayer_input input(hidden_states, attention_mask, past_key, past_value);
-    struct Int4llamaDecoderLayer_output output = layer.forward(input);
+    struct Int4llamaDecoderLayer_output output = layer.forward("INT4/models/LLaMA_7B_2_chat/decoder/layer0", input, 0);
     cudaDeviceSynchronize();
 
     half* buffer_5;
