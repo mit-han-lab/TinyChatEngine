@@ -1,13 +1,10 @@
 """Merge LLaMA model's qkv layers.
 
 Usage:
-   python model_quantizer.py --model_path <path to TinyEngine modelt> --method <Quantization method>
+    python llama_qkv_merger.py --model_path <model_path> --output_path <output_path>
 
 Example commands:
-   python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
-
-   python model_quantizer.py --model_path FP32/models/OPT_125m --method QM_ARM --output_path INT4
-
+    python llama_qkv_merger.py --model_path INT4/models/LLaMA_7B_2_chat --output_path INT4/models/LLaMA_7B_2_chat
 """
 import argparse
 import os
@@ -89,7 +86,7 @@ def _merge_model(
         layer_num = 40
     else:
         raise ValueError(
-            "Invalid model name. Expected 'LLaMA_7B', or 'LLaMA_7B'."
+            "Invalid model name. Expected 'LLaMA_7B' or 'LLaMA_13B'."
         )
 
     print(f"Merge {model_name_size}'s QKV layers...")
@@ -124,7 +121,7 @@ def main():
     def _get_parser():
         parser = argparse.ArgumentParser(description="Merge model's QKV layers.")
         parser.add_argument("--model_path", type=str, default="INT4/models/LLaMA_7B_2_chat", help="Model path")
-        parser.add_argument("--output_path", type=str, default=None, help="Quantization method")
+        parser.add_argument("--output_path", type=str, default=None, help="Output path")
         return parser
 
     parser = _get_parser()
