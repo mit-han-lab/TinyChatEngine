@@ -20,14 +20,14 @@ from quantize_methods import (
     quantize_row_q4_2,
     quantize_row_q4_3,
     quantize_row_q4_4,
-    quantize_row_q4_5,
+    quantize_row_q4_6,
 )
 
 quantization_funcs = {
     "QM_x86": quantize_row_q4_3,
     "QM_METAL": quantize_row_q4_2,
     "QM_ARM": quantize_row_q4_4,
-    "QM_CUDA": quantize_row_q4_5,
+    "QM_CUDA": quantize_row_q4_6,
 }
 
 

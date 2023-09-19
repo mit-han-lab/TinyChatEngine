@@ -59,7 +59,7 @@ class Int4llamaAttention {
     struct Int4llamaAttention_output forward(std::string param_path, const struct Int4llamaAttention_input &input);
 
 #if !(DEC_SHARED_MEM)
-    int *q_weight = nullptr, *k_weight = nullptr, *v_weight = nullptr, *o_weight = nullptr;
+    int *q_weight = nullptr, *k_weight = nullptr, *v_weight = nullptr, *o_weight = nullptr, *qkv_weight = nullptr;
 #endif
 
 #ifdef QM_CUDA
@@ -73,7 +73,7 @@ class Int4llamaAttention {
     std::string profile_name = "Int4llamaAttention";
     int embed_dim, num_heads, head_dim;
 #ifdef QM_CUDA
-    Linear_half_int4 k_proj, v_proj, q_proj, o_proj;
+    Linear_half_int4 k_proj, v_proj, q_proj, o_proj, qkv_proj;
     RotaryPosEmb_cuda rotary_pos_emb;
     BMM_F16T qk_bmm, pv_bmm;
     int max_sqlen;

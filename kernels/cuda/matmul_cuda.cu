@@ -515,6 +515,7 @@ namespace matmul{
     int threadsPerBlock = 1024;
     int blocksPerGrid =(num_out_feats * num_out_channels + threadsPerBlock - 1) / threadsPerBlock;
     merge_k_iters<<<blocksPerGrid, threadsPerBlock>>>(_out_feats, out_feats, num_out_feats * num_out_channels, split_k_iters);
+    // merge_k_iters_qkv<<<blocksPerGrid, threadsPerBlock>>>(_out_feats, out_feats, num_out_feats * num_out_channels * 3, split_k_iters);
 
     PROFILE_END("gemm_forward_4bit_cuda_m16n128k32");
   }

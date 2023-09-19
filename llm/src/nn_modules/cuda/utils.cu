@@ -144,6 +144,19 @@ __global__ void merge_k_iters(half *input, half *output, int N, int split_k_iter
     }
 }
 
+__global__ void merge_k_iters_qkv(half *input, half *output, int N, int split_k_iters) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (index < N) {
+        half sum = 0;
+        for (int j = 0; j < split_k_iters; j++) {
+            sum = __hadd(sum, input[index + j * N / 3]);
+        }
+
+        output[index] = sum;
+    }
+}
+
 // Explicitly instantiate the generic template function for other types (if needed)
 template void allocate_aligned_memory_gpu(float*& ptr, size_t size);
 template void allocate_aligned_memory_gpu(int*& ptr, size_t size);

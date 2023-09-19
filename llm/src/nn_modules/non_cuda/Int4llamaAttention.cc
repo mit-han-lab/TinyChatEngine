@@ -12,15 +12,15 @@ static float ***key_states_arr_cache;
 static float ***value_states_arr_cache;
 static float *attn_output_fp_arr;
 static int *cache_num;
-static float *query_states_unshape_arr;
 static float *attn_output_arr;
 static float *attn_output_transpose_arr;
-static float *key_states_unshape_arr;
 static float *key_states_arr;
-static float *value_states_unshape_arr;
 static float *value_states_arr;
 static float *query_states_arr;
 static float *value_states_transpose_arr;
+// static float *query_states_unshape_arr;
+// static float *key_states_unshape_arr;
+// static float *value_states_unshape_arr;
 static float *qkv_states_unshape_arr;
 
 #if DEC_SHARED_MEM

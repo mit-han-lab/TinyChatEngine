@@ -128,10 +128,13 @@ class MatmulOperator {
     // cuda
     void naive_mat_mul_fp16_int4(const struct matmul_params *params);
     void mat_mul_cuda(const struct matmul_params *params);
+    //// GEMM
     void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters);
     void gemm_forward_cuda_8splits(const struct matmul_params *params, float16_t *split_8_buffer);
     void gemm_forward_cuda_half(const struct matmul_params *params, int split_k_iters);
     void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
+    //// GEMV
+    void gemv_forward_cuda(const struct matmul_params *params);
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);

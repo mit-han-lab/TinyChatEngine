@@ -11,6 +11,7 @@ Modified from NVIDIA FasterTransformer: https://github.com/NVIDIA/FasterTransfor
 
 #pragma once
 
+
 __device__ uint4 dequantize_s4_to_fp16x2(uint32_t const& source)
 {
     uint4 result;

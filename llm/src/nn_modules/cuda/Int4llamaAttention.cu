@@ -8,31 +8,29 @@
 
 static float16_t *attn_weights_arr = nullptr;
 static float16_t *attn_output_half_arr = nullptr;
-static float16_t *query_states_unshape_arr = nullptr;
 static float16_t *attn_output_arr = nullptr;
 static float16_t *attn_output_transpose_arr = nullptr;
-static float16_t *key_states_unshape_arr = nullptr;
 static float16_t *key_states_arr = nullptr;
-static float16_t *value_states_unshape_arr = nullptr;
 static float16_t *value_states_arr = nullptr;
 static float16_t *query_states_arr = nullptr;
 static float16_t *value_states_transpose_arr = nullptr;
 static float16_t *key_states_arr_cache = nullptr;
 static float16_t *value_states_arr_cache = nullptr;
 static int *cache_num = nullptr;
+static float16_t *query_states_unshape_arr = nullptr;
+static float16_t *key_states_unshape_arr = nullptr;
+static float16_t *value_states_unshape_arr = nullptr;
+// static float16_t *qkv_states_unshape_arr = nullptr;
 
 void Int4llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory_gpu(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float16_t));
     allocate_aligned_memory_gpu(attn_output_half_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(attn_output_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(attn_output_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
-    allocate_aligned_memory_gpu(key_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(key_states_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
-    allocate_aligned_memory_gpu(value_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(value_states_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(query_states_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(value_states_transpose_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
-    allocate_aligned_memory_gpu(query_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
 
     allocate_aligned_memory(cache_num, config.num_layers * sizeof(int));
     for (int i = 0; i < config.num_layers; i++) cache_num[i] = 0;
@@ -41,6 +39,11 @@ void Int4llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory_gpu(value_states_arr_cache, config.num_layers * 2 * config.max_sqlen * config.embed_dim * sizeof(float16_t));
 
     allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.vocsize * sizeof(float16_t) * 8);
+
+    allocate_aligned_memory_gpu(query_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
+    allocate_aligned_memory_gpu(key_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
+    allocate_aligned_memory_gpu(value_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
+    // allocate_aligned_memory_gpu(qkv_states_unshape_arr, config.max_sqlen * config.embed_dim * 3 * sizeof(float16_t));
 }
 
 template <typename T>
@@ -51,6 +54,21 @@ __global__ void shape_cuda(Matrix3D<T> unshape, Matrix3D<T> shaped, int num_head
 
     if (i < num_heads && j < sqlen && k < head_dim) {
         shaped(i, j, k) = unshape(0, j, i * head_dim + k);
+    }
+}
+
+template <typename T>
+__global__ void shape_qkv_cuda(Matrix3D<T> unshape, Matrix3D<T> shaped_q, Matrix3D<T> shaped_k, Matrix3D<T> shaped_v,
+                               int num_heads, int sqlen, int head_dim) {
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int embed_dim = head_dim * num_heads;
+
+    if (i < num_heads && j < sqlen && k < head_dim) {
+        shaped_q(i, j, k) = unshape(0, j, i * head_dim + k);
+        shaped_k(i, j, k) = unshape(0, j, i * head_dim + k + embed_dim);
+        shaped_v(i, j, k) = unshape(0, j, i * head_dim + k + embed_dim * 2);
     }
 }
 
@@ -70,6 +88,7 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
     allocate_aligned_memory_gpu(k_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(v_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
+    // allocate_aligned_memory_gpu(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(int)) / 8);
 
     this->q_proj = Linear_half_int4(Matrix3D<int>(q_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/q_proj");
@@ -79,6 +98,8 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
                                   param_path + "/v_proj");
     this->o_proj = Linear_half_int4(Matrix3D<int>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
                                   param_path + "/o_proj");
+    // this->qkv_proj = Linear_half_int4(Matrix3D<int>(qkv_weight, 1, config.embed_dim * 3 / 8, config.embed_dim), 
+    //                               param_path + "/qkv_proj");
 
     allocate_aligned_memory_gpu(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(half));
     allocate_aligned_memory_gpu(sin_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(half));
@@ -128,6 +149,18 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     struct Int4llamaAttention_output output;
     const int sqlen = input.hidden_states.m_dim_y, b = input.hidden_states.m_dim_x;
     assert(b == 1);
+
+    // // Fused QKV
+    // Matrix3D<float16_t> qkv_states_unshape(qkv_states_unshape_arr, b, sqlen, embed_dim * 3);
+    // this->qkv_proj.forward(input.hidden_states, qkv_states_unshape, split_8_buffer);
+    // Matrix3D<float16_t> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
+    // Matrix3D<float16_t> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
+    // Matrix3D<float16_t> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
+    // dim3 threadsPerBlock(16, 1, 64);
+    // dim3 numBlocks((this->num_heads + threadsPerBlock.x - 1) / threadsPerBlock.x,
+    //             (sqlen + threadsPerBlock.y - 1) / threadsPerBlock.y,
+    //             (this->head_dim + threadsPerBlock.z - 1) / threadsPerBlock.z);
+    // shape_qkv_cuda<<<numBlocks, threadsPerBlock>>>(qkv_states_unshape, query_states, key_states, value_states, this->num_heads, sqlen, this->head_dim);
 
     // Query
     Matrix3D<float16_t> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
@@ -248,12 +281,9 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
 void Int4llamaAttention::free_cuda_memory() {
     free_aligned_memory_gpu(attn_weights_arr);
     free_aligned_memory_gpu(attn_output_half_arr);
-    free_aligned_memory_gpu(query_states_unshape_arr);
     free_aligned_memory_gpu(attn_output_arr);
     free_aligned_memory_gpu(attn_output_transpose_arr);
-    free_aligned_memory_gpu(key_states_unshape_arr);
     free_aligned_memory_gpu(key_states_arr);
-    free_aligned_memory_gpu(value_states_unshape_arr);
     free_aligned_memory_gpu(value_states_arr);
     free_aligned_memory_gpu(query_states_arr);
     free_aligned_memory_gpu(value_states_transpose_arr);
@@ -265,6 +295,10 @@ void Int4llamaAttention::free_cuda_memory() {
     free_aligned_memory_gpu(k_weight);
     free_aligned_memory_gpu(v_weight);
     free_aligned_memory_gpu(o_weight);
+    free_aligned_memory_gpu(query_states_unshape_arr);
+    free_aligned_memory_gpu(key_states_unshape_arr);
+    free_aligned_memory_gpu(value_states_unshape_arr);
+    // free_aligned_memory_gpu(qkv_states_unshape_arr);
 
     if(cache_num) {
         free(cache_num);

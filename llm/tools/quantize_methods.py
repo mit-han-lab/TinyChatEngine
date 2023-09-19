@@ -1,17 +1,11 @@
 """Quantization methods."""
-import numpy as np
-from quantize_constants import STORE_FP16
 
-QK4_0 = 32
-QK4_1 = 32
-QK4_2 = 32
-QK4_3 = 32
-QK4_5 = 128
+import numpy as np
+from quantize_constants import STORE_FP16, QK4_0, QK4_1, QK4_2, QK4_3, QK4_5, QK4_6
 
 # Converters
 def _convert_to_fp16(val):
     return np.float16(val)
-
 
 # 4-bit Quantization method 0
 def quantize_row_q4_0(input_path, k, data_type, input_channel, output_channel):
@@ -286,7 +280,7 @@ def quantize_row_q4_4(input_path, k, data_type, input_channel, output_channel):
 
 
 def quantize_row_q4_5(input_path, k, data_type, input_channel, output_channel):
-    """Quantize the row to the following format for CUDA."""
+    """Quantize the row to the following format for CUDA GEMM."""
 
     qk = QK4_5
     assert k % qk == 0
@@ -353,5 +347,76 @@ def quantize_row_q4_5(input_path, k, data_type, input_channel, output_channel):
     zp_pack = np.zeros(1, dtype=np.int32)
     zp_pack = zp | (zp << 4) | (zp << 8) | (zp << 12) | (zp << 16) | (zp << 20) | (zp << 24) | (zp << 28)
     zp = np.tile(zp_pack, (input_channel // qk, output_channel // 8))
+
+    return qs, d, m, zp
+
+def quantize_row_q4_6(input_path, k, data_type, input_channel, output_channel):
+    """Quantize the row to the following format for CUDA GEMV."""
+
+    qk = QK4_6
+    assert k % qk == 0
+    nb = k // qk
+    # assert k == input_channel * output_channel
+
+    with open(input_path, mode="rb") as fp:
+        origin_weight = fp.read()
+    fp.close()
+
+    if data_type == "fp32":
+        x = np.frombuffer(origin_weight, dtype=np.float32)
+    elif data_type == "fp16":
+        x = np.frombuffer(origin_weight, dtype=np.float16)
+    elif data_type == "int8":
+        x = np.frombuffer(origin_weight, dtype=np.int8)
+
+    # Reshape x to be a 2D array with shape (nb, qk)
+    x = x.reshape(nb, qk)
+
+    # Get the indices of maximum absolute values along axis 1
+    idx_max_abs = np.argmax(np.abs(x), axis=1)
+    max_vals = x[np.arange(x.shape[0]), idx_max_abs]
+    min_vals = np.zeros(nb, dtype=np.float32)
+    d_vals = max_vals / -8
+
+    id_vals = 1.0 / d_vals
+    id_vals[d_vals == 0] = 0.0
+
+    if STORE_FP16:
+        d = _convert_to_fp16(d_vals)  # scaling factors
+        m = _convert_to_fp16(min_vals)  # offsets
+        zp = _convert_to_fp16(8.0)  # zero point
+    else:
+        d = np.float32(d_vals)  # scaling factors
+        m = np.float32(min_vals)  # offsets
+        zp = np.float32([8.0])  # zero point
+
+    # TODO: Currently, we don't use offsets for CUDA
+    xi = ((x * id_vals[:, np.newaxis]) + 8.5).clip(0, 15).astype(np.int32)
+    xi = xi.reshape(-1).reshape(output_channel, input_channel)
+    qs = np.zeros((output_channel, input_channel // 8), dtype=np.int32)
+
+    # Store weights in column major for CUDA GEMV (kernel: OC, IC // 8 [int32])
+    # order of weights is 0 1 2 3 4 5 6 7
+    for idx in range(input_channel // 8):
+        qs[:, idx] = (
+            qs[:, idx]
+            | xi[:, idx * 8]
+            | (xi[:, idx * 8 + 1] << 4)
+            | (xi[:, idx * 8 + 2] << 8)
+            | (xi[:, idx * 8 + 3] << 12)
+            | (xi[:, idx * 8 + 4] << 16)
+            | (xi[:, idx * 8 + 5] << 20)
+            | (xi[:, idx * 8 + 6] << 24)
+            | ((xi[:, idx * 8 + 7] & 0xF) << 28)
+        )
+
+    # Store scaling_factors in column major for CUDA GEMV (scaling_factors: OC, IC // G [float16])
+    d = d.reshape(-1).reshape(output_channel, input_channel // qk)
+
+    # Store zero_points in column major for CUDA GEMV (zeros: OC, IC // G // 8 [int32])
+    zp = zp.astype(np.int32)
+    zp_pack = np.zeros(1, dtype=np.int32)
+    zp_pack = zp | (zp << 4) | (zp << 8) | (zp << 12) | (zp << 16) | (zp << 20) | (zp << 24) | (zp << 28)
+    zp = np.tile(zp_pack, (output_channel, input_channel // qk // 8))
 
     return qs, d, m, zp
