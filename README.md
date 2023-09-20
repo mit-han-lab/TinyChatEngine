@@ -60,11 +60,11 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 
 ### Windows with Nvidia GPU (Experimental)
 
-- Install CUDA toolkit for Windows ([link](https://developer.nvidia.com/cuda-toolkit)). When installing CUDA on your PC, please change the installzation path to another one that does not includes "spaces".
+- Install CUDA toolkit for Windows ([link](https://developer.nvidia.com/cuda-toolkit)). When installing CUDA on your PC, please change the installation path to another one that does not include "spaces".
 
 - Install Visual Studio with C and C++ support: Follow the [Instruction](https://learn.microsoft.com/en-us/cpp/build/vscpp-step-0-installation?view=msvc-170).
 
-- Follow the iunstructions below and use x64 Native Tools Command Prompt from Visual Studio to compile TinyChatEngine. 
+- Follow the instructions below and use x64 Native Tools Command Prompt from Visual Studio to compile TinyChatEngine. 
 
 
 ## Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine
