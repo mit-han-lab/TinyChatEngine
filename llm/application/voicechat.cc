@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             while (true) {
-                std::cout << "USER: ";
+                // std::cout << "USER: " << std::flush;
                 std::string input;
                 std::string output;
                 std::string model_input;
