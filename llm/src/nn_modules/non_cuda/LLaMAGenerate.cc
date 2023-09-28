@@ -229,8 +229,8 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
         --n_remain;
     }
     if (voicechat && interactive){
-        std::thread sayThread(sayInBackground, output);
-        sayThread.detach();
+        sayInBackground(output);
+
     }
 
     if (interactive) std::cout << std::endl;
