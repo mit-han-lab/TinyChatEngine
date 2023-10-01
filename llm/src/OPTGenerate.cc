@@ -216,7 +216,7 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
         --n_remain;
         STATS_END("Token generation");
     }
-    if (voicechat){
+    if (interactive && voicechat){
         speakInBackground(output);
     }
     if (interactive) std::cout << std::endl;
