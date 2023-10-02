@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true);
+                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, false);
         } else if (format_id == FP32) {
             Fp32OPTForCausalLM model = Fp32OPTForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true);
+                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, false);
         } else if (format_id == INT4) {
             Int4OPTForCausalLM model = Int4OPTForCausalLM("INT4/" + m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true);
+                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, false);
         }
 #endif  // QN_CUDA
     }

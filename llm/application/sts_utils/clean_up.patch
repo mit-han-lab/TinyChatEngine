@@ -1,16 +1,120 @@
-diff --git a/examples/stream/stream.cpp b/examples/stream/stream.cpp
-index 4c7f7d1..151d918 100644
---- a/examples/stream/stream.cpp
-+++ b/examples/stream/stream.cpp
-@@ -212,7 +212,6 @@ int main(int argc, char ** argv) {
-         }
+diff --git a/examples/common-sdl.cpp b/examples/common-sdl.cpp
+index c598633..b342f16 100644
+--- a/examples/common-sdl.cpp
++++ b/examples/common-sdl.cpp
+@@ -24,10 +24,10 @@ bool audio_async::init(int capture_id, int sample_rate) {
+ 
+     {
+         int nDevices = SDL_GetNumAudioDevices(SDL_TRUE);
+-        fprintf(stderr, "%s: found %d capture devices:\n", __func__, nDevices);
+-        for (int i = 0; i < nDevices; i++) {
+-            fprintf(stderr, "%s:    - Capture device #%d: '%s'\n", __func__, i, SDL_GetAudioDeviceName(i, SDL_TRUE));
+-        }
++        // fprintf(stderr, "%s: found %d capture devices:\n", __func__, nDevices);
++        // for (int i = 0; i < nDevices; i++) {
++        //     fprintf(stderr, "%s:    - Capture device #%d: '%s'\n", __func__, i, SDL_GetAudioDeviceName(i, SDL_TRUE));
++        // }
      }
  
+     SDL_AudioSpec capture_spec_requested;
+@@ -47,10 +47,10 @@ bool audio_async::init(int capture_id, int sample_rate) {
+     capture_spec_requested.userdata = this;
+ 
+     if (capture_id >= 0) {
+-        fprintf(stderr, "%s: attempt to open capture device %d : '%s' ...\n", __func__, capture_id, SDL_GetAudioDeviceName(capture_id, SDL_TRUE));
++        // fprintf(stderr, "%s: attempt to open capture device %d : '%s' ...\n", __func__, capture_id, SDL_GetAudioDeviceName(capture_id, SDL_TRUE));
+         m_dev_id_in = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(capture_id, SDL_TRUE), SDL_TRUE, &capture_spec_requested, &capture_spec_obtained, 0);
+     } else {
+-        fprintf(stderr, "%s: attempt to open default capture device ...\n", __func__);
++        // fprintf(stderr, "%s: attempt to open default capture device ...\n", __func__);
+         m_dev_id_in = SDL_OpenAudioDevice(nullptr, SDL_TRUE, &capture_spec_requested, &capture_spec_obtained, 0);
+     }
+ 
+@@ -60,13 +60,13 @@ bool audio_async::init(int capture_id, int sample_rate) {
+ 
+         return false;
+     } else {
+-        fprintf(stderr, "%s: obtained spec for input device (SDL Id = %d):\n", __func__, m_dev_id_in);
+-        fprintf(stderr, "%s:     - sample rate:       %d\n",                   __func__, capture_spec_obtained.freq);
+-        fprintf(stderr, "%s:     - format:            %d (required: %d)\n",    __func__, capture_spec_obtained.format,
+-                capture_spec_requested.format);
+-        fprintf(stderr, "%s:     - channels:          %d (required: %d)\n",    __func__, capture_spec_obtained.channels,
+-                capture_spec_requested.channels);
+-        fprintf(stderr, "%s:     - samples per frame: %d\n",                   __func__, capture_spec_obtained.samples);
++        // fprintf(stderr, "%s: obtained spec for input device (SDL Id = %d):\n", __func__, m_dev_id_in);
++        // fprintf(stderr, "%s:     - sample rate:       %d\n",                   __func__, capture_spec_obtained.freq);
++        // fprintf(stderr, "%s:     - format:            %d (required: %d)\n",    __func__, capture_spec_obtained.format,
++        //         capture_spec_requested.format);
++        // fprintf(stderr, "%s:     - channels:          %d (required: %d)\n",    __func__, capture_spec_obtained.channels,
++        //         capture_spec_requested.channels);
++        // fprintf(stderr, "%s:     - samples per frame: %d\n",                   __func__, capture_spec_obtained.samples);
+     }
+ 
+     m_sample_rate = capture_spec_obtained.freq;
+diff --git a/examples/stream/stream.cpp b/examples/stream/stream.cpp
+index 4c7f7d1..53304a6 100644
+--- a/examples/stream/stream.cpp
++++ b/examples/stream/stream.cpp
+@@ -171,7 +171,7 @@ int main(int argc, char ** argv) {
+ 
+     // print some info about the processing
+     {
+-        fprintf(stderr, "\n");
++        // fprintf(stderr, "\n");
+         if (!whisper_is_multilingual(ctx)) {
+             if (params.language != "en" || params.translate) {
+                 params.language = "en";
+@@ -179,24 +179,23 @@ int main(int argc, char ** argv) {
+                 fprintf(stderr, "%s: WARNING: model is not multilingual, ignoring language and translation options\n", __func__);
+             }
+         }
+-        fprintf(stderr, "%s: processing %d samples (step = %.1f sec / len = %.1f sec / keep = %.1f sec), %d threads, lang = %s, task = %s, timestamps = %d ...\n",
+-                __func__,
+-                n_samples_step,
+-                float(n_samples_step)/WHISPER_SAMPLE_RATE,
+-                float(n_samples_len )/WHISPER_SAMPLE_RATE,
+-                float(n_samples_keep)/WHISPER_SAMPLE_RATE,
+-                params.n_threads,
+-                params.language.c_str(),
+-                params.translate ? "translate" : "transcribe",
+-                params.no_timestamps ? 0 : 1);
++        // fprintf(stderr, "%s: processing %d samples (step = %.1f sec / len = %.1f sec / keep = %.1f sec), %d threads, lang = %s, task = %s, timestamps = %d ...\n",
++                // __func__,
++                // n_samples_step,
++                // float(n_samples_step)/WHISPER_SAMPLE_RATE,
++                // float(n_samples_len )/WHISPER_SAMPLE_RATE,
++                // float(n_samples_keep)/WHISPER_SAMPLE_RATE,
++                // params.n_threads,
++                // params.language.c_str(),
++                // params.translate ? "translate" : "transcribe",
++                // params.no_timestamps ? 0 : 1);
+ 
+         if (!use_vad) {
+             fprintf(stderr, "%s: n_new_line = %d, no_context = %d\n", __func__, n_new_line, params.no_context);
+         } else {
+-            fprintf(stderr, "%s: using VAD, will transcribe on speech activity\n", __func__);
++            fprintf(stderr, "USER: ");
+         }
+-
+-        fprintf(stderr, "\n");
++        // fprintf(stderr, "\n");
+     }
+ 
+     int n_iter = 0;
+@@ -211,11 +210,9 @@ int main(int argc, char ** argv) {
+             return 1;
+         }
+     }
+-
 -    printf("[Start speaking]");
      fflush(stdout);
  
-           auto t_last  = std::chrono::high_resolution_clock::now();
-@@ -329,10 +328,6 @@ int main(int argc, char ** argv) {
+-          auto t_last  = std::chrono::high_resolution_clock::now();
++    auto t_last  = std::chrono::high_resolution_clock::now();
+     const auto t_start = t_last;
+ 
+     // main audio loop
+@@ -329,10 +326,6 @@ int main(int argc, char ** argv) {
                  } else {
                      const int64_t t1 = (t_last - t_start).count()/1000000;
                      const int64_t t0 = std::max(0.0, t1 - pcmf32.size()*1000.0/WHISPER_SAMPLE_RATE);
@@ -21,7 +125,7 @@ index 4c7f7d1..151d918 100644
                  }
  
                  const int n_segments = whisper_full_n_segments(ctx);
-@@ -349,20 +344,10 @@ int main(int argc, char ** argv) {
+@@ -349,20 +342,10 @@ int main(int argc, char ** argv) {
                      } else {
                          const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
                          const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
@@ -44,7 +148,7 @@ index 4c7f7d1..151d918 100644
                          }
                      }
                  }
-@@ -372,8 +357,7 @@ int main(int argc, char ** argv) {
+@@ -372,8 +355,7 @@ int main(int argc, char ** argv) {
                  }
  
                  if (use_vad){
@@ -54,3 +158,153 @@ index 4c7f7d1..151d918 100644
                  }
              }
  
+diff --git a/whisper.cpp b/whisper.cpp
+index 9923fa0..bcfc5d9 100644
+--- a/whisper.cpp
++++ b/whisper.cpp
+@@ -827,7 +827,7 @@ static void kv_cache_free(struct whisper_kv_cache & cache) {
+ // see the convert-pt-to-ggml.py script for details
+ //
+ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_context & wctx) {
+-    log("%s: loading model\n", __func__);
++    // log("%s: loading model\n", __func__);
+ 
+     const int64_t t_start_us = ggml_time_us();
+ 
+@@ -898,19 +898,19 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
+ 
+         const size_t scale = model.hparams.ftype ? 1 : 2;
+ 
+-        log("%s: n_vocab       = %d\n", __func__, hparams.n_vocab);
+-        log("%s: n_audio_ctx   = %d\n", __func__, hparams.n_audio_ctx);
+-        log("%s: n_audio_state = %d\n", __func__, hparams.n_audio_state);
+-        log("%s: n_audio_head  = %d\n", __func__, hparams.n_audio_head);
+-        log("%s: n_audio_layer = %d\n", __func__, hparams.n_audio_layer);
+-        log("%s: n_text_ctx    = %d\n", __func__, hparams.n_text_ctx);
+-        log("%s: n_text_state  = %d\n", __func__, hparams.n_text_state);
+-        log("%s: n_text_head   = %d\n", __func__, hparams.n_text_head);
+-        log("%s: n_text_layer  = %d\n", __func__, hparams.n_text_layer);
+-        log("%s: n_mels        = %d\n", __func__, hparams.n_mels);
+-        log("%s: ftype         = %d\n", __func__, model.hparams.ftype);
+-        log("%s: qntvr         = %d\n", __func__, qntvr);
+-        log("%s: type          = %d\n", __func__, model.type);
++        // log("%s: n_vocab       = %d\n", __func__, hparams.n_vocab);
++        // log("%s: n_audio_ctx   = %d\n", __func__, hparams.n_audio_ctx);
++        // log("%s: n_audio_state = %d\n", __func__, hparams.n_audio_state);
++        // log("%s: n_audio_head  = %d\n", __func__, hparams.n_audio_head);
++        // log("%s: n_audio_layer = %d\n", __func__, hparams.n_audio_layer);
++        // log("%s: n_text_ctx    = %d\n", __func__, hparams.n_text_ctx);
++        // log("%s: n_text_state  = %d\n", __func__, hparams.n_text_state);
++        // log("%s: n_text_head   = %d\n", __func__, hparams.n_text_head);
++        // log("%s: n_text_layer  = %d\n", __func__, hparams.n_text_layer);
++        // log("%s: n_mels        = %d\n", __func__, hparams.n_mels);
++        // log("%s: ftype         = %d\n", __func__, model.hparams.ftype);
++        // log("%s: qntvr         = %d\n", __func__, qntvr);
++        // log("%s: type          = %d\n", __func__, model.type);
+ 
+         // print memory requirements
+         {
+@@ -928,8 +928,8 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
+             const size_t mem_required_decoder =
+                 scale*MEM_REQ_KV_SELF.at(model.type);
+ 
+-            log("%s: mem required  = %7.2f MB (+ %7.2f MB per decoder)\n", __func__,
+-                    mem_required / 1024.0 / 1024.0, mem_required_decoder / 1024.0 / 1024.0);
++            // log("%s: mem required  = %7.2f MB (+ %7.2f MB per decoder)\n", __func__,
++            //         mem_required / 1024.0 / 1024.0, mem_required_decoder / 1024.0 / 1024.0);
+         }
+ 
+         // initialize all memory buffers
+@@ -1004,7 +1004,7 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
+         }
+ 
+         if (n_vocab < model.hparams.n_vocab) {
+-            log("%s: adding %d extra tokens\n", __func__, model.hparams.n_vocab - n_vocab);
++            // log("%s: adding %d extra tokens\n", __func__, model.hparams.n_vocab - n_vocab);
+             for (int i = n_vocab; i < model.hparams.n_vocab; i++) {
+                 if (i > vocab.token_beg) {
+                     word = "[_TT_" + std::to_string(i - vocab.token_beg) + "]";
+@@ -1143,7 +1143,7 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
+ 
+         ctx_size += (15 + 15*n_audio_layer + 24*n_text_layer)*512; // object overhead
+ 
+-        log("%s: model ctx     = %7.2f MB\n", __func__, ctx_size/(1024.0*1024.0));
++        // log("%s: model ctx     = %7.2f MB\n", __func__, ctx_size/(1024.0*1024.0));
+     }
+ 
+     // create the ggml context
+@@ -1423,7 +1423,7 @@ static bool whisper_model_load(struct whisper_model_loader * loader, whisper_con
+             model.n_loaded++;
+         }
+ 
+-        log("%s: model size    = %7.2f MB\n", __func__, total_size/1024.0/1024.0);
++        // log("%s: model size    = %7.2f MB\n", __func__, total_size/1024.0/1024.0);
+ 
+         if (model.n_loaded == 0) {
+             log("%s: WARN no tensors loaded from model file - assuming empty model for testing\n", __func__);
+@@ -2706,7 +2706,7 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
+ 
+     {
+         const size_t memory_size = ggml_nbytes(state->decoders[0].kv_self.k) + ggml_nbytes(state->decoders[0].kv_self.v);
+-        log("%s: kv self size  = %7.2f MB\n", __func__, memory_size / 1024.0 / 1024.0);
++        // log("%s: kv self size  = %7.2f MB\n", __func__, memory_size / 1024.0 / 1024.0);
+     }
+ 
+     if (!kv_cache_init(ctx->model.hparams, scale * MEM_REQ_KV_CROSS.at(ctx->model.type), state->kv_cross, ctx->itype, ctx->model.hparams.n_audio_ctx)) {
+@@ -2717,7 +2717,7 @@ struct whisper_state * whisper_init_state(whisper_context * ctx) {
+ 
+     {
+         const size_t memory_size = ggml_nbytes(state->kv_cross.k) + ggml_nbytes(state->kv_cross.v);
+-        log("%s: kv cross size = %7.2f MB\n", __func__, memory_size / 1024.0 / 1024.0);
++        // log("%s: kv cross size = %7.2f MB\n", __func__, memory_size / 1024.0 / 1024.0);
+     }
+ 
+ #ifdef WHISPER_USE_COREML
+@@ -2810,7 +2810,7 @@ int whisper_ctx_init_openvino_encoder(
+ 
+ struct whisper_context * whisper_init_from_file_no_state(const char * path_model) {
+ 
+-    log("%s: loading model from '%s'\n", __func__, path_model);
++    // log("%s: loading model from '%s'\n", __func__, path_model);
+ 
+     auto fin = std::ifstream(path_model, std::ios::binary);
+     if (!fin) {
+@@ -2856,7 +2856,7 @@ struct whisper_context * whisper_init_from_buffer_no_state(void * buffer, size_t
+ 
+     buf_context ctx = { reinterpret_cast<uint8_t*>(buffer), buffer_size, 0 };
+ 
+-    log("%s: loading model from buffer\n", __func__);
++    // log("%s: loading model from buffer\n", __func__);
+ 
+     whisper_model_loader loader = {};
+ 
+@@ -3375,21 +3375,21 @@ whisper_token whisper_token_transcribe(struct whisper_context * ctx) {
+ void whisper_print_timings(struct whisper_context * ctx) {
+     const int64_t t_end_us = ggml_time_us();
+ 
+-    log("\n");
+-    log("%s:     load time = %8.2f ms\n", __func__, ctx->t_load_us / 1000.0f);
++    // log("\n");
++    // log("%s:     load time = %8.2f ms\n", __func__, ctx->t_load_us / 1000.0f);
+     if (ctx->state != nullptr) {
+ 
+         const int32_t n_sample = std::max(1, ctx->state->n_sample);
+         const int32_t n_encode = std::max(1, ctx->state->n_encode);
+         const int32_t n_decode = std::max(1, ctx->state->n_decode);
+ 
+-        log("%s:     fallbacks = %3d p / %3d h\n", __func__, ctx->state->n_fail_p, ctx->state->n_fail_h);
+-        log("%s:      mel time = %8.2f ms\n", __func__, ctx->state->t_mel_us / 1000.0f);
+-        log("%s:   sample time = %8.2f ms / %5d runs (%8.2f ms per run)\n", __func__, 1e-3f * ctx->state->t_sample_us, n_sample, 1e-3f * ctx->state->t_sample_us / n_sample);
+-        log("%s:   encode time = %8.2f ms / %5d runs (%8.2f ms per run)\n", __func__, 1e-3f * ctx->state->t_encode_us, n_encode, 1e-3f * ctx->state->t_encode_us / n_encode);
+-        log("%s:   decode time = %8.2f ms / %5d runs (%8.2f ms per run)\n", __func__, 1e-3f * ctx->state->t_decode_us, n_decode, 1e-3f * ctx->state->t_decode_us / n_decode);
++    //     log("%s:     fallbacks = %3d p / %3d h\n", __func__, ctx->state->n_fail_p, ctx->state->n_fail_h);
++    //     log("%s:      mel time = %8.2f ms\n", __func__, ctx->state->t_mel_us / 1000.0f);
++    //     log("%s:   sample time = %8.2f ms / %5d runs (%8.2f ms per run)\n", __func__, 1e-3f * ctx->state->t_sample_us, n_sample, 1e-3f * ctx->state->t_sample_us / n_sample);
++    //     log("%s:   encode time = %8.2f ms / %5d runs (%8.2f ms per run)\n", __func__, 1e-3f * ctx->state->t_encode_us, n_encode, 1e-3f * ctx->state->t_encode_us / n_encode);
++    //     log("%s:   decode time = %8.2f ms / %5d runs (%8.2f ms per run)\n", __func__, 1e-3f * ctx->state->t_decode_us, n_decode, 1e-3f * ctx->state->t_decode_us / n_decode);
+     }
+-    log("%s:    total time = %8.2f ms\n", __func__, (t_end_us - ctx->t_start_us)/1000.0f);
++    // log("%s:    total time = %8.2f ms\n", __func__, (t_end_us - ctx->t_start_us)/1000.0f);
+ }
+ 
+ void whisper_reset_timings(struct whisper_context * ctx) {
