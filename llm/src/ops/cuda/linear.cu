@@ -2,7 +2,7 @@
 #include "operators.h"
 #include "utils.h"
 
-void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output, half *split_8_buffer) {
+void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output) {
     const int num_thread = 8;
     Matrix3D<int> b = this->weight;
     PROFILE_START(profile_name);
@@ -10,8 +10,8 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
     // a: m x k   b: n x k   c: m x n
     assert(output.m_dim_x == 1);
     assert(output.m_dim_y == x.m_dim_y);
-    assert(output.m_dim_z / 8 == weight.m_dim_y);
-    assert(x.m_dim_z == weight.m_dim_z);
+    // assert(output.m_dim_z == weight.m_dim_y);
+    // assert(x.m_dim_z / 8 == weight.m_dim_z);
 
     assert(output.m_dim_z > num_thread);
     assert(output.m_dim_z % (num_thread * 2) == 0);  // unroll column by 2
@@ -33,8 +33,7 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
     params.block_size = QK;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
-    // op.gemm_forward_cuda(&params, 1);
-    op.gemm_forward_cuda_8splits(&params, split_8_buffer);
+    op.gemv_forward_cuda(&params);
 
     PROFILE_END(profile_name);
     return;

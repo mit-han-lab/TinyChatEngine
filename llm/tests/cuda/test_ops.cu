@@ -1,4 +1,6 @@
 #include <cmath>
+#include <iostream>
+#include <fstream>
 
 #include "operators.h"
 #include "utils.h"
@@ -601,7 +603,7 @@ void test_FPLinear() {
 }
 
 // TODO: test fp32/fp32, fp16/fp16, fp32/w4, fp16/w4
-void test_FP16Linear_int4() {
+void test_FP16Linear_int4_by_ref() {
     const int m = 1, n = 32000, k = 4096;
 
     float *hidden_states_arr;
@@ -640,15 +642,12 @@ void test_FP16Linear_int4() {
     allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
     Matrix3D<half> outputQ_cuda(outputQ_cuda_arr, 1, m, n);
 
-    half *split_k_buffer;
-    allocate_aligned_memory_gpu(split_k_buffer, (m * n * 8 * sizeof(half)));
-
     const int flops = k * m * n * 2;
     STATS_FLOPS("int4_ref", flops);
     int4_op_ref.forward_ref(hidden_states_ref, outputQ_ref);
     STATS_END("int4_ref");
     STATS_FLOPS("int4_fast", flops);
-    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda, split_k_buffer);
+    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda);
     cudaDeviceSynchronize();
     STATS_END("int4_fast");
 
@@ -665,7 +664,61 @@ void test_FP16Linear_int4() {
     cudaFree(int4_weight_cuda_arr);
     cudaFree(outputQ_ref_arr);
     cudaFree(outputQ_cuda_arr);
-    cudaFree(split_k_buffer);
+}
+
+void test_FP16Linear_int4() {
+    const int m = 1, n = 32000, k = 4096;
+
+    float *hidden_states_arr;
+    allocate_aligned_memory(hidden_states_arr, (m * k * sizeof(float)));
+    Matrix3D<float> hidden_states(hidden_states_arr, 1, m, k);
+    hidden_states.load("assets/llama/tests/ops/Linear/input.bin");
+
+    half *hidden_states_cuda_arr;
+    allocate_aligned_memory_gpu(hidden_states_cuda_arr, (m * k * sizeof(half)));
+    Matrix3D<half> hidden_states_cuda(hidden_states_cuda_arr, 1, m, k);
+
+    for(int i = 0; i < m * k; i++) {
+        hidden_states_cuda_arr[i] = __float2half(hidden_states_arr[i]);
+    }
+
+    int32_t *int4_weight_cuda_arr;
+    allocate_aligned_memory_gpu(int4_weight_cuda_arr, (n * k / 8 * sizeof(int32_t)));
+    Matrix3D<int32_t> int4_cuda_weight(int4_weight_cuda_arr, 1, n, k / 8);
+    Linear_half_int4 int4_op_cuda = Linear_half_int4(int4_cuda_weight, "INT4/models/LLaMA_7B_2_chat/lm_head/");
+
+    half *outputQ_cuda_arr;
+    allocate_aligned_memory_gpu(outputQ_cuda_arr, (m * n * sizeof(half)));
+    Matrix3D<half> outputQ_cuda(outputQ_cuda_arr, 1, m, n);
+
+    const int flops = k * m * n * 2;
+    STATS_FLOPS("int4_fast", flops);
+    int4_op_cuda.forward(hidden_states_cuda, outputQ_cuda);
+    cudaDeviceSynchronize();
+    STATS_END("int4_fast");
+
+    // std::ofstream file("assets/llama/tests/ops/Linear/output_half.bin", std::ios::binary | std::ios::out);
+    // file.write(reinterpret_cast<char*>(outputQ_cuda.m_data), m * n * sizeof(half));
+    // file.close();
+
+    half* outputGT_arr;
+    cudaMallocManaged(&outputGT_arr, sizeof(half) * m * n);
+    Matrix3D<half> outputGT(outputGT_arr, 1, m, n);
+    read_to_array_half("assets/llama/tests/ops/Linear/output_half.bin", outputGT.m_data, m * n);
+
+    // bool success = check_two_equal_cpu_gpu(outputQ_cuda.m_data, outputGT.m_data, outputQ_cuda.length(), 7e-4);
+    bool success = check_two_equal_half_half(outputQ_cuda.m_data, outputGT.m_data, outputQ_cuda.length());
+
+    if (!success)
+        std::cout << "-------- Test of " << __func__ << ": Fail! -------- " << std::endl;
+    else
+        std::cout << "-------- Test of " << __func__ << ": Passed! -------- " << std::endl;
+
+    // Free memory
+    cudaFree(hidden_states_cuda_arr);
+    cudaFree(int4_weight_cuda_arr);
+    cudaFree(outputQ_cuda_arr);
+    cudaFree(outputGT_arr);
 }
 
 void test_LlamaRMSNorm_cuda() {
@@ -915,6 +968,7 @@ int main() {
     test_FPLinear();
 
     /* GPU-version ops */
+    // test_FP16Linear_int4_by_ref();
     test_FP16Linear_int4();
     test_LlamaRMSNorm_cuda();
     test_softmax_cuda();

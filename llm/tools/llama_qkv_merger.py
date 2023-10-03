@@ -120,7 +120,7 @@ def main():
 
     def _get_parser():
         parser = argparse.ArgumentParser(description="Merge model's QKV layers.")
-        parser.add_argument("--model_path", type=str, default="INT4/models/LLaMA_7B_2_chat", help="Model path")
+        parser.add_argument("--model_path", type=str, default="INT4/models/LLaMA_13B_2_chat", help="Model path")
         parser.add_argument("--output_path", type=str, default=None, help="Output path")
         return parser
 

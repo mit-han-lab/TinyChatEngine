@@ -9,7 +9,9 @@ import os
 import dropbox
 
 files_to_upload = [
-    "assets.zip",
+    "LLaMA_13B_2_chat.zip",
+    # "LLaMA_7B_2_chat.zip",
+    # "assets.zip",
 ]
 
 
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("token", help="Your Dropbox OAuth2 token.")
     args = parser.parse_args()
 
-    db_prefix = "/MIT/transformer_assets/"
+    db_prefix = "/HAN Lab Public Space/Projects/TinyChatEngine/assets and models/QM_CUDA/"
     local_prefix = "uploads"
 
     for file in files_to_upload:

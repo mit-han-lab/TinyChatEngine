@@ -217,19 +217,19 @@ namespace matmul{
     int num_in_channels = A->column;
     int num_out_feats = C->row;
     int num_out_channels = C->column;
+    int group_size = QK;
 
     auto in_feats = reinterpret_cast<float4*>(A->half_data_ptr);
     auto kernel = reinterpret_cast<uint32_t*>(B->int32_data_ptr);
     auto zeros = reinterpret_cast<uint32_t*>(params->int32_zero_point);
     auto scaling_factors = reinterpret_cast<half*>(params->half_scales);
     auto out_feats = reinterpret_cast<half*>(C->half_data_ptr);
-    int group_size = QK;
 
     int blockDim_z = num_out_feats;
     dim3 num_blocks(1, num_out_channels / 4, num_out_feats);
     dim3 num_threads(32, 4);
 
-    PROFILE_START("gemm_forward_4bit_cuda_m16n128k32");
+    PROFILE_START("gemv_forward_cuda");
 
     if (group_size == 64)
     {
@@ -255,6 +255,14 @@ namespace matmul{
       exit(1);
     }
 
-    PROFILE_END("gemm_forward_4bit_cuda_m16n128k32");
+    PROFILE_END("gemv_forward_cuda");
   }
+
+  void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
+    // TODO: remove this
+  };
+
+  void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
+    // gemm_forward_cuda(params, 1);
+  };
 }  // namespace matmul

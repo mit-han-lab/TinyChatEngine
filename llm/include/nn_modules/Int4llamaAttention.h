@@ -73,7 +73,7 @@ class Int4llamaAttention {
     std::string profile_name = "Int4llamaAttention";
     int embed_dim, num_heads, head_dim;
 #ifdef QM_CUDA
-    Linear_half_int4 k_proj, v_proj, q_proj, o_proj, qkv_proj;
+    Linear_half_int4 o_proj, qkv_proj;
     RotaryPosEmb_cuda rotary_pos_emb;
     BMM_F16T qk_bmm, pv_bmm;
     int max_sqlen;

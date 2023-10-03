@@ -2,7 +2,7 @@
 
 # List of files to download, their corresponding MD5 checksums, and target local paths
 files_and_checksums=(
-  "https://www.dropbox.com/scl/fi/b6uy5hl55w9qant6ed7mt/assets.zip?rlkey=9v5e8i2kgy3sizhz2rwswqmns&dl=1 26b42d58a6fc1f8c9189815aefe5fb3e assets.zip"
+  "https://www.dropbox.com/scl/fi/fln95cddsgvi6p11b9jym/assets.zip?rlkey=615ye5b2ck4wkj5zoh1i40xoq&dl=1 8527788105acccfada9c89d075fa8764 assets.zip"
 )
 
 OS=`uname`

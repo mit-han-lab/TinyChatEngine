@@ -3,6 +3,23 @@
 import numpy as np
 from quantize_constants import STORE_FP16, QK4_0, QK4_1, QK4_2, QK4_3, QK4_5, QK4_6
 
+def make_divisible(c, divisor):
+    return (c + divisor - 1) // divisor
+
+def calculate_zeros_width(in_features, group_size=128, pack_num=8):
+    if group_size >= 128:
+        size_multiplier = 1
+    elif group_size == 64:
+        size_multiplier = 2
+    elif group_size == 32:
+        size_multiplier = 4
+    else:
+        raise NotImplementedError
+    
+    base_width = make_divisible(in_features // group_size, pack_num)
+    base_width = make_divisible(base_width, size_multiplier) * size_multiplier
+    return base_width
+
 # Converters
 def _convert_to_fp16(val):
     return np.float16(val)
@@ -382,11 +399,11 @@ def quantize_row_q4_6(input_path, k, data_type, input_channel, output_channel):
     id_vals[d_vals == 0] = 0.0
 
     if STORE_FP16:
-        d = _convert_to_fp16(d_vals)  # scaling factors
+        d_temp = _convert_to_fp16(d_vals)  # scaling factors
         m = _convert_to_fp16(min_vals)  # offsets
         zp = _convert_to_fp16(8.0)  # zero point
     else:
-        d = np.float32(d_vals)  # scaling factors
+        d_temp = np.float32(d_vals)  # scaling factors
         m = np.float32(min_vals)  # offsets
         zp = np.float32([8.0])  # zero point
 
@@ -400,23 +417,26 @@ def quantize_row_q4_6(input_path, k, data_type, input_channel, output_channel):
     for idx in range(input_channel // 8):
         qs[:, idx] = (
             qs[:, idx]
-            | xi[:, idx * 8]
-            | (xi[:, idx * 8 + 1] << 4)
-            | (xi[:, idx * 8 + 2] << 8)
-            | (xi[:, idx * 8 + 3] << 12)
-            | (xi[:, idx * 8 + 4] << 16)
-            | (xi[:, idx * 8 + 5] << 20)
-            | (xi[:, idx * 8 + 6] << 24)
+            | (xi[:, idx * 8] & 0xF)
+            | ((xi[:, idx * 8 + 1] & 0xF) << 4)
+            | ((xi[:, idx * 8 + 2] & 0xF) << 8)
+            | ((xi[:, idx * 8 + 3] & 0xF) << 12)
+            | ((xi[:, idx * 8 + 4] & 0xF) << 16)
+            | ((xi[:, idx * 8 + 5] & 0xF) << 20)
+            | ((xi[:, idx * 8 + 6] & 0xF) << 24)
             | ((xi[:, idx * 8 + 7] & 0xF) << 28)
         )
 
     # Store scaling_factors in column major for CUDA GEMV (scaling_factors: OC, IC // G [float16])
-    d = d.reshape(-1).reshape(output_channel, input_channel // qk)
+    d_temp = d_temp.reshape(-1).reshape(output_channel, input_channel // qk)
+    d = np.zeros((output_channel, calculate_zeros_width(input_channel, qk) * 8), dtype=np.float32)
+    d[:, :d_temp.shape[1]] = d_temp
 
     # Store zero_points in column major for CUDA GEMV (zeros: OC, IC // G // 8 [int32])
     zp = zp.astype(np.int32)
     zp_pack = np.zeros(1, dtype=np.int32)
     zp_pack = zp | (zp << 4) | (zp << 8) | (zp << 12) | (zp << 16) | (zp << 20) | (zp << 24) | (zp << 28)
-    zp = np.tile(zp_pack, (output_channel, input_channel // qk // 8))
+    # zp = np.tile(zp_pack, (output_channel, input_channel // qk // 8))
+    zp = np.tile(zp_pack, (output_channel, calculate_zeros_width(input_channel, qk)))
 
     return qs, d, m, zp

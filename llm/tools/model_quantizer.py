@@ -36,7 +36,7 @@ def _write_weight_to_file(prefix: str, qs, d, m, zp, is_cuda=False, is_lm_head=F
     # Convert to bytes
     if is_cuda:
         qs_data = np.asarray(qs, dtype=np.int32).tobytes()
-        d_data = np.asarray(d, dtype=np.float16).tobytes()  # Need to ne converted to fp16 in CUDA
+        d_data = np.asarray(d, dtype=np.float16).tobytes()  # Need to be converted to fp16 in CUDA
         m_data = np.asarray(
             m, dtype=np.float16
         ).tobytes()  # TODO: Currently, we don't use offsets for CUDA so this is redundant

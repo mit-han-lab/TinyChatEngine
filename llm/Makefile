@@ -50,13 +50,18 @@ $(info Detected CUDA_PATH: $(CUDA_HOME))
 			$(error CUDA_PATH is not set. Please set it to your CUDA installation path)
 		endif
 		CXX = nvcc
-		CXXFLAGS = -std=c++17 -O3 -DQM_CUDA
+# Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
+		CXXFLAGS = -std=c++17 -O3 -DQM_CUDA -arch=sm_86
 		PATH_BRACKET = "
 	else
 		CUDA_HOME = /usr/local/cuda
 		CXX = $(CUDA_HOME)/bin/nvcc
-		CXXFLAGS =  -std=c++17 -Xptxas -O3 -use_fast_math -Xcompiler "-pthread" -DQM_CUDA
+# Please modify 'arch=compute_87,code=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
+		CXXFLAGS = -std=c++17 -Xptxas -O3 -gencode arch=compute_87,code=sm_87 --forward-unknown-to-host-compiler -Xcompiler "-pthread" -DQM_CUDA -DENABLE_BF16 -U__CUDA_NO_HALF_OPERATORS__ -U__CUDA_NO_HALF_CONVERSIONS__ -U__CUDA_NO_BFLOAT16_OPERATORS__ -U__CUDA_NO_BFLOAT16_CONVERSIONS__ -U__CUDA_NO_BFLOAT162_OPERATORS__ -U__CUDA_NO_BFLOAT162_CONVERSIONS__ --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math --threads=8
 	endif
+	# LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc) $(wildcard $(LIB_DIR)/cuda/attention/*.cc)
+	# LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard $(LIB_DIR)/cuda/attention/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
+	# INCLUDE_DIRS += -I./include/ops/cuda -I$(LIB_DIR)/cuda/attention
 	LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc)
 	LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
 	INCLUDE_DIRS += -I./include/ops/cuda
@@ -69,12 +74,10 @@ ifeq ($(shell uname -m),x86_64)
 	ifdef CUDA_AVAILABLE
 		ifeq ($(OS),Windows_NT)
 # For Windows platforms with CUDA
-			CXXFLAGS += -arch=sm_86
 			INCLUDE_DIRS += -I"$(CUDA_HOME)/include" -I"$(CUDA_HOME)/targets/x86_64-linux/include"
 			LDFLAGS += -lcublas -lcudart -lcublasLt -lnvrtc -lcuda -lcurand -lcusolver -L"$(CUDA_HOME)/lib64" -L"$(CUDA_HOME)/targets/x86_64-linux/lib" -Xlinker -rpath="$(CUDA_HOME)/lib64" -Xlinker -rpath="$(CUDA_HOME)/targets/x86_64-linux/lib"
 		else
-# Please modify '-arch=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-			CXXFLAGS += -arch=sm_86 --forward-unknown-to-host-compiler -Xcompiler "-mavx2" -mfma -ffast-math -fpermissive
+			CXXFLAGS += -Xcompiler "-mavx2" -mfma -ffast-math -fpermissive
 			INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/x86_64-linux/include -I/usr/include/x86_64-linux-gnu
 			LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/x86_64-linux/lib -L/usr/lib/x86_64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/x86_64-linux/lib -Xlinker -rpath=/usr/lib/x86_64-linux-gnu
 		endif
@@ -90,8 +93,7 @@ else ifeq ($(shell uname -m),aarch64)
 # For ARM aarch64 platforms with CUDA
 		INCLUDE_DIRS += -I$(CUDA_HOME)/include -I$(CUDA_HOME)/targets/aarch64-linux/include -I/usr/include/aarch64-linux-gnu
 		LDFLAGS += -lcublas -lculibos -lcudart -lcublasLt -lpthread -ldl -lrt -lnvrtc -lcuda -lcudnn -lcurand -lcusolver -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/targets/aarch64-linux/lib -L/usr/lib/aarch64-linux-gnu -Xlinker -rpath=$(CUDA_HOME)/lib64 -Xlinker -rpath=$(CUDA_HOME)/targets/aarch64-linux/lib -Xlinker -rpath=/usr/lib/aarch64-linux-gnu
-# Please modify '-arch=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-		CXXFLAGS += -arch=sm_87 --forward-unknown-to-host-compiler -fPIC -march=armv8.2-a
+		CXXFLAGS += -fPIC
 	else
 # For ARM aarch64 platforms with NEON
 		LIB_NEON_SRC = $(wildcard $(LIB_DIR)/neon/*.cc)

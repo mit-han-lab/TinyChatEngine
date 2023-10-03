@@ -17,10 +17,7 @@ static float16_t *value_states_transpose_arr = nullptr;
 static float16_t *key_states_arr_cache = nullptr;
 static float16_t *value_states_arr_cache = nullptr;
 static int *cache_num = nullptr;
-static float16_t *query_states_unshape_arr = nullptr;
-static float16_t *key_states_unshape_arr = nullptr;
-static float16_t *value_states_unshape_arr = nullptr;
-// static float16_t *qkv_states_unshape_arr = nullptr;
+static float16_t *qkv_states_unshape_arr = nullptr;
 
 void Int4llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory_gpu(attn_weights_arr, config.num_heads * config.max_sqlen * config.max_sqlen * sizeof(float16_t));
@@ -37,24 +34,7 @@ void Int4llamaAttention::initialized_memory(const struct model_config config) {
 
     allocate_aligned_memory_gpu(key_states_arr_cache, config.num_layers * 2 * config.max_sqlen * config.embed_dim * sizeof(float16_t));
     allocate_aligned_memory_gpu(value_states_arr_cache, config.num_layers * 2 * config.max_sqlen * config.embed_dim * sizeof(float16_t));
-
-    allocate_aligned_memory_gpu(split_8_buffer, config.max_sqlen * config.vocsize * sizeof(float16_t) * 8);
-
-    allocate_aligned_memory_gpu(query_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
-    allocate_aligned_memory_gpu(key_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
-    allocate_aligned_memory_gpu(value_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float16_t));
-    // allocate_aligned_memory_gpu(qkv_states_unshape_arr, config.max_sqlen * config.embed_dim * 3 * sizeof(float16_t));
-}
-
-template <typename T>
-__global__ void shape_cuda(Matrix3D<T> unshape, Matrix3D<T> shaped, int num_heads, int sqlen, int head_dim) {
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    int j = threadIdx.y + blockIdx.y * blockDim.y;
-    int k = threadIdx.z + blockIdx.z * blockDim.z;
-
-    if (i < num_heads && j < sqlen && k < head_dim) {
-        shaped(i, j, k) = unshape(0, j, i * head_dim + k);
-    }
+    allocate_aligned_memory_gpu(qkv_states_unshape_arr, config.max_sqlen * config.embed_dim * 3 * sizeof(float16_t));
 }
 
 template <typename T>
@@ -84,22 +64,12 @@ __global__ void unshape_cuda(Matrix3D<T> shaped, Matrix3D<T> unshape, int num_he
 }
 
 Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config, int layer_idx) {
-    allocate_aligned_memory_gpu(q_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-    allocate_aligned_memory_gpu(k_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-    allocate_aligned_memory_gpu(v_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory_gpu(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-    // allocate_aligned_memory_gpu(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(int)) / 8);
-
-    this->q_proj = Linear_half_int4(Matrix3D<int>(q_weight, 1, config.embed_dim / 8, config.embed_dim),
-                                  param_path + "/q_proj");
-    this->k_proj = Linear_half_int4(Matrix3D<int>(k_weight, 1, config.embed_dim / 8, config.embed_dim),
-                                  param_path + "/k_proj");
-    this->v_proj = Linear_half_int4(Matrix3D<int>(v_weight, 1, config.embed_dim / 8, config.embed_dim),
-                                  param_path + "/v_proj");
-    this->o_proj = Linear_half_int4(Matrix3D<int>(o_weight, 1, config.embed_dim / 8, config.embed_dim),
+    allocate_aligned_memory_gpu(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(int)) / 8);
+    this->o_proj = Linear_half_int4(Matrix3D<int>(o_weight, 1, config.embed_dim, config.embed_dim / 8),
                                   param_path + "/o_proj");
-    // this->qkv_proj = Linear_half_int4(Matrix3D<int>(qkv_weight, 1, config.embed_dim * 3 / 8, config.embed_dim), 
-    //                               param_path + "/qkv_proj");
+    this->qkv_proj = Linear_half_int4(Matrix3D<int>(qkv_weight, 1, config.embed_dim, config.embed_dim * 3 / 8), 
+                                  param_path + "/qkv_proj");
 
     allocate_aligned_memory_gpu(cos_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(half));
     allocate_aligned_memory_gpu(sin_buf, config.max_sqlen * (config.embed_dim / config.num_heads) * sizeof(half));
@@ -150,29 +120,23 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     const int sqlen = input.hidden_states.m_dim_y, b = input.hidden_states.m_dim_x;
     assert(b == 1);
 
-    // // Fused QKV
-    // Matrix3D<float16_t> qkv_states_unshape(qkv_states_unshape_arr, b, sqlen, embed_dim * 3);
-    // this->qkv_proj.forward(input.hidden_states, qkv_states_unshape, split_8_buffer);
-    // Matrix3D<float16_t> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
-    // Matrix3D<float16_t> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
-    // Matrix3D<float16_t> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
-    // dim3 threadsPerBlock(16, 1, 64);
-    // dim3 numBlocks((this->num_heads + threadsPerBlock.x - 1) / threadsPerBlock.x,
-    //             (sqlen + threadsPerBlock.y - 1) / threadsPerBlock.y,
-    //             (this->head_dim + threadsPerBlock.z - 1) / threadsPerBlock.z);
-    // shape_qkv_cuda<<<numBlocks, threadsPerBlock>>>(qkv_states_unshape, query_states, key_states, value_states, this->num_heads, sqlen, this->head_dim);
-
-    // Query
-    Matrix3D<float16_t> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
-    this->q_proj.forward(input.hidden_states, query_states_unshape, split_8_buffer);
-
+    // Fused QKV
+    Matrix3D<float16_t> qkv_states_unshape(qkv_states_unshape_arr, b, sqlen, embed_dim * 3);
+    this->qkv_proj.forward(input.hidden_states, qkv_states_unshape);
     Matrix3D<float16_t> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
+    Matrix3D<float16_t> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
+    Matrix3D<float16_t> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     dim3 threadsPerBlock(16, 1, 64);
     dim3 numBlocks((this->num_heads + threadsPerBlock.x - 1) / threadsPerBlock.x,
                 (sqlen + threadsPerBlock.y - 1) / threadsPerBlock.y,
                 (this->head_dim + threadsPerBlock.z - 1) / threadsPerBlock.z);
-    shape_cuda<<<numBlocks, threadsPerBlock>>>(query_states_unshape, query_states, this->num_heads, sqlen, this->head_dim);
+    shape_qkv_cuda<<<numBlocks, threadsPerBlock>>>(qkv_states_unshape, query_states, key_states, value_states, this->num_heads, sqlen, this->head_dim);
 
+    int tgz = sqlen;
+    if (input.has_past_key_value) {
+        assert(input.past_key.m_dim_z == this->head_dim);
+        tgz += input.past_key.m_dim_y;    
+    }
     float16_t *ret_value_states, *ret_key_states;
     if (cache_num[input.layer_idx] == 1) {
         ret_value_states = &value_states_arr_cache[(input.layer_idx * 2 + 1) * this->max_sqlen * this->embed_dim];
@@ -183,20 +147,9 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
         ret_key_states = &key_states_arr_cache[input.layer_idx * 2 * this->max_sqlen * this->embed_dim];
         cache_num[input.layer_idx] = 1;
     }
-
-    // Key
-    Matrix3D<float16_t> key_states_unshape(key_states_unshape_arr, b, sqlen, embed_dim);
-    this->k_proj.forward(input.hidden_states, key_states_unshape, split_8_buffer);
-
-    Matrix3D<float16_t> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
-    shape_cuda<<<numBlocks, threadsPerBlock>>>(key_states_unshape, key_states, this->num_heads, sqlen, this->head_dim);
-
-    // Value
-    Matrix3D<float16_t> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
-    this->v_proj.forward(input.hidden_states, value_states_unshape, split_8_buffer);
-
-    Matrix3D<float16_t> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
-    shape_cuda<<<numBlocks, threadsPerBlock>>>(value_states_unshape, value_states, this->num_heads, sqlen, this->head_dim);
+    Matrix3D<float16_t> final_value_states(ret_value_states, this->num_heads, tgz, this->head_dim);
+    Matrix3D<float16_t> final_key_states(ret_key_states, this->num_heads, tgz, this->head_dim);
+    Matrix3D<float16_t> attn_output_half(attn_output_half_arr, 1, sqlen, this->num_heads * this->head_dim);
 
     int start_idx = 0;
     if (input.has_past_key_value) start_idx = input.past_key.m_dim_y;
@@ -205,10 +158,10 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     dim3 block(sqlen, 1, 1);
     RotaryPosEmb_cuda_forward<<<grid, block>>>(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
 
-    int tgz = sqlen;
+    // int tgz = sqlen;
     if (input.has_past_key_value) {
-        assert(input.past_key.m_dim_z == this->head_dim);
-        tgz += input.past_key.m_dim_y;
+        // assert(input.past_key.m_dim_z == this->head_dim);
+        // tgz += input.past_key.m_dim_y;
         float16_t *val_ptr = ret_value_states, *key_ptr = ret_key_states;
         int past_block = input.past_key.m_dim_y * input.past_key.m_dim_z;
         int sq_block = sqlen * this->head_dim;
@@ -227,9 +180,6 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
         cudaMemcpyAsync(ret_value_states, value_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float16_t), cudaMemcpyDeviceToDevice);
         cudaMemcpyAsync(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float16_t), cudaMemcpyDeviceToDevice);
     }
-
-    Matrix3D<float16_t> final_value_states(ret_value_states, this->num_heads, tgz, this->head_dim);
-    Matrix3D<float16_t> final_key_states(ret_key_states, this->num_heads, tgz, this->head_dim);
 
     Matrix3D<float16_t> attn_weights(attn_weights_arr, this->num_heads, sqlen, tgz);
     this->qk_bmm.forward(query_states, final_key_states, attn_weights);
@@ -266,8 +216,8 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     Matrix3D<float16_t> attn_output_transpose(attn_output_transpose_arr, 1, sqlen, this->num_heads * this->head_dim);
     unshape_cuda<<<numBlocks, threadsPerBlock>>>(attn_output, attn_output_transpose, this->num_heads, sqlen, this->head_dim);
 
-    Matrix3D<float16_t> attn_output_half(attn_output_half_arr, 1, sqlen, this->num_heads * this->head_dim);
-    this->o_proj.forward(attn_output_transpose, attn_output_half, split_8_buffer);
+    // Matrix3D<float16_t> attn_output_half(attn_output_half_arr, 1, sqlen, this->num_heads * this->head_dim);
+    this->o_proj.forward(attn_output_transpose, attn_output_half);
 
     // output assignment
     output.attn_output = attn_output_half;
@@ -291,14 +241,8 @@ void Int4llamaAttention::free_cuda_memory() {
     free_aligned_memory_gpu(value_states_arr_cache);
     free_aligned_memory_gpu(cos_buf);
     free_aligned_memory_gpu(sin_buf);
-    free_aligned_memory_gpu(q_weight);
-    free_aligned_memory_gpu(k_weight);
-    free_aligned_memory_gpu(v_weight);
     free_aligned_memory_gpu(o_weight);
-    free_aligned_memory_gpu(query_states_unshape_arr);
-    free_aligned_memory_gpu(key_states_unshape_arr);
-    free_aligned_memory_gpu(value_states_unshape_arr);
-    // free_aligned_memory_gpu(qkv_states_unshape_arr);
+    free_aligned_memory_gpu(qkv_states_unshape_arr);
 
     if(cache_num) {
         free(cache_num);

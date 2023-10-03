@@ -127,6 +127,7 @@ class MatmulOperator {
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda
     void naive_mat_mul_fp16_int4(const struct matmul_params *params);
+    // void naive_mat_mul_fp16_int4_gemv(const struct matmul_params *params);
     void mat_mul_cuda(const struct matmul_params *params);
     //// GEMM
     void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters);

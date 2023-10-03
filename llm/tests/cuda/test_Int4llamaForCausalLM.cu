@@ -21,8 +21,6 @@ static void Int4LLaMAFreeMemory() {
     // Int4llamaAttention
     Int4llamaAttention llamaAttention;
     llamaAttention.free_cuda_memory();
-
-    free_aligned_memory_gpu(split_8_buffer);
 }
 
 void test_Int4LlamaForCausalLM() {

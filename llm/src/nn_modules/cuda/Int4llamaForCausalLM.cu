@@ -10,7 +10,7 @@ Int4LlamaForCausalLM::Int4LlamaForCausalLM(std::string param_path, const struct 
     allocate_aligned_memory_gpu(lm_head_weight, (config.embed_dim * config.vocsize * sizeof(int)) / 8);
 
     this->decoder = Int4llamaDecoder(param_path + "/decoder", config);
-    this->lm_head = Linear_half_int4(Matrix3D<int>(lm_head_weight, 1, config.vocsize / 8, config.embed_dim),
+    this->lm_head = Linear_half_int4(Matrix3D<int>(lm_head_weight, 1, config.vocsize, config.embed_dim / 8),
                                    param_path + "/lm_head");
 }
 
@@ -30,7 +30,7 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(std::string par
     }
 
     Matrix3D<float16_t> logits_half(logits_output_half, 1, sqlen, this->decoder.voc_size);
-    this->lm_head.forward(decoder_output.last_hidden_state, logits_half, split_8_buffer);
+    this->lm_head.forward(decoder_output.last_hidden_state, logits_half);
 
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
     int threadsPerBlock_1D = 1024;

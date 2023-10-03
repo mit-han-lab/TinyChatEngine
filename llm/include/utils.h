@@ -62,6 +62,9 @@ void deallocate_memory(void* ptr);
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
 
+int make_divisible_c(int c, int divisor);
+int calculate_zeros_width(int in_features, int group_size=128, int pack_num=8);
+
 #define CHECK_CUDA(call)                                                                             \
     do {                                                                                             \
         cudaError_t err = call;                                                                      \
@@ -72,8 +75,6 @@ void deallocate_memory(void* ptr);
                                      std::to_string(err));                                           \
         }                                                                                            \
     } while (0)
-
-extern half* split_8_buffer;
 
 void read_to_array_half(const char* path, half* array, int size);
 
