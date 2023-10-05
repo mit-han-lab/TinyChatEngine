@@ -99,8 +99,8 @@ Qmodels = {
     },
     "QM_CUDA": {
         "LLaMA2_7B_chat_awq_int4": {
-            "url": "https://www.dropbox.com/scl/fi/fwnd4x4t7065di0ojtbri/LLaMA_7B_2_chat.zip?rlkey=pzkux4yvjbsy8geua9wpio0gw&dl=1",  # noqa: E501
-            "md5sum": "c3120b523f233134a6813d308d437fe1",
+            "url": "https://www.dropbox.com/scl/fi/g8n64frjqk2c9yrqaf5qp/LLaMA_7B_2_chat.zip?rlkey=pu4onfk3sya1pexbw4z54tlbg&dl=1",  # noqa: E501
+            "md5sum": "e0fa70724edb73111790a97143f7d3c7",
         },
         "LLaMA2_13B_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/fes1l27b9kv4dn4h0qjzu/LLaMA_13B_2_chat.zip?rlkey=u1j2kt96xpj764zkj1v87gw6u&dl=1",  # noqa: E501
