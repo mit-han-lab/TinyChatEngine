@@ -566,7 +566,7 @@ void test_LlamaRMSNorm() {
 
     LlamaRMSNorm op(weight);
 
-    op.forward(hidden_states, output);
+    op.forward(hidden_states, output, llama7B.rms_norm_eps);
     bool success = check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim);
 
     if (!success)
@@ -692,7 +692,7 @@ void test_LlamaRMSNorm_cuda() {
     Matrix3D<half> output(buffer_4, 1, sqlen, embed_dim);
 
     LlamaRMSNorm_cuda op(weight);
-    op.forward(hidden_states, output);
+    op.forward(hidden_states, output, llama7B.rms_norm_eps);
     cudaDeviceSynchronize();
 
     bool success = check_two_equal_half_half(output.m_data, outputGT.m_data, sqlen * embed_dim);

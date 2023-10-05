@@ -1,11 +1,13 @@
 #include <iostream>
 #include <map>
+#include <cstring>
 
 #include "Generate.h"
 
 std::map<std::string, int> model_config = {
     {"OPT_125m", OPT_125M},       {"OPT_1.3B", OPT_1_3B}, {"OPT_6.7B", OPT_6_7B},         {"LLaMA_7B", LLaMA_7B},
-    {"LLaMA2_7B_chat", LLaMA_7B}, {"7b", LLaMA_7B},       {"LLaMA2_13B_chat", LLaMA_13B}, {"13b", LLaMA_13B}};
+    {"LLaMA2_7B_chat", LLaMA_7B}, {"7b", LLaMA_7B},       {"LLaMA2_13B_chat", LLaMA_13B}, {"13b", LLaMA_13B},
+    {"CodeLLaMA_7B", CodeLLaMA_7B},   {"CodeLLaMA_13B", CodeLLaMA_13B}};
 
 std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"},
                                                  {"OPT_1.3B", "models/OPT_1.3B"},
@@ -14,7 +16,9 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
                                                  {"LLaMA2_7B_chat", "models/LLaMA_7B_2_chat"},
                                                  {"LLaMA2_13B_chat", "models/LLaMA_13B_2_chat"},
                                                  {"7b", "models/LLaMA_7B_2_chat"},
-                                                 {"13b", "models/LLaMA_13B_2_chat"}};
+                                                 {"13b", "models/LLaMA_13B_2_chat"},
+                                                 {"CodeLLaMA_7B", "models/CodeLLaMA_7B_Instruct"},
+                                                 {"CodeLLaMA_13B", "models/CodeLLaMA_13B_Instruct"}};
 
 std::map<std::string, int> data_format_list = {
     {"FP32", FP32}, {"INT8", QINT8}, {"INT4", INT4}, {"int4", INT4}, {"fp32", FP32},
@@ -22,21 +26,49 @@ std::map<std::string, int> data_format_list = {
 
 bool isLLaMA(std::string s) {
     std::string LLaMA_prefix = "LLaMA";
+    std::string CodeLLaMA_prefix = "CodeLLaMA";
 
-    if (s.substr(0, LLaMA_prefix.size()) == LLaMA_prefix || s == "7b" || s == "13b")
+    if (s.substr(0, LLaMA_prefix.size()) == LLaMA_prefix || s.substr(0, CodeLLaMA_prefix.size()) == CodeLLaMA_prefix || s == "7b" || s == "13b")
         return true;
     else
         return false;
 }
 
+bool isCodeLLaMA(std::string s) {
+    std::string CodeLLaMA_prefix = "CodeLLaMA";
+
+    if (s.substr(0, CodeLLaMA_prefix.size()) == CodeLLaMA_prefix)
+        return true;
+    else
+        return false;
+}
+
+bool convertToBool(const char* str) {
+    if (strcmp(str, "true") == 0 || strcmp(str, "1") == 0) {
+        return true;
+    }
+    else if (strcmp(str, "false") == 0 || strcmp(str, "0") == 0) {
+        return false;
+    }
+    else {
+        std::cerr << "Error: Invalid boolean value: " << str << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char* argv[]) {
     std::string target_model = "LLaMA2_7B_chat";
     std::string target_data_format = "INT4";
+    bool instruct = true;
     Profiler::getInstance().for_demo = true;
 
     std::cout << "TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine" << std::endl;
 
-    if (argc == 3) {
+    if (argc == 3 || argc == 4) {
+        if (argc == 4) {
+            instruct = convertToBool(argv[3]);
+        }
+
         auto target_str = argv[1];
         target_model = argv[1];
         if (model_config.count(target_model) == 0) {
@@ -108,10 +140,14 @@ int main(int argc, char* argv[]) {
         #endif
 
         struct opt_params generation_config;
-        generation_config.n_predict = 512;
         generation_config.n_vocab = 32000;
-        generation_config.temp = 0.1f;
+        generation_config.n_predict = 512;
         generation_config.repeat_penalty = 1.25f;
+        generation_config.temp = 0.1f;
+        if(isCodeLLaMA(target_model)) {
+            generation_config.temp = 0.2f;
+            generation_config.top_p = 0.95f;
+        }
 
         if (format_id == FP32) {
             Fp32LlamaForCausalLM model = Fp32LlamaForCausalLM(m_path, get_opt_model_config(model_id));
@@ -122,7 +158,21 @@ int main(int argc, char* argv[]) {
                 std::cout << "USER: ";
                 std::string input;
                 std::getline(std::cin, input);
-                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                if (instruct) {
+                    std::cout << "ASSISTANT: " << std::endl;
+                    if (isCodeLLaMA(target_model)) {
+                        input = "<s>[INST] " + input + " [/INST]";
+                    }
+                }
+                else {
+                    if (isCodeLLaMA(target_model)) {
+                        std::cout << input;
+                    }
+                }
+
+                if (!isCodeLLaMA(target_model)) {
+                    input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                }
 
                 LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
             }
@@ -136,7 +186,21 @@ int main(int argc, char* argv[]) {
                 std::cout << "USER: ";
                 std::string input;
                 std::getline(std::cin, input);
-                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                if (instruct) {
+                    std::cout << "ASSISTANT: " << std::endl;
+                    if (isCodeLLaMA(target_model)) {
+                        input = "<s>[INST] " + input + " [/INST]";
+                    }
+                }
+                else {
+                    if (isCodeLLaMA(target_model)) {
+                        std::cout << input;
+                    }
+                }
+
+                if (!isCodeLLaMA(target_model)) {
+                    input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                }
 
                 LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false);
             }

@@ -2,7 +2,6 @@
 #include <iomanip>
 
 #include "operators.h"
-#include "utils.h"
 #include "reduction.cuh"
 
 static inline __device__ float to_float(half src)
@@ -94,7 +93,7 @@ __global__ void generalT5LayerNorm(
 }
 
 
-void LlamaRMSNorm_cuda::forward(const Matrix3D<half> &x, Matrix3D<half> &output) {
+void LlamaRMSNorm_cuda::forward(const Matrix3D<half> &x, Matrix3D<half> &output, float eps) {
     int m = x.m_dim_x * x.m_dim_y;
     int n = x.m_dim_z;
     dim3 grid(m);

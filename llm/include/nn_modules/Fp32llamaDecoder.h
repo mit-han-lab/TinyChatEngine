@@ -31,6 +31,7 @@ class Fp32llamaDecoder {
     struct Fp32llamaDecoder_output forward(const struct Fp32llamaDecoder_input& input);
     Embedding embed_tokens;
     LlamaRMSNorm norm;
+    float rms_norm_eps;
     int voc_size, embed_dim, padding_idx, hidden_dim, num_heads;
     std::vector<Fp32llamaDecoderLayer> layers;
     std::string profile_name = "Fp32llamaDecoder";

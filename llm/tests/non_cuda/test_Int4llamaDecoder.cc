@@ -17,7 +17,7 @@ void test_Decoder() {
 
     Int4llamaDecoder decoder = Int4llamaDecoder("models/LLaMA_7B/decoder/", llama7B);
 
-    struct Int4llamaDecoder_output output_1st = decoder.forward(input_1st);
+    struct Int4llamaDecoder_output output_1st = decoder.forward("models/LLaMA_7B/decoder/", input_1st);
 
     // reasoning phase: 1st run
     Matrix3D<float> last_hidden_state1_GT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
@@ -47,7 +47,7 @@ void test_Decoder() {
     input_ids_2nd.load("assets/llama/tests/decoder/2nd/input_ids.bin");
     struct Int4llamaDecoder_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
 
-    struct Int4llamaDecoder_output output_2nd = decoder.forward(input_2nd);
+    struct Int4llamaDecoder_output output_2nd = decoder.forward("models/LLaMA_7B/decoder/", input_2nd);
 
     Matrix3D<float> last_hidden_state2_GT(mem_buf.get_fpbuffer(b * 1 * embed_dim), b, 1, embed_dim);
     last_hidden_state2_GT.load("assets/llama/tests/decoder/2nd/last_hidden_state.bin");

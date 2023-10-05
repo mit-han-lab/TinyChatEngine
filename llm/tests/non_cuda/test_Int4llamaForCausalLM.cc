@@ -20,7 +20,7 @@ void test_Int4LlamaForCausalLM() {
 
     Int4LlamaForCausalLM model = Int4LlamaForCausalLM("models/LLaMA_7B", config);
 
-    struct Int4LlamaForCausalLM_output output_1st = model.forward(input_1st);
+    struct Int4LlamaForCausalLM_output output_1st = model.forward("models/LLaMA_7B", input_1st);
 
     Matrix3D<float> logits(mem_buf.get_fpbuffer(b * sqlen * voc_size), b, sqlen, voc_size);
     logits.load("assets/llama/tests/model/1st_logits.bin");
@@ -39,7 +39,7 @@ void test_Int4LlamaForCausalLM() {
     struct Int4LlamaForCausalLM_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
 
     struct Int4LlamaForCausalLM_output output_2nd;
-    for (int i = 0; i < 10; i++) output_2nd = model.forward(input_2nd);
+    for (int i = 0; i < 10; i++) output_2nd = model.forward("models/LLaMA_7B", input_2nd);
 
     logits = Matrix3D<float>(mem_buf.get_fpbuffer(b * 1 * voc_size), b, 1, voc_size);
     logits.load("assets/llama/tests/model/2nd_logits.bin");

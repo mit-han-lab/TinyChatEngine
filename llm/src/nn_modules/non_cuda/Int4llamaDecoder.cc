@@ -35,6 +35,7 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     this->hidden_dim = config.hidden_dim;
     this->num_heads = config.num_heads;
     this->padding_idx = config.padding_idx;
+    this->rms_norm_eps = config.rms_norm_eps;
 
     int max_sqlen = config.max_sqlen;
 
@@ -101,7 +102,7 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(std::string param_path,
 
     // Layernorm
     Matrix3D<float> last_hidden_states(last_hidden_states_buf, 1, sqlen, this->embed_dim);
-    this->norm.forward(hidden_states, last_hidden_states);
+    this->norm.forward(hidden_states, last_hidden_states, rms_norm_eps);
 
     struct Int4llamaDecoder_output output = {last_hidden_states, past_keys, past_values};
     PROFILE_END(profile_name);
