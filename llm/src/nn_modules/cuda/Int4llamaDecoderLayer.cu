@@ -58,7 +58,7 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     this->attn = Int4llamaAttention(param_path + "/self_attn", config, layer_idx);
 
     allocate_aligned_memory_gpu(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
-    allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8);
+    allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8 + 1);
     allocate_aligned_memory_gpu(up_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
     this->gate_proj = Linear_half_int4(Matrix3D<int>(gate_proj_weight, 1, config.hidden_dim, config.embed_dim / 8),
                                      (param_path + "/gate_proj"));

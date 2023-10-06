@@ -195,6 +195,7 @@ __global__ void gemv_kernel_g128(
 
 
 namespace matmul{
+  
   /*
   Computes GEMV.
 
@@ -263,6 +264,7 @@ namespace matmul{
   };
 
   void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
-    // gemm_forward_cuda(params, 1);
+    // TODO: remove this
   };
+
 }  // namespace matmul

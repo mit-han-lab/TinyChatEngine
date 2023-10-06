@@ -15,7 +15,7 @@ __global__ void softmax_cuda(Matrix3D<half> input, Matrix3D<half> output) {
         for (int k = 0; k < input.m_dim_z; k++) {
             half value = input(i, j, k);
 #if defined(__CUDA_ARCH__)
-#if __CUDA_ARCH__ >= 860  // CCompute Capability >= 8.6
+#if __CUDA_ARCH__ >= 860  // Compute Capability >= 8.6
             max_value = __hmax(max_value, value);
 #else
             max_value = __hgt(max_value, value) ? max_value : value;
