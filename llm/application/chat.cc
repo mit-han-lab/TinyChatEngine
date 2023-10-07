@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
                 if (instruct) {
                     std::cout << "ASSISTANT: " << std::endl;
                     if (isCodeLLaMA(target_model)) {
-                        input = "<s>[INST] " + input + " [/INST]";
+                        input = "<s>[INST] " + input + " [/INST]\n";
                     }
                 }
                 else {

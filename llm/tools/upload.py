@@ -48,7 +48,7 @@ if __name__ == "__main__":
     parser.add_argument("token", help="Your Dropbox OAuth2 token.")
     args = parser.parse_args()
 
-    db_prefix = "/HAN Lab Public Space/Projects/TinyChatEngine/assets and models/QM_CUDA/"
+    db_prefix = "/HAN Lab Public Space/Projects/TinyChatEngine/assets and models/QM_x86/"
     local_prefix = "uploads"
 
     for file in files_to_upload:

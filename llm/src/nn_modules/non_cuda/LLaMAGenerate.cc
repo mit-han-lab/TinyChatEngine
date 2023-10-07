@@ -28,6 +28,11 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
     const int n = llama_tokenize(vocab, text.c_str(), input_ids.data(), input_ids.size(), true);
     input_ids.resize(n);
 
+    bool is_codellama = false;
+    if (param_path.find("CodeLLaMA") != std::string::npos) {
+        is_codellama = true;
+    }
+
     int n_consumed = 0;
     while ((int)input_ids.size() > n_consumed) {
         embd.push_back(input_ids[n_consumed]);
@@ -95,7 +100,6 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
                    generation_config.n_vocab * sizeof(float));
         }
         has_past_kv = true;
-        new_prompt = false;
 
         // Generate
         const int n_ctx = generation_config.n_ctx;
@@ -174,6 +178,11 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
             previous_two_hash = false;
         }
 
+        if (is_codellama && new_prompt) {
+            new_prompt = false;
+            continue;
+        }
+
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
         embd.push_back(id);
@@ -229,11 +238,12 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
                 } 
             } 
         }
+
+        new_prompt = false;
         --n_remain;
     }
     if (voicechat && interactive){
         sayInBackground(output);
-
     }
 
     if (interactive) std::cout << std::endl;

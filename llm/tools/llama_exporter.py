@@ -118,7 +118,24 @@ def main():
 
         print("Loading model...")
         if args.model.endswith(".pt"):
-            model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
+            if args.model.split("/")[-1].lower().startswith("llama-2"):
+                if args.model.split("-")[2].lower() == "7b":
+                    print("Loading LLaMA 7B model...");
+                    model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
+                elif args.model.split("-")[2].lower() == "13b":
+                    print("Loading LLaMA 13B model...");
+                    model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-13b-hf", torch_dtype=torch.float16)
+            elif args.model.split("/")[-1].lower().startswith("codellama"):
+                if args.model.split("-")[1].lower() == "7b":
+                    print("Loading CodaLLaMA 7B model...");
+                    model = LlamaForCausalLM.from_pretrained("codellama/CodeLlama-7b-Instruct-hf", torch_dtype=torch.float16)
+                elif args.model.split("-")[1].lower() == "13b":
+                    print("Loading CodaLLaMA 13B model...");
+                    model = LlamaForCausalLM.from_pretrained("codellama/CodeLlama-13b-Instruct-hf", torch_dtype=torch.float16)
+            else:
+                print("Model not supported.")
+                return
+            
             model.load_state_dict(torch.load(args.model))
         else:
             model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
