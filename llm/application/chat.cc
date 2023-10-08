@@ -7,7 +7,7 @@
 std::map<std::string, int> model_config = {
     {"OPT_125m", OPT_125M},       {"OPT_1.3B", OPT_1_3B}, {"OPT_6.7B", OPT_6_7B},         {"LLaMA_7B", LLaMA_7B},
     {"LLaMA2_7B_chat", LLaMA_7B}, {"7b", LLaMA_7B},       {"LLaMA2_13B_chat", LLaMA_13B}, {"13b", LLaMA_13B},
-    {"CodeLLaMA_7B", CodeLLaMA_7B},   {"CodeLLaMA_13B", CodeLLaMA_13B}};
+    {"CodeLLaMA_7B_Instruct", CodeLLaMA_7B},   {"CodeLLaMA_13B_Instruct", CodeLLaMA_13B}};
 
 std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"},
                                                  {"OPT_1.3B", "models/OPT_1.3B"},
@@ -17,8 +17,8 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
                                                  {"LLaMA2_13B_chat", "models/LLaMA_13B_2_chat"},
                                                  {"7b", "models/LLaMA_7B_2_chat"},
                                                  {"13b", "models/LLaMA_13B_2_chat"},
-                                                 {"CodeLLaMA_7B", "models/CodeLLaMA_7B_Instruct"},
-                                                 {"CodeLLaMA_13B", "models/CodeLLaMA_13B_Instruct"}};
+                                                 {"CodeLLaMA_7B_Instruct", "models/CodeLLaMA_7B_Instruct"},
+                                                 {"CodeLLaMA_13B_Instruct", "models/CodeLLaMA_13B_Instruct"}};
 
 std::map<std::string, int> data_format_list = {
     {"FP32", FP32}, {"INT8", QINT8}, {"INT4", INT4}, {"int4", INT4}, {"fp32", FP32},
@@ -152,6 +152,8 @@ int main(int argc, char* argv[]) {
             generation_config.top_p = 0.95f;
         }
 
+        bool first_prompt = true;
+
         if (format_id == FP32) {
             Fp32LlamaForCausalLM model = Fp32LlamaForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
@@ -174,7 +176,13 @@ int main(int argc, char* argv[]) {
                 }
 
                 if (!isCodeLLaMA(target_model)) {
-                    input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                    if (first_prompt) {
+                        input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = "### Human: " + input + "\n### Assistant: \n";
+                    }
                 }
 
                 LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
@@ -202,7 +210,13 @@ int main(int argc, char* argv[]) {
                 }
 
                 if (!isCodeLLaMA(target_model)) {
-                    input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                    if (first_prompt) {
+                        input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = "### Human: " + input + "\n### Assistant: \n";
+                    }
                 }
 
                 LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false);

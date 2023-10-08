@@ -282,6 +282,11 @@ def _quantize_model(
             hidden_dim = 13824
         else:
             raise NotImplementedError(f"{model_name} not supported.")
+        
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("LLaMA_13B"):
+            vocab_size = 32000
+        elif model_name.startswith("CodeLLaMA_7B") or model_name.startswith("CodeLLaMA_13B"):
+            vocab_size = 32016
 
         # Quantize lm_head
         file_path = f"{prefix}"
@@ -290,7 +295,7 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, 32000)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, vocab_size)
         _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda, True)
         print("Quantization of lm_head finished.")
 
