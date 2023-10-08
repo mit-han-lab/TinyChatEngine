@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "utils_memalloc.h"
 
+int NUM_THREAD = 8;
+
 void test_Int8OPTAttention() {
     const int num_heads = 12, embed_dim = 768, sqlen = 108, b = 1;
     MemoryAllocator mem_buf;

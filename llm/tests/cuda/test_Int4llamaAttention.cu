@@ -2,6 +2,8 @@
 #include "operators.h"
 #include "utils.h"
 
+int NUM_THREAD = 8;
+
 static void Int4LLaMAFreeMemory() {
     // Int4llamaAttention
     Int4llamaAttention llamaAttention;

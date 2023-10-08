@@ -29,6 +29,8 @@ bool isLLaMA(std::string s) {
         return false;
 }
 
+int NUM_THREAD = 8;
+
 int main(int argc, char* argv[]) {
     std::string target_model = "LLaMA2_7B_chat";
     std::string target_data_format = "INT4";

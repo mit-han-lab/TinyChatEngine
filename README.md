@@ -137,7 +137,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
 | W8A8   |  ✅  |  ✅  |      |
 
 - For Raspberry Pi, we recommend using the board with 8GB RAM. Our testing was primarily conducted on Raspberry Pi 4 Model B Rev 1.4 with aarch64. For other versions, please feel free to try it out and let us know if you encounter any issues.
-- For Nvidia GPU, our CUDA backend may not support Nvidia GPUs with compute capability <= 7.5. We will release a new version to support Nvidia GPUs with lower compute capability soon, please stay tuned!
+- For Nvidia GPU, our CUDA backend can support Nvidia GPUs with compute capability >= 6.1. For the GPUs with compute capability < 6.1, please feel free to try it out but we haven't tested it yet and thus cannot guarantee the results.
 
 ## Quantization and Model Support
 
@@ -311,7 +311,14 @@ For instance, to download the quantized LLaMA-2-7B-chat model: (for int4 models,
 
 To deploy a quantized model with TinyChatEngine, compile and run the chat program.
 
+- On CPU platforms
+```bash
+make chat -j
+./chat <model_name> <precision> <num_threads>
 ```
+
+- On GPU platforms
+```bash
 make chat -j
 ./chat <model_name> <precision>
 ```

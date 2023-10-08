@@ -6,6 +6,8 @@
 #include "utils.h"
 #include "utils_memalloc.h"
 
+int NUM_THREAD = 8;
+
 void test_Fp32LlamaForCausalLM() {
     struct model_config config = get_opt_model_config(LLaMA_7B);
     const int num_heads = config.num_heads, embed_dim = config.embed_dim, sqlen = 9, b = 1,

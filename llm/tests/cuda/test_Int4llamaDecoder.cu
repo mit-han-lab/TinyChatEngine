@@ -4,6 +4,8 @@
 #include "operators.h"
 #include "utils.h"
 
+int NUM_THREAD = 8;
+
 static void Int4LLaMAFreeMemory() {
     // Int4llamaDecoder
     Int4llamaDecoder llamaDecoder;

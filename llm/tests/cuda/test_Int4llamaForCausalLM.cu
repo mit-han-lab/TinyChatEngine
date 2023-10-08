@@ -5,6 +5,8 @@
 #include "operators.h"
 #include "utils.h"
 
+int NUM_THREAD = 8;
+
 static void Int4LLaMAFreeMemory() {
     // Int4LlamaForCausalLM
     Int4LlamaForCausalLM LlamaForCausalLM;

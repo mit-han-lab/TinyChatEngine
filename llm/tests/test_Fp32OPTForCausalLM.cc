@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "utils_memalloc.h"
 
+int NUM_THREAD = 8;
+
 void test_Fp32OPTForCausalLM() {
     struct model_config config = get_opt_model_config(OPT_1_3B);
     const int embed_dim = config.embed_dim, sqlen = 2, b = 1;

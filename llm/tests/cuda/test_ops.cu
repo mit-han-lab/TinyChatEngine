@@ -6,6 +6,8 @@
 #include "utils.h"
 #include "../utils_memalloc.h"
 
+int NUM_THREAD = 8;
+
 void test_LayerNormQ() {
     const int b = 1, m = 108, n = 768;
     MemoryAllocator mem_buf;

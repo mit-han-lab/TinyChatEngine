@@ -2,6 +2,8 @@
 
 #include "OPTTokenizer.h"
 
+int NUM_THREAD = 8;
+
 void test_OPTEncode() {
     std::string bpe_file = "models/opt_merges.txt";
     std::string vocab_file = "models/opt_vocab.json";
