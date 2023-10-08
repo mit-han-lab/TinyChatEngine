@@ -132,32 +132,33 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> prepare_decoder_attention_mask(<span class="keywordtype">int</span> length, <span class="keywordtype">int</span> past_length);</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structInt4llamaDecoder__output.html">Int4llamaDecoder_output</a> forward(std::string param_path, const struct <a class="code hl_struct" href="structInt4llamaDecoder__input.html">Int4llamaDecoder_input</a>&amp; input);</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    int voc_size, embed_dim, padding_idx, hidden_dim, num_heads;</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    std::vector&lt;Int4llamaDecoderLayer&gt; layers;</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    std::string profile_name = &quot;<a class="code hl_class" href="classInt4llamaDecoder.html">Int4llamaDecoder</a>&quot;;</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="preprocessor">#ifdef QM_CUDA</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    void free_cuda_memory();</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <a class="code hl_class" href="classEmbedding.html">Embedding</a> embed_tokens;</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    LlamaRMSNorm_cuda norm;</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    float16_t* attention_mask_buf = nullptr;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    float16_t* last_hidden_states_buf = nullptr;</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    float* hidden_states_buf = nullptr;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    float16_t* hidden_states_half_buf = nullptr;</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <a class="code hl_class" href="classEmbedding.html">Embedding</a> embed_tokens;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <a class="code hl_class" href="classLlamaRMSNorm.html">LlamaRMSNorm</a> norm;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    float* attention_mask_buf;</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    float* pos_embeds_buf;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    float* last_hidden_states_buf;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    float* hidden_states_buf;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    float* norm_weight_ptr = nullptr;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>};</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    float rms_norm_eps;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    std::vector&lt;Int4llamaDecoderLayer&gt; layers;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    std::string profile_name = &quot;<a class="code hl_class" href="classInt4llamaDecoder.html">Int4llamaDecoder</a>&quot;;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#ifdef QM_CUDA</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    void free_cuda_memory();</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <a class="code hl_class" href="classEmbedding.html">Embedding</a> embed_tokens;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    LlamaRMSNorm_cuda norm;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    float16_t* attention_mask_buf = nullptr;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    float16_t* last_hidden_states_buf = nullptr;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    float* hidden_states_buf = nullptr;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    float16_t* hidden_states_half_buf = nullptr;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <a class="code hl_class" href="classEmbedding.html">Embedding</a> embed_tokens;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <a class="code hl_class" href="classLlamaRMSNorm.html">LlamaRMSNorm</a> norm;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    float* attention_mask_buf;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    float* pos_embeds_buf;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    float* last_hidden_states_buf;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    float* hidden_states_buf;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    float* norm_weight_ptr = nullptr;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>};</div>
 </div>
 <div class="ttc" id="aclassEmbedding_html"><div class="ttname"><a href="classEmbedding.html">Embedding</a></div><div class="ttdef"><b>Definition</b> Embedding.h:5</div></div>
 <div class="ttc" id="aclassInt4llamaDecoder_html"><div class="ttname"><a href="classInt4llamaDecoder.html">Int4llamaDecoder</a></div><div class="ttdef"><b>Definition</b> Int4llamaDecoder.h:40</div></div>
-<div class="ttc" id="aclassLlamaRMSNorm_html"><div class="ttname"><a href="classLlamaRMSNorm.html">LlamaRMSNorm</a></div><div class="ttdef"><b>Definition</b> LlamaRMSNorm.h:3</div></div>
+<div class="ttc" id="aclassLlamaRMSNorm_html"><div class="ttname"><a href="classLlamaRMSNorm.html">LlamaRMSNorm</a></div><div class="ttdef"><b>Definition</b> LlamaRMSNorm.h:4</div></div>
 <div class="ttc" id="aclassMatrix3D_html"><div class="ttname"><a href="classMatrix3D.html">Matrix3D</a></div><div class="ttdef"><b>Definition</b> common.h:34</div></div>
 <div class="ttc" id="astructInt4llamaDecoder__input_html"><div class="ttname"><a href="structInt4llamaDecoder__input.html">Int4llamaDecoder_input</a></div><div class="ttdef"><b>Definition</b> Int4llamaDecoder.h:18</div></div>
 <div class="ttc" id="astructInt4llamaDecoder__output_html"><div class="ttname"><a href="structInt4llamaDecoder__output.html">Int4llamaDecoder_output</a></div><div class="ttdef"><b>Definition</b> Int4llamaDecoder.h:9</div></div>

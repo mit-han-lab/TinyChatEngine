@@ -89,43 +89,44 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;matmul.h&quot;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#define BLK_SIZE 16</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#define NUM_THREAD 4</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment">// include all ops</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;ops/BMM_F32T.h&quot;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;ops/BMM_S8T_S8N_F32T.h&quot;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;ops/BMM_S8T_S8N_S8T.h&quot;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;ops/Embedding.h&quot;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &quot;ops/LayerNorm.h&quot;</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &quot;ops/LayerNormQ.h&quot;</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &quot;ops/LlamaRMSNorm.h&quot;</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &quot;ops/RotaryPosEmb.h&quot;</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &quot;ops/W8A8B8O8Linear.h&quot;</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#include &quot;ops/W8A8B8O8LinearReLU.h&quot;</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="preprocessor">#include &quot;ops/W8A8BFP32OFP32Linear.h&quot;</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#include &quot;ops/arg_max.h&quot;</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="preprocessor">#include &quot;ops/linear.h&quot;</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keywordtype">void</span> softmax(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;output, <span class="keywordtype">int</span> dim);</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keywordtype">void</span> batch_Add(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;input, <span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;input2, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;output);</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keywordtype">void</span> linear(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;T&gt;</a> &amp;a, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;T&gt;</a> &amp;b, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;T&gt;</a> &amp;c);</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">#ifdef QM_CUDA</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#include &quot;ops/cuda/BMM_F16T.cuh&quot;</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#include &quot;ops/cuda/Embedding.cuh&quot;</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">#include &quot;ops/cuda/LlamaRMSNorm.cuh&quot;</span></div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#include &quot;ops/cuda/RotaryPosEmb.cuh&quot;</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>__global__ <span class="keywordtype">void</span> batch_Add_float(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> input, <span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> input2, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> output);</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>__global__ <span class="keywordtype">void</span> batch_Add_cuda(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input, <span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input2,</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>                               <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> output);</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>__global__ <span class="keywordtype">void</span> batch_Add_cuda_half2(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input2, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> output);</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>__global__ <span class="keywordtype">void</span> softmax_float(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> output);</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>__global__ <span class="keywordtype">void</span> softmax_cuda(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> output);</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="preprocessor">#endif  </span><span class="comment">// OPERATORS_H</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="comment">// #define NUM_THREAD 8</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">static</span> <span class="keywordtype">int</span> NUM_THREAD = 8;</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment">// include all ops</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;ops/BMM_F32T.h&quot;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;ops/BMM_S8T_S8N_F32T.h&quot;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;ops/BMM_S8T_S8N_S8T.h&quot;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &quot;ops/Embedding.h&quot;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &quot;ops/LayerNorm.h&quot;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &quot;ops/LayerNormQ.h&quot;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &quot;ops/LlamaRMSNorm.h&quot;</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &quot;ops/RotaryPosEmb.h&quot;</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#include &quot;ops/W8A8B8O8Linear.h&quot;</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="preprocessor">#include &quot;ops/W8A8B8O8LinearReLU.h&quot;</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#include &quot;ops/W8A8BFP32OFP32Linear.h&quot;</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="preprocessor">#include &quot;ops/arg_max.h&quot;</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#include &quot;ops/linear.h&quot;</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keywordtype">void</span> softmax(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;output, <span class="keywordtype">int</span> dim);</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keywordtype">void</span> batch_Add(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;input, <span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;input2, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> &amp;output);</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keywordtype">void</span> linear(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;T&gt;</a> &amp;a, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;T&gt;</a> &amp;b, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;T&gt;</a> &amp;c);</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#ifdef QM_CUDA</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#include &quot;ops/cuda/BMM_F16T.cuh&quot;</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">#include &quot;ops/cuda/Embedding.cuh&quot;</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#include &quot;ops/cuda/LlamaRMSNorm.cuh&quot;</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#include &quot;ops/cuda/RotaryPosEmb.cuh&quot;</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>__global__ <span class="keywordtype">void</span> batch_Add_float(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> input, <span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> input2, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> output);</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>__global__ <span class="keywordtype">void</span> batch_Add_cuda(<span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input, <span class="keyword">const</span> <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input2,</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>                               <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> output);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>__global__ <span class="keywordtype">void</span> batch_Add_cuda_half2(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input2, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> output);</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>__global__ <span class="keywordtype">void</span> softmax_float(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> output);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>__global__ <span class="keywordtype">void</span> softmax_cuda(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> input, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float16_t&gt;</a> output);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#endif  </span><span class="comment">// OPERATORS_H</span></div>
 <div class="ttc" id="aclassMatrix3D_html"><div class="ttname"><a href="classMatrix3D.html">Matrix3D</a></div><div class="ttdef"><b>Definition</b> common.h:34</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
