@@ -155,7 +155,7 @@ Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine</h2>
 <li>Check this table for the detailed list of supported models</li>
 </ul>
 </li>
-<li>*(CUDA only)* Modify <code>-arch=sm_xx</code> in <a href="llm/Makefile#L72">Line 72</a>, <a href="llm/Makefile#L77">Line 77</a> or <a href="llm/Makefile#L94">Line 94</a> in Makefile, according to the platform you are using and the compute capability of your GPU.</li>
+<li>*(CUDA only)* Based on the platform you are using and the compute capability of your GPU, modify the Makefile accordingly. If using Windows with Nvidia GPU, please modify <code>-arch=sm_xx</code> in <a href="llm/Makefile#L54">Line 54</a>. If using other platforms with Nvidia GPU, please modify <code>-gencode arch=compute_xx,code=sm_xx</code> in <a href="llm/Makefile#L60">Line 60</a>.</li>
 <li>Compile and start the chat locally. <div class="fragment"><div class="line">make chat -j</div>
 <div class="line">./chat</div>
 <div class="line"> </div>
@@ -185,7 +185,7 @@ Backend Support</h2>
  (Apple M1/M2 &amp; RPi) | Nvidia GPU | Apple GPU | | ---&mdash; | ------------------------&mdash; | ------&mdash; | ------&mdash; | ------&mdash; | | FP32 | ✅ | ✅ | | | W4A16 | | | ✅ | ✅ | W4A32 | ✅ | ✅ | | ✅ | W4A8 | ✅ | ✅ | | | W8A8 | ✅ | ✅ | |</p>
 <ul>
 <li>For Raspberry Pi, we recommend using the board with 8GB RAM. Our testing was primarily conducted on Raspberry Pi 4 Model B Rev 1.4 with aarch64. For other versions, please feel free to try it out and let us know if you encounter any issues.</li>
-<li>For Nvidia GPU, our CUDA backend may not support Nvidia GPUs with compute capability &lt;= 7.5. We will release a new version to support Nvidia GPUs with lower compute capability soon, please stay tuned!</li>
+<li>For Nvidia GPU, our CUDA backend can support Nvidia GPUs with compute capability &gt;= 6.1. For the GPUs with compute capability &lt; 6.1, please feel free to try it out but we haven't tested it yet and thus cannot guarantee the results.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md12"></a>
 Quantization and Model Support</h2>
@@ -253,9 +253,15 @@ Download and Deploy Models from our Model Zoo</h2>
 </div><!-- fragment --></li>
 </ul>
 <p>To deploy a quantized model with TinyChatEngine, compile and run the chat program.</p>
-<div class="fragment"><div class="line">make chat -j</div>
+<ul>
+<li>On CPU platforms <div class="fragment"><div class="line">make chat -j</div>
+<div class="line">./chat &lt;model_name&gt; &lt;precision&gt; &lt;num_threads&gt;</div>
+</div><!-- fragment --></li>
+<li>On GPU platforms <div class="fragment"><div class="line">make chat -j</div>
 <div class="line">./chat &lt;model_name&gt; &lt;precision&gt;</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md15"></a>
+</div><!-- fragment --></li>
+</ul>
+<h2><a class="anchor" id="autotoc_md15"></a>
 Experimental Features</h2>
 <h3><a class="anchor" id="autotoc_md16"></a>
 Voice Chatbot &lt;a href="https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC" &gt;[Demo]&lt;/a&gt;</h3>
