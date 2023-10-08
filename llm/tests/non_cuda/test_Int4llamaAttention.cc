@@ -9,7 +9,7 @@ void test_Int4llamaAttention() {
 
     MemoryAllocator mem_buf;
 
-    Int4llamaAttention attn = Int4llamaAttention("models/LLaMA_7B/decoder/layer0/self_attn", llama7B);
+    Int4llamaAttention attn = Int4llamaAttention("models/LLaMA_7B/decoder/layer0/self_attn", llama7B, 0);
 
     Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(embed_dim * sqlen), b, sqlen, embed_dim);
     read_to_array("assets/llama/tests/atten/sqlen9/hidden_states.bin", hidden_states.m_data, b * sqlen * embed_dim);
@@ -20,7 +20,7 @@ void test_Int4llamaAttention() {
     attn.initialized_memory(llama7B);
     struct Int4llamaAttention_input input(hidden_states, attention_mask, 0);
 
-    struct Int4llamaAttention_output output = attn.forward(input);
+    struct Int4llamaAttention_output output = attn.forward("models/LLaMA_7B/decoder/layer0/self_attn", input);
 
     Matrix3D<float> attn_outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
     read_to_array("assets/llama/tests/atten/sqlen9/attn_output.bin", attn_outputGT.m_data, b * sqlen * embed_dim);
@@ -45,7 +45,7 @@ void test_Int4llamaAttention_gen() {
 
     MemoryAllocator mem_buf;
 
-    Int4llamaAttention attn = Int4llamaAttention("models/LLaMA_7B/decoder/layer0/self_attn", llama7B);
+    Int4llamaAttention attn = Int4llamaAttention("models/LLaMA_7B/decoder/layer0/self_attn", llama7B, 0);
 
     Matrix3D<float> hidden_states(mem_buf.get_fpbuffer(embed_dim * sqlen), b, sqlen, embed_dim);
     hidden_states.load("assets/llama/tests/atten/sqlen1/hidden_states.bin");
@@ -59,7 +59,7 @@ void test_Int4llamaAttention_gen() {
     attn.initialized_memory(llama7B);
     struct Int4llamaAttention_input input(hidden_states, attention_mask, past_key, past_value, true, 0);
 
-    struct Int4llamaAttention_output output = attn.forward(input);
+    struct Int4llamaAttention_output output = attn.forward("models/LLaMA_7B/decoder/layer0/self_attn", input);
 
     Matrix3D<float> attn_outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
     attn_outputGT.load("assets/llama/tests/atten/sqlen1/attn_output.bin");

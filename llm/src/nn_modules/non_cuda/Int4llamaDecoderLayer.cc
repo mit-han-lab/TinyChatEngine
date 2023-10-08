@@ -61,7 +61,7 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
     // Layernorm
     Matrix3D<float> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                   input.hidden_states.m_dim_z);
-    this->input_layernorm.forward(input.hidden_states, hidden_states);
+    this->input_layernorm.forward(input.hidden_states, hidden_states, rms_norm_eps);
 
     // Attention
     struct Int4llamaAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
@@ -76,7 +76,7 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
     // Layernorm
     Matrix3D<float> post_attention_layernorm(final_layer_norm_arr, input.hidden_states.m_dim_x,
                                              input.hidden_states.m_dim_y, input.hidden_states.m_dim_z);
-    this->post_attention_layernorm.forward(residual_add, post_attention_layernorm);
+    this->post_attention_layernorm.forward(residual_add, post_attention_layernorm, rms_norm_eps);
 
     // Gate proj: embedding -> hidden_dim
     Matrix3D<float> gate_proj(gate_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
@@ -146,6 +146,8 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     Matrix3D<float> post_attention_layernorm_weight(post_attention_layernorm_ptr, 1, 1, config.embed_dim);
     post_attention_layernorm_weight.load((param_path + "/post_attention_layernorm/weight.bin").c_str());
     this->post_attention_layernorm = LlamaRMSNorm(post_attention_layernorm_weight);
+
+    this->rms_norm_eps = config.rms_norm_eps;
 
     this->embed_dim = config.embed_dim;
     this->num_attention_heads = config.num_heads;

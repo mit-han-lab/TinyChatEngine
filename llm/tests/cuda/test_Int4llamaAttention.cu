@@ -15,7 +15,7 @@ void test_Int4llamaAttention() {
     const struct model_config llama7B = llama_7B;
     const int sqlen = 9, b = 1, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads;
 
-    Int4llamaAttention attn = Int4llamaAttention("INT4/models/LLaMA_7B_2_chat/decoder/layer0/self_attn", llama7B);
+    Int4llamaAttention attn = Int4llamaAttention("INT4/models/LLaMA_7B_2_chat/decoder/layer0/self_attn", llama7B, 0);
 
     half* buffer_1;
     cudaMallocManaged(&buffer_1, sizeof(half) * embed_dim * sqlen * b);
@@ -28,7 +28,7 @@ void test_Int4llamaAttention() {
 
     attn.initialized_memory(llama7B);
     struct Int4llamaAttention_input input(hidden_states, attention_mask, 0);
-    struct Int4llamaAttention_output output = attn.forward(input);
+    struct Int4llamaAttention_output output = attn.forward("INT4/models/LLaMA_7B_2_chat/decoder/layer0/self_attn", input);
     cudaDeviceSynchronize();
 
     half* buffer_3;
@@ -68,7 +68,7 @@ void test_Int4llamaAttention_gen() {
     const int sqlen = 1, b = 1, past_sqlen = 9, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads,
               head_dim = embed_dim / num_heads;
 
-    Int4llamaAttention attn = Int4llamaAttention("INT4/models/LLaMA_7B_2_chat/decoder/layer0/self_attn", llama7B);
+    Int4llamaAttention attn = Int4llamaAttention("INT4/models/LLaMA_7B_2_chat/decoder/layer0/self_attn", llama7B, 0);
 
     half* buffer_1;
     cudaMallocManaged(&buffer_1, sizeof(half) * embed_dim * sqlen * b);
@@ -89,7 +89,7 @@ void test_Int4llamaAttention_gen() {
 
     attn.initialized_memory(llama7B);
     struct Int4llamaAttention_input input(hidden_states, attention_mask, past_key, past_value, true, 0);
-    struct Int4llamaAttention_output output = attn.forward(input);
+    struct Int4llamaAttention_output output = attn.forward("INT4/models/LLaMA_7B_2_chat/decoder/layer0/self_attn", input);
     cudaDeviceSynchronize();
 
     half* buffer_5;

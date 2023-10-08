@@ -37,7 +37,7 @@ void test_Int4LlamaForCausalLM() {
     struct Int4LlamaForCausalLM_input input_1st = {input_ids};
 
     Int4LlamaForCausalLM model = Int4LlamaForCausalLM("INT4/models/LLaMA_7B_2_chat", config);
-    struct Int4LlamaForCausalLM_output output_1st = model.forward(input_1st);
+    struct Int4LlamaForCausalLM_output output_1st = model.forward("INT4/models/LLaMA_7B_2_chat", input_1st);
 
     float* buffer_2;
     cudaMallocManaged(&buffer_2, sizeof(float) * b * sqlen * voc_size);
@@ -55,7 +55,7 @@ void test_Int4LlamaForCausalLM() {
     input_ids_2nd.load("assets/llama/tests/model/2nd_input_ids.bin");
 
     struct Int4LlamaForCausalLM_input input_2nd = {input_ids_2nd, output_1st.past_keys, output_1st.past_values};
-    struct Int4LlamaForCausalLM_output output_2nd = model.forward(input_2nd);
+    struct Int4LlamaForCausalLM_output output_2nd = model.forward("INT4/models/LLaMA_7B_2_chat", input_2nd);
 
     float* buffer_4;
     cudaMallocManaged(&buffer_4, sizeof(float) * b * 1 * voc_size);

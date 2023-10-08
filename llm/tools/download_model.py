@@ -30,6 +30,14 @@ models = {
         "url": "https://www.dropbox.com/scl/fi/qpzv3805ftdldvlocssu4/LLaMA_13B_2_chat.zip?rlkey=tfgnv9cz2i8lwuznyy6u3sf4k&dl=1",  # noqa: E501
         "md5sum": "59b73efa638be4131e5fd27c3fdee597",
     },
+    "CodeLLaMA_7B_Instruct_fp32": {
+        "url": "",
+        "md5sum": "",
+    },
+    "CodeLLaMA_13B_Instruct_fp32": {
+        "url": "",
+        "md5sum": "",
+    },
     "opt_6.7B_fp32": {
         "url": "https://www.dropbox.com/scl/fi/mwy0uw51anodezy9rtcf1/OPT_6.7B.zip?rlkey=f8mtjg5eesuflrz3t5och4219&dl=1",
         "md5sum": "69cffdc090388ac2d2abcbe8163b0397",
@@ -58,6 +66,14 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/rb7el1reycad98xrzif9a/LLaMA_13B_2_chat.zip?rlkey=wwd400no2uelcthvqxut3ojvj&dl=1",  # noqa: E501
             "md5sum": "f1f7693da630bb7aa269ecae5bcc397a",
         },
+        "CodeLLaMA_7B_Instruct_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/m6qcwnsg37sdtewvh41sb/CodeLLaMA_7B_Instruct.zip?rlkey=mlnn1s76k63zez44uatmsc7ij&dl=1",
+            "md5sum": "a5b4c15857944daaa1e1ee34c5917264",
+        },
+        "CodeLLaMA_13B_Instruct_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/7gcmtonyyyavdaeccnivi/CodeLLaMA_13B_Instruct.zip?rlkey=e1u6ne71prrtcjh1sp8hs5sns&dl=1",
+            "md5sum": "d749ec83a54dcf40a7d87e7dbfba42d4",
+        },
         "opt_125m_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/3dedmlzi36jngj74iskr6/OPT_125m.zip?rlkey=hy7z46cwfbr4dlz9bcs1mtx5b&dl=1",  # noqa: E501
             "md5sum": "2b42c3866c54642557046140367217fa",
@@ -84,6 +100,14 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/t4u1jkp7gav8om4m6xjjv/LLaMA_13B_2_chat.zip?rlkey=tahltmq9bqu3ofx03r4mrsk2r&dl=1",  # noqa: E501
             "md5sum": "3684e5740f44ed05e213d6d807a1f136",
         },
+        "CodeLLaMA_7B_Instruct_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/fav8kvwcuw1dpdiykny24/CodeLLaMA_7B_Instruct.zip?rlkey=bjhf467r8xb7di2lilqbgv8vm&dl=1",
+            "md5sum": "b208eec1b1bbb6532f26b68a7a3caae6",
+        },
+        "CodeLLaMA_13B_Instruct_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/0appg7uacff9z21hth06n/CodeLLaMA_13B_Instruct.zip?rlkey=v6fxuomhqmskwqgtclsat9pzt&dl=1",
+            "md5sum": "71ade74fe50b6beb378d52e19396926d",
+        },
         "opt_125m_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/sl6kc1ql0877w550e4v17/OPT_125m.zip?rlkey=fsdqf3bc0vktl7iv6pfi6bbyx&dl=1",  # noqa: E501
             "md5sum": "c9c26bb5c8bf9867e21e525da744ef19",
@@ -105,6 +129,14 @@ Qmodels = {
         "LLaMA2_13B_chat_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/fes1l27b9kv4dn4h0qjzu/LLaMA_13B_2_chat.zip?rlkey=u1j2kt96xpj764zkj1v87gw6u&dl=1",  # noqa: E501
             "md5sum": "802c81d86b6393aff3e93326e5b58f7f",
+        },
+        "CodeLLaMA_7B_Instruct_awq_int4": {
+            "url": "",
+            "md5sum": "",
+        },
+        "CodeLLaMA_13B_Instruct_awq_int4": {
+            "url": "",
+            "md5sum": "",
         },
     },
     "INT8": {

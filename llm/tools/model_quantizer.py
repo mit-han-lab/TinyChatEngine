@@ -124,9 +124,9 @@ def _quantize_model(
         layer_num = 24
     elif model_name_size == "OPT_6.7B":
         layer_num = 32
-    elif model_name_size.startswith("LLaMA_7B"):
+    elif model_name_size.startswith("LLaMA_7B") or model_name_size.startswith("CodeLLaMA_7B"):
         layer_num = 32
-    elif model_name_size.startswith("LLaMA_13B"):
+    elif model_name_size.startswith("LLaMA_13B") or model_name_size.startswith("CodeLLaMA_13B"):
         layer_num = 40
     else:
         raise ValueError(
@@ -273,11 +273,11 @@ def _quantize_model(
             print(f"Quantization of layer {idx} finished.")
 
     # LLaMA
-    elif model_name.startswith("LLaMA"):
-        if model_name.startswith("LLaMA_7B"):
+    elif model_name.startswith("LLaMA") or model_name.startswith("CodeLLaMA"):
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("CodeLLaMA_7B"):
             embed_dim = 4096
             hidden_dim = 11008
-        elif model_name.startswith("LLaMA_13B"):
+        elif model_name.startswith("LLaMA_13B") or model_name.startswith("CodeLLaMA_13B"):
             embed_dim = 5120
             hidden_dim = 13824
         else:

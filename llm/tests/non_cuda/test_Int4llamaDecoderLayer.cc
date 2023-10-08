@@ -19,7 +19,7 @@ void test_Int4llamaDecoderLayer() {
 
     struct Int4llamaDecoderLayer_input input(hidden_states, attention_mask);
 
-    struct Int4llamaDecoderLayer_output output = layer.forward(input);
+    struct Int4llamaDecoderLayer_output output = layer.forward("models/LLaMA_7B/decoder/layer0", input, 0);
 
     Matrix3D<float> outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
     outputGT.load("assets/llama/tests/layer0/sqlen9/output_hidden_states.bin");
@@ -58,7 +58,7 @@ void test_Int4llamaDecoderLayer_gen() {
 
     struct Int4llamaDecoderLayer_input input(hidden_states, attention_mask, past_key, past_value);
 
-    struct Int4llamaDecoderLayer_output output = layer.forward(input);
+    struct Int4llamaDecoderLayer_output output = layer.forward("models/LLaMA_7B/decoder/layer0", input, 0);
 
     Matrix3D<float> outputGT(mem_buf.get_fpbuffer(b * sqlen * embed_dim), b, sqlen, embed_dim);
     outputGT.load("assets/llama/tests/layer0/sqlen1/output_hidden_states.bin");

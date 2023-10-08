@@ -4,7 +4,7 @@
 #include "operators.h"
 #include "utils.h"
 
-void LlamaRMSNorm::forward(const Matrix3D<float> &x, Matrix3D<float> &output) {
+void LlamaRMSNorm::forward(const Matrix3D<float> &x, Matrix3D<float> &output, float eps) {
     PROFILE_START(profile_name);
     const int last_dims = 2;
 

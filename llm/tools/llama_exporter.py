@@ -1,4 +1,4 @@
-"""Implementation of exporting LLaMA PyTorch model to TinyLLMEngine format.
+"""Implementation of exporting LLaMA PyTorch model to TinyChatEngine format.
 
 Usage:
    python llama_exporter.py <path of hugging face model checkpoint> <output dir>
@@ -99,11 +99,11 @@ def _export_attention_params(attn, prefix: str):
 
 
 def main():
-    """Export a LLaMA model to TinyLLMEngine format."""
-    parser = argparse.ArgumentParser(description="export LLaMA pytorch model to TinyLLMEngine format.")
+    """Export a LLaMA model to TinyChatEngine format."""
+    parser = argparse.ArgumentParser(description="export LLaMA pytorch model to TinyChatEngine format.")
     parser.add_argument("--hf_path", type=str, help="Path to huggingface model hub", default=None)
-    parser.add_argument("model", type=str, help="Path of the LLaMA torch model")
-    parser.add_argument("output", type=str, help="Output directory of the exported model")
+    parser.add_argument("--model", type=str, help="Path of the LLaMA torch model")
+    parser.add_argument("--output", type=str, help="Output directory of the exported model")
 
     args = parser.parse_args()
 
@@ -118,12 +118,29 @@ def main():
 
         print("Loading model...")
         if args.model.endswith(".pt"):
-            model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
+            if args.model.split("/")[-1].lower().startswith("llama-2"):
+                if args.model.split("-")[2].lower() == "7b":
+                    print("Loading LLaMA 7B model...");
+                    model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
+                elif args.model.split("-")[2].lower() == "13b":
+                    print("Loading LLaMA 13B model...");
+                    model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-13b-hf", torch_dtype=torch.float16)
+            elif args.model.split("/")[-1].lower().startswith("codellama"):
+                if args.model.split("-")[1].lower() == "7b":
+                    print("Loading CodaLLaMA 7B model...");
+                    model = LlamaForCausalLM.from_pretrained("codellama/CodeLlama-7b-Instruct-hf", torch_dtype=torch.float16)
+                elif args.model.split("-")[1].lower() == "13b":
+                    print("Loading CodaLLaMA 13B model...");
+                    model = LlamaForCausalLM.from_pretrained("codellama/CodeLlama-13b-Instruct-hf", torch_dtype=torch.float16)
+            else:
+                print("Model not supported.")
+                return
+            
             model.load_state_dict(torch.load(args.model))
         else:
             model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
     else:
-        model = LlamaForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.float16)
+        model = LlamaForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.bfloat16)
 
     print("Start exporting the model...")
     _export_model(model, args.output)

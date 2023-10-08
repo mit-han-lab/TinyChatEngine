@@ -410,7 +410,8 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
     // ref imp.
     // matmul_int8_int4_no_offset(params);
 
-    const int num_thread = 8;
+    // const int num_thread = 8;
+    const int num_thread = params->opt_params.num_thread;
     pthread_t thread_pool[num_thread];
     struct a8w4_thread_args threads_args[num_thread];
     assert(params->block_size == 32);  // support block size 32 for now

@@ -399,7 +399,8 @@ static void *fast_zp_no_offset_over_column_func_v3(void *args) {
 namespace matmul {
 
 void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
-    const int num_thread = 32;
+    // const int num_thread = 32;
+    const int num_thread = params->opt_params.num_thread;
     int i, j, k;
     pthread_t thread_pool[num_thread];
     struct int4_thread_args threads_args[num_thread];

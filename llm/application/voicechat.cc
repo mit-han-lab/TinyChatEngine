@@ -123,10 +123,11 @@ int main(int argc, char* argv[]) {
                 std::string output;
                 std::string model_input;
 
-                std::system("./application/sts_utils/listen");
+                int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
-                std::system("rm tmpfile");
+                result = std::system("rm tmpfile");
+                (void)result;
                 std::cout << input << std::endl;
 
                 if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
@@ -145,10 +146,11 @@ int main(int argc, char* argv[]) {
                 std::string output;
                 std::string model_input;
 
-                std::system("./application/sts_utils/listen");
+                int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
-                std::system("rm tmpfile");
+                result = std::system("rm tmpfile");
+                (void)result;
                 std::cout << input << std::endl;
 
                 if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
@@ -191,10 +193,11 @@ int main(int argc, char* argv[]) {
                 std::string output;
                 std::string model_input;
 
-                std::system("./application/sts_utils/listen");
+                int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
-                std::system("rm tmpfile");
+                result = std::system("rm tmpfile");
+                (void)result;
                 std::vector<int> input_ids = encoder.encode(input);
                 std::string decoded = encoder.decode(input_ids);
                 std::cout << input << std::endl;
@@ -215,10 +218,11 @@ int main(int argc, char* argv[]) {
                 std::string output;
                 std::string model_input;
 
-                std::system("./application/sts_utils/listen");
+                int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
-                std::system("rm tmpfile");
+                result = std::system("rm tmpfile");
+                (void)result;
                 std::vector<int> input_ids = encoder.encode(input);
                 std::string decoded = encoder.decode(input_ids);
                 std::cout << input << std::endl;
@@ -238,10 +242,11 @@ int main(int argc, char* argv[]) {
                 std::string output;
                 std::string model_input;
 
-                std::system("./application/sts_utils/listen");
+                int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
-                std::system("rm tmpfile");
+                result = std::system("rm tmpfile");
+                (void)result;
                 std::vector<int> input_ids = encoder.encode(input);
                 std::string decoded = encoder.decode(input_ids);
                 std::cout << input << std::endl;
