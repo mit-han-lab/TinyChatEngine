@@ -27,7 +27,8 @@ https://github.com/ggerganov/llama.cpp
 #include "operators.h"
 #include "utils.h"
 
-inline std::mt19937 OPT_rng;  // inline variables are only available with ‘-std=c++17’ or ‘-std=gnu++17’
+// inline std::mt19937 OPT_rng;  // inline variables are only available with ‘-std=c++17’ or ‘-std=gnu++17’
+static std::mt19937 OPT_rng;
 
 typedef struct OPT_token_data {
     int id;       // token id

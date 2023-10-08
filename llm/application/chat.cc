@@ -64,9 +64,12 @@ int main(int argc, char* argv[]) {
 
     std::cout << "TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine" << std::endl;
 
-    if (argc == 3 || argc == 4) {
-        if (argc == 4) {
-            instruct = convertToBool(argv[3]);
+    if (argc >= 3 && argc <= 5) {
+        if (argc >= 4) {
+            NUM_THREAD = atoi(argv[3]);
+        }
+        if (argc == 5) {
+            instruct = convertToBool(argv[4]);
         }
 
         auto target_str = argv[1];
