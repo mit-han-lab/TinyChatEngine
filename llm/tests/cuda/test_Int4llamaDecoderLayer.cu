@@ -2,6 +2,8 @@
 #include "operators.h"
 #include "utils.h"
 
+int NUM_THREAD = 8;
+
 static void Int4LLaMAFreeMemory() {
     // Int4llamaDecoderLayer
     Int4llamaDecoderLayer llamaDecoderLayer;
@@ -10,9 +12,6 @@ static void Int4LLaMAFreeMemory() {
     // Int4llamaAttention
     Int4llamaAttention llamaAttention;
     llamaAttention.free_cuda_memory();
-
-    // split_k_buffer
-    free_aligned_memory_gpu(split_8_buffer);
 }
 
 void test_Int4llamaDecoderLayer() {

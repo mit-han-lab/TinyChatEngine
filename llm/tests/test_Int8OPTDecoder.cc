@@ -5,6 +5,8 @@
 #include "utils.h"
 #include "utils_memalloc.h"
 
+int NUM_THREAD = 8;
+
 // TODO: check if the errors here make sense
 void test_Decoder_layers() {
     const int num_heads = 12, embed_dim = 768, sqlen = 108, b = 1, hidden_dim = 3072, voc_size = 50272, padding_idx = 1,

@@ -60,13 +60,13 @@ Int4llamaDecoderLayer::Int4llamaDecoderLayer(std::string param_path, const struc
     this->attn = Int4llamaAttention(param_path + "/self_attn", config, layer_idx);
 
     allocate_aligned_memory_gpu(gate_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
-    allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8);
+    allocate_aligned_memory_gpu(down_proj_weight, (config.hidden_dim * config.embed_dim * sizeof(int)) / 8 + 1);
     allocate_aligned_memory_gpu(up_proj_weight, (config.embed_dim * config.hidden_dim * sizeof(int)) / 8);
-    this->gate_proj = Linear_half_int4(Matrix3D<int>(gate_proj_weight, 1, config.hidden_dim / 8, config.embed_dim),
+    this->gate_proj = Linear_half_int4(Matrix3D<int>(gate_proj_weight, 1, config.hidden_dim, config.embed_dim / 8),
                                      (param_path + "/gate_proj"));
-    this->down_proj = Linear_half_int4(Matrix3D<int>(down_proj_weight, 1, config.embed_dim / 8, config.hidden_dim),
+    this->down_proj = Linear_half_int4(Matrix3D<int>(down_proj_weight, 1, config.embed_dim, config.hidden_dim / 8),
                                      (param_path + "/down_proj"));
-    this->up_proj = Linear_half_int4(Matrix3D<int>(up_proj_weight, 1, config.hidden_dim / 8, config.embed_dim),
+    this->up_proj = Linear_half_int4(Matrix3D<int>(up_proj_weight, 1, config.hidden_dim, config.embed_dim / 8),
                                    (param_path + "/up_proj"));
 }
 
@@ -93,16 +93,16 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
 
     Matrix3D<float16_t> gate_proj(gate_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                               this->hidden_dim);
-    this->gate_proj.forward(post_attention_layernorm, gate_proj, split_8_buffer);
+    this->gate_proj.forward(post_attention_layernorm, gate_proj);
 
     Matrix3D<float16_t> up_proj(up_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
-    this->up_proj.forward(post_attention_layernorm, up_proj, split_8_buffer);
+    this->up_proj.forward(post_attention_layernorm, up_proj);
 
     int blocksPerGrid2 =(gate_proj.length() + threadsPerBlock - 1) / threadsPerBlock;
     SiLuMul_half<<<blocksPerGrid2, threadsPerBlock>>>(gate_proj, up_proj);
 
     Matrix3D<float16_t> down_proj(down_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->embed_dim);
-    this->down_proj.forward(gate_proj, down_proj, split_8_buffer);
+    this->down_proj.forward(gate_proj, down_proj);
 
     int blocksPerGrid3 =(residual_add.length() + threadsPerBlock - 1) / threadsPerBlock;
     add_half<<<blocksPerGrid3, threadsPerBlock>>>(residual_add, down_proj, residual_add);

@@ -20,14 +20,14 @@ from quantize_methods import (
     quantize_row_q4_2,
     quantize_row_q4_3,
     quantize_row_q4_4,
-    quantize_row_q4_5,
+    quantize_row_q4_6,
 )
 
 quantization_funcs = {
     "QM_x86": quantize_row_q4_3,
     "QM_METAL": quantize_row_q4_2,
     "QM_ARM": quantize_row_q4_4,
-    "QM_CUDA": quantize_row_q4_5,
+    "QM_CUDA": quantize_row_q4_6,
 }
 
 
@@ -36,7 +36,7 @@ def _write_weight_to_file(prefix: str, qs, d, m, zp, is_cuda=False, is_lm_head=F
     # Convert to bytes
     if is_cuda:
         qs_data = np.asarray(qs, dtype=np.int32).tobytes()
-        d_data = np.asarray(d, dtype=np.float16).tobytes()  # Need to ne converted to fp16 in CUDA
+        d_data = np.asarray(d, dtype=np.float16).tobytes()  # Need to be converted to fp16 in CUDA
         m_data = np.asarray(
             m, dtype=np.float16
         ).tobytes()  # TODO: Currently, we don't use offsets for CUDA so this is redundant
@@ -282,6 +282,11 @@ def _quantize_model(
             hidden_dim = 13824
         else:
             raise NotImplementedError(f"{model_name} not supported.")
+        
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("LLaMA_13B"):
+            vocab_size = 32000
+        elif model_name.startswith("CodeLLaMA_7B") or model_name.startswith("CodeLLaMA_13B"):
+            vocab_size = 32016
 
         # Quantize lm_head
         file_path = f"{prefix}"
@@ -290,7 +295,7 @@ def _quantize_model(
         if file_size_bytes % bytes_per_element != 0:
             raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
         array_size = file_size_bytes // bytes_per_element
-        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, 32000)
+        qs, d, m, zp = quantize_method(weight_path, array_size, data_type, embed_dim, vocab_size)
         _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda, True)
         print("Quantization of lm_head finished.")
 

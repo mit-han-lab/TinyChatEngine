@@ -9,8 +9,6 @@
 #include <cstring>
 #include <iostream>
 
-half *split_8_buffer = nullptr;
-
 void read_to_array_half(const char* path, half* array, int size) {
     std::ifstream infile(path, std::ios::binary | std::ios::in);
     if (infile.fail()) {
@@ -142,6 +140,41 @@ __global__ void merge_k_iters(half *input, half *output, int N, int split_k_iter
 
         output[index] = sum;
     }
+}
+
+__global__ void merge_k_iters_qkv(half *input, half *output, int N, int split_k_iters) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (index < N) {
+        half sum = 0;
+        for (int j = 0; j < split_k_iters; j++) {
+            sum = __hadd(sum, input[index + j * N / 3]);
+        }
+
+        output[index] = sum;
+    }
+}
+
+int make_divisible_c(int c, int divisor) {
+    return (c + divisor - 1) / divisor;
+}
+
+int calculate_zeros_width(int in_features, int group_size, int pack_num) {
+    int size_multiplier;
+
+    if (group_size >= 128) {
+        size_multiplier = 1;
+    } else if (group_size == 64) {
+        size_multiplier = 2;
+    } else if (group_size == 32) {
+        size_multiplier = 4;
+    } else {
+        throw std::runtime_error("The group_size of calculate_zeros_width should be 128, 64 or 32.");
+    }
+
+    int base_width = make_divisible_c(in_features / group_size, pack_num);
+    base_width = make_divisible_c(base_width, size_multiplier) * size_multiplier;
+    return base_width;
 }
 
 // Explicitly instantiate the generic template function for other types (if needed)

@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "utils_memalloc.h"
 
+int NUM_THREAD = 8;
+
 void test_DecoderLayer_generate() {
     const int num_heads = 12, embed_dim = 768, sqlen = 108, b = 1, hidden_dim = 3072;
     MemoryAllocator mem_buf;

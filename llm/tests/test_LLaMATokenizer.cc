@@ -1,5 +1,7 @@
 #include "LLaMATokenizer.h"
 
+int NUM_THREAD = 8;
+
 static const std::map<std::string, std::vector<int>> &test_LLaMATokenizer() {
     static std::map<std::string, std::vector<int>> llama_answer = {
         /* 1. */ {

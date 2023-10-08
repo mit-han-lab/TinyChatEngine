@@ -7,7 +7,7 @@
 
 #define BLK_SIZE 16
 // #define NUM_THREAD 8
-static int NUM_THREAD = 8;
+extern int NUM_THREAD;
 
 // include all ops
 #include "ops/BMM_F32T.h"

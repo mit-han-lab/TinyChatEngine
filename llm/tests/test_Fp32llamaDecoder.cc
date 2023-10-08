@@ -5,6 +5,8 @@
 #include "utils.h"
 #include "utils_memalloc.h"
 
+int NUM_THREAD = 8;
+
 void test_Decoder() {
     const struct model_config llama7B = llama_7B;
     const int sqlen = 9, b = 1, embed_dim = llama7B.embed_dim, num_heads = llama7B.num_heads,
