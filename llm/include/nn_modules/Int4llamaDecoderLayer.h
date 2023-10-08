@@ -67,6 +67,7 @@ class Int4llamaDecoderLayer {
 
     std::string profile_name = "Int4llamaDecoderLayer";
     int embed_dim, num_attention_heads, hidden_dim, layer_idx;
+    float rms_norm_eps;
     Int4llamaAttention attn;
 #ifdef QM_CUDA
     void free_cuda_memory();

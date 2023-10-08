@@ -159,7 +159,8 @@ static void quantize_fp_to_int8_block_size32(float *x, int size, int8_t *qx, flo
 namespace matmul {
 
 void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params) {
-    const int num_thread = 4;  // params->opt_params.num_thread;
+    // const int num_thread = 4;
+    const int num_thread = params->opt_params.num_thread;
     int i, j, k;
     pthread_t thread_pool[num_thread];
     struct int4_thread_args threads_args[num_thread];

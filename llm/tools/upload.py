@@ -9,7 +9,9 @@ import os
 import dropbox
 
 files_to_upload = [
-    "LLaMA_13B_2_chat.zip",
+    "CodeLLaMA_13B_Instruct.zip",
+    "CodeLLaMA_7B_Instruct.zip",
+    # "LLaMA_13B_2_chat.zip",
     # "LLaMA_7B_2_chat.zip",
     # "assets.zip",
 ]

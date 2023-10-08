@@ -17,9 +17,7 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
                                                  {"13b", "models/LLaMA_13B_2_chat"}};
 
 std::map<std::string, int> data_format_list = {
-    {"FP32", FP32},
-    {"INT8", QINT8},
-    {"INT4", INT4},
+    {"FP32", FP32}, {"INT8", QINT8}, {"INT4", INT4},
 };
 
 bool isLLaMA(std::string s) {
@@ -35,6 +33,8 @@ int main(int argc, char* argv[]) {
     std::string target_model = "LLaMA2_7B_chat";
     std::string target_data_format = "INT4";
     Profiler::getInstance().for_demo = true;
+    
+    std::cout << "TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine" << std::endl;
 
     if (argc == 3) {
         auto target_str = argv[1];
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
             std::cerr << std::endl;
             throw("Unsupported model\n");
         }
-        std::cout << "Model: " << argv[1] << " selected" << std::endl;
+        std::cout << "Using model: " << argv[1] << std::endl;
 
         auto data_format_input = argv[2];
         if (data_format_list.count(data_format_input) == 0) {
@@ -60,8 +60,11 @@ int main(int argc, char* argv[]) {
             std::cerr << std::endl;
             throw("Unsupported data format\n");
         }
-        std::cout << "Data format: " << argv[2] << " selected" << std::endl;
         target_data_format = argv[2];
+        if (target_data_format == "INT4" || target_data_format == "int4")
+            std::cout << "Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq" << std::endl;
+        else
+            std::cout << "Using data format: " << argv[2] << std::endl;
     } else if (argc == 2) {
         auto target_str = argv[1];
         target_model = argv[1];
@@ -74,18 +77,21 @@ int main(int argc, char* argv[]) {
             std::cerr << std::endl;
             throw("Unsupported model\n");
         }
-        std::cout << "Model: " << argv[1] << " selected" << std::endl;
+        std::cout << "Using model: " << argv[1] << std::endl;
 
         auto data_format_input = "INT4";
     } else {
         if (isLLaMA(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
-            std::cout << "Using LLaMA's default data format: " + target_data_format << std::endl;
+            if (target_data_format == "INT4" || target_data_format == "int4")
+                std::cout << "Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq" << std::endl;
+            else
+                std::cout << "Using data format: " << target_data_format << std::endl;
         } else {  // OPT
             target_model = "OPT6.7B";
             target_data_format = "INT8";
             std::cout << "Using model: " + target_model << std::endl;
-            std::cout << "Using OPT's default data format: " + target_data_format << std::endl;
+            std::cout << "Using data format: " + target_data_format << std::endl;
         }
     }
 
@@ -96,6 +102,10 @@ int main(int argc, char* argv[]) {
         std::cout << "Loading model... " << std::flush;
         int model_id = model_config[target_model];
         std::string m_path = model_path[target_model];
+
+        #ifdef MODEL_PREFIX
+        m_path = MODEL_PREFIX + m_path;
+        #endif
 
         struct opt_params generation_config;
         generation_config.n_predict = 512;
@@ -109,21 +119,29 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             while (true) {
-                std::cout << "USER: ";
                 std::string input;
-                std::getline(std::cin, input);
-                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                std::string output;
+                std::string model_input;
 
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
+
+                if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
+                    break;
+
+                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
                 LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, true);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
             Int4LlamaForCausalLM model = Int4LlamaForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
-
             // Get input from the user
             while (true) {
-                std::cout << "USER: ";
                 std::string input;
                 std::string output;
                 std::string model_input;
@@ -135,6 +153,10 @@ int main(int argc, char* argv[]) {
                 (void)result;
 
                 std::cout << input << std::endl;
+
+                if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
+                    break;
+
                 model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
                 LLaMAGenerate(m_path, &model, LLaMA_INT4, model_input, generation_config, "models/llama_vocab.bin",
                                        true, true);
@@ -143,7 +165,100 @@ int main(int argc, char* argv[]) {
             std::cout << std::endl;
             std::cerr << "At this time, we only support FP32 and INT4 for LLaMA7B." << std::endl;
         }
-    } else {
-        std::cout << target_model << " is not supported with voicechat!" << std::endl;
+    } else { // OPT
+#ifdef QM_CUDA
+        printf("OPT is not supported with CUDA backend yet.");
+        exit(-1);
+#else
+        // Load model
+        std::cout << "Loading model... " << std::flush;
+        int model_id = model_config[target_model];
+        std::string m_path = model_path[target_model];
+        int format_id = data_format_list[target_data_format];
+
+        // Load encoder
+        std::string bpe_file = "models/opt_merges.txt";
+        std::string vocab_file = "models/opt_vocab.json";
+        Encoder encoder = get_encoder(vocab_file, bpe_file);
+        std::string decode;
+
+        struct opt_params generation_config;
+        generation_config.n_predict = 512;
+        if (format_id == QINT8) {
+            OPTForCausalLM model = OPTForCausalLM("INT8/" + m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl;
+            
+            // Get input from the user
+            while (true) {
+                std::string input;
+                std::string output;
+                std::string model_input;
+
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::vector<int> input_ids = encoder.encode(input);
+                std::string decoded = encoder.decode(input_ids);
+                std::cout << input << std::endl;
+
+                if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
+                    break;
+
+                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, true);
+            }
+
+        } else if (format_id == FP32) {
+            Fp32OPTForCausalLM model = Fp32OPTForCausalLM(m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl;
+
+            while (true) {
+                std::string input;
+                std::string output;
+                std::string model_input;
+
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::vector<int> input_ids = encoder.encode(input);
+                std::string decoded = encoder.decode(input_ids);
+                std::cout << input << std::endl;
+                
+                if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
+                    break;
+
+                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, true);
+            }
+        } else if (format_id == INT4) {
+            Int4OPTForCausalLM model = Int4OPTForCausalLM("INT4/" + m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl;
+
+            while (true) {
+                std::string input;
+                std::string output;
+                std::string model_input;
+
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::vector<int> input_ids = encoder.encode(input);
+                std::string decoded = encoder.decode(input_ids);
+                std::cout << input << std::endl;
+
+                if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
+                    break;
+                    
+                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, true);
+            }
+        }
+#endif  // QN_CUDA
     }
 };

@@ -566,7 +566,7 @@ void test_LlamaRMSNorm() {
 
     LlamaRMSNorm op(weight);
 
-    op.forward(hidden_states, output);
+    op.forward(hidden_states, output, llama7B.rms_norm_eps);
     bool success = check_two_equal(output.m_data, outputGT.m_data, sqlen * embed_dim);
 
     if (!success)

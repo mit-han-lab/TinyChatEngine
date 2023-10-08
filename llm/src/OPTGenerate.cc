@@ -1,10 +1,20 @@
 #include "Generate.h"
 #include "common.h"
 #include "utils.h"
+#include <thread>
+#include <string>
+#include <sstream>
+
+// Function to speak in the background
+void speakInBackground(const std::string& text) {
+    std::string command = "./application/sts_utils/speak \"" + text + "\"";
+    int result = std::system(command.c_str());
+    (void)result;
+}
 
 // OPTGenerate function
 std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> input_ids,
-                             const struct opt_params generation_config, Encoder *encoder, bool interactive) {
+                             const struct opt_params generation_config, Encoder *encoder, bool interactive, bool voicechat) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -29,6 +39,7 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
     std::vector<Matrix3D<int8_t>> past_keys_int8, past_values_int8;
     std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
+    std::string output;
     while (n_remain != 0) {
         STATS_START("Token generation");
         std::vector<float> logits(generation_config.n_vocab);
@@ -154,16 +165,64 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
         embd.push_back(id);
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
+        if (interactive) {
+            output += encoder->decode(input_ids);
+            std::cout << encoder->decode(input_ids) << std::flush;
+            if (voicechat) {
+                // Remove quotes
+                output.erase(std::remove(output.begin(), output.end(), '\"'), output.end());
+                // Remove hashtags
+                output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
+                // Remove dashes
+                std::replace(output.begin(), output.end(), '-', ' ');
 
-        if (interactive) std::cout << encoder->decode(input_ids) << std::flush;
-
+                size_t lastPos;
+                // starts ealier but slows down dictation
+                bool ended = false;
+                if (output.find(", ") != std::string::npos){
+                    lastPos = output.rfind(',');
+                    ended = true;
+                }
+                if (output.find("\n") != std::string::npos){
+                    lastPos = output.rfind('\n');
+                    ended = true;
+                }
+                else if (output.find(". ") != std::string::npos){
+                    lastPos = output.rfind('.');
+                    ended = true;
+                }
+                else if (output.find("! ") != std::string::npos){
+                    lastPos = output.rfind('!');
+                    ended = true;
+                }
+                else if (output.find("? ") != std::string::npos){
+                    lastPos = output.rfind('?');
+                    ended = true;
+    
+                }
+                else if (output.find(": ") != std::string::npos){
+                    lastPos = output.rfind(':');
+                    ended = true;
+                }
+                if (ended){
+                    // Extract sentence 1 (up to and including the last period)
+                    std::string output_copy = output.substr(0, lastPos + 1);
+                    // Extract beginning of sentence 2 (excluding the space after the last period)
+                    output = output.substr(lastPos + 1); // Skip the last period and space
+                    std::thread sayThread(speakInBackground, output_copy);
+                    sayThread.detach(); 
+                } 
+            } 
+        }
         --n_remain;
         STATS_END("Token generation");
     }
-
+    if (interactive && voicechat){
+        speakInBackground(output);
+    }
     if (interactive) std::cout << std::endl;
 
-    Profiler::getInstance().report_internal();
+    if (!voicechat) Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
 
     return generate_ids;

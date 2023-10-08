@@ -28,6 +28,11 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
     const int n = llama_tokenize(vocab, text.c_str(), input_ids.data(), input_ids.size(), true);
     input_ids.resize(n);
 
+    bool is_codellama = false;
+    if (param_path.find("CodeLLaMA") != std::string::npos) {
+        is_codellama = true;
+    }
+
     int n_consumed = 0;
     while ((int)input_ids.size() > n_consumed) {
         embd.push_back(input_ids[n_consumed]);
@@ -39,18 +44,22 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
             break;
         }
     }
-    if (interactive) std::cout << "ASSISTANT: " << std::endl;
+    // if (interactive) std::cout << "ASSISTANT: " << std::endl;
 
-    bool has_past_kv = false;
     bool previous_two_hash = false;
-    std::vector<Matrix3D<float>> past_keys, past_values;
-    int n_remain = generation_config.n_predict;
     int break_cnt = 2;
+    bool new_prompt = true;
+    static bool has_past_kv = false;
+    static std::vector<Matrix3D<float>> past_keys, past_values;
+    int n_remain = generation_config.n_predict;
     std::string output;
     while (n_remain != 0 && break_cnt) {
         std::vector<float> logits(generation_config.n_vocab);
 
         int sqlen = 1;
+        if (new_prompt) {
+            sqlen = input_ids.size();
+        }
         if (model_type == LLaMA_INT4) {
             Int4LlamaForCausalLM *model = static_cast<Int4LlamaForCausalLM *>(model_ptr);
             struct Int4LlamaForCausalLM_output model_output;
@@ -59,13 +68,12 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
                 model_input = {input_ids_mat, past_keys, past_values};
             } else {
-                sqlen = input_ids.size();
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
                 model_input = {input_ids_mat};
             }
-            if (has_past_kv) STATS_START("Inference latency");
+            if (!new_prompt) STATS_START("Inference latency");
             model_output = model->forward(param_path, model_input);
-            if (has_past_kv) STATS_END("Inference latency");
+            if (!new_prompt) STATS_END("Inference latency");
             past_keys = model_output.past_keys;
             past_values = model_output.past_values;
             // memcpy model_ouput.logits[-1] to logits
@@ -79,13 +87,12 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
                 model_input = {input_ids_mat, past_keys, past_values};
             } else {
-                sqlen = input_ids.size();
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
                 model_input = {input_ids_mat};
             }
-            if (has_past_kv) STATS_START("Inference latency");
+            if (!new_prompt) STATS_START("Inference latency");
             model_output = model->forward(model_input);
-            if (has_past_kv) STATS_END("Inference latency");
+            if (!new_prompt) STATS_END("Inference latency");
             past_keys = model_output.past_keys;
             past_values = model_output.past_values;
             // memcpy model_ouput.logits[-1] to logits
@@ -171,6 +178,11 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
             previous_two_hash = false;
         }
 
+        if (is_codellama && new_prompt) {
+            new_prompt = false;
+            continue;
+        }
+
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
         embd.push_back(id);
@@ -226,11 +238,12 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
                 } 
             } 
         }
+
+        new_prompt = false;
         --n_remain;
     }
     if (voicechat && interactive){
-        std::thread sayThread(sayInBackground, output);
-        sayThread.detach();
+        sayInBackground(output);
     }
 
     if (interactive) std::cout << std::endl;

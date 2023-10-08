@@ -6,7 +6,8 @@
 #include "matmul.h"
 
 #define BLK_SIZE 16
-#define NUM_THREAD 4
+// #define NUM_THREAD 8
+static int NUM_THREAD = 8;
 
 // include all ops
 #include "ops/BMM_F32T.h"

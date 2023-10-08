@@ -5,6 +5,9 @@ https://github.com/ggerganov/llama.cpp
 
 */
 
+#ifndef GENERATE_H
+#define GENERATE_H
+
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -24,7 +27,8 @@ https://github.com/ggerganov/llama.cpp
 #include "operators.h"
 #include "utils.h"
 
-inline std::mt19937 OPT_rng;
+// inline std::mt19937 OPT_rng;  // inline variables are only available with ‘-std=c++17’ or ‘-std=gnu++17’
+static std::mt19937 OPT_rng;
 
 typedef struct OPT_token_data {
     int id;       // token id
@@ -39,14 +43,14 @@ typedef struct OPT_token_data_array {
 } OPT_token_data_array;
 
 struct opt_params {
-    int32_t seed = -1;        // RNG seed
-    int32_t n_threads = 1;    // TODO: fix this
-    int32_t n_predict = 128;  // new tokens to predict
-    int32_t n_parts = -1;     // amount of model parts (-1 = determine from model dimensions)
-    int32_t n_ctx = 512;      // context size
-    int32_t n_batch = 512;    // batch size for prompt processing (must be >=32 to use BLAS)
-    int32_t n_keep = 0;       // number of tokens to keep from initial prompt
-    int32_t n_vocab = 50272;  // vocabulary size
+    int32_t seed = -1;                          // RNG seed
+    int32_t n_threads = 1;                      // TODO: fix this
+    int32_t n_predict = 128;                    // new tokens to predict
+    int32_t n_parts = -1;                       // amount of model parts (-1 = determine from model dimensions)
+    int32_t n_ctx = 512;                        // context size
+    int32_t n_batch = 512;                      // batch size for prompt processing (must be >=32 to use BLAS)
+    int32_t n_keep = 0;                         // number of tokens to keep from initial prompt
+    int32_t n_vocab = 50272;                    // vocabulary size
 
     // sampling parameters
     std::unordered_map<int, float> logit_bias;  // logit bias for specific tokens
@@ -92,8 +96,10 @@ void sample_top_p(OPT_token_data_array* candidates, float p, size_t min_keep);
 
 std::vector<int> OPTGenerate(void* model, int model_type, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder* encoder = NULL,
-                             bool interactive = false);
+                             bool interactive = false, bool voicechat = false);
 
 enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4 };
 std::string LLaMAGenerate(std::string param_path, void* model, int model_type, std::string text, const struct opt_params generation_config,
                           std::string voc_path, bool interactive, bool voicechat);
+
+#endif  // GENERATE_H

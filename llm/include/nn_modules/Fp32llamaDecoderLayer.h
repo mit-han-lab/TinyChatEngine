@@ -42,6 +42,7 @@ class Fp32llamaDecoderLayer {
     struct Fp32llamaDecoderLayer_output forward(const struct Fp32llamaDecoderLayer_input &input);
 
     int embed_dim, num_attention_heads, hidden_dim, layer_idx;
+    float rms_norm_eps;
     LlamaRMSNorm input_layernorm, post_attention_layernorm;
     Linear_FP gate_proj, down_proj, up_proj;
     Fp32llamaAttention attn;
