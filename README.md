@@ -43,6 +43,12 @@ For MacOS, install boost and llvm by
 brew install boost
 brew install llvm
 ```
+For Building httpchat
+
+```bash
+brew install cpp-httplib
+```
+
 
 For M1/M2 users, install Xcode from AppStore to enable the metal compiler for GPU support.
 
