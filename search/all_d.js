@@ -8,7 +8,7 @@ var searchData=
   ['library_5',['TinyChatEngine: On-Device LLM Inference Library',['../index.html#autotoc_md0',1,'']]],
   ['linear_5ffp_6',['Linear_FP',['../classLinear__FP.html',1,'']]],
   ['linear_5ffp_5fint4_7',['Linear_FP_int4',['../classLinear__FP__int4.html',1,'']]],
-  ['llama2_207b_20chat_20with_20tinychatengine_8',['Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine',['../index.html#autotoc_md10',1,'']]],
+  ['llama2_207b_20chat_20with_20tinychatengine_8',['Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine',['../index.html#autotoc_md11',1,'']]],
   ['llama_5ffile_9',['llama_file',['../structllama__file.html',1,'']]],
   ['llama_5fsp_5fbigram_10',['llama_sp_bigram',['../structllama__sp__bigram.html',1,'']]],
   ['llama_5fsp_5fsymbol_11',['llama_sp_symbol',['../structllama__sp__symbol.html',1,'']]],
