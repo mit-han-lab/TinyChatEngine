@@ -146,8 +146,8 @@ int main(int argc, char* argv[]) {
 
         struct opt_params generation_config;
         generation_config.n_predict = 512;
-        generation_config.repeat_penalty = 1.25f;
-        generation_config.temp = 0.1f;
+        generation_config.repeat_penalty = 1.1f;
+        generation_config.temp = 0.2f;
         if(isCodeLLaMA(target_model)) {
             generation_config.n_vocab = 32016;
         }
