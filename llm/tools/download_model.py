@@ -31,12 +31,12 @@ models = {
         "md5sum": "59b73efa638be4131e5fd27c3fdee597",
     },
     "CodeLLaMA_7B_Instruct_fp32": {
-        "url": "",
-        "md5sum": "",
+        "url": "https://www.dropbox.com/scl/fi/fo79fi1q395rfb8lu4bef/CodeLLaMA_7B_Instruct.zip?rlkey=pw1ue4t4j85hogp3yf5yw9pig&dl=1",
+        "md5sum": "6ca1682140cd8f91316a8b5b7dee6cd4",
     },
     "CodeLLaMA_13B_Instruct_fp32": {
-        "url": "",
-        "md5sum": "",
+        "url": "https://www.dropbox.com/scl/fi/gtor1fw1mmol8agqy178j/CodeLLaMA_13B_Instruct.zip?rlkey=0e9zh1cptwjb67yaez0aorou9&dl=1",
+        "md5sum": "ebcb20dec3bd95a7e5a6eb93ed4c178d",
     },
     "opt_6.7B_fp32": {
         "url": "https://www.dropbox.com/scl/fi/mwy0uw51anodezy9rtcf1/OPT_6.7B.zip?rlkey=f8mtjg5eesuflrz3t5och4219&dl=1",
