@@ -180,7 +180,7 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
 
         if (is_codellama && new_prompt) {
             new_prompt = false;
-            continue;
+            // continue;
         }
 
         last_n_tokens.erase(last_n_tokens.begin());
