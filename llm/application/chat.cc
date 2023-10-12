@@ -145,13 +145,14 @@ int main(int argc, char* argv[]) {
         #endif
 
         struct opt_params generation_config;
-        generation_config.n_vocab = 32000;
         generation_config.n_predict = 512;
-        generation_config.repeat_penalty = 1.25f;
-        generation_config.temp = 0.1f;
+        generation_config.repeat_penalty = 1.1f;
+        generation_config.temp = 0.2f;
         if(isCodeLLaMA(target_model)) {
-            generation_config.temp = 0.2f;
-            generation_config.top_p = 0.95f;
+            generation_config.n_vocab = 32016;
+        }
+        else {
+            generation_config.n_vocab = 32000;
         }
 
         bool first_prompt = true;
@@ -168,8 +169,15 @@ int main(int argc, char* argv[]) {
                 if (instruct) {
                     std::cout << "ASSISTANT: " << std::endl;
                     if (isCodeLLaMA(target_model)) {
-                        input = "<s>[INST] " + input + " [/INST]\n";
+                        if (first_prompt) {
+                            input = "<s>[INST] " + input + " [/INST] ";
+                            first_prompt = false;
+                        }
+                        else {
+                            input = " </s> <s>[INST] " + input + " [/INST] ";
+                        }
                     }
+
                 }
                 else {
                     if (isCodeLLaMA(target_model)) {
@@ -202,7 +210,13 @@ int main(int argc, char* argv[]) {
                 if (instruct) {
                     std::cout << "ASSISTANT: " << std::endl;
                     if (isCodeLLaMA(target_model)) {
-                        input = "<s>[INST] " + input + " [/INST]";
+                        if (first_prompt) {
+                            input = "<s>[INST] " + input + " [/INST] ";
+                            first_prompt = false;
+                        }
+                        else {
+                            input = " </s> <s>[INST] " + input + " [/INST] ";
+                        }
                     }
                 }
                 else {

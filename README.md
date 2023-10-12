@@ -33,6 +33,13 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 ![overview](assets/figures/overview.png)
 
 
+## News
+
+- **(2023/10)** We extended the support for the coding assistant [Code Llama](#download-and-deploy-models-from-our-model-zoo). Feel free to check out.
+- **(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability >= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!
+- **(2023/09)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and [step-by-step guide](llm/application/README.md) to deploy it on your device!
+
+
 ## Prerequisites
 
 ### MacOS
@@ -220,6 +227,38 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
             <td> ✅ </td>
         </tr>
         <tr>
+            <td rowspan="2">CodeLLaMA_13B_Instruct</td>
+            <td> fp32</td>
+            <td> CodeLLaMA_13B_Instruct_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td>int4</td>
+            <td>CodeLLaMA_13B_Instruct_awq_int4</td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+        </tr>
+        <tr>
+            <td rowspan="2">CodeLLaMA_7B_Instruct</td>
+            <td> fp32</td>
+            <td> CodeLLaMA_7B_Instruct_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td>int4</td>
+            <td>CodeLLaMA_7B_Instruct_awq_int4</td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+        </tr>
+        <tr>
             <td rowspan="3">opt-6.7B</td>
             <td>fp32</td>
             <td>opt_6.7B_fp32</td>
@@ -314,13 +353,15 @@ To deploy a quantized model with TinyChatEngine, compile and run the chat progra
 - On CPU platforms
 ```bash
 make chat -j
-./chat <model_name> <precision> <num_threads>
+# ./chat <model_name> <precision> <num_threads>
+./chat LLaMA2_7B_chat INT4 8
 ```
 
 - On GPU platforms
 ```bash
 make chat -j
-./chat <model_name> <precision>
+# ./chat <model_name> <precision>
+./chat LLaMA2_7B_chat INT4
 ```
 
 
