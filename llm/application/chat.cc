@@ -169,8 +169,15 @@ int main(int argc, char* argv[]) {
                 if (instruct) {
                     std::cout << "ASSISTANT: " << std::endl;
                     if (isCodeLLaMA(target_model)) {
-                        input = "<s>[INST] " + input + " [/INST]";
+                        if (first_prompt) {
+                            input = "<s>[INST] " + input + " [/INST] ";
+                            first_prompt = false;
+                        }
+                        else {
+                            input = " </s> <s>[INST] " + input + " [/INST] ";
+                        }
                     }
+
                 }
                 else {
                     if (isCodeLLaMA(target_model)) {
@@ -203,7 +210,13 @@ int main(int argc, char* argv[]) {
                 if (instruct) {
                     std::cout << "ASSISTANT: " << std::endl;
                     if (isCodeLLaMA(target_model)) {
-                        input = "<s>[INST] " + input + " [/INST]";
+                        if (first_prompt) {
+                            input = "<s>[INST] " + input + " [/INST] ";
+                            first_prompt = false;
+                        }
+                        else {
+                            input = " </s> <s>[INST] " + input + " [/INST] ";
+                        }
                     }
                 }
                 else {
