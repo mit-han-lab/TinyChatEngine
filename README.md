@@ -8,10 +8,44 @@ This is enabled by LLM model compression technique: [SmoothQuant](https://github
 
 
 ### Demo on an NVIDIA GeForce RTX 4070 laptop:
-<img src="assets/figures/chat_demo_gpu.gif" alt="chat_demo_gpu" width="49%"/> <img src="assets/figures/coding_demo_gpu.gif" alt="coding_demo_gpu" width="49%"/>
+<table>
+  <tr>
+    <td>
+      <img src="assets/figures/chat_demo_gpu.gif" alt="chat_demo_gpu" width="100%"/> 
+    </td>
+    <td>
+      <img src="assets/figures/coding_demo_gpu.gif" alt="coding_demo_gpu" width="100%"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      LLaMA Chat
+    </td>
+    <td align="center">
+      Code LLaMA
+    </td>
+  </tr>
+</table>
 
 ### Demo on an Apple MacBook Pro (M1, 2021):
-<img src="assets/figures/chat_demo_m1.gif" alt="chat_demo_m1" width="49%"/> <img src="assets/figures/coding_demo_m1.gif" alt="coding_demo_m1" width="49%"/>
+<table>
+  <tr>
+    <td>
+      <img src="assets/figures/chat_demo_m1.gif" alt="chat_demo_m1" width="100%"/> 
+    </td>
+    <td>
+      <img src="assets/figures/coding_demo_m1.gif" alt="coding_demo_m1" width="100%"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      LLaMA Chat
+    </td>
+    <td align="center">
+      Code LLaMA
+    </td>
+  </tr>
+</table>
 
 Feel free to check out our [slides](assets/slides.pdf) for more details!
 
