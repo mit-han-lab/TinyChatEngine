@@ -6,6 +6,7 @@ Running large language models (LLMs) on the edge is useful: copilot services (co
 
 This is enabled by LLM model compression technique: [SmoothQuant](https://github.com/mit-han-lab/smoothquant) and [AWQ (Activation-aware Weight Quantization)](https://github.com/mit-han-lab/llm-awq), co-designed with TinyChatEngine that implements the compressed low-precision model. 
 
+Feel free to check out our [slides](assets/slides.pdf) for more details!
 
 ### Demo on an NVIDIA GeForce RTX 4070 laptop:
 <table>
@@ -46,8 +47,6 @@ This is enabled by LLM model compression technique: [SmoothQuant](https://github
     </td>
   </tr>
 </table>
-
-Feel free to check out our [slides](assets/slides.pdf) for more details!
 
 
 ## Overview
