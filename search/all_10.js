@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['on_20an_20apple_20macbook_20air_20m1_202020_20_3a_0',['Demo on an Apple MacBook Air (M1, 2020):',['../index.html#autotoc_md2',1,'']]],
+  ['on_20an_20apple_20macbook_20pro_20m1_202021_20_3a_0',['Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
   ['on_20an_20nvidia_20geforce_20rtx_204070_20laptop_3a_1',['Demo on an NVIDIA GeForce RTX 4070 laptop:',['../index.html#autotoc_md1',1,'']]],
   ['on_20device_20llm_20inference_20library_2',['TinyChatEngine: On-Device LLM Inference Library',['../index.html#autotoc_md0',1,'']]],
   ['opt_5fparams_3',['opt_params',['../structopt__params.html',1,'']]],

@@ -4,6 +4,7 @@ var searchData=
   ['pack_5fq8_5ftensor_1',['pack_q8_tensor',['../structpack__q8__tensor.html',1,'']]],
   ['pair_5fhash_2',['pair_hash',['../structpair__hash.html',1,'']]],
   ['prerequisites_3',['Prerequisites',['../index.html#autotoc_md7',1,'']]],
-  ['profiler_4',['Profiler',['../classProfiler.html',1,'']]],
-  ['projects_5',['Related Projects',['../index.html#autotoc_md18',1,'']]]
+  ['pro_20m1_202021_20_3a_4',['Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
+  ['profiler_5',['Profiler',['../classProfiler.html',1,'']]],
+  ['projects_6',['Related Projects',['../index.html#autotoc_md18',1,'']]]
 ];
