@@ -6,6 +6,8 @@
 
 #include "../matmul.h"
 
+#include "pthread_pool.h"
+
 struct int4_thread_args {
     int start_j, end_j;
     const struct matmul_params *params;
@@ -175,7 +177,7 @@ static inline __m128i packNibbles( __m256i bytes )
 //     acc0 = _mm256_fmadd_ps(intermediate, v_s, acc0);
 //     acc0 = _mm256_fmadd_ps(intermediate2, v_s2, acc0);
 // }
-static inline void merge_int4_int8_dot_product_unroll2block(float *s, float *s_a, uint8_t *w_ptr, __m256i *x_ptr,
+inline static void merge_int4_int8_dot_product_unroll2block(float *s, float *s_a, uint8_t *w_ptr, __m256i *x_ptr,
                                                             __m256 &acc0) {
     __m256 v_s = _mm256_set1_ps(s[0] * s_a[0]);
     __m256 v_s2 = _mm256_set1_ps(s[1] * s_a[1]);
@@ -218,7 +220,7 @@ static inline void merge_int4_int8_dot_product_unroll2block(float *s, float *s_a
     acc0 = _mm256_fmadd_ps(intermediate2, v_s2, acc0);
 }
 
-static void *fast_int8_int4_zp_no_offset_over_column_unroll2block(void *args) {
+inline static void *fast_int8_int4_zp_no_offset_over_column_unroll2block(void *args) {
     int i, j, k;
     struct int4_thread_args *mat_args = (struct int4_thread_args *)args;
     const struct matmul_params *params = mat_args->params;
@@ -324,25 +326,33 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
     // const int num_thread = 4;
     const int num_thread = params->opt_params.num_thread;
     int i, j, k;
-    pthread_t thread_pool[num_thread];
+    // pthread_t thread_pool[num_thread];
     struct int4_thread_args threads_args[num_thread];
     assert(params->block_size == 32);  // support block size 32 for now
     assert(params->A.column % (params->block_size * 2) == 0);
-    assert((params->C.column % (num_thread * 2)) == 0);  // support block size 32 for now
+    // assert((params->C.column % (num_thread * 2)) == 0);  // support block size 32 for now
 
     // quantize A
     assert((params->A.column * params->A.row) % params->block_size == 0);
     quantize_fp_to_int8_block_size32(params->A.data_ptr, params->A.column * params->A.row, params->A.int8_data_ptr,
                                      params->A_scales);
 
+    static void *pool = pool_start(fast_int8_int4_zp_no_offset_over_column_unroll2block, num_thread);
+
     // Thread creation
     for (j = 0; j < num_thread; j++) {
         threads_args[j].start_j = j * (params->C.column / num_thread);
-        threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
+        if (j == num_thread - 1) {
+            threads_args[j].end_j = params->C.column;
+        } else {
+            threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
+        }
         threads_args[j].params = params;
-        pthread_create(&thread_pool[j], NULL, fast_int8_int4_zp_no_offset_over_column_unroll2block, &threads_args[j]);
+        // pthread_create(&thread_pool[j], NULL, fast_int8_int4_zp_no_offset_over_column_unroll2block, &threads_args[j]);
+        pool_enqueue(pool, &threads_args[j], NULL);
     }
-    // Join threads
-    for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
+    // // Join threads
+    // for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
+    pool_wait(pool);
 };
 }  // namespace matmul

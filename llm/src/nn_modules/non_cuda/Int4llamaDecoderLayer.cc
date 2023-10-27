@@ -30,12 +30,17 @@ static void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
     PROFILE_END("Int4llamaDecoderLayer::add");
 }
 
-static void SiLuMul(Matrix3D<float> a, Matrix3D<float> b) {
+inline static float Silu(float x) {
+    return x / (1.0f + expf(-x));
+}
+
+inline static void SiLuMul(Matrix3D<float> a, Matrix3D<float> b) {
     PROFILE_START("Int4llamaDecoderLayer::MulSiLu");
     for (int i = 0; i < a.length(); i++) {
-        float v = a.m_data[i];
-        float silu_v = v * (1.0 / (1.0 + exp(-1 * v)));
-        a.m_data[i] = silu_v * b.m_data[i];
+        // float v = a.m_data[i];
+        // float silu_v = v * (1.0 / (1.0 + exp(-1 * v)));
+        // a.m_data[i] = silu_v * b.m_data[i];
+        a.m_data[i] = Silu(a.m_data[i]) * b.m_data[i];
     }
     PROFILE_END("Int4llamaDecoderLayer::MulSiLu");
 }
@@ -81,18 +86,24 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
     // Gate proj: embedding -> hidden_dim
     Matrix3D<float> gate_proj(gate_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                               this->hidden_dim);
+    PROFILE_START("Int4llamaDecoderLayer::gate_proj");
     this->gate_proj.forward(post_attention_layernorm, gate_proj);
+    PROFILE_END("Int4llamaDecoderLayer::gate_proj");
 
     // up proj: embedding -> hidden_dim
     Matrix3D<float> up_proj(up_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
+    PROFILE_START("Int4llamaDecoderLayer::up_proj");
     this->up_proj.forward(post_attention_layernorm, up_proj);
+    PROFILE_END("Int4llamaDecoderLayer::up_proj");
 
     // silu
     SiLuMul(gate_proj, up_proj);
 
     // down proj: hidden_dim -> embedding
     Matrix3D<float> down_proj(down_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->embed_dim);
+    PROFILE_START("Int4llamaDecoderLayer::down_proj");
     this->down_proj.forward(gate_proj, down_proj);
+    PROFILE_END("Int4llamaDecoderLayer::down_proj");
 
     // Residual add
     add(residual_add, down_proj, residual_add);
