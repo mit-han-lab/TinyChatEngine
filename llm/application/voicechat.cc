@@ -1,11 +1,15 @@
 #include <iostream>
 #include <map>
+#include <string>
+
 
 #include "Generate.h"
 
 std::map<std::string, int> model_config = {
     {"OPT_125m", OPT_125M},       {"OPT_1.3B", OPT_1_3B}, {"OPT_6.7B", OPT_6_7B},         {"LLaMA_7B", LLaMA_7B},
-    {"LLaMA2_7B_chat", LLaMA_7B}, {"7b", LLaMA_7B},       {"LLaMA2_13B_chat", LLaMA_13B}, {"13b", LLaMA_13B}};
+    {"LLaMA2_7B_chat", LLaMA_7B}, {"7b", LLaMA_7B},       {"LLaMA2_13B_chat", LLaMA_13B}, {"13b", LLaMA_13B},
+    {"CodeLLaMA_7B_Instruct", CodeLLaMA_7B},   {"CodeLLaMA_13B_Instruct", CodeLLaMA_13B}};
+
 
 std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"},
                                                  {"OPT_1.3B", "models/OPT_1.3B"},
@@ -17,7 +21,7 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
                                                  {"13b", "models/LLaMA_13B_2_chat"}};
 
 std::map<std::string, int> data_format_list = {
-    {"FP32", FP32}, {"INT8", QINT8}, {"INT4", INT4},
+    {"FP32", FP32}, {"INT8", QINT8}, {"INT4", INT4}, {"int4", INT4}, {"fp32", FP32},
 };
 
 bool isLLaMA(std::string s) {
@@ -123,7 +127,6 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::string input;
                 std::string output;
-                std::string model_input;
 
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
@@ -135,7 +138,7 @@ int main(int argc, char* argv[]) {
                 if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
                     break;
 
-                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
                 LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, true);
             }
         } else if (format_id == INT4) {
@@ -146,8 +149,7 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::string input;
                 std::string output;
-                std::string model_input;
-
+                
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
@@ -159,8 +161,8 @@ int main(int argc, char* argv[]) {
                 if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
                     break;
 
-                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
-                LLaMAGenerate(m_path, &model, LLaMA_INT4, model_input, generation_config, "models/llama_vocab.bin",
+                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin",
                                        true, true);
             }
         } else {
@@ -194,7 +196,6 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::string input;
                 std::string output;
-                std::string model_input;
 
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
@@ -208,7 +209,7 @@ int main(int argc, char* argv[]) {
                 if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
                     break;
 
-                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
                 OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, true);
             }
 
@@ -219,7 +220,6 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::string input;
                 std::string output;
-                std::string model_input;
 
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
@@ -233,7 +233,7 @@ int main(int argc, char* argv[]) {
                 if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
                     break;
 
-                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
                 OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, true);
             }
         } else if (format_id == INT4) {
@@ -243,7 +243,6 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::string input;
                 std::string output;
-                std::string model_input;
 
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
@@ -257,7 +256,7 @@ int main(int argc, char* argv[]) {
                 if (input == " quit" || input == " Quit" || input == " Quit." || input == " quit.")
                     break;
                     
-                model_input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
                 OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, true);
             }
         }

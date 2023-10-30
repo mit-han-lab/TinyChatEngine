@@ -11,6 +11,7 @@
 // Function to speak in the background
 void sayInBackground(const std::string& text) {
     std::string command = "./application/sts_utils/speak \"" + text + "\"";
+    std::cout << "Running: " << command << std::endl;
     int result = std::system(command.c_str());
     (void)result;
 }
@@ -248,7 +249,8 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
 
     if (interactive) std::cout << std::endl;
 
-    if (!voicechat) Profiler::getInstance().report_internal();
+    // if (!voicechat) Profiler::getInstance().report_internal();
+    Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
     return output;
 }

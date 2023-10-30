@@ -52,7 +52,7 @@ index c598633..b342f16 100644
  
      m_sample_rate = capture_spec_obtained.freq;
 diff --git a/examples/stream/stream.cpp b/examples/stream/stream.cpp
-index 4c7f7d1..53304a6 100644
+index 4c7f7d1..9dd1e0e 100644
 --- a/examples/stream/stream.cpp
 +++ b/examples/stream/stream.cpp
 @@ -171,7 +171,7 @@ int main(int argc, char ** argv) {
@@ -125,7 +125,7 @@ index 4c7f7d1..53304a6 100644
                  }
  
                  const int n_segments = whisper_full_n_segments(ctx);
-@@ -349,20 +342,10 @@ int main(int argc, char ** argv) {
+@@ -349,20 +342,11 @@ int main(int argc, char ** argv) {
                      } else {
                          const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
                          const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
@@ -140,6 +140,7 @@ index 4c7f7d1..53304a6 100644
 -
 -                        printf("%s", output.c_str());
 -                        fflush(stdout);
++                        text += 1;
 +                        printf ("%s\n", text);
  
                          if (params.fname_out.length() > 0) {
@@ -148,7 +149,7 @@ index 4c7f7d1..53304a6 100644
                          }
                      }
                  }
-@@ -372,8 +355,7 @@ int main(int argc, char ** argv) {
+@@ -372,8 +356,7 @@ int main(int argc, char ** argv) {
                  }
  
                  if (use_vad){
