@@ -174,7 +174,7 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
     assert(x.m_dim_z / 2 == weight.m_dim_z);
 
     assert(output.m_dim_z > num_thread);
-    assert(output.m_dim_z % (num_thread * 2) == 0);  // unroll column by 2
+    // assert(output.m_dim_z % (num_thread * 2) == 0);  // unroll column by 2
 
     struct matmul_params params;
     params.A.row = x.m_dim_y;

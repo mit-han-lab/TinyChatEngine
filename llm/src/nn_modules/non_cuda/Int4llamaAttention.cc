@@ -288,7 +288,9 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     
     // Query states
     Matrix3D<float> query_states_unshape(query_states_unshape_arr, b, sqlen, embed_dim);
+    PROFILE_START(profile_name + "::q_proj");
     this->q_proj.forward(input.hidden_states, query_states_unshape);
+    PROFILE_END(profile_name + "::q_proj");
     Matrix3D<float> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(query_states_unshape, query_states, sqlen);
 
@@ -306,13 +308,17 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
 
     // Key states
     Matrix3D<float> key_states_unshape(key_states_unshape_arr, b, sqlen, embed_dim);
+    PROFILE_START(profile_name + "::k_proj");
     this->k_proj.forward(input.hidden_states, key_states_unshape);
+    PROFILE_END(profile_name + "::k_proj");
     Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(key_states_unshape, key_states, sqlen);
 
     // Value states
     Matrix3D<float> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
+    PROFILE_START(profile_name + "::v_proj");
     this->v_proj.forward(input.hidden_states, value_states_unshape);
+    PROFILE_END(profile_name + "::v_proj");
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(value_states_unshape, value_states, sqlen);
 
@@ -381,7 +387,9 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
 
     // Output projection
     Matrix3D<float> attn_output_fp(attn_output_fp_arr, 1, sqlen, this->num_heads * this->head_dim);
+    PROFILE_START(profile_name + "::o_proj");
     this->o_proj.forward(attn_output_transpose, attn_output_fp);
+    PROFILE_END(profile_name + "::o_proj");
 
     // Output assignment
     output.attn_output = attn_output_fp;

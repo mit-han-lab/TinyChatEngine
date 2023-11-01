@@ -9,6 +9,13 @@
 #include "../matmul.h"
 #include "common.h"
 
+#include "pthread_pool.h"
+
+struct a8w4_thread_args {
+    int start_j, end_j;
+    const struct matmul_params* params;
+};
+
 // Most of this function is from llama.cpp
 void quantize_fp32_to_int8(float* A, int8_t* qA, float* sA, int size, int block_size) {
     assert(size % block_size == 0);
@@ -159,11 +166,6 @@ void matmul_int8_int4_no_offset(struct matmul_params* params) {
     }
 }
 
-struct a8w4_thread_args {
-    int start_j, end_j;
-    const struct matmul_params* params;
-};
-
 static void* matmul_int8_int4_no_offset_over_column(void* args) {
     struct a8w4_thread_args* mat_args = (struct a8w4_thread_args*)args;
     const struct matmul_params* params = mat_args->params;
@@ -230,7 +232,7 @@ static void* matmul_int8_int4_no_offset_over_column(void* args) {
     return NULL;
 }
 
-static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
+inline static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
     struct a8w4_thread_args* mat_args = (struct a8w4_thread_args*)args;
     const struct matmul_params* params = mat_args->params;
     int n = params->C.column, m = params->C.row, k = params->A.column, block_size = params->block_size;
@@ -279,6 +281,46 @@ static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
                 int8x16_t w3_low = vreinterpretq_s8_u8(vandq_u8(w3, mask_low4bit));
                 int8x16_t w3_high = vreinterpretq_s8_u8(vshrq_n_u8(w3, 4));
 
+                // // Sequential data
+                // uint8x8_t hi_mask = vdup_n_u8(0xF0);  // 11110000
+                // uint8x8_t lo_mask = vdup_n_u8(0x0F);  // 00001111
+                // // Split the data into two 64-bit halves
+                // uint8x8_t w0_lower_half = vget_low_u8(w0);
+                // uint8x8_t w0_upper_half = vget_high_u8(w0);
+                // uint8x8_t w0_low_hi_nibbles = vshr_n_u8(vand_u8(w0_lower_half, hi_mask), 4);
+                // uint8x8_t w0_low_lo_nibbles = vand_u8(w0_lower_half, lo_mask);
+                // int8x16_t w0_low = vreinterpretq_s8_u8(vcombine_u8(w0_low_lo_nibbles, w0_low_hi_nibbles));
+                // uint8x8_t w0_high_hi_nibbles = vshr_n_u8(vand_u8(w0_upper_half, hi_mask), 4);
+                // uint8x8_t w0_high_lo_nibbles = vand_u8(w0_upper_half, lo_mask);
+                // int8x16_t w0_high = vreinterpretq_s8_u8(vcombine_u8(w0_high_lo_nibbles, w0_high_hi_nibbles));
+
+                // uint8x8_t w1_lower_half = vget_low_u8(w1);
+                // uint8x8_t w1_upper_half = vget_high_u8(w1);
+                // uint8x8_t w1_low_hi_nibbles = vshr_n_u8(vand_u8(w1_lower_half, hi_mask), 4);
+                // uint8x8_t w1_low_lo_nibbles = vand_u8(w1_lower_half, lo_mask);
+                // int8x16_t w1_low = vreinterpretq_s8_u8(vcombine_u8(w1_low_lo_nibbles, w1_low_hi_nibbles));
+                // uint8x8_t w1_high_hi_nibbles = vshr_n_u8(vand_u8(w1_upper_half, hi_mask), 4);
+                // uint8x8_t w1_high_lo_nibbles = vand_u8(w1_upper_half, lo_mask);
+                // int8x16_t w1_high = vreinterpretq_s8_u8(vcombine_u8(w1_high_lo_nibbles, w1_high_hi_nibbles));
+
+                // uint8x8_t w2_lower_half = vget_low_u8(w2);
+                // uint8x8_t w2_upper_half = vget_high_u8(w2);
+                // uint8x8_t w2_low_hi_nibbles = vshr_n_u8(vand_u8(w2_lower_half, hi_mask), 4);
+                // uint8x8_t w2_low_lo_nibbles = vand_u8(w2_lower_half, lo_mask);
+                // int8x16_t w2_low = vreinterpretq_s8_u8(vcombine_u8(w2_low_lo_nibbles, w2_low_hi_nibbles));
+                // uint8x8_t w2_high_hi_nibbles = vshr_n_u8(vand_u8(w2_upper_half, hi_mask), 4);
+                // uint8x8_t w2_high_lo_nibbles = vand_u8(w2_upper_half, lo_mask);
+                // int8x16_t w2_high = vreinterpretq_s8_u8(vcombine_u8(w2_high_lo_nibbles, w2_high_hi_nibbles));
+
+                // uint8x8_t w3_lower_half = vget_low_u8(w3);
+                // uint8x8_t w3_upper_half = vget_high_u8(w3);
+                // uint8x8_t w3_low_hi_nibbles = vshr_n_u8(vand_u8(w3_lower_half, hi_mask), 4);
+                // uint8x8_t w3_low_lo_nibbles = vand_u8(w3_lower_half, lo_mask);
+                // int8x16_t w3_low = vreinterpretq_s8_u8(vcombine_u8(w3_low_lo_nibbles, w3_low_hi_nibbles));
+                // uint8x8_t w3_high_hi_nibbles = vshr_n_u8(vand_u8(w3_upper_half, hi_mask), 4);
+                // uint8x8_t w3_high_lo_nibbles = vand_u8(w3_upper_half, lo_mask);
+                // int8x16_t w3_high = vreinterpretq_s8_u8(vcombine_u8(w3_high_lo_nibbles, w3_high_hi_nibbles));
+
                 // apply offset
                 w0_low = vsubq_s8(w0_low, offsets);
                 w0_high = vsubq_s8(w0_high, offsets);
@@ -326,6 +368,111 @@ static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
 
     return NULL;
 }
+// inline static void* matmul_int8_int4_no_offset_over_column_unroll128(void* args) {
+//     struct a8w4_thread_args* mat_args = (struct a8w4_thread_args*)args;
+//     const struct matmul_params* params = mat_args->params;
+//     int n = params->C.column, m = params->C.row, k = params->A.column, block_size = params->block_size;
+//     const int num_block = k / block_size;
+
+//     for (int i = 0; i < m; i++) {
+//         for (int j = mat_args->start_j; j < mat_args->end_j; j++) {
+//             float32x4_t sumv0 = vdupq_n_f32(0.0f);
+//             float32x4_t sumv1 = vdupq_n_f32(0.0f);
+//             float32x4_t sumv2 = vdupq_n_f32(0.0f);
+//             float32x4_t sumv3 = vdupq_n_f32(0.0f);
+//             float32x4_t sumv4 = vdupq_n_f32(0.0f);
+//             float32x4_t sumv5 = vdupq_n_f32(0.0f);
+//             float32x4_t sumv6 = vdupq_n_f32(0.0f);
+//             float32x4_t sumv7 = vdupq_n_f32(0.0f);
+//             const unsigned char* w_start = &params->B.int4_data_ptr[j * k / 2];
+//             const signed char* a_start = &params->A.int8_data_ptr[i * k];
+//             float* s_a = &params->A_scales[i * k / 32];
+//             float* s_w = &params->scales[j * k / 32];
+
+//             const uint8x16_t mask_low4bit = vdupq_n_u8(0xf);
+//             const int8x16_t offsets = vdupq_n_s8(8);
+//             for (int q = 0; q < num_block; q += 8) {
+//                 int32x4_t int_sum0 = vdupq_n_s32(0);
+//                 int32x4_t int_sum1 = vdupq_n_s32(0);
+//                 int32x4_t int_sum2 = vdupq_n_s32(0);
+//                 int32x4_t int_sum3 = vdupq_n_s32(0);
+//                 int32x4_t int_sum4 = vdupq_n_s32(0);
+//                 int32x4_t int_sum5 = vdupq_n_s32(0);
+//                 int32x4_t int_sum6 = vdupq_n_s32(0);
+//                 int32x4_t int_sum7 = vdupq_n_s32(0);
+//                 float s_0 = *s_a++ * *s_w++;
+//                 float s_1 = *s_a++ * *s_w++;
+//                 float s_2 = *s_a++ * *s_w++;
+//                 float s_3 = *s_a++ * *s_w++;
+
+
+//                 const uint8x16_t w0 = vld1q_u8(w_start);       // 32 4bit weight
+//                 const uint8x16_t w1 = vld1q_u8(w_start + 16);  // 32 4bit weight
+//                 const uint8x16_t w2 = vld1q_u8(w_start + 32);  // 32 4bit weight
+//                 const uint8x16_t w3 = vld1q_u8(w_start + 48);  // 32 4bit weight
+//                 w_start += 64;
+
+//                 // Quantization Method QM_ARM, convert 64 4-bit to 64 8-bit
+//                 // sequential: (0, 1), (2, 3), (4, 5), (6, 7)... : 128 bit
+//                 // expected layout of inB: (0, 16), (1, 17), (2, 18), (3, 19)...
+//                 // low; (0, 0), (1, 0), (2, 0), (3, 0) ...
+//                 // high: (16, 0), (17, 0), (18, 0), (19, 0) ...
+//                 int8x16_t w0_low = vreinterpretq_s8_u8(vandq_u8(w0, mask_low4bit));
+//                 int8x16_t w0_high = vreinterpretq_s8_u8(vshrq_n_u8(w0, 4));
+//                 int8x16_t w1_low = vreinterpretq_s8_u8(vandq_u8(w1, mask_low4bit));
+//                 int8x16_t w1_high = vreinterpretq_s8_u8(vshrq_n_u8(w1, 4));
+//                 int8x16_t w2_low = vreinterpretq_s8_u8(vandq_u8(w2, mask_low4bit));
+//                 int8x16_t w2_high = vreinterpretq_s8_u8(vshrq_n_u8(w2, 4));
+//                 int8x16_t w3_low = vreinterpretq_s8_u8(vandq_u8(w3, mask_low4bit));
+//                 int8x16_t w3_high = vreinterpretq_s8_u8(vshrq_n_u8(w3, 4));
+
+//                 // apply offset
+//                 w0_low = vsubq_s8(w0_low, offsets);
+//                 w0_high = vsubq_s8(w0_high, offsets);
+//                 w1_low = vsubq_s8(w1_low, offsets);
+//                 w1_high = vsubq_s8(w1_high, offsets);
+//                 w2_low = vsubq_s8(w2_low, offsets);
+//                 w2_high = vsubq_s8(w2_high, offsets);
+//                 w3_low = vsubq_s8(w3_low, offsets);
+//                 w3_high = vsubq_s8(w3_high, offsets);
+
+//                 // load 64 8-bit activation
+//                 const int8x16_t a0 = vld1q_s8(a_start);
+//                 const int8x16_t a1 = vld1q_s8(a_start + 16);
+//                 const int8x16_t a2 = vld1q_s8(a_start + 32);
+//                 const int8x16_t a3 = vld1q_s8(a_start + 48);
+//                 const int8x16_t a4 = vld1q_s8(a_start + 64);
+//                 const int8x16_t a5 = vld1q_s8(a_start + 80);
+//                 const int8x16_t a6 = vld1q_s8(a_start + 96);
+//                 const int8x16_t a7 = vld1q_s8(a_start + 112);
+//                 a_start += 128;
+
+//                 // dot product into int32x4_t
+//                 int_sum0 = my_vdotq_s32(int_sum0, w0_low, a0);
+//                 int_sum0 = my_vdotq_s32(int_sum0, w0_high, a1);
+//                 int_sum1 = my_vdotq_s32(int_sum1, w1_low, a2);
+//                 int_sum1 = my_vdotq_s32(int_sum1, w1_high, a3);
+//                 int_sum2 = my_vdotq_s32(int_sum2, w2_low, a4);
+//                 int_sum2 = my_vdotq_s32(int_sum2, w2_high, a5);
+//                 int_sum3 = my_vdotq_s32(int_sum3, w3_low, a6);
+//                 int_sum3 = my_vdotq_s32(int_sum3, w3_high, a7);
+
+//                 sumv0 = vmlaq_n_f32(sumv0, vcvtq_f32_s32(int_sum0), s_0);
+//                 sumv1 = vmlaq_n_f32(sumv1, vcvtq_f32_s32(int_sum1), s_1);
+//                 sumv2 = vmlaq_n_f32(sumv2, vcvtq_f32_s32(int_sum2), s_2);
+//                 sumv3 = vmlaq_n_f32(sumv3, vcvtq_f32_s32(int_sum3), s_3);
+//             }
+//             if (params->bias.data_ptr)
+//                 params->C.data_ptr[i * n + j] = params->bias.data_ptr[j] + vaddvq_f32(sumv0) + vaddvq_f32(sumv1) +
+//                                                 vaddvq_f32(sumv2) + vaddvq_f32(sumv3);
+//             else
+//                 params->C.data_ptr[i * n + j] =
+//                     vaddvq_f32(sumv0) + vaddvq_f32(sumv1) + vaddvq_f32(sumv2) + vaddvq_f32(sumv3);
+//         }
+//     }
+
+//     return NULL;
+// }
 
 static void* matmul_int8_int4_no_offset_over_column_packed(void* args) {
     struct a8w4_thread_args* mat_args = (struct a8w4_thread_args*)args;
@@ -412,23 +559,37 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
 
     // const int num_thread = 8;
     const int num_thread = params->opt_params.num_thread;
-    pthread_t thread_pool[num_thread];
+    // pthread_t thread_pool[num_thread];
     struct a8w4_thread_args threads_args[num_thread];
     assert(params->block_size == 32);  // support block size 32 for now
+
+#ifdef PACK_QK
+    // This may lead to performance degradation
+    static void *pool = pool_start(matmul_int8_int4_no_offset_over_column_packed, num_thread);
+#else
+    static void *pool = pool_start(matmul_int8_int4_no_offset_over_column_unroll128, num_thread);
+#endif
 
     // Thread creation
     for (j = 0; j < num_thread; j++) {
         threads_args[j].start_j = j * (params->C.column / num_thread);
-        threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
+        // threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
+        if (j == num_thread - 1) {
+            threads_args[j].end_j = params->C.column;
+        } else {
+            threads_args[j].end_j = (j + 1) * (params->C.column / num_thread);
+        }
         threads_args[j].params = params;
-#ifdef PACK_QK
-        // This may lead to performance degradation
-        pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_packed, &threads_args[j]);
-#else
-        pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_unroll128, &threads_args[j]);
-#endif
+// #ifdef PACK_QK
+//         // This may lead to performance degradation
+//         pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_packed, &threads_args[j]);
+// #else
+//         pthread_create(&thread_pool[j], NULL, matmul_int8_int4_no_offset_over_column_unroll128, &threads_args[j]);
+// #endif
+        pool_enqueue(pool, &threads_args[j], NULL);
     }
     // Join threads
-    for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
+    // for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
+    pool_wait(pool);
 };
 }  // namespace matmul

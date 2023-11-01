@@ -32,7 +32,9 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(std::string par
 
     // Get logits
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
+    PROFILE_START("Int4LlamaForCausalLM::lm_head");
     this->lm_head.forward(decoder_output.last_hidden_state, logits);
+    PROFILE_END("Int4LlamaForCausalLM::lm_head");
 
     struct Int4LlamaForCausalLM_output LMoutput = {logits, decoder_output.past_keys, decoder_output.past_values};
     PROFILE_END(profile_name);
