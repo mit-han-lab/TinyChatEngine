@@ -5,23 +5,23 @@
 
 #include "utils.h"
 
-// Matrix3D<float> Fp32GPTBigCodeDecoder::prepare_decoder_attention_mask(int length, int past_length) {
-//     PROFILE_START("Fp32GPTBigCodeDecoder::prepare_decoder_attention_mask");
-//     assert(length - past_length > 0);
-//     Matrix3D<float> causal_attention_mask(attention_mask_buf, 1, length - past_length, length);
-//     for (int i = 0; i < length - past_length; i++) {
-//         for (int j = 0; j < length; j++) {
-//             if (i + past_length < j) {
-//                 causal_attention_mask(0, i, j) = -65504.0;
-//             } else {
-//                 causal_attention_mask(0, i, j) = 0.0;
-//             }
-//         }
-//     }
+Matrix3D<float> Fp32GPTBigCodeDecoder::prepare_decoder_attention_mask(int length, int past_length) {
+    PROFILE_START("Fp32GPTBigCodeDecoder::prepare_decoder_attention_mask");
+    assert(length - past_length > 0);
+    Matrix3D<float> causal_attention_mask(attention_mask_buf, 1, length - past_length, length);
+    for (int i = 0; i < length - past_length; i++) {
+        for (int j = 0; j < length; j++) {
+            if (i + past_length < j) {
+                causal_attention_mask(0, i, j) = -65504.0;
+            } else {
+                causal_attention_mask(0, i, j) = 0.0;
+            }
+        }
+    }
 
-//     PROFILE_END("Fp32GPTBigCodeDecoder::prepare_decoder_attention_mask");
-//     return causal_attention_mask;
-// }
+    PROFILE_END("Fp32GPTBigCodeDecoder::prepare_decoder_attention_mask");
+    return causal_attention_mask;
+}
 
 // Matrix3D<float> Fp32GPTBigCodeDecoder::get_position_embed(int sql_length, int past_length) {
 //     PROFILE_START("Fp32GPTBigCodeDecoder::get_position_embed");
@@ -112,7 +112,7 @@ struct Fp32GPTBigCodeDecoder_output Fp32GPTBigCodeDecoder::forward(const struct 
     int position_ids_buf[sqlen];
     float pos_embeds_buf[sqlen * this->embed_dim];
 #endif
-    Matrix3D<float> position_ids(position_ids_buf, 1, 1, sqlen);
+    Matrix3D<int> position_ids(position_ids_buf, 1, 1, sqlen);
     for (int i = 0; i < sqlen; i++) position_ids.m_data[i] = i + past_key_values_length;
     Matrix3D<float> pos_embeds(pos_embeds_buf, 1, sqlen, this->embed_dim);
     this->wpe.forward(position_ids, pos_embeds);

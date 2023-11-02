@@ -64,7 +64,6 @@ struct Fp32GPTBigCodeDecoderLayer_output Fp32GPTBigCodeDecoderLayer::forward(con
     Gelu(fc1_out);
 
     // FC 2
-    assert(inputs_embeds.m_dim_z == this->embed_dim);
     Matrix3D<float> fc2_out(fc_2_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                             input.hidden_states.m_dim_z);
     this->fc2.forward(fc1_out, fc2_out);
@@ -111,9 +110,11 @@ Fp32GPTBigCodeDecoderLayer::Fp32GPTBigCodeDecoderLayer(std::string param_path, c
     this->fc1 =
         Linear_FP(Matrix3D<float>(fc1_weight, 1, config.hidden_dim, config.embed_dim), param_path + "/fc1/weight.bin",
                   Matrix3D<float>(fc1_bias, 1, 1, config.hidden_dim), param_path + "/fc1/bias.bin");
+    this->fc1.has_bias = true;
     this->fc2 =
         Linear_FP(Matrix3D<float>(fc2_weight, 1, config.embed_dim, config.hidden_dim), param_path + "/fc2/weight.bin",
                   Matrix3D<float>(fc2_bias, 1, 1, config.embed_dim), param_path + "/fc2/bias.bin");
+    this->fc2.has_bias = true;
 
     this->embed_dim = config.embed_dim;
     this->num_attention_heads = config.num_heads;

@@ -37,10 +37,11 @@ class Fp32GPTBigCodeAttention {
 
    private:
     void unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen);
-    void shpae(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen);
+    void shape_qkv(Matrix3D<float> unshape, Matrix3D<float> shaped_q, Matrix3D<float> shaped_k,
+                                          Matrix3D<float> shaped_v, int sqlen);
     float scaling;
     int embed_dim, num_heads, head_dim, kv_heads, kv_dim;
     BMM_F32T qk_bmm, pv_bmm;
-    Linear_FP k_proj, v_proj, q_proj, out_proj;
+    Linear_FP c_attn, c_proj;
     std::string profile_name = "Fp32GPTBigCodeAttention";
 };

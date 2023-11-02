@@ -30,7 +30,7 @@ class Fp32GPTBigCodeDecoder {
     Matrix3D<float> prepare_decoder_attention_mask(int length, int past_length);
     Matrix3D<float> get_position_embed(int sql_length, int past_length);
     struct Fp32GPTBigCodeDecoder_output forward(const struct Fp32GPTBigCodeDecoder_input& input);
-    Embedding embed_tokens, embed_positions;
+    Embedding wte, wpe;
     int voc_size, embed_dim, padding_idx, hidden_dim, num_heads, max_position_embeddings;
     std::vector<Fp32GPTBigCodeDecoderLayer> layers;
     LayerNorm ln_f;

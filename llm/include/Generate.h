@@ -98,8 +98,11 @@ std::vector<int> OPTGenerate(void* model, int model_type, std::vector<int> input
                              const struct opt_params generation_config, Encoder* encoder = NULL,
                              bool interactive = false, bool voicechat = false);
 
-enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4 };
+enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4, StarCoder_FP32, StarCoder_INT4 };
 std::string LLaMAGenerate(std::string param_path, void* model, int model_type, std::string text, const struct opt_params generation_config,
+                          std::string voc_path, bool interactive, bool voicechat);
+
+std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
                           std::string voc_path, bool interactive, bool voicechat);
 
 #endif  // GENERATE_H
