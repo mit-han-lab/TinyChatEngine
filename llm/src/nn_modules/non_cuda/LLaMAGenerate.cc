@@ -11,7 +11,6 @@
 // Function to speak in the background
 void sayInBackground(const std::string& text) {
     std::string command = "./application/sts_utils/speak \"" + text + "\"";
-    std::cout << "Running: " << command << std::endl;
     int result = std::system(command.c_str());
     (void)result;
 }
