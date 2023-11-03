@@ -122,7 +122,7 @@ def _export_attention_params(attn, prefix: str):
     #     f.write(bytearray(struct.pack("f", attn.scaling)))
     _export_LinearFP_MQAtoMHA(attn.c_attn, os.path.join(outpath, "c_attn"))
     _export_LinearFP(attn.c_proj, os.path.join(outpath, "c_proj"))
-    qk_bmm_alpha = 1 / math.sqrt(attn.head_dim)
+    qk_bmm_alpha = 1 / math.sqrt(head_dim)
     _export_BMM_F32T(qk_bmm_alpha, os.path.join(outpath, "qk_bmm"))
 
 

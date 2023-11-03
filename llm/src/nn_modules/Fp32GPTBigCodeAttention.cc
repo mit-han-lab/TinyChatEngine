@@ -91,11 +91,10 @@ Fp32GPTBigCodeAttention::Fp32GPTBigCodeAttention(std::string param_path, const s
                   Matrix3D<float>(c_proj_bias, 1, 1, config.embed_dim), param_path + "/c_proj/bias.bin");
     this->c_proj.has_bias = true;
 
-    this->qk_bmm = BMM_F32T(1.0f);
+    float qk_bmm_alpha;
+    read_to_array((param_path + "/qk_bmm/alpha.bin").c_str(), &qk_bmm_alpha, 1);
+    this->qk_bmm = BMM_F32T(qk_bmm_alpha);
     this->pv_bmm = BMM_F32T(1.0f);
-
-    // scaling
-    read_to_array((param_path + "/scaling.bin").c_str(), &this->scaling, sizeof(float));
 }
 
 inline void Fp32GPTBigCodeAttention::shape_qkv(Matrix3D<float> unshape, Matrix3D<float> shaped_q, Matrix3D<float> shaped_k,
