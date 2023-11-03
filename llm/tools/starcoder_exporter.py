@@ -13,7 +13,7 @@ import struct
 import numpy as np
 
 import torch
-from transformers import LlamaForCausalLM
+from transformers import AutoModelForCausalLM, AutoConfig
 
 n_head = 48
 embed_dim = 6144
@@ -148,16 +148,19 @@ def main():
         if args.model.endswith(".pt"):
             if args.model.split("/")[-1].lower().startswith("starcoder"):
                 print("Loading StarCoder model...");
-                model = LlamaForCausalLM.from_pretrained("bigcode/starcoder", torch_dtype=torch.float16)
+                config = AutoConfig.from_pretrained("models/starcoder", trust_remote_code=True)
+                model = AutoModelForCausalLM.from_pretrained("models/starcoder", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
             else:
                 print("Model not supported.")
                 return
             
             model.load_state_dict(torch.load(args.model))
         else:
-            model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
+            print("Loading StarCoder model...");
+            config = AutoConfig.from_pretrained(args.model, trust_remote_code=True)
+            model = AutoModelForCausalLM.from_pretrained(args.model, config=config, torch_dtype=torch.float32, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
     else:
-        model = LlamaForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.bfloat16)
+        model = AutoModelForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.float32)
 
     print("Start exporting the model...")
     _export_model(model, args.output)

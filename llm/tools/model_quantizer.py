@@ -514,11 +514,9 @@ def _quantize_model(
             _write_weight_to_file(os.path.join(output_path, file_path), qs, d, m, zp, is_cuda)
             os.system(f"cp {os.path.join(file_path, 'bias.bin')} {os.path.join(output_path, file_path, 'bias.bin')}")
 
-            # Scaling
-            file_path = f"{prefix}/decoder/layer{idx}/attn/"
-            os.system(
-                f"cp {os.path.join(file_path, 'scaling.bin')} {os.path.join(output_path, file_path, 'scaling.bin')}"
-            )
+            # cp attn/qk_bmm
+            dir_path = f"{prefix}/decoder/layer{idx}/attn/qk_bmm"
+            _rm_and_cp_dir_if_exist(dir_path, os.path.join(output_path, dir_path))
 
             print(f"Quantization of layer {idx} finished.")
 
