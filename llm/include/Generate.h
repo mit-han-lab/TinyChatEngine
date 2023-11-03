@@ -20,8 +20,10 @@ https://github.com/ggerganov/llama.cpp
 
 #include "Fp32OPTForCausalLM.h"
 #include "Fp32llamaForCausalLM.h"
+#include "Fp32GPTBigCodeForCausalLM.h"
 #include "Int4OPTForCausalLM.h"
 #include "Int4llamaForCausalLM.h"
+#include "Int4GPTBigCodeForCausalLM.h"
 #include "OPTForCausalLM.h"
 #include "OPTTokenizer.h"
 #include "operators.h"

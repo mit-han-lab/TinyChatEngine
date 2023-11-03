@@ -1,4 +1,4 @@
-#include "Fp32GPTBigCodeDecoderLayer.h"
+#include "Int4GPTBigCodeDecoderLayer.h"
 
 #include "utils.h"
 
@@ -12,13 +12,13 @@ static float *hidden_states_arr;
 
 template <typename T>
 void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
-    PROFILE_START("Fp32GPTBigCodeDecoderLayer::add");
+    PROFILE_START("Int4GPTBigCodeDecoderLayer::add");
     assert(c.length() == a.length() && a.length() == b.length());
 
     for (int i = 0; i < a.length(); i++) {
         c.m_data[i] = a.m_data[i] + b.m_data[i];
     }
-    PROFILE_END("Fp32GPTBigCodeDecoderLayer::add");
+    PROFILE_END("Int4GPTBigCodeDecoderLayer::add");
 }
 
 static const float GELU_COEF_A    = 0.044715f;
@@ -27,14 +27,14 @@ inline static float Gelu_imp(float x) {
     return 0.5f * x * (1.0f + tanhf(SQRT_2_OVER_PI * x * (1.0f + GELU_COEF_A * x * x)));
 }
 inline static void Gelu(Matrix3D<float> a) {
-    PROFILE_START("Fp32GPTBigCodeDecoderLayer::Gelu");
+    PROFILE_START("Int4GPTBigCodeDecoderLayer::Gelu");
     for (int i = 0; i < a.length(); i++) {
         a.m_data[i] = Gelu_imp(a.m_data[i]);
     }
-    PROFILE_END("Fp32GPTBigCodeDecoderLayer::Gelu");
+    PROFILE_END("Int4GPTBigCodeDecoderLayer::Gelu");
 }
 
-struct Fp32GPTBigCodeDecoderLayer_output Fp32GPTBigCodeDecoderLayer::forward(const struct Fp32GPTBigCodeDecoderLayer_input &input) {
+struct Int4GPTBigCodeDecoderLayer_output Int4GPTBigCodeDecoderLayer::forward(const struct Int4GPTBigCodeDecoderLayer_input &input) {
     PROFILE_START(profile_name);
     // Layernorm
     Matrix3D<float> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
@@ -42,9 +42,9 @@ struct Fp32GPTBigCodeDecoderLayer_output Fp32GPTBigCodeDecoderLayer::forward(con
     this->ln_1.forward(input.hidden_states, hidden_states);
 
     // Attention
-    struct Fp32GPTBigCodeAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
+    struct Int4GPTBigCodeAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
                                              input.has_past_key_value, this->layer_idx);
-    struct Fp32GPTBigCodeAttention_output attn_output = this->attn.forward(attn_param);
+    struct Int4GPTBigCodeAttention_output attn_output = this->attn.forward(attn_param);
 
     // Residual add
     Matrix3D<float> residual_add(hidden_states_float_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
@@ -71,19 +71,19 @@ struct Fp32GPTBigCodeDecoderLayer_output Fp32GPTBigCodeDecoderLayer::forward(con
     // Reidual add
     add(residual_add, fc2_out, residual_add);
 
-    struct Fp32GPTBigCodeDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped, attn_output.past_key_value);
+    struct Int4GPTBigCodeDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped, attn_output.past_key_value);
     PROFILE_END(profile_name);
     return output;
 }
 
-Fp32GPTBigCodeDecoderLayer::Fp32GPTBigCodeDecoderLayer(std::string param_path, const model_config config, int layer_idx) {
+Int4GPTBigCodeDecoderLayer::Int4GPTBigCodeDecoderLayer(std::string param_path, const model_config config, int layer_idx) {
     if (layer_idx == 0) {
         allocate_aligned_memory(hidden_states_float_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         allocate_aligned_memory(ln_2_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         allocate_aligned_memory(fc_1_arr, config.max_sqlen * config.hidden_dim * sizeof(float));
         allocate_aligned_memory(fc_2_arr, config.max_sqlen * config.embed_dim * sizeof(float));
         allocate_aligned_memory(hidden_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
-        Fp32GPTBigCodeAttention::initialized_memory(config);
+        Int4GPTBigCodeAttention::initialized_memory(config);
     }
 
     struct LayerNorm_params ln_1, ln_2;
@@ -101,18 +101,18 @@ Fp32GPTBigCodeDecoderLayer::Fp32GPTBigCodeDecoderLayer(std::string param_path, c
     this->ln_2 = LayerNorm(ln_2);
     load_LayerNorm(this->ln_2, param_path + "/ln_2");
 
-    float *fc1_weight, *fc2_weight;
-    allocate_aligned_memory(fc1_weight, (config.embed_dim * config.hidden_dim * sizeof(float)));
-    allocate_aligned_memory(fc2_weight, (config.embed_dim * config.hidden_dim * sizeof(float)));
+    uint8_t *fc1_weight, *fc2_weight;
+    allocate_aligned_memory(fc1_weight, (config.embed_dim * config.hidden_dim * sizeof(uint8_t) / 2));
+    allocate_aligned_memory(fc2_weight, (config.embed_dim * config.hidden_dim * sizeof(uint8_t) / 2));
     float *fc1_bias, *fc2_bias;
     allocate_aligned_memory(fc1_bias, (config.hidden_dim * sizeof(float)));
     allocate_aligned_memory(fc2_bias, (config.embed_dim * sizeof(float)));
     this->fc1 =
-        Linear_FP(Matrix3D<float>(fc1_weight, 1, config.hidden_dim, config.embed_dim), param_path + "/c_fc/weight.bin",
+        Linear_FP_int4(Matrix3D<uint8_t>(fc1_weight, 1, config.hidden_dim, config.embed_dim / 2), param_path + "/c_fc",
                   Matrix3D<float>(fc1_bias, 1, 1, config.hidden_dim), param_path + "/c_fc/bias.bin");
     this->fc1.has_bias = true;
     this->fc2 =
-        Linear_FP(Matrix3D<float>(fc2_weight, 1, config.embed_dim, config.hidden_dim), param_path + "/c_proj/weight.bin",
+        Linear_FP_int4(Matrix3D<uint8_t>(fc2_weight, 1, config.embed_dim, config.hidden_dim / 2), param_path + "/c_proj",
                   Matrix3D<float>(fc2_bias, 1, 1, config.embed_dim), param_path + "/c_proj/bias.bin");
     this->fc2.has_bias = true;
 
@@ -121,5 +121,5 @@ Fp32GPTBigCodeDecoderLayer::Fp32GPTBigCodeDecoderLayer(std::string param_path, c
     this->hidden_dim = config.hidden_dim;
     this->layer_idx = layer_idx;
 
-    this->attn = Fp32GPTBigCodeAttention(param_path + "/attn", config);
+    this->attn = Int4GPTBigCodeAttention(param_path + "/attn", config);
 }
