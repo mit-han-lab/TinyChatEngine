@@ -10,7 +10,7 @@ var searchData=
   ['pool_5fstart_7',['pool_start',['../pthread__pool_8h.html#a414561dad8af7224cdbd531e3d9e4a0a',1,'pthread_pool.cc']]],
   ['pool_5fwait_8',['pool_wait',['../pthread__pool_8h.html#a314c9adaec7a7ad64fe9e5b8bfa3fbd1',1,'pthread_pool.cc']]],
   ['prerequisites_9',['Prerequisites',['../index.html#autotoc_md7',1,'']]],
-  ['pro_20m1_202021_20_3a_10',['Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
+  ['pro_20m1_202021_20_3a_10',['LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
   ['profiler_11',['Profiler',['../classProfiler.html',1,'']]],
   ['projects_12',['Related Projects',['../index.html#autotoc_md18',1,'']]],
   ['pthread_5fpool_2eh_13',['pthread_pool.h',['../pthread__pool_8h.html',1,'']]]

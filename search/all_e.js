@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['m1_202021_20_3a_0',['Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
-  ['macbook_20pro_20m1_202021_20_3a_1',['Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
+  ['m1_202021_20_3a_0',['LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
+  ['macbook_20pro_20m1_202021_20_3a_1',['LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):',['../index.html#autotoc_md2',1,'']]],
   ['macos_2',['MacOS',['../index.html#autotoc_md8',1,'']]],
   ['matmul_5fparams_3',['matmul_params',['../structmatmul__params.html',1,'']]],
   ['matmuloperator_4',['MatmulOperator',['../classmatmul_1_1MatmulOperator.html',1,'matmul']]],
