@@ -8,45 +8,11 @@ This is enabled by LLM model compression technique: [SmoothQuant](https://github
 
 Feel free to check out our [slides](assets/slides.pdf) for more details!
 
-### Demo on an NVIDIA GeForce RTX 4070 laptop:
-<table>
-  <tr>
-    <td>
-      <img src="assets/figures/chat_demo_gpu.gif" alt="chat_demo_gpu" width="100%"/> 
-    </td>
-    <td>
-      <img src="assets/figures/coding_demo_gpu.gif" alt="coding_demo_gpu" width="100%"/>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      LLaMA Chat
-    </td>
-    <td align="center">
-      Code LLaMA
-    </td>
-  </tr>
-</table>
+### Code LLaMA Demo on an NVIDIA GeForce RTX 4070 laptop:
+![coding_demo_gpu](assets/figures/coding_demo_gpu.gif)
 
-### Demo on an Apple MacBook Pro (M1, 2021):
-<table>
-  <tr>
-    <td>
-      <img src="assets/figures/chat_demo_m1.gif" alt="chat_demo_m1" width="100%"/> 
-    </td>
-    <td>
-      <img src="assets/figures/coding_demo_m1.gif" alt="coding_demo_m1" width="100%"/>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      LLaMA Chat
-    </td>
-    <td align="center">
-      Code LLaMA
-    </td>
-  </tr>
-</table>
+### LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):
+![chat_demo_m1](assets/figures/chat_demo_m1.gif)
 
 
 ## Overview
