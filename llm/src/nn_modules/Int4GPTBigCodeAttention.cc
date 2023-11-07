@@ -74,7 +74,7 @@ Int4GPTBigCodeAttention::Int4GPTBigCodeAttention(std::string param_path, const s
     allocate_aligned_memory(c_proj_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t) / 2));
     float *c_attn_bias, *c_proj_bias;
     // allocate_aligned_memory(c_attn_bias, ((config.embed_dim + 2 * this->kv_dim) * sizeof(float)));
-    allocate_aligned_memory(c_attn_bias, (config.embed_dim * 3 * sizeof(float)) / 2);
+    allocate_aligned_memory(c_attn_bias, (config.embed_dim * 3 * sizeof(float)));
     allocate_aligned_memory(c_proj_bias, (config.embed_dim * sizeof(float)));
 
     // this->c_attn =
@@ -177,11 +177,13 @@ struct Int4GPTBigCodeAttention_output Int4GPTBigCodeAttention::forward(const str
     assert(b == 1);
 
     // Fused QKV
+    // printf(("Before c_attn\n");
     Matrix3D<float> qkv_states_unshape(qkv_states_unshape_arr, b, sqlen, embed_dim * 3);
     this->c_attn.forward(input.hidden_states, qkv_states_unshape);
     Matrix3D<float> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
     Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
+    // printf(("After c_attn\n");
     this->shape_qkv(qkv_states_unshape, query_states, key_states, value_states, sqlen);
     
     // // Query, Key and Value states
@@ -253,17 +255,21 @@ struct Int4GPTBigCodeAttention_output Int4GPTBigCodeAttention::forward(const str
     PROFILE_END(profile_name + "::cat_past_keys_values");
 
     // QK_BMM
+    // printf(("Before qk_bmm\n");
     Matrix3D<float> attn_weights(attn_weights_arr, this->num_heads, sqlen, tgz);
     this->qk_bmm.forward(query_states, final_key_states, attn_weights);
 
     // Add mask
+    // printf(("Before add_mask\n");
     batch_Add(attn_weights, input.attention_mask, attn_weights);
 
     // Softmax QK
+    // printf(("Before softmax\n");
     Matrix3D<float> attn_probs(attn_weights_arr, this->num_heads, sqlen, tgz);
     softmax(attn_weights, attn_probs, 2);
 
     // Transpose V for PV_BMM
+    // printf(("Before transpose\n");
     Matrix3D<float> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
     transpose_1_2idx(final_value_states, value_states_transpose);
     Matrix3D<float> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
@@ -273,6 +279,7 @@ struct Int4GPTBigCodeAttention_output Int4GPTBigCodeAttention::forward(const str
     this->unshape(attn_output, attn_output_transpose, sqlen);
 
     // Output projection
+    // printf(("Before c_proj\n");
     Matrix3D<float> attn_output_fp(attn_output_fp_arr, 1, sqlen, this->num_heads * this->head_dim);
     this->c_proj.forward(attn_output_transpose, attn_output_fp);
 

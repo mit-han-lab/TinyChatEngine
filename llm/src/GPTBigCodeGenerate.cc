@@ -18,6 +18,7 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
     std::vector<int> input_ids(max_token);
     starcoder_vocab vocab = starcoder_init_vocab(voc_path);
     const int n = starcoder_tokenize(vocab, text, input_ids, input_ids.size());
+    // printf("n = %d\n", n);
     input_ids.resize(n);
 
     int n_consumed = 0;
@@ -48,9 +49,9 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
             sqlen = input_ids.size();
         }
         if (model_type == StarCoder_INT4) {
-            Int4LlamaForCausalLM *model = static_cast<Int4LlamaForCausalLM *>(model_ptr);
-            struct Int4LlamaForCausalLM_output model_output;
-            struct Int4LlamaForCausalLM_input model_input;
+            Int4GPTBigCodeForCausalLM *model = static_cast<Int4GPTBigCodeForCausalLM *>(model_ptr);
+            struct Int4GPTBigCodeForCausalLM_output model_output;
+            struct Int4GPTBigCodeForCausalLM_input model_input;
             if (has_past_kv) {
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
                 model_input = {input_ids_mat, past_keys, past_values};
@@ -59,17 +60,21 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
                 model_input = {input_ids_mat};
             }
             if (!new_prompt) STATS_START("Inference latency");
+            // printf("Before model->forward\n");
             model_output = model->forward(param_path, model_input);
+            // printf("After model->forward\n");
             if (!new_prompt) STATS_END("Inference latency");
             past_keys = model_output.past_keys;
             past_values = model_output.past_values;
             // memcpy model_ouput.logits[-1] to logits
+            // printf("Before memcpy\n");
             memcpy(logits.data(), &model_output.logits.m_data[(sqlen - 1) * generation_config.n_vocab],
                    generation_config.n_vocab * sizeof(float));
+            // printf("After memcpy\n");
         } else if (model_type == StarCoder_FP32) {
-            Fp32LlamaForCausalLM *model = static_cast<Fp32LlamaForCausalLM *>(model_ptr);
-            struct Fp32LlamaForCausalLM_output model_output;
-            struct Fp32LlamaForCausalLM_input model_input;
+            Fp32GPTBigCodeForCausalLM *model = static_cast<Fp32GPTBigCodeForCausalLM *>(model_ptr);
+            struct Fp32GPTBigCodeForCausalLM_output model_output;
+            struct Fp32GPTBigCodeForCausalLM_input model_input;
             if (has_past_kv) {
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
                 model_input = {input_ids_mat, past_keys, past_values};

@@ -49,7 +49,7 @@ Int4GPTBigCodeDecoder::Int4GPTBigCodeDecoder(std::string param_path, const struc
     this->hidden_dim = config.hidden_dim;
     this->num_heads = config.num_heads;
     this->padding_idx = config.padding_idx;
-    this->max_position_embeddings = 8192; // To be fixed
+    this->max_position_embeddings = 2048; // To be fixed
 
     // Embedding
     Matrix3D<float> embweight(new float[voc_size * embed_dim], 1, voc_size, embed_dim);
@@ -83,24 +83,31 @@ struct Int4GPTBigCodeDecoder_output Int4GPTBigCodeDecoder::forward(const struct 
     int sqlen = input.input_ids.m_dim_z, batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
 
     // Input token -> Embedding
+    // printf(("Int4GPTBigCodeDecoder starts\n");
 #ifdef _WIN32
     std::vector<float> inputs_embeds_buf_vec(sqlen * this->embed_dim);
     float *inputs_embeds_buf = &inputs_embeds_buf_vec.front();
 #else
+    // printf(("uou\n");
     float inputs_embeds_buf[sqlen * this->embed_dim];
+    // printf(("wowwww\n");
 #endif
     Matrix3D<float> inputs_embeds(inputs_embeds_buf, 1, sqlen, this->embed_dim);
+    // printf(("lolll\n");
     this->wte.forward(input.input_ids, inputs_embeds);
+    // printf(("aaaaaaa\n");
 
     if (input.has_past_keys_values) {
         past_key_values_length = input.past_keys[0].m_dim_y;
     }
 
     // Attention mask  // To be checked
+    // printf(("Before prepare_decoder_attention_mask\n");
     Matrix3D<float> causal_attention_mask =
         this->prepare_decoder_attention_mask(sqlen + past_key_values_length, past_key_values_length);
 
     // Position embeddings
+    // printf(("Before get_position_embed\n");
     // Matrix3D<float> pos_embeds = this->get_position_embed(sqlen, past_key_values_length);
 #ifdef _WIN32
     std::vector<float> position_ids_buf_vec(sqlen);
@@ -128,6 +135,7 @@ struct Int4GPTBigCodeDecoder_output Int4GPTBigCodeDecoder::forward(const struct 
         hidden_states.m_data[i] = inputs_embeds.m_data[i] + pos_embeds.m_data[i];
 
     // Go through each layer
+    // printf(("Before layers\n");
     std::vector<Matrix3D<float>> past_keys, past_values;
     for (int i = 0; i < this->layers.size(); i++) {
         if (!input.has_past_keys_values) {

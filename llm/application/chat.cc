@@ -276,8 +276,9 @@ int main(int argc, char* argv[]) {
         #endif
 
         struct opt_params generation_config;
-        generation_config.n_predict = 512;
-        generation_config.repeat_penalty = 1.1f;
+        generation_config.n_predict = 32;
+        // generation_config.repeat_penalty = 1.1f;
+        generation_config.top_k = 0;
         generation_config.temp = 0.2f;
         generation_config.n_vocab = 49152;
 

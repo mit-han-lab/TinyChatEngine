@@ -47,6 +47,6 @@ starcoder_vocab starcoder_init_vocab(const std::string & vocab_file);
 
 const char* starcoder_id_to_token(starcoder_vocab& vocab, int id);
 
-int starcoder_tokenize(const starcoder_vocab &vocab, const std::string &text, std::vector<int> &tokens, int n_max_tokens);
+int starcoder_tokenize(const starcoder_vocab &vocab, const std::string &text, std::vector<int> &final_tokens, int n_max_tokens);
 
 #endif

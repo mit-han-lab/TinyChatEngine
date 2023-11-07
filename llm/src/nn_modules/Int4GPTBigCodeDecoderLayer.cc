@@ -34,48 +34,6 @@ inline static void Gelu(Matrix3D<float> a) {
     PROFILE_END("Int4GPTBigCodeDecoderLayer::Gelu");
 }
 
-struct Int4GPTBigCodeDecoderLayer_output Int4GPTBigCodeDecoderLayer::forward(const struct Int4GPTBigCodeDecoderLayer_input &input) {
-    PROFILE_START(profile_name);
-    // Layernorm
-    Matrix3D<float> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
-                                  input.hidden_states.m_dim_z);
-    this->ln_1.forward(input.hidden_states, hidden_states);
-
-    // Attention
-    struct Int4GPTBigCodeAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
-                                             input.has_past_key_value, this->layer_idx);
-    struct Int4GPTBigCodeAttention_output attn_output = this->attn.forward(attn_param);
-
-    // Residual add
-    Matrix3D<float> residual_add(hidden_states_float_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
-                                 input.hidden_states.m_dim_z);
-    add(input.hidden_states, attn_output.attn_output, residual_add);
-
-    // Layernorm
-    Matrix3D<float> ln_2(ln_2_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
-                                     input.hidden_states.m_dim_z);
-    this->ln_2.forward(residual_add, ln_2);
-
-    // FC 1
-    Matrix3D<float> fc1_out(fc_1_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
-    this->fc1.forward(ln_2, fc1_out);
-
-    // GELU
-    Gelu(fc1_out);
-
-    // FC 2
-    Matrix3D<float> fc2_out(fc_2_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
-                            input.hidden_states.m_dim_z);
-    this->fc2.forward(fc1_out, fc2_out);
-
-    // Reidual add
-    add(residual_add, fc2_out, residual_add);
-
-    struct Int4GPTBigCodeDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped, attn_output.past_key_value);
-    PROFILE_END(profile_name);
-    return output;
-}
-
 Int4GPTBigCodeDecoderLayer::Int4GPTBigCodeDecoderLayer(std::string param_path, const model_config config, int layer_idx) {
     if (layer_idx == 0) {
         allocate_aligned_memory(hidden_states_float_arr, config.max_sqlen * config.embed_dim * sizeof(float));
@@ -122,4 +80,49 @@ Int4GPTBigCodeDecoderLayer::Int4GPTBigCodeDecoderLayer(std::string param_path, c
     this->layer_idx = layer_idx;
 
     this->attn = Int4GPTBigCodeAttention(param_path + "/attn", config);
+}
+
+struct Int4GPTBigCodeDecoderLayer_output Int4GPTBigCodeDecoderLayer::forward(const struct Int4GPTBigCodeDecoderLayer_input &input) {
+    PROFILE_START(profile_name);
+    // Layernorm
+    // printf(("Before ln_1\n");
+    Matrix3D<float> hidden_states(hidden_states_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
+                                  input.hidden_states.m_dim_z);
+    this->ln_1.forward(input.hidden_states, hidden_states);
+
+    // Attention
+    // printf(("Before attn\n");
+    struct Int4GPTBigCodeAttention_input attn_param(hidden_states, input.attention_mask, input.past_key, input.past_value,
+                                             input.has_past_key_value, this->layer_idx);
+    struct Int4GPTBigCodeAttention_output attn_output = this->attn.forward(attn_param);
+    // printf(("After attn\n");
+
+    // Residual add
+    Matrix3D<float> residual_add(hidden_states_float_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
+                                 input.hidden_states.m_dim_z);
+    add(input.hidden_states, attn_output.attn_output, residual_add);
+
+    // Layernorm
+    Matrix3D<float> ln_2(ln_2_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
+                                     input.hidden_states.m_dim_z);
+    this->ln_2.forward(residual_add, ln_2);
+
+    // FC 1
+    Matrix3D<float> fc1_out(fc_1_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
+    this->fc1.forward(ln_2, fc1_out);
+
+    // GELU
+    Gelu(fc1_out);
+
+    // FC 2
+    Matrix3D<float> fc2_out(fc_2_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
+                            input.hidden_states.m_dim_z);
+    this->fc2.forward(fc1_out, fc2_out);
+
+    // Reidual add
+    add(residual_add, fc2_out, residual_add);
+
+    struct Int4GPTBigCodeDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped, attn_output.past_key_value);
+    PROFILE_END(profile_name);
+    return output;
 }

@@ -9,6 +9,7 @@ struct Fp32GPTBigCodeForCausalLM_input {
     std::vector<Matrix3D<float>> past_keys, past_values;
     bool has_past_keys_values;
 
+    Fp32GPTBigCodeForCausalLM_input() {}
     Fp32GPTBigCodeForCausalLM_input(Matrix3D<int> input_ids_) : input_ids(input_ids_) { has_past_keys_values = false; }
     Fp32GPTBigCodeForCausalLM_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float>> past_keys_,
                              std::vector<Matrix3D<float>> past_values_)

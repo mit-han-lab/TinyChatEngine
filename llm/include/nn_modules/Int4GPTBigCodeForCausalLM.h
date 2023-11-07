@@ -9,6 +9,7 @@ struct Int4GPTBigCodeForCausalLM_input {
     std::vector<Matrix3D<float>> past_keys, past_values;
     bool has_past_keys_values;
 
+    Int4GPTBigCodeForCausalLM_input() {}
     Int4GPTBigCodeForCausalLM_input(Matrix3D<int> input_ids_) : input_ids(input_ids_) { has_past_keys_values = false; }
     Int4GPTBigCodeForCausalLM_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float>> past_keys_,
                              std::vector<Matrix3D<float>> past_values_)
@@ -20,7 +21,7 @@ struct Int4GPTBigCodeForCausalLM_input {
 class Int4GPTBigCodeForCausalLM {
    public:
     Int4GPTBigCodeForCausalLM(std::string param_path, const struct model_config config);
-    struct Int4GPTBigCodeForCausalLM_output forward(const struct Int4GPTBigCodeForCausalLM_input& input);
+    struct Int4GPTBigCodeForCausalLM_output forward(std::string param_path, const struct Int4GPTBigCodeForCausalLM_input& input);
 
    private:
     Int4GPTBigCodeDecoder decoder;

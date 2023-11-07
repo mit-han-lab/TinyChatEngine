@@ -57,8 +57,9 @@ const char *starcoder_id_to_token(starcoder_vocab &vocab, int id) {
     return vocab.id_to_token[id].c_str();
 }
 
-int starcoder_tokenize(const starcoder_vocab &vocab, const std::string &text, std::vector<int> &tokens, int n_max_tokens) {
+int starcoder_tokenize(const starcoder_vocab &vocab, const std::string &text, std::vector<int> &final_tokens, int n_max_tokens) {
     std::vector<std::string> words;
+    std::vector<int32_t> tokens;
 
     // first split the text into words
     {
@@ -120,6 +121,10 @@ int starcoder_tokenize(const starcoder_vocab &vocab, const std::string &text, st
                 ++i;
             }
         }
+    }
+
+    for (size_t i = 0; i < tokens.size(); i++) {
+        final_tokens[i] = tokens[i];
     }
 
     return tokens.size();

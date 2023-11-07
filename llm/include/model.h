@@ -37,6 +37,7 @@ const struct model_config llama_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-6)
 const struct model_config llama_13B(1, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-6);
 const struct model_config codellama_7B(1, 32, 32, 2048, 4096, 11008, 32016, 1, 1e-5);
 const struct model_config codellama_13B(1, 40, 40, 2048, 5120, 13824, 32016, 1, 1e-5);
+// const struct model_config starcoder_15_5B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 0); // temporary
 const struct model_config starcoder_15_5B(1, 48, 40, 2048, 6144, 24576, 49152, 1, 0);
 static struct model_config get_opt_model_config(int choise) {
     struct model_config ret;

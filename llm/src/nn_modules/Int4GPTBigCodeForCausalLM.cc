@@ -13,17 +13,21 @@ Int4GPTBigCodeForCausalLM::Int4GPTBigCodeForCausalLM(std::string param_path, con
         Linear_FP_int4(Matrix3D<uint8_t>(lm_head_weight, 1, config.vocsize, config.embed_dim / 2), param_path + "/lm_head");
 }
 
-struct Int4GPTBigCodeForCausalLM_output Int4GPTBigCodeForCausalLM::forward(const struct Int4GPTBigCodeForCausalLM_input &input) {
+struct Int4GPTBigCodeForCausalLM_output Int4GPTBigCodeForCausalLM::forward(std::string param_path, const struct Int4GPTBigCodeForCausalLM_input &input) {
+    // printf(("Int4GPTBigCodeForCausalLM::forward\n");
     PROFILE_START(profile_name);
+    // printf(("Int4GPTBigCodeForCausalLM starts\n");
     int sqlen = input.input_ids.m_dim_z;
 
     struct Int4GPTBigCodeDecoder_output decoder_output;
-
+    // printf(("Before this->decoder.forward\n");
     if (input.has_past_keys_values) {
         struct Int4GPTBigCodeDecoder_input decoder_input = {input.input_ids, input.past_keys, input.past_values};
         decoder_output = this->decoder.forward(decoder_input);
     } else {
+        // printf(("00000000\n");
         struct Int4GPTBigCodeDecoder_input decoder_input = {input.input_ids};
+        // printf(("11111111\n");
         decoder_output = this->decoder.forward(decoder_input);
     }
 
