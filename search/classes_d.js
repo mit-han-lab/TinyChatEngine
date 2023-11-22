@@ -1,9 +1,7 @@
 var searchData=
 [
-  ['w8a8b8o8linear_0',['W8A8B8O8Linear',['../classW8A8B8O8Linear.html',1,'']]],
-  ['w8a8b8o8linear_5fparams_1',['W8A8B8O8Linear_params',['../structW8A8B8O8Linear__params.html',1,'']]],
-  ['w8a8b8o8linearrelu_2',['W8A8B8O8LinearReLU',['../classW8A8B8O8LinearReLU.html',1,'']]],
-  ['w8a8b8o8linearrelu_5fparams_3',['W8A8B8O8LinearReLU_params',['../structW8A8B8O8LinearReLU__params.html',1,'']]],
-  ['w8a8bfp32ofp32linear_4',['W8A8BFP32OFP32Linear',['../classW8A8BFP32OFP32Linear.html',1,'']]],
-  ['w8a8bfp32ofp32linear_5fparams_5',['W8A8BFP32OFP32Linear_params',['../structW8A8BFP32OFP32Linear__params.html',1,'']]]
+  ['thread_5fargs_0',['thread_args',['../structthread__args.html',1,'']]],
+  ['token_5fscore_1',['token_score',['../structllama__vocab_1_1token__score.html',1,'llama_vocab']]],
+  ['transpose_5f1_5f2idx_5farg_2',['transpose_1_2idx_arg',['../structtranspose__1__2idx__arg.html',1,'']]],
+  ['transpose_5f1_5f2idx_5ffloat_5farg_3',['transpose_1_2idx_float_arg',['../structtranspose__1__2idx__float__arg.html',1,'']]]
 ];
