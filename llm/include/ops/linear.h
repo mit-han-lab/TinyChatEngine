@@ -66,9 +66,12 @@ class Linear_FP_int4 {
         : weight(weight_), bias(bias_) {
         float *scale_ptr, *zero_point_ptr;
         // float *offset_ptr;
+        // length of int8_t weight = elements / 2
+        // length of scales/offset = elements / QK = weight / (QK/2)  // TODO: Currently, we don't need offset
+        // length of zero_point = 1
         assert((weight.m_dim_z * 2) % (QK) == 0);
         allocate_aligned_memory(scale_ptr, (this->weight.length() * 2 * sizeof(float)) / QK);
-        // allocate_aligned_memory(offset_ptr, (this->weight.length() * 2 * sizeof(float)) / QK);  // TODO: Currently, we don't need offset
+        // allocate_aligned_memory(offset_ptr, (this->weight.length() * 2 * sizeof(float)) / QK);
         allocate_aligned_memory(zero_point_ptr, 1 * sizeof(float));
 
         int x = this->weight.m_dim_x, y = this->weight.m_dim_y, z = (this->weight.m_dim_z * 2) / QK;
