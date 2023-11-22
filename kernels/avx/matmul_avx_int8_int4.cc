@@ -349,7 +349,7 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
         }
         threads_args[j].params = params;
         // pthread_create(&thread_pool[j], NULL, fast_int8_int4_zp_no_offset_over_column_unroll2block, &threads_args[j]);
-        pool_enqueue(pool, &threads_args[j], NULL);
+        pool_enqueue(pool, &threads_args[j], '\0');
     }
     // // Join threads
     // for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);

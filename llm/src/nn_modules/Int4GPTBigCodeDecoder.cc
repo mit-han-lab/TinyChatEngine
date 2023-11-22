@@ -122,11 +122,7 @@ struct Int4GPTBigCodeDecoder_output Int4GPTBigCodeDecoder::forward(const struct 
     for (int i = 0; i < sqlen; i++) position_ids.m_data[i] = i + past_key_values_length;
     Matrix3D<float> pos_embeds(pos_embeds_buf, 1, sqlen, this->embed_dim);
     this->wpe.forward(position_ids, pos_embeds);
-
-    if (input.has_past_keys_values) {
-        past_key_values_length = input.past_keys[0].m_dim_y;
-    }
-
+    
     assert(inputs_embeds.m_dim_x == pos_embeds.m_dim_x);
     assert(inputs_embeds.m_dim_y == pos_embeds.m_dim_y);
     assert(inputs_embeds.m_dim_z == pos_embeds.m_dim_z);
