@@ -17,7 +17,8 @@ TEST_TARGET_IF_CUDA = test_ops test_Int4llamaAttention test_Int4llamaDecoderLaye
 PROFILE_TARGET = profile_Fp32llamaForCausalLM profile_Int4llamaForCausalLM profile_OPTForCausalLM profile_ops
 APP_TARGET = voicechat
 CHAT_TARGET = chat
-TARGET = $(TEST_TARGET_GENERAL) $(TEST_TARGET_IF_CUDA) $(PROFILE_TARGET) $(APP_TARGET) $(CHAT_TARGET)
+HTTP_TARGET = httpchat
+TARGET = $(TEST_TARGET_GENERAL) $(TEST_TARGET_IF_CUDA) $(PROFILE_TARGET) $(APP_TARGET) $(CHAT_TARGET) $(HTTP_TARGET)
 
 BUILDDIR := build/transformer
 PROFILEDIR := build_profile/transformer
@@ -226,6 +227,11 @@ $(APP_TARGET): %: application/%.cc $(OBJS)
 # Rule for CHAT_TARGET
 $(CHAT_TARGET): %: application/%.cc $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $(CHATNAME) $^ $(LIB) $(LDFLAGS)
+
+# Rule for HTTP_TARGET
+$(HTTP_TARGET): %: application/%.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $@ $^ $(LIB) $(LDFLAGS)
+
 
 # Clean up
 clean:
