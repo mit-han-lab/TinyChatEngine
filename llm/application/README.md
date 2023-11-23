@@ -6,7 +6,7 @@
 
 - Follow the [instructions](../../README.md) to download and deploy LLaMA2-7B-chat.
 
-- Configure whisper.cpp
+- Configure whisper.cpp. You may need to update the Makefile and ggml.h files of whisper.cpp to get it running. For related issues, please refer to the [whisper.cpp](https://github.com/ggerganov/whisper.cpp) repository.
 
   ```bash
   # Get whisper.cpp for speech recognition
@@ -33,6 +33,7 @@
 
   ```bash
     mkdir TTS
+    cd TTS
     wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
     tar -xvzf piper_arm64.tar.gz
   ```
@@ -51,7 +52,7 @@
   nano application/sts_utils/speak
   ```
 
-- Compile and start the voicechat locally.
+- Compile and start the voicechat locally. 
 
   ```bash
   make -j chat
