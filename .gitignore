@@ -28,12 +28,12 @@ test_*
 !test_*.cu
 demo
 chat
-voicechat
 profile_*
 !profile_*.cc
 libtorch/
 checkpoints/
 
-output.wav
-tmpfile
-TTS/
+llm/chat
+llm/output.wav
+llm/tmpfile
+llm/TTS
