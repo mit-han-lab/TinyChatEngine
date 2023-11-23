@@ -248,7 +248,6 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
 
     if (interactive) std::cout << std::endl;
 
-    // if (!voicechat) Profiler::getInstance().report_internal();
     Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
     return output;

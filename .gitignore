@@ -27,13 +27,11 @@ test_*
 !test_*.cu
 demo
 chat
-voicechat
 profile_*
 !profile_*.cc
 libtorch/
 
 transformer/chat
-transformer/voicechat
 transformer/output.wav
 transformer/tmpfile
 transformer/TTS

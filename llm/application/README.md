@@ -54,6 +54,6 @@
 - Compile and start the voicechat locally.
 
   ```bash
-  make -j voicechat
-  ./voicechat # voicechat.exe on Windows
+  make -j chat
+  ./chat -v # chat.exe -v on Windows
   ```

@@ -222,7 +222,7 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
     }
     if (interactive) std::cout << std::endl;
 
-    if (!voicechat) Profiler::getInstance().report_internal();
+    Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
 
     return generate_ids;

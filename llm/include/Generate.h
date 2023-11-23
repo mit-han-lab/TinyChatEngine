@@ -105,6 +105,6 @@ std::string LLaMAGenerate(std::string param_path, void* model, int model_type, s
                           std::string voc_path, bool interactive, bool voicechat);
 
 std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
-                          std::string voc_path, bool interactive, bool voicechat);
+                          std::string voc_path, bool interactive);
 
 #endif  // GENERATE_H
