@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <string>
 #include <cstring>
 
 #include "Generate.h"
@@ -73,13 +74,27 @@ bool convertToBool(const char* str) {
 int NUM_THREAD = 8;
 
 int main(int argc, char* argv[]) {
+    bool use_voicechat = false;
+
+    // Check for optional arguments
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "-v") == 0) {
+            use_voicechat = true;
+            // Remove the flag from argc and argv
+            for (int j = i; j < argc - 1; ++j) {
+                argv[j] = argv[j + 1];
+            }
+            --argc;
+            break;
+        }
+    }
+
     std::string target_model = "LLaMA2_7B_chat";
     std::string target_data_format = "INT4";
     bool instruct = true;
     Profiler::getInstance().for_demo = true;
 
     std::cout << "TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine" << std::endl;
-
     if (argc >= 3 && argc <= 5) {
         if (argc >= 4) {
             NUM_THREAD = atoi(argv[3]);
@@ -185,9 +200,20 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             while (true) {
-                std::cout << "USER: ";
                 std::string input;
-                std::getline(std::cin, input);
+                if (use_voicechat){
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
+                } else {
+                    std::cout << "USER: ";
+                    std::getline(std::cin, input);
+                }
+                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                    break;
                 if (instruct) {
                     std::cout << "ASSISTANT: " << std::endl;
                     if (isCodeLLaMA(target_model)) {
@@ -223,12 +249,23 @@ int main(int argc, char* argv[]) {
             m_path = "INT4/" + m_path;
             Int4LlamaForCausalLM model = Int4LlamaForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
-
+            
             // Get input from the user
             while (true) {
-                std::cout << "USER: ";
                 std::string input;
-                std::getline(std::cin, input);
+                if (use_voicechat){
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
+                } else {
+                    std::cout << "USER: ";
+                    std::getline(std::cin, input);
+                }
+                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                    break;
                 if (instruct) {
                     std::cout << "ASSISTANT: " << std::endl;
                     if (isCodeLLaMA(target_model)) {
@@ -256,8 +293,7 @@ int main(int argc, char* argv[]) {
                         input = "### Human: " + input + "\n### Assistant: \n";
                     }
                 }
-
-                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false);
+                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, use_voicechat);
             }
         } else {
             std::cout << std::endl;
@@ -293,7 +329,7 @@ int main(int argc, char* argv[]) {
                 std::getline(std::cin, input);
                 std::cout << input;
 
-                GPTBigCodeGenerate(m_path, &model, StarCoder_FP32, input, generation_config, "models/starcoder_vocab.bin", true, false);
+                GPTBigCodeGenerate(m_path, &model, StarCoder_FP32, input, generation_config, "models/starcoder_vocab.bin", true);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -307,7 +343,7 @@ int main(int argc, char* argv[]) {
                 std::getline(std::cin, input);
                 std::cout << input;
 
-                GPTBigCodeGenerate(m_path, &model, StarCoder_INT4, input, generation_config, "models/starcoder_vocab.bin", true, false);    
+                GPTBigCodeGenerate(m_path, &model, StarCoder_INT4, input, generation_config, "models/starcoder_vocab.bin", true);    
             }
         } else {
             std::cout << std::endl;
@@ -335,45 +371,73 @@ int main(int argc, char* argv[]) {
         if (format_id == QINT8) {
             OPTForCausalLM model = OPTForCausalLM("INT8/" + m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
-
+            
             // Get input from the user
-            std::cout << "USER: ";
             std::string input;
-            std::getline(std::cin, input);
+            if (use_voicechat){
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
+            } else {
+                std::cout << "USER: ";
+                std::getline(std::cin, input);
+            }
             std::vector<int> input_ids = encoder.encode(input);
             std::string decoded = encoder.decode(input_ids);
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, false);
+                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, use_voicechat);
         } else if (format_id == FP32) {
             Fp32OPTForCausalLM model = Fp32OPTForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user
-            std::cout << "USER: ";
             std::string input;
-            std::getline(std::cin, input);
+            if (use_voicechat){
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
+            } else {
+                std::cout << "USER: ";
+                std::getline(std::cin, input);
+            }
             std::vector<int> input_ids = encoder.encode(input);
             std::string decoded = encoder.decode(input_ids);
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, false);
+                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, use_voicechat);
         } else if (format_id == INT4) {
             Int4OPTForCausalLM model = Int4OPTForCausalLM("INT4/" + m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl;
 
             // Get input from the user
-            std::cout << "USER: ";
             std::string input;
-            std::getline(std::cin, input);
+            if (use_voicechat){
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
+            } else {
+                std::cout << "USER: ";
+                std::getline(std::cin, input);
+            }
+            
             std::vector<int> input_ids = encoder.encode(input);
             std::string decoded = encoder.decode(input_ids);
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, false);
+                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, use_voicechat);
         }
 #endif  // QN_CUDA
     }

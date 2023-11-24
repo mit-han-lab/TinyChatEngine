@@ -52,10 +52,26 @@ index c598633..b342f16 100644
  
      m_sample_rate = capture_spec_obtained.freq;
 diff --git a/examples/stream/stream.cpp b/examples/stream/stream.cpp
-index 4c7f7d1..53304a6 100644
+index 4c7f7d1..60845f4 100644
 --- a/examples/stream/stream.cpp
 +++ b/examples/stream/stream.cpp
-@@ -171,7 +171,7 @@ int main(int argc, char ** argv) {
+@@ -139,10 +139,15 @@ int main(int argc, char ** argv) {
+ 
+     const int n_new_line = !use_vad ? std::max(1, params.length_ms / params.step_ms - 1) : 1; // number of steps to print new line
+ 
++    if (use_vad){
++        fprintf(stderr, "USER: ");
++    }
++
+     params.no_timestamps  = !use_vad;
+     params.no_context    |= use_vad;
+     params.max_tokens     = 0;
+ 
++
+     // init audio
+ 
+     audio_async audio(params.length_ms);
+@@ -171,7 +176,7 @@ int main(int argc, char ** argv) {
  
      // print some info about the processing
      {
@@ -64,7 +80,7 @@ index 4c7f7d1..53304a6 100644
          if (!whisper_is_multilingual(ctx)) {
              if (params.language != "en" || params.translate) {
                  params.language = "en";
-@@ -179,24 +179,23 @@ int main(int argc, char ** argv) {
+@@ -179,24 +184,21 @@ int main(int argc, char ** argv) {
                  fprintf(stderr, "%s: WARNING: model is not multilingual, ignoring language and translation options\n", __func__);
              }
          }
@@ -91,17 +107,17 @@ index 4c7f7d1..53304a6 100644
  
          if (!use_vad) {
              fprintf(stderr, "%s: n_new_line = %d, no_context = %d\n", __func__, n_new_line, params.no_context);
-         } else {
+-        } else {
 -            fprintf(stderr, "%s: using VAD, will transcribe on speech activity\n", __func__);
-+            fprintf(stderr, "USER: ");
-         }
+-        }
 -
 -        fprintf(stderr, "\n");
++        } 
 +        // fprintf(stderr, "\n");
      }
  
      int n_iter = 0;
-@@ -211,11 +210,9 @@ int main(int argc, char ** argv) {
+@@ -211,11 +213,9 @@ int main(int argc, char ** argv) {
              return 1;
          }
      }
@@ -114,7 +130,7 @@ index 4c7f7d1..53304a6 100644
      const auto t_start = t_last;
  
      // main audio loop
-@@ -329,10 +326,6 @@ int main(int argc, char ** argv) {
+@@ -329,10 +329,6 @@ int main(int argc, char ** argv) {
                  } else {
                      const int64_t t1 = (t_last - t_start).count()/1000000;
                      const int64_t t0 = std::max(0.0, t1 - pcmf32.size()*1000.0/WHISPER_SAMPLE_RATE);
@@ -125,7 +141,7 @@ index 4c7f7d1..53304a6 100644
                  }
  
                  const int n_segments = whisper_full_n_segments(ctx);
-@@ -349,20 +342,10 @@ int main(int argc, char ** argv) {
+@@ -349,20 +345,11 @@ int main(int argc, char ** argv) {
                      } else {
                          const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
                          const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
@@ -140,6 +156,7 @@ index 4c7f7d1..53304a6 100644
 -
 -                        printf("%s", output.c_str());
 -                        fflush(stdout);
++                        text += 1;
 +                        printf ("%s\n", text);
  
                          if (params.fname_out.length() > 0) {
@@ -148,7 +165,7 @@ index 4c7f7d1..53304a6 100644
                          }
                      }
                  }
-@@ -372,8 +355,7 @@ int main(int argc, char ** argv) {
+@@ -372,8 +359,7 @@ int main(int argc, char ** argv) {
                  }
  
                  if (use_vad){
@@ -158,6 +175,24 @@ index 4c7f7d1..53304a6 100644
                  }
              }
  
+diff --git a/ggml-cuda.cu b/ggml-cuda.cu
+index 50df20e..2ebef36 100644
+--- a/ggml-cuda.cu
++++ b/ggml-cuda.cu
+@@ -1835,11 +1835,11 @@ void ggml_init_cublas() {
+         CUDA_CHECK(cudaGetDeviceCount(&g_device_count));
+         GGML_ASSERT(g_device_count <= GGML_CUDA_MAX_DEVICES);
+         int64_t total_vram = 0;
+-        fprintf(stderr, "%s: found %d CUDA devices:\n", __func__, g_device_count);
++        // fprintf(stderr, "%s: found %d CUDA devices:\n", __func__, g_device_count);
+         for (int id = 0; id < g_device_count; ++id) {
+             cudaDeviceProp prop;
+             CUDA_CHECK(cudaGetDeviceProperties(&prop, id));
+-            fprintf(stderr, "  Device %d: %s\n", id, prop.name);
++            // fprintf(stderr, "  Device %d: %s\n", id, prop.name);
+             g_tensor_split[id] = total_vram;
+             total_vram += prop.totalGlobalMem;
+         }
 diff --git a/whisper.cpp b/whisper.cpp
 index 9923fa0..bcfc5d9 100644
 --- a/whisper.cpp

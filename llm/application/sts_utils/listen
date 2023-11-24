@@ -25,4 +25,4 @@ options:
   -tdrz,     --tinydiarize  [false  ] enable tinydiarize (requires a tdrz model)
 comm
 
-./whisper.cpp/stream -m ./whisper.cpp/models/ggml-base.en.bin -t 6 --step 0 --length 30000 -vth 0.7 -c 1 > tmpfile
+./whisper.cpp/stream -m ./whisper.cpp/models/ggml-base.en.bin -t 6 --step 0 --length 30000 -vth 0.6 -c 1 > tmpfile

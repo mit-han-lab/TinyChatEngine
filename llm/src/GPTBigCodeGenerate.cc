@@ -8,7 +8,7 @@
 #include <sstream>
 
 std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
-                          std::string voc_path, bool interactive, bool voicechat) {
+                          std::string voc_path, bool interactive) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -187,7 +187,7 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
 
     if (interactive) std::cout << std::endl;
 
-    if (!voicechat) Profiler::getInstance().report_internal();
+    Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
     return output;
 }
