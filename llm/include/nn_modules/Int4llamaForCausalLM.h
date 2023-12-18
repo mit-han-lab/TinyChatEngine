@@ -10,7 +10,10 @@ struct Int4LlamaForCausalLM_output {
 };
 struct Int4LlamaForCausalLM_input {
     Matrix3D<int> input_ids;
+    Matrix3D<float> image_embed;
+    Matrix3D<int> second_input_ids;
     bool has_past_keys_values;
+    bool is_llava;
 #ifdef QM_CUDA
     std::vector<Matrix3D<float16_t>> past_keys, past_values;
 #else
@@ -18,7 +21,10 @@ struct Int4LlamaForCausalLM_input {
 #endif
 
     Int4LlamaForCausalLM_input() {}
-    Int4LlamaForCausalLM_input(Matrix3D<int> input_ids_) : input_ids(input_ids_) { has_past_keys_values = false; }
+    Int4LlamaForCausalLM_input(Matrix3D<int> input_ids_) : input_ids(input_ids_) { 
+        has_past_keys_values = false; 
+        is_llava = false;
+    }
 #ifdef QM_CUDA
     Int4LlamaForCausalLM_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float16_t>> past_keys_,
                                std::vector<Matrix3D<float16_t>> past_values_)
@@ -28,6 +34,12 @@ struct Int4LlamaForCausalLM_input {
 #endif
         : input_ids(input_ids_), past_keys(past_keys_), past_values(past_values_) {
         has_past_keys_values = true;
+        is_llava = false;
+    }
+    Int4LlamaForCausalLM_input(Matrix3D<int> input_ids_, Matrix3D<float> image_embed_, Matrix3D<int> second_input_ids_)
+        : input_ids(input_ids_), image_embed(image_embed_), second_input_ids(second_input_ids_) {
+        has_past_keys_values = false;
+        is_llava = true;
     }
 };
 

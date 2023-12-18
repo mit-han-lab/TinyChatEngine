@@ -9,7 +9,7 @@ std::map<std::string, int> model_config = {
     {"OPT_125m", OPT_125M},       {"OPT_1.3B", OPT_1_3B}, {"OPT_6.7B", OPT_6_7B},         {"LLaMA_7B", LLaMA_7B},
     {"LLaMA2_7B_chat", LLaMA_7B}, {"7b", LLaMA_7B},       {"LLaMA2_13B_chat", LLaMA_13B}, {"13b", LLaMA_13B},
     {"CodeLLaMA_7B_Instruct", CodeLLaMA_7B},   {"CodeLLaMA_13B_Instruct", CodeLLaMA_13B}, 
-    {"StarCoder", StarCoder_15_5B}, {"StarCoder_15.5B", StarCoder_15_5B}
+    {"StarCoder", StarCoder_15_5B}, {"StarCoder_15.5B", StarCoder_15_5B}, {"LLaVA_7B", LLaVA_7B}, {"Clip_ViT_Large", Clip_ViT_Large}
     };
 
 std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"},
@@ -23,7 +23,9 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
                                                  {"CodeLLaMA_7B_Instruct", "models/CodeLLaMA_7B_Instruct"},
                                                  {"CodeLLaMA_13B_Instruct", "models/CodeLLaMA_13B_Instruct"},
                                                  {"StarCoder", "models/StarCoder"},
-                                                 {"StarCoder_15.5B", "models/StarCoder"}
+                                                 {"StarCoder_15.5B", "models/StarCoder"},
+                                                 {"LLaVA_7B", "models/LLaVA_7B"},
+                                                {"Clip_ViT_Large", "models/CLIP_ViT_Large"}
                                                  };
 
 std::map<std::string, int> data_format_list = {
@@ -33,7 +35,6 @@ std::map<std::string, int> data_format_list = {
 bool isLLaMA(std::string s) {
     std::string LLaMA_prefix = "LLaMA";
     std::string CodeLLaMA_prefix = "CodeLLaMA";
-
     if (s.substr(0, LLaMA_prefix.size()) == LLaMA_prefix || s.substr(0, CodeLLaMA_prefix.size()) == CodeLLaMA_prefix || s == "7b" || s == "13b")
         return true;
     else
@@ -42,7 +43,6 @@ bool isLLaMA(std::string s) {
 
 bool isCodeLLaMA(std::string s) {
     std::string CodeLLaMA_prefix = "CodeLLaMA";
-
     if (s.substr(0, CodeLLaMA_prefix.size()) == CodeLLaMA_prefix)
         return true;
     else
@@ -51,8 +51,15 @@ bool isCodeLLaMA(std::string s) {
 
 bool isStarCoder(std::string s) {
     std::string StarCoder_prefix = "StarCoder";
-
     if (s.substr(0, StarCoder_prefix.size()) == StarCoder_prefix)
+        return true;
+    else
+        return false;
+}
+
+bool isLLaVA(std::string s) {
+    std::string LLaVA_prefix = "LLaVA";
+    if (s.substr(0, LLaVA_prefix.size()) == LLaVA_prefix)
         return true;
     else
         return false;
@@ -71,7 +78,7 @@ bool convertToBool(const char* str) {
     }
 }
 
-int NUM_THREAD = 8;
+int NUM_THREAD = 5;
 
 int main(int argc, char* argv[]) {
     bool use_voicechat = false;
@@ -92,19 +99,26 @@ int main(int argc, char* argv[]) {
     std::string target_model = "LLaMA2_7B_chat";
     std::string target_data_format = "INT4";
     bool instruct = true;
+    std::string img_path = "images/monalisa.jpg";
     Profiler::getInstance().for_demo = true;
 
     std::cout << "TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine" << std::endl;
     if (argc >= 3 && argc <= 5) {
+        auto target_str = argv[1];
+        target_model = argv[1];
+        
         if (argc >= 4) {
             NUM_THREAD = atoi(argv[3]);
         }
         if (argc == 5) {
-            instruct = convertToBool(argv[4]);
+            if (isCodeLLaMA(target_model)) {
+                instruct = convertToBool(argv[4]);
+            }
+            else if (isLLaVA(target_model)) {
+                img_path = argv[4];
+            }
         }
 
-        auto target_str = argv[1];
-        target_model = argv[1];
         if (model_config.count(target_model) == 0) {
             std::cerr << "Model config:" << target_str << " unsupported" << std::endl;
             std::cerr << "Please select one of the following:";
@@ -155,6 +169,13 @@ int main(int argc, char* argv[]) {
                 std::cout << "Using data format: " << target_data_format << std::endl;
         } 
         else if (isStarCoder(target_model)) {
+            std::cout << "Using model: " + target_model << std::endl;
+            if (target_data_format == "INT4" || target_data_format == "int4")
+                std::cout << "Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq" << std::endl;
+            else
+                std::cout << "Using data format: " << target_data_format << std::endl;
+        }
+        else if (isLLaVA(target_model)) {
             std::cout << "Using model: " + target_model << std::endl;
             if (target_data_format == "INT4" || target_data_format == "int4")
                 std::cout << "Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq" << std::endl;
@@ -225,7 +246,6 @@ int main(int argc, char* argv[]) {
                             input = " </s> <s>[INST] " + input + " [/INST] ";
                         }
                     }
-
                 }
                 else {
                     if (isCodeLLaMA(target_model)) {
@@ -297,7 +317,7 @@ int main(int argc, char* argv[]) {
             }
         } else {
             std::cout << std::endl;
-            std::cerr << "At this time, we only support FP32 and INT4 for LLaMA7B." << std::endl;
+            std::cerr << "At this time, we only support FP32 and INT4 for LLaMA_7B." << std::endl;
         }
     } else if (isStarCoder(target_model)) {
         int format_id = data_format_list[target_data_format];
@@ -348,6 +368,102 @@ int main(int argc, char* argv[]) {
         } else {
             std::cout << std::endl;
             std::cerr << "At this time, we only support FP32 and INT4 for StarCoder." << std::endl;
+        }
+    } else if (isLLaVA(target_model)) {
+        int format_id = data_format_list[target_data_format];
+
+        // Load model
+        std::cout << "Loading model... " << std::flush;
+        std::string clip_m_path = model_path["Clip_ViT_Large"];
+        std::string llama_m_path = model_path[target_model];
+
+        int clip_model_id = model_config["Clip_ViT_Large"];
+        int llama_model_id = model_config[target_model];
+
+        #ifdef MODEL_PREFIX
+        llama_m_path = MODEL_PREFIX + llama_m_path;
+        #endif
+
+        struct opt_params generation_config;
+        generation_config.n_predict = 512;
+        generation_config.repeat_penalty = 1.1f;
+        generation_config.temp = 0.2f;
+        generation_config.n_vocab = 32000;
+
+        bool first_prompt = true;
+
+        if (format_id == FP32) {
+            Fp32CLIPVisionTransformer clip_model = Fp32CLIPVisionTransformer(clip_m_path, get_opt_model_config(clip_model_id));
+            Fp32LlamaForCausalLM llama_model = Fp32LlamaForCausalLM(llama_m_path, get_opt_model_config(llama_model_id));
+            std::cout << "Finished!" << std::endl;
+
+            // Get input from the user
+            while (true) {
+                std::string input;
+                if (use_voicechat){
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
+                } else {
+                    std::cout << "USER: ";
+                    std::getline(std::cin, input);
+                }
+                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                    break;
+
+                std::string second_input;
+                if (first_prompt) {
+                    second_input = "\n" + input + "\n### ASSISTANT:";
+                    input = "A chat between a user and an assistant.\n\n### USER: ";
+                    first_prompt = false;
+                }
+                else {
+                    input = "### USER: " + input + "\n### ASSISTANT: \n";
+                }
+
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_FP32, input, second_input, img_path, generation_config, "models/llama_vocab.bin", true, false);
+            }
+        } else if (format_id == INT4) {
+            Fp32CLIPVisionTransformer clip_model = Fp32CLIPVisionTransformer(clip_m_path, get_opt_model_config(clip_model_id));
+            llama_m_path = "INT4/" + llama_m_path;
+            Int4LlamaForCausalLM llama_model = Int4LlamaForCausalLM(llama_m_path, get_opt_model_config(llama_model_id));
+            std::cout << "Finished!" << std::endl;
+            
+            // Get input from the user
+            while (true) {
+                std::string input;
+                if (use_voicechat){
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
+                } else {
+                    std::cout << "USER: ";
+                    std::getline(std::cin, input);
+                }
+                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                    break;
+
+                std::string second_input;
+                if (first_prompt) {
+                    second_input = "\n" + input + "\n### ASSISTANT:";
+                    input = "A chat between a user and an assistant.\n\n### USER: ";
+                    first_prompt = false;
+                }
+                else {
+                    input = "### USER: " + input + "\n### ASSISTANT: \n";
+                }
+
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_INT4, input, second_input, img_path, generation_config, "models/llama_vocab.bin", true, use_voicechat);
+            }
+        } else {
+            std::cout << std::endl;
+            std::cerr << "At this time, we only support FP32 and INT4 for LLaVA_7B." << std::endl;
         }
     } else {  // OPT
 #ifdef QM_CUDA

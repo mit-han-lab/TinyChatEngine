@@ -4,9 +4,9 @@ Usage:
    python model_quantizer.py --model_path <path to TinyEngine modelt> --method <Quantization method>
 
 Example commands:
-   python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
+   python tools/model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
 
-   python model_quantizer.py --model_path FP32/models/OPT_125m --method QM_ARM --output_path INT4
+   python tools/model_quantizer.py --model_path FP32/models/OPT_125m --method QM_ARM --output_path INT4
 
 """
 import argparse
@@ -130,9 +130,11 @@ def _quantize_model(
         layer_num = 40
     elif model_name_size.startswith("StarCoder"):
         layer_num = 40
+    elif model_name_size.startswith("LLaVA_7B"):
+        layer_num = 32
     else:
         raise ValueError(
-            "Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B', 'LLaMA_13B', 'CodeLLaMA_7B', 'CodeLLaMA_13B', or 'StarCoder'."
+            "Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B', 'LLaMA_13B', 'CodeLLaMA_7B', 'CodeLLaMA_13B', 'StarCoder', or 'LLaVA_7B'."
         )
 
     # Check quantization method
@@ -274,9 +276,9 @@ def _quantize_model(
 
             print(f"Quantization of layer {idx} finished.")
 
-    # LLaMA
-    elif model_name.startswith("LLaMA") or model_name.startswith("CodeLLaMA"):
-        if model_name.startswith("LLaMA_7B") or model_name.startswith("CodeLLaMA_7B"):
+    # LLaMA / LLaVA
+    elif model_name.startswith("LLaMA") or model_name.startswith("CodeLLaMA") or model_name.startswith("LLaVA"):
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("CodeLLaMA_7B") or model_name.startswith("LLaVA_7B"):
             embed_dim = 4096
             hidden_dim = 11008
         elif model_name.startswith("LLaMA_13B") or model_name.startswith("CodeLLaMA_13B"):
@@ -285,7 +287,7 @@ def _quantize_model(
         else:
             raise NotImplementedError(f"{model_name} not supported.")
         
-        if model_name.startswith("LLaMA_7B") or model_name.startswith("LLaMA_13B"):
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("LLaMA_13B") or model_name.startswith("LLaVA_7B"):
             vocab_size = 32000
         elif model_name.startswith("CodeLLaMA_7B") or model_name.startswith("CodeLLaMA_13B"):
             vocab_size = 32016
