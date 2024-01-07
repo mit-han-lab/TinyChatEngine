@@ -6,5 +6,5 @@ var searchData=
   ['starcoder_5fvocab_3',['starcoder_vocab',['../structstarcoder__vocab.html',1,'']]],
   ['step_20by_20step_20to_20deploy_20llama2_207b_20chat_20with_20tinychatengine_4',['Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine',['../index.html#autotoc_md11',1,'']]],
   ['step_20to_20deploy_20llama2_207b_20chat_20with_20tinychatengine_5',['Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine',['../index.html#autotoc_md11',1,'']]],
-  ['support_6',['support',['../index.html#autotoc_md12',1,'Backend Support'],['../index.html#autotoc_md13',1,'Quantization and Model Support']]]
+  ['support_6',['Support',['../index.html#autotoc_md12',1,'Backend Support'],['../index.html#autotoc_md13',1,'Quantization and Model Support']]]
 ];
