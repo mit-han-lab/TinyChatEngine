@@ -51,6 +51,14 @@
   ```bash
   nano application/sts_utils/speak
   ```
+  
+- Test each of the submodules to ensure they are working as intended
+
+  ```bash
+  ./application/sts_utils/listen
+  cat tmpfile
+  ./application/sts_utils/speak hello
+  ```
 
 - Compile and start the voicechat locally. 
 
