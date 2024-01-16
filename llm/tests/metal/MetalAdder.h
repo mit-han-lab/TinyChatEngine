@@ -4,7 +4,7 @@ A class to manage all of the Metal objects this app creates.
 
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#include "common.h"
+#include "../../include/common.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

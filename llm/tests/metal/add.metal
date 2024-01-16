@@ -9,7 +9,7 @@ using namespace metal;
 kernel void elementwise_add(
     device const Matrix3D<float> &inputA,
     device const Matrix3D<float> &inputB,
-   device const Matrix3D<float> &output,
+    device const Matrix3D<float> &output,
     uint3 gid [[ thread_position_in_grid ]]
 )
 {
