@@ -2,7 +2,7 @@ var searchData=
 [
   ['inference_20engine_3a_20tinychatengine_0',['LLM Inference Engine: TinyChatEngine',['../index.html#autotoc_md5',1,'']]],
   ['inference_20library_1',['TinyChatEngine: On-Device LLM Inference Library',['../index.html#autotoc_md0',1,'']]],
-  ['int4_20weight_20reordering_2',['Device-specific int4 Weight Reordering',['../index.html#autotoc_md14',1,'']]],
+  ['int4_20weight_20reordering_2',['Device-specific int4 Weight Reordering',['../index.html#autotoc_md15',1,'']]],
   ['int4_5fthread_5fargs_3',['int4_thread_args',['../structint4__thread__args.html',1,'']]],
   ['int4gptbigcodeattention_4',['Int4GPTBigCodeAttention',['../classInt4GPTBigCodeAttention.html',1,'']]],
   ['int4gptbigcodeattention_5finput_5',['Int4GPTBigCodeAttention_input',['../structInt4GPTBigCodeAttention__input.html',1,'']]],
