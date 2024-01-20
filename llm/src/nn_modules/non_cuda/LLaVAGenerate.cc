@@ -137,9 +137,9 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                 model_input = {input_ids_mat, past_keys, past_values};
             } else {
                 // Load and preprocess image
-                printf("Loading and preprocessing image...\n");
+                // printf("Loading and preprocessing image...\n");
                 auto image_embed = load_image(img_path, clip_model_ptr);
-                printf("Image loaded and preprocessed.\n");
+                // printf("Image loaded and preprocessed.\n");
                 
                 sqlen = input_ids.size() + 576 + second_input_ids.size();
                 int first_sqlen = input_ids.size();
@@ -166,9 +166,9 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                 model_input = {input_ids_mat, past_keys, past_values};
             } else {
                 // Load and preprocess image
-                printf("Loading and preprocessing image...\n");
+                // printf("Loading and preprocessing image...\n");
                 auto image_embed = load_image(img_path, clip_model_ptr);
-                printf("Image loaded and preprocessed.\n");
+                // printf("Image loaded and preprocessed.\n");
                 
                 sqlen = input_ids.size() + 576 + second_input_ids.size();
                 int first_sqlen = input_ids.size();
