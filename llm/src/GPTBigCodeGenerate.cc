@@ -150,25 +150,9 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
             }
         }
 
-        if (id == 2) {
-            break_cnt--;
-            continue;
-        }  // eos
-        else if (id == 1)
-            continue;
-        break_cnt = 2;
-
-        bool skip = false;
-        if (id == 2277 && !previous_two_hash) {
-            previous_two_hash = true;
-            skip = true;
-        } else if (previous_two_hash && id == 29937) {  // token = #
-            break_cnt = 0;
-            skip = true;
-        } else {
-            if (previous_two_hash) std::cout << "##" << std::endl;
-            previous_two_hash = false;
-        }
+        if (id == 0) {
+            break;
+        }  // endoftext
 
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
@@ -176,7 +160,7 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
 
-        if (interactive && !skip) {
+        if (interactive) {
             output += starcoder_id_to_token(vocab, id);
             std::cout << starcoder_id_to_token(vocab, id) << std::flush;
         }
