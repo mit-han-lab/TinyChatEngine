@@ -413,6 +413,7 @@ int main(int argc, char* argv[]) {
                 }
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
+                std::cout << "ASSISTANT: " << std::endl;
 
                 std::string second_input;
                 if (first_prompt) {
@@ -448,7 +449,8 @@ int main(int argc, char* argv[]) {
                 }
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
-
+                std::cout << "ASSISTANT: " << std::endl;
+                
                 std::string second_input;
                 if (first_prompt) {
                     second_input = "\n" + input + "\n### ASSISTANT:";
