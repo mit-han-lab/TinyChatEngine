@@ -13,7 +13,7 @@
 #define CA_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
 #include "Metal/Metal.hpp"
-#include "Foundation/Foundation"
+#include "Foundation/Foundation.hpp"
 
 int arraySize = 100;
 
