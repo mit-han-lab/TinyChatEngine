@@ -23,7 +23,7 @@ MTL::Buffer* pM3;
 using namespace std;
 using namespace chrono;
 
-int arraySize = 100000;
+int arraySize = 100000000;
 
 void addArrays(const int arr1[], const int arr2[], int result[], int size) {
     for (int i = 0; i < size; ++i) {
@@ -52,20 +52,18 @@ int main(){
     int *M2 = new int[arraySize];
     int *M3 = new int[arraySize];
 
-    
-    
     generateRandomIntArray(M1);
     generateRandomIntArray(M2);
     generateRandomIntArray(M3);
-    std::cout << "M1[0]: " << M1[0] << " " << M1[1] << " " << M1[2] << std::endl;
-    std::cout << "M2[0]: " << M2[0] << " " << M2[1] << " " << M2[2] << std::endl;
-    std::cout << "M3[0]: " << M3[0] << " " << M3[1] << " " << M3[2]  << std::endl;
-
 
     auto start2 = high_resolution_clock::now();
     addArrays(M1, M2, M3, arraySize);
     auto stop2 = high_resolution_clock::now();
     auto duration2 = duration_cast<microseconds>(stop2 - start2);
+    std::cout << "CPU" << std::endl;
+    std::cout << "M1[0]: " << M1[0] << " " << M1[1] << " " << M1[2] << std::endl;
+    std::cout << "M2[0]: " << M2[0] << " " << M2[1] << " " << M2[2] << std::endl;
+    std::cout << "M3[0]: " << M3[0] << " " << M3[1] << " " << M3[2]  << std::endl;
     
     // auto start = high_resolution_clock::now();
     MTL::Device *_mDevice = MTL::CreateSystemDefaultDevice();
@@ -145,12 +143,11 @@ int main(){
     MTL::Size threadgroupCount = MTL::Size::Make((arraySize + threadsPerThreadgroup - 1) / threadsPerThreadgroup, 1, 1);
     // Dispatch threads in multiple threadgroups
     MTL::Size threadgroups = MTL::Size::Make(threadsPerThreadgroup, 1, 1);
-    
-
 
     auto start = high_resolution_clock::now();
     // Encode the compute command.
-    computeEncoder->dispatchThreads(mtlthreadsPerthreadgroup, threadgroupSize);
+    // computeEncoder->dispatchThreads(mtlthreadsPerthreadgroup, threadgroupSize);
+    computeEncoder->dispatchThreadgroups(threadgroups, threadgroupCount);
 
     // End the compute pass.
     computeEncoder->endEncoding();
@@ -162,10 +159,10 @@ int main(){
     // but in this example, the code simply blocks until the calculation is complete.
     commandBuffer->waitUntilCompleted();
     
-    // std::cout << "M1[0]: " << ((int*)(buffer1->contents()))[0] << " " << ((int*)(buffer1->contents()))[1] << " " << ((int*)(buffer1->contents()))[2] << std::endl;
-    // std::cout << "M2[0]: " << ((int*)(buffer2->contents()))[0] << " " << ((int*)(buffer2->contents()))[1] << " " << ((int*)(buffer2->contents()))[2] << std::endl;
-    // std::cout << "M3[0]: " << ((int*)(buffer3->contents()))[0] << " " << ((int*)(buffer3->contents()))[1] << " " << ((int*)(buffer3->contents()))[2]  << std::endl;
-
+    std::cout << "GPU" << std::endl;
+    std::cout << "M1[0]: " << ((int*)(buffer1->contents()))[0] << " " << ((int*)(buffer1->contents()))[1] << " " << ((int*)(buffer1->contents()))[2] << std::endl;
+    std::cout << "M2[0]: " << ((int*)(buffer2->contents()))[0] << " " << ((int*)(buffer2->contents()))[1] << " " << ((int*)(buffer2->contents()))[2] << std::endl;
+    std::cout << "M3[0]: " << ((int*)(buffer3->contents()))[0] << " " << ((int*)(buffer3->contents()))[1] << " " << ((int*)(buffer3->contents()))[2]  << std::endl;
     
     computeEncoder->release();
     commandBuffer->release();
