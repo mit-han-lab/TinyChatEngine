@@ -23,9 +23,9 @@ kernel void matmul(device const float* matrixA,
                             device float* matrixC,
                             uint2 gid [[thread_position_in_grid]])
 {
-    unsigned int widthA = 2; // Set the width of matrix A
-    unsigned int widthB = 2; // Set the width of matrix B
-    unsigned int heightA = 2; // Set the height of matrix A
+    unsigned int widthA = 8; // Set the width of matrix A
+    unsigned int widthB = 8; // Set the width of matrix B
+    unsigned int heightA = 8; // Set the height of matrix A
 
     if (gid.x >= widthB || gid.y >= heightA) {
         return;

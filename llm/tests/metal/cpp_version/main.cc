@@ -31,8 +31,8 @@ using namespace std;
 using namespace chrono;
 
 // Customizable parameters for testing
-uint row = 2;
-uint col = 2;
+uint row = 8;
+uint col = 8;
 uint arraySize = row*col;
 const char * fn_name = "matmul";
 float *A1, *A2, *A3;
@@ -40,7 +40,8 @@ struct dim {
     uint r;
     uint c;
 };
-struct dim matdim;
+struct dim matdim1;
+struct dim matdim2;
 
 void test_addArrays(const float arr1[], const float arr2[], float result[], uint size) {
     for (int i = 0; i < size; ++i) {
@@ -125,9 +126,9 @@ void metal_encodecommand(MTL::ComputeCommandEncoder *computeEncoder){
     computeEncoder->setBuffer(bM2, 0, 1);
     computeEncoder->setBuffer(bM3, 0, 2);
 
-    memcpy(bM1->contents(), A1, arraySize);
-    memcpy(bM2->contents(), A2, arraySize);
-    memcpy(bM3->contents(), A3, arraySize);
+    memcpy(bM1->contents(), A1, arraySize*sizeof(float));
+    memcpy(bM2->contents(), A2, arraySize*sizeof(float));
+    memcpy(bM3->contents(), A3, arraySize*sizeof(float));
 }
 
 void metal_compute(){
@@ -145,9 +146,7 @@ void metal_compute(){
     // NS::UInteger ThreadGroupSize = MIN(arraySize, maxThreadGroupSize);
     // MTL::Size mGridSize = MTL::Size::Make((arraySize + ThreadGroupSize - 1) / ThreadGroupSize, 1, 1);
     // MTL::Size mThreadGroupSize = MTL::Size::Make(ThreadGroupSize, 1, 1);
-    // NS::UInteger maxThreadGroupSize = mfnPipelineState->maxTotalThreadsPerThreadgroup();
-    // NS::UInteger ThreadGroupSize = MIN(arraySize, maxThreadGroupSize);
-    MTL::Size mThreadGroupSize = MTL::Size::Make(2, 2, 1);
+    MTL::Size mThreadGroupSize = MTL::Size::Make(8, 8, 1);
     MTL::Size mGridSize = MTL::Size::Make((matdim.r + mThreadGroupSize.width - 1) / mThreadGroupSize.width,
                                            (matdim.r + mThreadGroupSize.height - 1) / mThreadGroupSize.height,
                                            1);
@@ -177,18 +176,24 @@ int main(){
 
     // CPU
     test_matmul(A1, row, col, A2, row, col, A3);
-    printf("A1: %f; A2 %f; A3 %f\n", A1[0], A2[0], A3[0]);
+    printf("CPU Results: \n");
+    for (uint8_t i = 0; i < arraySize; i++){
+        printf("A1: %f; A2 %f; A3 %f\n", A1[i], A2[i], A3[i]);
+    }
     free(A3);
     A3 = new float[arraySize];
     
     // GPU
     metal_init();
     metal_compute();
-    printf("A1: %f; A2 %f; A3 %f\n", A1[0], A2[0], ((float*)(bM3->contents()))[0]);
+    printf("GPU Results: \n");
+    for (uint8_t i = 0; i < arraySize; i++){
+        printf("bM1: %f; bM2 %f; bM3 %f\n", ((float*)(bM1->contents()))[i], ((float*)(bM2->contents()))[i], ((float*)(bM3->contents()))[i]);
+    }
     free(A1);
     free(A2);
     free(A3);
-}   
+}
 
 
 
