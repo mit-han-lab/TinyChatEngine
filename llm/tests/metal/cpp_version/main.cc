@@ -24,32 +24,58 @@ MTL::ComputePipelineState* mfnPipelineState;
 MTL::CommandQueue* mCommandQueue;
 NS::Error *error = nullptr;
 
-const char * fn_name = "arrayAdd";
 
-int *A1, *A2, *A3;
 
 
 using namespace std;
 using namespace chrono;
 
-uint row = 100;
-uint col = 100;
+// Customizable parameters for testing
+uint row = 2;
+uint col = 2;
 uint arraySize = row*col;
+const char * fn_name = "matmul";
+float *A1, *A2, *A3;
+struct dim {
+    uint r;
+    uint c;
+};
+struct dim matdim;
 
-void addArrays(const int arr1[], const int arr2[], int result[], int size) {
+void test_addArrays(const float arr1[], const float arr2[], float result[], uint size) {
     for (int i = 0; i < size; ++i) {
         result[i] = arr1[i] + arr2[i];
     }
 }
 
+void test_matmul(const float* matA, int rowsA, int colsA,
+                      const float* matB, int rowsB, int colsB,
+                      float* result) {
+    for (int i = 0; i < rowsA; ++i) {
+        for (int j = 0; j < colsB; ++j) {
+            result[i * colsB + j] = 0;
+            for (int k = 0; k < colsA; ++k) {
+                result[i * colsB + j] += matA[i * colsA + k] * matB[k * colsB + j];
+            }
+        }
+    }
+}
+
+void printArray(const float* array) {
+    for (int i = 0; i < arraySize; ++i) {
+        std::cout << array[i] << " ";
+    }
+    std::cout << std::endl;
+}
+
 // Function to generate a random integer array
-void generateRandomIntArray(int* array) {
+void generateRandomFloatArray(float* array) {
     // Use a random device to seed the random number generator
     std::random_device rd;
     // Use the current time as a seed for the random number generator
     std::mt19937 gen(rd());
     // Define the range of random numbers (adjust as needed)
-    std::uniform_int_distribution<int> distribution(1, 100);
+    std::uniform_real_distribution<float> distribution(1, 100);
 
     // Generate random integers and fill the array
     for (int i = 0; i < arraySize; ++i) {
@@ -90,9 +116,9 @@ MTL::Buffer *metal_newBuf(unsigned long type_size, unsigned long size){
 
 void metal_encodecommand(MTL::ComputeCommandEncoder *computeEncoder){
     //Create Metal buffers for input and output, if inside the TinyChat, param should be created in advance
-    bM1 = metal_newBuf(sizeof(int), arraySize);
-    bM2 = metal_newBuf(sizeof(int), arraySize);
-    bM3 = metal_newBuf(sizeof(int), arraySize);
+    bM1 = metal_newBuf(sizeof(float), arraySize);
+    bM2 = metal_newBuf(sizeof(float), arraySize);
+    bM3 = metal_newBuf(sizeof(float), arraySize);
 
     computeEncoder->setComputePipelineState(mfnPipelineState);
     computeEncoder->setBuffer(bM1, 0, 0);
@@ -115,10 +141,16 @@ void metal_compute(){
     metal_encodecommand(computeEncoder);
 
     // Threads -> ThreadGroup -> Grid
-    NS::UInteger maxThreadGroupSize = mfnPipelineState->maxTotalThreadsPerThreadgroup();
-    NS::UInteger ThreadGroupSize = MIN(arraySize, maxThreadGroupSize);
-    MTL::Size mGridSize = MTL::Size::Make((arraySize + ThreadGroupSize - 1) / ThreadGroupSize, 1, 1);
-    MTL::Size mThreadGroupSize = MTL::Size::Make(ThreadGroupSize, 1, 1);
+    // NS::UInteger maxThreadGroupSize = mfnPipelineState->maxTotalThreadsPerThreadgroup();
+    // NS::UInteger ThreadGroupSize = MIN(arraySize, maxThreadGroupSize);
+    // MTL::Size mGridSize = MTL::Size::Make((arraySize + ThreadGroupSize - 1) / ThreadGroupSize, 1, 1);
+    // MTL::Size mThreadGroupSize = MTL::Size::Make(ThreadGroupSize, 1, 1);
+    // NS::UInteger maxThreadGroupSize = mfnPipelineState->maxTotalThreadsPerThreadgroup();
+    // NS::UInteger ThreadGroupSize = MIN(arraySize, maxThreadGroupSize);
+    MTL::Size mThreadGroupSize = MTL::Size::Make(2, 2, 1);
+    MTL::Size mGridSize = MTL::Size::Make((matdim.r + mThreadGroupSize.width - 1) / mThreadGroupSize.width,
+                                           (matdim.r + mThreadGroupSize.height - 1) / mThreadGroupSize.height,
+                                           1);
 
     // Dispatch and Run Computation
     computeEncoder->dispatchThreadgroups(mGridSize, mThreadGroupSize);
@@ -132,19 +164,30 @@ void metal_compute(){
 int main(){
 
     // Initialization for array addition
-    A1 = new int[arraySize];
-    A2 = new int[arraySize];
-    A3 = new int[arraySize];
-    generateRandomIntArray(A1);
-    generateRandomIntArray(A2);
-
-    // Initialization for matmul
+    A1 = new float[arraySize];
+    A2 = new float[arraySize];
+    A3 = new float[arraySize];
+    generateRandomFloatArray(A1);
+    generateRandomFloatArray(A2);
+    printArray(A1);
+    printArray(A2);
+    matdim.r = row;
+    matdim.c = col;
     
+
+    // CPU
+    test_matmul(A1, row, col, A2, row, col, A3);
+    printf("A1: %f; A2 %f; A3 %f\n", A1[0], A2[0], A3[0]);
+    free(A3);
+    A3 = new float[arraySize];
+    
+    // GPU
     metal_init();
     metal_compute();
-    printf("A1: %d; A2 %d; A3 %d\n", A1[0], A2[0], ((int*)(bM3->contents()))[0]);
-    
-    
+    printf("A1: %f; A2 %f; A3 %f\n", A1[0], A2[0], ((float*)(bM3->contents()))[0]);
+    free(A1);
+    free(A2);
+    free(A3);
 }   
 
 

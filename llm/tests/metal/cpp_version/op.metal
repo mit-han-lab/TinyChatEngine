@@ -8,9 +8,9 @@
 #include <metal_stdlib>
 using namespace metal;
 
-kernel void arrayAdd(const device int* inputA,
-                       const device int* inputB,
-                       device int* output,
+kernel void arrayAdd(const device float* inputA,
+                       const device float* inputB,
+                       device float* output,
                        uint id [[thread_position_in_grid]])
  {
     // Perform array addition
@@ -18,30 +18,26 @@ kernel void arrayAdd(const device int* inputA,
  }
 
 
-// kernel void matmul(device const float* inA,
-//                     device const float* inB, // column major
-//                     device float* result,
-//                     constant MetalMatMulParams& params,
-//                     uint2 id [[thread_position_in_grid]])
-// {
-//     // the for-loop is replaced with a collection of threads, each of which
-//     // calls this function.
+kernel void matmul(device const float* matrixA,
+                            device const float* matrixB,
+                            device float* matrixC,
+                            uint2 gid [[thread_position_in_grid]])
+{
+    unsigned int widthA = 2; // Set the width of matrix A
+    unsigned int widthB = 2; // Set the width of matrix B
+    unsigned int heightA = 2; // Set the height of matrix A
 
-//     const uint n = params.n;
-//     const uint k = params.k;
+    if (gid.x >= widthB || gid.y >= heightA) {
+        return;
+    }
 
-//     const uint idx = id.x; // column index of the output
-//     const uint idy = id.y; // row index of the output
+    float sum = 0.0;
+    for (unsigned int k = 0; k < widthA; k++) {
+        sum += matrixA[gid.y * widthA + k] * matrixB[k * widthB + gid.x];
+    }
 
-//     float sum = 0;
-//     for (uint i = 0; i < k; i++){
-//         float vA = inA[idy * k + i];
-//         float vB = inB[idx * k + i];
-
-//         sum += vA * vB;
-//     }
-//     result[idy * n + idx] = sum;
-// }
+    matrixC[gid.y * widthB + gid.x] = sum;
+}
 
 // kernel void matmulInt4(device const float* inA,
 //                     device const uint8_t* inB, // column major
