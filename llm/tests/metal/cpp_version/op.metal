@@ -7,6 +7,7 @@
 
 #include <metal_stdlib>
 using namespace metal;
+#include "param.h"
 
 kernel void arrayAdd(const device float* inputA,
                        const device float* inputB,
@@ -20,12 +21,13 @@ kernel void arrayAdd(const device float* inputA,
 
 kernel void matmul(device const float* matrixA,
                             device const float* matrixB,
+                            device matmul_param *param,
                             device float* matrixC,
                             uint2 gid [[thread_position_in_grid]])
 {
-    unsigned int widthA = 8; // Set the width of matrix A
-    unsigned int widthB = 8; // Set the width of matrix B
-    unsigned int heightA = 8; // Set the height of matrix A
+    unsigned int widthA = param->width1; // Set the width of matrix A
+    unsigned int widthB = param->width2; // Set the width of matrix B
+    unsigned int heightA = param->height1; // Set the height of matrix A
 
     if (gid.x >= widthB || gid.y >= heightA) {
         return;
