@@ -64,8 +64,8 @@ kernel void matmulInt4(device const float* inA,
         for (uint j = 0; j < group_size; j+=2){
             size_t weight_idx = (idx * k + i + j) / 2;
             uint8_t weight_packed = inB[weight_idx];
-            int8_t vl = (weight_packed & 0x0F) - 8;
-            int8_t vh = (weight_packed >> 4) - 8;
+            int8_t vl = (weight_packed & 0x0F) ; // -8?
+            int8_t vh = (weight_packed >> 4) & 0x0F ; // -8?
 
             sum += (inA[idy * k + i + j] * vl) * scale;
             sum += (inA[idy * k + i + j + 1] * vh) * scale;
@@ -75,111 +75,111 @@ kernel void matmulInt4(device const float* inA,
 }
 
 
-// kernel void matmulInt4_SIMD_Q4Interleave(
-//                     device const packed_float4* inA,
-//                     device const packed_char4* inB, // column major
-//                     device float* result,
-//                     device const float* scales,
-//                     constant MetalMatMulParams& params,
-//                     uint2 id [[thread_position_in_grid]])
-// {
-//     // the for-loop is replaced with a collection of threads, each of which
-//     // calls this function.
+kernel void matmulInt4_SIMD_Q4Interleave(
+                    device const packed_float4* inA,
+                    device const packed_char4* inB, // column major
+                    device float* result,
+                    device const float* scales,
+                    constant MetalMatMulParams* params,
+                    uint2 id [[thread_position_in_grid]])
+{
+    // the for-loop is replaced with a collection of threads, each of which
+    // calls this function.
 
-//     const uint n = params.n;
-//     const uint k = params.k;
-//     const uint group_size = params.group_size;
+    const uint n = params->width3;
+    const uint k = params->width1;
+    const uint group_size = params->group_size;
 
-//     const uint idx = id.x; // column index of the output
-//     const uint idy = id.y; // row index of the output
+    const uint idx = id.x; // column index of the output
+    const uint idy = id.y; // row index of the output
 
-//     packed_char4 lowMask = {0x0F, 0x0F, 0x0F, 0x0F};
-//     packed_float4 sum4 = {0.0f, 0.0f, 0.0f, 0.0f};
+    packed_char4 lowMask = {0x0F, 0x0F, 0x0F, 0x0F};
+    packed_float4 sum4 = {0.0f, 0.0f, 0.0f, 0.0f};
 
-//     for (uint i = 0; i < k; i += group_size){
-//         float scale = scales[(idx * k + i) / group_size];
-//         packed_float4 scale4 = {scale, scale, scale, scale};
-//         for (uint j = 0; j < group_size; j+= 8){
-//             // sequential: (a, b), (c, d), (e, f), (g, h): 32 bit = 4xuint8
-//             // expected layout of inB: (a, e), (b, f), (c, g), (d, h)
-//             // low; (a, 0), (b, 0), (c, 0), (d, 0)
-//             // high: (e, 0), (f, 0), (g, 0), (h, 0)
-//             size_t weight_idx = (idx * k + i + j) / 8;
-//             size_t activation_idx = (idy * k + i + j) / 4;
-//             packed_char4 packed_8 = inB[weight_idx];
-//             packed_char4 packed_low = packed_8 & lowMask;
-//             packed_char4 packed_high = (packed_8 >> 4) & lowMask;
+    for (uint i = 0; i < k; i += group_size){
+        float scale = scales[(idx * k + i) / group_size];
+        packed_float4 scale4 = {scale, scale, scale, scale};
+        for (uint j = 0; j < group_size; j+= 8){
+            // sequential: (a, b), (c, d), (e, f), (g, h): 32 bit = 4xuint8
+            // expected layout of inB: (a, e), (b, f), (c, g), (d, h)
+            // low; (a, 0), (b, 0), (c, 0), (d, 0)
+            // high: (e, 0), (f, 0), (g, 0), (h, 0)
+            size_t weight_idx = (idx * k + i + j) / 8;
+            size_t activation_idx = (idy * k + i + j) / 4;
+            packed_char4 packed_8 = inB[weight_idx];
+            packed_char4 packed_low = packed_8 & lowMask;
+            packed_char4 packed_high = (packed_8 >> 4) & lowMask;
 
-//             packed_float4 inAlow = inA[activation_idx];
-//             packed_float4 inAhigh = inA[activation_idx+1];
-//             packed_float4 inBlow = packed_float4(packed_low) * scale4;
-//             packed_float4 inBhigh = packed_float4(packed_high) * scale4;
+            packed_float4 inAlow = inA[activation_idx];
+            packed_float4 inAhigh = inA[activation_idx+1];
+            packed_float4 inBlow = packed_float4(packed_low) * scale4;
+            packed_float4 inBhigh = packed_float4(packed_high) * scale4;
 
-//             sum4 += inAlow * inBlow;
-//             sum4 += inAhigh * inBhigh;
-//         }
-//     }
-//     float sum = sum4[0] + sum4[1] + sum4[2] + sum4[3];
-//     result[idy * n + idx] = sum;
-// }
+            sum4 += inAlow * inBlow;
+            sum4 += inAhigh * inBhigh;
+        }
+    }
+    float sum = sum4[0] + sum4[1] + sum4[2] + sum4[3];
+    result[idy * n + idx] = sum;
+}
 
-// kernel void matmulUInt4_SIMD_Q4Interleave_unroll16(
-//                     device const packed_float4* inA,
-//                     device const packed_char4* inB, // column major
-//                     device float* result,
-//                     device const float* scales,
-//                     constant MetalMatMulParams& params,
-//                     uint2 id [[thread_position_in_grid]])
-// {
-//     // the for-loop is replaced with a collection of threads, each of which
-//     // calls this function.
+kernel void matmulUInt4_SIMD_Q4Interleave_unroll16(
+                    device const packed_float4* inA,
+                    device const packed_char4* inB, // column major
+                    device float* result,
+                    device const float* scales,
+                    constant MetalMatMulParams* params,
+                    uint2 id [[thread_position_in_grid]])
+{
+    // the for-loop is replaced with a collection of threads, each of which
+    // calls this function.
 
-//     const uint n = params.n;
-//     const uint k = params.k;
-//     const uint group_size = params.group_size;
+    const uint n = params->width3;
+    const uint k = params->width1;
+    const uint group_size = params->group_size;
+    const uint idx = id.x; // column index of the output
+    const uint idy = id.y; // row index of the output
 
-//     const uint idx = id.x; // column index of the output
-//     const uint idy = id.y; // row index of the output
+    packed_char4 lowMask = {0x0F, 0x0F, 0x0F, 0x0F};
+    packed_float4 sum4 = {0.0f, 0.0f, 0.0f, 0.0f};
+    packed_char4 offsets = {8, 8, 8, 8};
+    // packed_char4 offsets = {0, 0, 0, 0};
 
-//     packed_char4 lowMask = {0x0F, 0x0F, 0x0F, 0x0F};
-//     packed_float4 sum4 = {0.0f, 0.0f, 0.0f, 0.0f};
-//     packed_char4 offsets = {8, 8, 8, 8};
+    for (uint i = 0; i < k; i += group_size){
+        float scale = scales[(idx * k + i) / group_size];
+        packed_float4 scale4 = {scale, scale, scale, scale};
+        for (uint j = 0; j < group_size; j+= 16){
+            // sequential: (a, b), (c, d), (e, f), (g, h): 32 bit = 4xuint8
+            // expected layout of inB: (a, e), (b, f), (c, g), (d, h)
+            // low; (a, 0), (b, 0), (c, 0), (d, 0)
+            // high: (e, 0), (f, 0), (g, 0), (h, 0)
+            size_t weight_idx = (idx * k + i + j) / 8;
+            size_t activation_idx = (idy * k + i + j) / 4;
+            packed_char4 packed_8_0 = inB[weight_idx];
+            packed_char4 packed_8_1 = inB[weight_idx + 1];
+            packed_char4 packed_low_0 = (packed_8_0 & lowMask) - offsets;;
+            packed_char4 packed_low_1 = (packed_8_1 & lowMask) - offsets;;
+            packed_char4 packed_high_0 = ((packed_8_0 >> 4) & lowMask) - offsets;
+            packed_char4 packed_high_1 = ((packed_8_1 >> 4) & lowMask) - offsets;
 
-//     for (uint i = 0; i < k; i += group_size){
-//         float scale = scales[(idx * k + i) / group_size];
-//         packed_float4 scale4 = {scale, scale, scale, scale};
-//         for (uint j = 0; j < group_size; j+= 16){
-//             // sequential: (a, b), (c, d), (e, f), (g, h): 32 bit = 4xuint8
-//             // expected layout of inB: (a, e), (b, f), (c, g), (d, h)
-//             // low; (a, 0), (b, 0), (c, 0), (d, 0)
-//             // high: (e, 0), (f, 0), (g, 0), (h, 0)
-//             size_t weight_idx = (idx * k + i + j) / 8;
-//             size_t activation_idx = (idy * k + i + j) / 4;
-//             packed_char4 packed_8_0 = inB[weight_idx];
-//             packed_char4 packed_8_1 = inB[weight_idx + 1];
-//             packed_char4 packed_low_0 = (packed_8_0 & lowMask) - offsets;;
-//             packed_char4 packed_low_1 = (packed_8_1 & lowMask) - offsets;;
-//             packed_char4 packed_high_0 = ((packed_8_0 >> 4) & lowMask) - offsets;
-//             packed_char4 packed_high_1 = ((packed_8_1 >> 4) & lowMask) - offsets;
+            packed_float4 inAlow_0 = inA[activation_idx];
+            packed_float4 inAlow_1 = inA[activation_idx+2];
+            packed_float4 inAhigh_0 = inA[activation_idx+1];
+            packed_float4 inAhigh_1 = inA[activation_idx+3];
+            packed_float4 inBlow_0 = packed_float4(packed_low_0) * scale4;
+            packed_float4 inBlow_1 = packed_float4(packed_low_1) * scale4;
+            packed_float4 inBhigh_0 = packed_float4(packed_high_0) * scale4;
+            packed_float4 inBhigh_1 = packed_float4(packed_high_1) * scale4;
 
-//             packed_float4 inAlow_0 = inA[activation_idx];
-//             packed_float4 inAlow_1 = inA[activation_idx+2];
-//             packed_float4 inAhigh_0 = inA[activation_idx+1];
-//             packed_float4 inAhigh_1 = inA[activation_idx+3];
-//             packed_float4 inBlow_0 = packed_float4(packed_low_0) * scale4;
-//             packed_float4 inBlow_1 = packed_float4(packed_low_1) * scale4;
-//             packed_float4 inBhigh_0 = packed_float4(packed_high_0) * scale4;
-//             packed_float4 inBhigh_1 = packed_float4(packed_high_1) * scale4;
-
-//             sum4 += inAlow_0 * inBlow_0;
-//             sum4 += inAlow_1 * inBlow_1;
-//             sum4 += inAhigh_0 * inBhigh_0;
-//             sum4 += inAhigh_1 * inBhigh_1;
-//         }
-//     }
-//     float sum = sum4[0] + sum4[1] + sum4[2] + sum4[3];
-//     result[idy * n + idx] = sum;
-// }
+            sum4 += inAlow_0 * inBlow_0;
+            sum4 += inAlow_1 * inBlow_1;
+            sum4 += inAhigh_0 * inBhigh_0;
+            sum4 += inAhigh_1 * inBhigh_1;
+        }
+    }
+    float sum = sum4[0] + sum4[1] + sum4[2] + sum4[3];
+    result[idy * n + idx] = sum;
+}
 
 
 // kernel void matmulUInt4_SIMD_Q4Interleave_unroll32(
