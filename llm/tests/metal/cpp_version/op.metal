@@ -41,38 +41,38 @@ kernel void matmul(device const float* matrixA,
     matrixC[gid.y * widthB + gid.x] = sum;
 }
 
-// kernel void matmulInt4(device const float* inA,
-//                     device const uint8_t* inB, // column major
-//                     device float* result,
-//                     device const float* scales,
-//                     constant MetalMatMulParams& params,
-//                     uint2 id [[thread_position_in_grid]])
-// {
-//     // the for-loop is replaced with a collection of threads, each of which
-//     // calls this function.
+kernel void matmulInt4(device const float* inA,
+                    device const uint8_t* inB, // column major
+                    device float* result,
+                    device const float* scales,
+                    device const MetalMatMulParams* params,
+                    uint2 id [[thread_position_in_grid]])
+{
+    // the for-loop is replaced with a collection of threads, each of which
+    // calls this function.
 
-//     const uint n = params.n;
-//     const uint k = params.k;
-//     const uint group_size = params.group_size;
+    const uint n = params->width3;
+    const uint k = params->width1;
+    const uint group_size = params->group_size;
 
-//     const uint idx = id.x; // column index of the output
-//     const uint idy = id.y; // row index of the output
+    const uint idx = id.x; // column index of the output
+    const uint idy = id.y; // row index of the output
 
-//     float sum = 0;
-//     for (uint i = 0; i < k; i += group_size){
-//         float scale = scales[(idx * k + i) / group_size];
-//         for (uint j = 0; j < group_size; j+=2){
-//             size_t weight_idx = (idx * k + i + j) / 2;
-//             uint8_t weight_packed = inB[weight_idx];
-//             int8_t vl = (weight_packed & 0x0F) - 8;
-//             int8_t vh = (weight_packed >> 4) - 8;
+    float sum = 0;
+    for (uint i = 0; i < k; i += group_size){
+        float scale = scales[(idx * k + i) / group_size];
+        for (uint j = 0; j < group_size; j+=2){
+            size_t weight_idx = (idx * k + i + j) / 2;
+            uint8_t weight_packed = inB[weight_idx];
+            int8_t vl = (weight_packed & 0x0F) - 8;
+            int8_t vh = (weight_packed >> 4) - 8;
 
-//             sum += (inA[idy * k + i + j] * vl) * scale;
-//             sum += (inA[idy * k + i + j + 1] * vh) * scale;
-//         }
-//     }
-//     result[idy * n + idx] = sum;
-// }
+            sum += (inA[idy * k + i + j] * vl) * scale;
+            sum += (inA[idy * k + i + j + 1] * vh) * scale;
+        }
+    }
+    result[idy * n + idx] = sum;
+}
 
 
 // kernel void matmulInt4_SIMD_Q4Interleave(
