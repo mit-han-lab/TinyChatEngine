@@ -191,6 +191,8 @@ void metal_compute(){
         metal_encodecommand_matmulInt4(computeEncoder);
     } else if (strcmp(fn_name, "matmul") == 0) {
         metal_encodecommand_matmul(computeEncoder);
+    } else {
+        metal_encodecommand_matmulInt4(computeEncoder);
     }
     
     // Threads -> ThreadGroup -> Grid
@@ -204,6 +206,9 @@ void metal_compute(){
         mGridSize = MTL::Size::Make((param->width1 + mThreadGroupSize.width - 1) / mThreadGroupSize.width,
                                               (param->height2 + mThreadGroupSize.height - 1) / mThreadGroupSize.height,
                                               1);
+    } else {
+        mThreadGroupSize = MTL::Size::Make(Int4_params->width3, Int4_params->height1, 1);
+        mGridSize = MTL::Size::Make(16, 1, 1);
     }
     
     // Dispatch and Run Computation
@@ -283,6 +288,21 @@ void test_matmulInt4(){
     Int4_buffer->B = A2;
     Int4_buffer->C = A3;
     Int4_buffer->scales = scales;
+    
+    metal_init();
+    metal_compute();
+    printf("GPU Results: \n");
+    for (uint32_t i = 0; i < Int4_params->height1*Int4_params->width1/Int4_params->group_size; i++){
+        printf("bM3[%d]: %f\n", i, ((float*)(bM3->contents()))[i]);
+    }
+    fn_name = "matmulInt4_SIMD_Q4Interleave";
+    metal_init();
+    metal_compute();
+    printf("GPU Results: \n");
+    for (uint32_t i = 0; i < Int4_params->height1*Int4_params->width1/Int4_params->group_size; i++){
+        printf("bM3[%d]: %f\n", i, ((float*)(bM3->contents()))[i]);
+    }
+    fn_name = "matmulUInt4_SIMD_Q4Interleave_unroll16";
     metal_init();
     metal_compute();
     printf("GPU Results: \n");
@@ -295,7 +315,6 @@ int main(){
     test_matmulInt4();
     return 0;
 }
-
 
 
 

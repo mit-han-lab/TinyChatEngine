@@ -23,7 +23,3 @@ typedef struct {
 } MetalMatMulParams;
 
 // should be inside metal header
-// typedef struct {
-//     float *A, *C, *scales, *offset;
-//     unsigned char *B;
-// } MetalMatmulBuffers;
