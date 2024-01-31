@@ -12,6 +12,7 @@
 #endif /* param_h */
 typedef struct  {
     unsigned int width1, height1, width2, height2, outputsize, arraySize1, arraySize2;
+    unsigned int m_dim_x, m_dim_y, m_dim_z;
 }matmul_param;
 
 // For customized MatmulInt4 use
