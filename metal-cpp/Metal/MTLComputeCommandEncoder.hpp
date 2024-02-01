@@ -2,7 +2,7 @@
 //
 // Metal/MTLComputeCommandEncoder.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,6 +57,14 @@ public:
     void              setBufferOffset(NS::UInteger offset, NS::UInteger index);
 
     void              setBuffers(const class Buffer* const buffers[], const NS::UInteger offsets[], NS::Range range);
+
+    void              setBuffer(const class Buffer* buffer, NS::UInteger offset, NS::UInteger stride, NS::UInteger index);
+
+    void              setBuffers(const class Buffer* const buffers[], const NS::UInteger* offsets, const NS::UInteger* strides, NS::Range range);
+
+    void              setBufferOffset(NS::UInteger offset, NS::UInteger stride, NS::UInteger index);
+
+    void              setBytes(const void* bytes, NS::UInteger length, NS::UInteger stride, NS::UInteger index);
 
     void              setVisibleFunctionTable(const class VisibleFunctionTable* visibleFunctionTable, NS::UInteger bufferIndex);
 
@@ -153,6 +161,30 @@ _MTL_INLINE void MTL::ComputeCommandEncoder::setBufferOffset(NS::UInteger offset
 _MTL_INLINE void MTL::ComputeCommandEncoder::setBuffers(const MTL::Buffer* const buffers[], const NS::UInteger offsets[], NS::Range range)
 {
     Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setBuffers_offsets_withRange_), buffers, offsets, range);
+}
+
+// method: setBuffer:offset:attributeStride:atIndex:
+_MTL_INLINE void MTL::ComputeCommandEncoder::setBuffer(const MTL::Buffer* buffer, NS::UInteger offset, NS::UInteger stride, NS::UInteger index)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setBuffer_offset_attributeStride_atIndex_), buffer, offset, stride, index);
+}
+
+// method: setBuffers:offsets:attributeStrides:withRange:
+_MTL_INLINE void MTL::ComputeCommandEncoder::setBuffers(const MTL::Buffer* const buffers[], const NS::UInteger* offsets, const NS::UInteger* strides, NS::Range range)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setBuffers_offsets_attributeStrides_withRange_), buffers, offsets, strides, range);
+}
+
+// method: setBufferOffset:attributeStride:atIndex:
+_MTL_INLINE void MTL::ComputeCommandEncoder::setBufferOffset(NS::UInteger offset, NS::UInteger stride, NS::UInteger index)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setBufferOffset_attributeStride_atIndex_), offset, stride, index);
+}
+
+// method: setBytes:length:attributeStride:atIndex:
+_MTL_INLINE void MTL::ComputeCommandEncoder::setBytes(const void* bytes, NS::UInteger length, NS::UInteger stride, NS::UInteger index)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setBytes_length_attributeStride_atIndex_), bytes, length, stride, index);
 }
 
 // method: setVisibleFunctionTable:atBufferIndex:

@@ -2,7 +2,7 @@
 //
 // Metal/MTLFunctionStitching.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ namespace MTL
 {
 class FunctionStitchingAttribute : public NS::Referencing<FunctionStitchingAttribute>
 {
+public:
 };
 
 class FunctionStitchingAttributeAlwaysInline : public NS::Referencing<FunctionStitchingAttributeAlwaysInline, FunctionStitchingAttribute>
@@ -44,6 +45,7 @@ public:
 
 class FunctionStitchingNode : public NS::Copying<FunctionStitchingNode>
 {
+public:
 };
 
 class FunctionStitchingInputNode : public NS::Referencing<FunctionStitchingInputNode, FunctionStitchingNode>

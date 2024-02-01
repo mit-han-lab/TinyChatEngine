@@ -2,7 +2,7 @@
 //
 // Foundation/NSObject.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -243,7 +243,7 @@ _NS_INLINE _Ret NS::Object::sendMessageSafe(const void* pObj, SEL selector, _Arg
 
     if constexpr (!std::is_void<_Ret>::value)
     {
-        return 0;
+        return _Ret(0);
     }
 }
 

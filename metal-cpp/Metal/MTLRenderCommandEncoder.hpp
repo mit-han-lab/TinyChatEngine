@@ -2,7 +2,7 @@
 //
 // Metal/MTLRenderCommandEncoder.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -150,6 +150,14 @@ public:
     void         setVertexBufferOffset(NS::UInteger offset, NS::UInteger index);
 
     void         setVertexBuffers(const class Buffer* const buffers[], const NS::UInteger offsets[], NS::Range range);
+
+    void         setVertexBuffer(const class Buffer* buffer, NS::UInteger offset, NS::UInteger stride, NS::UInteger index);
+
+    void         setVertexBuffers(const class Buffer* const buffers[], const NS::UInteger* offsets, const NS::UInteger* strides, NS::Range range);
+
+    void         setVertexBufferOffset(NS::UInteger offset, NS::UInteger stride, NS::UInteger index);
+
+    void         setVertexBytes(const void* bytes, NS::UInteger length, NS::UInteger stride, NS::UInteger index);
 
     void         setVertexTexture(const class Texture* texture, NS::UInteger index);
 
@@ -422,6 +430,30 @@ _MTL_INLINE void MTL::RenderCommandEncoder::setVertexBufferOffset(NS::UInteger o
 _MTL_INLINE void MTL::RenderCommandEncoder::setVertexBuffers(const MTL::Buffer* const buffers[], const NS::UInteger offsets[], NS::Range range)
 {
     Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setVertexBuffers_offsets_withRange_), buffers, offsets, range);
+}
+
+// method: setVertexBuffer:offset:attributeStride:atIndex:
+_MTL_INLINE void MTL::RenderCommandEncoder::setVertexBuffer(const MTL::Buffer* buffer, NS::UInteger offset, NS::UInteger stride, NS::UInteger index)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setVertexBuffer_offset_attributeStride_atIndex_), buffer, offset, stride, index);
+}
+
+// method: setVertexBuffers:offsets:attributeStrides:withRange:
+_MTL_INLINE void MTL::RenderCommandEncoder::setVertexBuffers(const MTL::Buffer* const buffers[], const NS::UInteger* offsets, const NS::UInteger* strides, NS::Range range)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setVertexBuffers_offsets_attributeStrides_withRange_), buffers, offsets, strides, range);
+}
+
+// method: setVertexBufferOffset:attributeStride:atIndex:
+_MTL_INLINE void MTL::RenderCommandEncoder::setVertexBufferOffset(NS::UInteger offset, NS::UInteger stride, NS::UInteger index)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setVertexBufferOffset_attributeStride_atIndex_), offset, stride, index);
+}
+
+// method: setVertexBytes:length:attributeStride:atIndex:
+_MTL_INLINE void MTL::RenderCommandEncoder::setVertexBytes(const void* bytes, NS::UInteger length, NS::UInteger stride, NS::UInteger index)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setVertexBytes_length_attributeStride_atIndex_), bytes, length, stride, index);
 }
 
 // method: setVertexTexture:atIndex:

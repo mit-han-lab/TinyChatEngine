@@ -2,7 +2,7 @@
 //
 // Metal/MTLTexture.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ _MTL_OPTIONS(NS::UInteger, TextureUsage) {
     TextureUsageShaderWrite = 2,
     TextureUsageRenderTarget = 4,
     TextureUsagePixelFormatView = 16,
+    TextureUsageShaderAtomic = 32,
 };
 
 _MTL_ENUM(NS::Integer, TextureCompressionType) {

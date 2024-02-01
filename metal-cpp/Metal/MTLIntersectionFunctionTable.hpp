@@ -2,7 +2,7 @@
 //
 // Metal/MTLIntersectionFunctionTable.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ _MTL_OPTIONS(NS::UInteger, IntersectionFunctionSignature) {
     IntersectionFunctionSignatureInstanceMotion = 8,
     IntersectionFunctionSignaturePrimitiveMotion = 16,
     IntersectionFunctionSignatureExtendedLimits = 32,
+    IntersectionFunctionSignatureMaxLevels = 64,
+    IntersectionFunctionSignatureCurveData = 128,
 };
 
 class IntersectionFunctionTableDescriptor : public NS::Copying<IntersectionFunctionTableDescriptor>
@@ -71,6 +73,10 @@ public:
     void            setOpaqueTriangleIntersectionFunction(MTL::IntersectionFunctionSignature signature, NS::UInteger index);
 
     void            setOpaqueTriangleIntersectionFunction(MTL::IntersectionFunctionSignature signature, NS::Range range);
+
+    void            setOpaqueCurveIntersectionFunction(MTL::IntersectionFunctionSignature signature, NS::UInteger index);
+
+    void            setOpaqueCurveIntersectionFunction(MTL::IntersectionFunctionSignature signature, NS::Range range);
 
     void            setVisibleFunctionTable(const class VisibleFunctionTable* functionTable, NS::UInteger bufferIndex);
 
@@ -148,6 +154,18 @@ _MTL_INLINE void MTL::IntersectionFunctionTable::setOpaqueTriangleIntersectionFu
 _MTL_INLINE void MTL::IntersectionFunctionTable::setOpaqueTriangleIntersectionFunction(MTL::IntersectionFunctionSignature signature, NS::Range range)
 {
     Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setOpaqueTriangleIntersectionFunctionWithSignature_withRange_), signature, range);
+}
+
+// method: setOpaqueCurveIntersectionFunctionWithSignature:atIndex:
+_MTL_INLINE void MTL::IntersectionFunctionTable::setOpaqueCurveIntersectionFunction(MTL::IntersectionFunctionSignature signature, NS::UInteger index)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setOpaqueCurveIntersectionFunctionWithSignature_atIndex_), signature, index);
+}
+
+// method: setOpaqueCurveIntersectionFunctionWithSignature:withRange:
+_MTL_INLINE void MTL::IntersectionFunctionTable::setOpaqueCurveIntersectionFunction(MTL::IntersectionFunctionSignature signature, NS::Range range)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setOpaqueCurveIntersectionFunctionWithSignature_withRange_), signature, range);
 }
 
 // method: setVisibleFunctionTable:atBufferIndex:

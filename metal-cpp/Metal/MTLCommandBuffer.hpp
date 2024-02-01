@@ -2,7 +2,7 @@
 //
 // Metal/MTLCommandBuffer.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ _MTL_ENUM(NS::UInteger, CommandBufferError) {
     CommandBufferErrorInternal = 1,
     CommandBufferErrorTimeout = 2,
     CommandBufferErrorPageFault = 3,
-    CommandBufferErrorAccessRevoked = 4,
     CommandBufferErrorBlacklisted = 4,
+    CommandBufferErrorAccessRevoked = 4,
     CommandBufferErrorNotPermitted = 7,
     CommandBufferErrorOutOfMemory = 8,
     CommandBufferErrorInvalidResource = 9,

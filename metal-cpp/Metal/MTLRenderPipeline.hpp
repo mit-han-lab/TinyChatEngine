@@ -2,7 +2,7 @@
 //
 // Metal/MTLRenderPipeline.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,10 +65,10 @@ _MTL_ENUM(NS::UInteger, BlendOperation) {
 
 _MTL_OPTIONS(NS::UInteger, ColorWriteMask) {
     ColorWriteMaskNone = 0,
-    ColorWriteMaskAlpha = 1,
-    ColorWriteMaskBlue = 2,
-    ColorWriteMaskGreen = 4,
     ColorWriteMaskRed = 8,
+    ColorWriteMaskGreen = 4,
+    ColorWriteMaskBlue = 2,
+    ColorWriteMaskAlpha = 1,
     ColorWriteMaskAll = 15,
 };
 
@@ -467,6 +467,18 @@ public:
 
     MTL::PixelFormat                                    stencilAttachmentPixelFormat() const;
     void                                                setStencilAttachmentPixelFormat(MTL::PixelFormat stencilAttachmentPixelFormat);
+
+    bool                                                supportIndirectCommandBuffers() const;
+    void                                                setSupportIndirectCommandBuffers(bool supportIndirectCommandBuffers);
+
+    class LinkedFunctions*                              objectLinkedFunctions() const;
+    void                                                setObjectLinkedFunctions(const class LinkedFunctions* objectLinkedFunctions);
+
+    class LinkedFunctions*                              meshLinkedFunctions() const;
+    void                                                setMeshLinkedFunctions(const class LinkedFunctions* meshLinkedFunctions);
+
+    class LinkedFunctions*                              fragmentLinkedFunctions() const;
+    void                                                setFragmentLinkedFunctions(const class LinkedFunctions* fragmentLinkedFunctions);
 
     void                                                reset();
 };
@@ -1589,6 +1601,50 @@ _MTL_INLINE MTL::PixelFormat MTL::MeshRenderPipelineDescriptor::stencilAttachmen
 _MTL_INLINE void MTL::MeshRenderPipelineDescriptor::setStencilAttachmentPixelFormat(MTL::PixelFormat stencilAttachmentPixelFormat)
 {
     Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setStencilAttachmentPixelFormat_), stencilAttachmentPixelFormat);
+}
+
+// property: supportIndirectCommandBuffers
+_MTL_INLINE bool MTL::MeshRenderPipelineDescriptor::supportIndirectCommandBuffers() const
+{
+    return Object::sendMessageSafe<bool>(this, _MTL_PRIVATE_SEL(supportIndirectCommandBuffers));
+}
+
+_MTL_INLINE void MTL::MeshRenderPipelineDescriptor::setSupportIndirectCommandBuffers(bool supportIndirectCommandBuffers)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setSupportIndirectCommandBuffers_), supportIndirectCommandBuffers);
+}
+
+// property: objectLinkedFunctions
+_MTL_INLINE MTL::LinkedFunctions* MTL::MeshRenderPipelineDescriptor::objectLinkedFunctions() const
+{
+    return Object::sendMessage<MTL::LinkedFunctions*>(this, _MTL_PRIVATE_SEL(objectLinkedFunctions));
+}
+
+_MTL_INLINE void MTL::MeshRenderPipelineDescriptor::setObjectLinkedFunctions(const MTL::LinkedFunctions* objectLinkedFunctions)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setObjectLinkedFunctions_), objectLinkedFunctions);
+}
+
+// property: meshLinkedFunctions
+_MTL_INLINE MTL::LinkedFunctions* MTL::MeshRenderPipelineDescriptor::meshLinkedFunctions() const
+{
+    return Object::sendMessage<MTL::LinkedFunctions*>(this, _MTL_PRIVATE_SEL(meshLinkedFunctions));
+}
+
+_MTL_INLINE void MTL::MeshRenderPipelineDescriptor::setMeshLinkedFunctions(const MTL::LinkedFunctions* meshLinkedFunctions)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setMeshLinkedFunctions_), meshLinkedFunctions);
+}
+
+// property: fragmentLinkedFunctions
+_MTL_INLINE MTL::LinkedFunctions* MTL::MeshRenderPipelineDescriptor::fragmentLinkedFunctions() const
+{
+    return Object::sendMessage<MTL::LinkedFunctions*>(this, _MTL_PRIVATE_SEL(fragmentLinkedFunctions));
+}
+
+_MTL_INLINE void MTL::MeshRenderPipelineDescriptor::setFragmentLinkedFunctions(const MTL::LinkedFunctions* fragmentLinkedFunctions)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setFragmentLinkedFunctions_), fragmentLinkedFunctions);
 }
 
 // method: reset

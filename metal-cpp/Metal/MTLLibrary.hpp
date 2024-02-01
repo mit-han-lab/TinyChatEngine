@@ -2,7 +2,7 @@
 //
 // Metal/MTLLibrary.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -146,6 +146,7 @@ _MTL_ENUM(NS::UInteger, LanguageVersion) {
     LanguageVersion2_3 = 131075,
     LanguageVersion2_4 = 131076,
     LanguageVersion3_0 = 196608,
+    LanguageVersion3_1 = 196609,
 };
 
 _MTL_ENUM(NS::Integer, LibraryType) {
@@ -156,6 +157,11 @@ _MTL_ENUM(NS::Integer, LibraryType) {
 _MTL_ENUM(NS::Integer, LibraryOptimizationLevel) {
     LibraryOptimizationLevelDefault = 0,
     LibraryOptimizationLevelSize = 1,
+};
+
+_MTL_ENUM(NS::Integer, CompileSymbolVisibility) {
+    CompileSymbolVisibilityDefault = 0,
+    CompileSymbolVisibilityHidden = 1,
 };
 
 class CompileOptions : public NS::Copying<CompileOptions>
@@ -188,6 +194,15 @@ public:
 
     MTL::LibraryOptimizationLevel optimizationLevel() const;
     void                          setOptimizationLevel(MTL::LibraryOptimizationLevel optimizationLevel);
+
+    MTL::CompileSymbolVisibility  compileSymbolVisibility() const;
+    void                          setCompileSymbolVisibility(MTL::CompileSymbolVisibility compileSymbolVisibility);
+
+    bool                          allowReferencingUndefinedSymbols() const;
+    void                          setAllowReferencingUndefinedSymbols(bool allowReferencingUndefinedSymbols);
+
+    NS::UInteger                  maxTotalThreadsPerThreadgroup() const;
+    void                          setMaxTotalThreadsPerThreadgroup(NS::UInteger maxTotalThreadsPerThreadgroup);
 };
 
 _MTL_ENUM(NS::UInteger, LibraryError) {
@@ -543,6 +558,39 @@ _MTL_INLINE MTL::LibraryOptimizationLevel MTL::CompileOptions::optimizationLevel
 _MTL_INLINE void MTL::CompileOptions::setOptimizationLevel(MTL::LibraryOptimizationLevel optimizationLevel)
 {
     Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setOptimizationLevel_), optimizationLevel);
+}
+
+// property: compileSymbolVisibility
+_MTL_INLINE MTL::CompileSymbolVisibility MTL::CompileOptions::compileSymbolVisibility() const
+{
+    return Object::sendMessage<MTL::CompileSymbolVisibility>(this, _MTL_PRIVATE_SEL(compileSymbolVisibility));
+}
+
+_MTL_INLINE void MTL::CompileOptions::setCompileSymbolVisibility(MTL::CompileSymbolVisibility compileSymbolVisibility)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setCompileSymbolVisibility_), compileSymbolVisibility);
+}
+
+// property: allowReferencingUndefinedSymbols
+_MTL_INLINE bool MTL::CompileOptions::allowReferencingUndefinedSymbols() const
+{
+    return Object::sendMessage<bool>(this, _MTL_PRIVATE_SEL(allowReferencingUndefinedSymbols));
+}
+
+_MTL_INLINE void MTL::CompileOptions::setAllowReferencingUndefinedSymbols(bool allowReferencingUndefinedSymbols)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setAllowReferencingUndefinedSymbols_), allowReferencingUndefinedSymbols);
+}
+
+// property: maxTotalThreadsPerThreadgroup
+_MTL_INLINE NS::UInteger MTL::CompileOptions::maxTotalThreadsPerThreadgroup() const
+{
+    return Object::sendMessage<NS::UInteger>(this, _MTL_PRIVATE_SEL(maxTotalThreadsPerThreadgroup));
+}
+
+_MTL_INLINE void MTL::CompileOptions::setMaxTotalThreadsPerThreadgroup(NS::UInteger maxTotalThreadsPerThreadgroup)
+{
+    Object::sendMessage<void>(this, _MTL_PRIVATE_SEL(setMaxTotalThreadsPerThreadgroup_), maxTotalThreadsPerThreadgroup);
 }
 
 _MTL_INLINE void MTL::Library::newFunction(const NS::String* pFunctionName, const FunctionConstantValues* pConstantValues, const std::function<void(Function* pFunction, NS::Error* pError)>& completionHandler)

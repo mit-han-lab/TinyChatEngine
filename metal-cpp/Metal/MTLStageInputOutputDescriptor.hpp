@@ -2,7 +2,7 @@
 //
 // Metal/MTLStageInputOutputDescriptor.hpp
 //
-// Copyright 2020-2022 Apple Inc.
+// Copyright 2020-2023 Apple Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,6 +83,8 @@ _MTL_ENUM(NS::UInteger, AttributeFormat) {
     AttributeFormatUShortNormalized = 51,
     AttributeFormatShortNormalized = 52,
     AttributeFormatHalf = 53,
+    AttributeFormatFloatRG11B10 = 54,
+    AttributeFormatFloatRGB9E5 = 55,
 };
 
 _MTL_ENUM(NS::UInteger, IndexType) {
