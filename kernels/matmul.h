@@ -143,7 +143,7 @@ class MatmulOperator {
     void silu_metal(const struct matmul_params *params);
     void gelu_metal(const struct matmul_params *params);
     void gelu_quick_metal(const struct matmul_params *params);
-    void rms_norm_metal(const struct matmul_params *params); // TODO: to be fixed
+    void rms_norm_metal(const struct matmul_params *params, float eps);
     void soft_max_metal(const struct matmul_params *params); // TODO: to be fixed
     void soft_max_4_metal(const struct matmul_params *params); // TODO: to be fixed
     void rope_metal(const struct matmul_params *params); // TODO: to be fixed

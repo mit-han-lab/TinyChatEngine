@@ -1,6 +1,8 @@
 #include <metal_stdlib>
 using namespace metal;
 
+#define N_SIMDWIDTH 32 // assuming SIMD group size is 32
+
  /* CUDA */
 //  __global__ void batch_Add_cuda(Matrix3D<half> input, Matrix3D<half> input2, Matrix3D<half> output) {
 //     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -69,9 +71,10 @@ kernel void kernel_gelu_quick(
 kernel void kernel_rms_norm(
         device const  void * src0,
         device       float * dst,
-        constant   int64_t & ne00,
-        constant  uint64_t & nb01,
-        constant     float & eps,
+        constant MetalMatMulParams& params,
+        // constant   int64_t & ne00, // row
+        // constant  uint64_t & nb01, // col*sizeof(type)
+        // constant     float & eps,
         threadgroup float  * buf [[threadgroup(0)]],
         uint tgpig[[threadgroup_position_in_grid]],
         uint tpitg[[thread_position_in_threadgroup]],
@@ -79,13 +82,15 @@ kernel void kernel_rms_norm(
         uint tiisg[[thread_index_in_simdgroup]],
         uint   ntg[[threads_per_threadgroup]]) {
     device const float4 * x = (device const float4 *) ((device const char *) src0 + tgpig*nb01);
-
+    unsigned int ne00 = params.m;
+    unsigned int nb01 = params.k*param.type_size;
+    float eps = param.eps;
     float4 sumf = 0;
     float all_sum = 0;
 
     // parallel sum
     for (int i00 = tpitg; i00 < ne00/4; i00 += ntg) {
-        sumf += x[i00] * x[i00];
+        sumf += x[i00] * x[i00]; // take four elements and square it at the same time
     }
     all_sum = sumf[0] + sumf[1] + sumf[2] + sumf[3];
     all_sum = simd_sum(all_sum);

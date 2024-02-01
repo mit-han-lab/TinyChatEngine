@@ -10,6 +10,7 @@
 // all op helper functions here, which will be called later in ops. 
 
 // static data
+#define N_SIMDWIDTH 32 // assuming SIMD group size is 32
 MTL::Device *MetalIMP::_mDevice;
 MTL::ComputePipelineState *MetalIMP::_mMatmulFunctionPSO;
 MTL::CommandQueue *MetalIMP::_mCommandQueue;
@@ -39,7 +40,6 @@ void *MetalIMP::allocateSharedMem(size_t size) {
 
     return void_ptr;
 }
-
 
 void MetalIMP::init() {
     _mDevice = MTL::CreateSystemDefaultDevice();
@@ -400,7 +400,6 @@ void MetalIMP::run_gelu(MetalMatMulParams param, MetalMatmulBuffers *bufferParam
     _mMatmulFunctionPSO->release();
 }
 
-
 void MetalIMP::run_gelu_quick(MetalMatMulParams param, MetalMatmulBuffers *bufferParams){
     setupLibrary("kernel_gelu_quick");
 
@@ -437,6 +436,52 @@ void MetalIMP::run_gelu_quick(MetalMatMulParams param, MetalMatmulBuffers *buffe
     computeEncoder->setBuffer(_mBufferResult, 0, 1);
 
     MTL::Size threadgroupSize = MTL::Size::Make(8, 8, 1);
+    MTL::Size gridSize = MTL::Size::Make((k + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (m + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              1);
+
+    SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
+    _mMatmulFunctionPSO->release();
+}
+
+void MetalIMP::run_rms_norm(MetalMatMulParams param, MetalMatmulBuffers *bufferParams){
+    setupLibrary("kernel void kernel_rms_norm");
+
+    _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
+    _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
+
+
+    *_mParamsPtr = param;
+    unsigned int m, n, k;
+    m = param.m; // row1
+    k = param.k; // col1
+
+    // assign the buffers to hold our data and the result.
+    _mBufferA = getBufferfromPtr((void *)bufferParams->A);
+    _mBufferResult = getBufferfromPtr((void *)bufferParams->C);
+
+    if (!_mBufferA || !_mBufferResult) {
+        std::cerr << "Failed to locate some buffer!" << std::endl;
+        exit(-1);
+    }
+
+    // Create a command buffer to hold commands.
+    MTL::CommandBuffer *commandBuffer = _mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+
+    // Start a compute pass.
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    // Encode the pipeline state object and its parameters.
+    computeEncoder->setComputePipelineState(_mMatmulFunctionPSO);
+    computeEncoder->setBuffer(_mBufferA, 0, 0);
+    computeEncoder->setBuffer(_mBufferResult, 0, 1);
+    computeEncoder->setBuffer(_mParams, 0, 2);
+
+    computeEncoder->setThreadgroupMemoryLength(param.type_size * N_SIMDWIDTH, 0);
+
+    MTL::Size threadgroupSize = MTL::Size::Make(16, 16, 1);
     MTL::Size gridSize = MTL::Size::Make((k + threadgroupSize.width - 1) / threadgroupSize.width,
                                 (m + threadgroupSize.height - 1) / threadgroupSize.height,
                                               1);
