@@ -36,6 +36,7 @@ class MetalIMP {
     static void *allocateSharedMem(size_t size);
     static MetalMatMulParams *_mParamsPtr;
     static MTL::Buffer *getBufferfromPtr(void *ptr);
+    static void SendEncode(MTL::Size gridSize, MTL::Size threadgroupSize, MTL::CommandBuffer *commandBuffer, MTL::ComputeCommandEncoder *computeEncoder);
 
     static void run_mat_mul_accelerator_int4_fast_no_offset(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
     static void run_naive_mat_mul(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
