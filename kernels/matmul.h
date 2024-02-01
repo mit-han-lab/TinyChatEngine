@@ -121,7 +121,7 @@ class MatmulOperator {
     // void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);
     // int4
     void mat_mul_accelerator_int4_fast(const struct matmul_params *params);
-    void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params);
+    void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params); //also supported by metal
     void mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
@@ -136,6 +136,19 @@ class MatmulOperator {
     void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
     //// GEMV
     void gemv_forward_cuda(const struct matmul_params *params);
+    // metal 
+    void mat_mul_metal(const struct matmul_params *params); 
+    void batch_add_metal(const struct matmul_params *params);
+    void relu_metal(const struct matmul_params *params);
+    void silu_metal(const struct matmul_params *params);
+    void gelu_metal(const struct matmul_params *params);
+    void gelu_quick_metal(const struct matmul_params *params);
+    void rms_norm_metal(const struct matmul_params *params); // TODO: to be fixed
+    void soft_max_metal(const struct matmul_params *params); // TODO: to be fixed
+    void soft_max_4_metal(const struct matmul_params *params); // TODO: to be fixed
+    void rope_metal(const struct matmul_params *params); // TODO: to be fixed
+
+
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);
