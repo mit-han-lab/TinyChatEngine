@@ -80,13 +80,13 @@ def _merge_model(
 ):
     # Check model name
     model_name_size = prefix.split("/")[-1]
-    if model_name_size.startswith("LLaMA_7B") or model_name_size.startswith("CodeLLaMA_7B"):
+    if model_name_size.startswith("LLaMA_7B") or model_name_size.startswith("CodeLLaMA_7B") or model_name_size.startswith("LLaVA_7B"):
         layer_num = 32
     elif model_name_size.startswith("LLaMA_13B") or model_name_size.startswith("CodeLLaMA_13B"):
         layer_num = 40
     else:
         raise ValueError(
-            "Invalid model name. Expected 'LLaMA_7B', 'CodeLLaMA_7B', 'LLaMA_13B', or 'CodeLLaMA_13B'."
+            "Invalid model name. Expected 'LLaMA_7B', 'CodeLLaMA_7B', 'LLaMA_13B', 'CodeLLaMA_13B', or 'LLaVA_7B'."
         )
 
     print(f"Merge {model_name_size}'s QKV layers...")
@@ -94,8 +94,8 @@ def _merge_model(
     model_name = model_name_size
 
     # LLaMA
-    if model_name.startswith("LLaMA") or model_name.startswith("CodeLLaMA"):
-        if model_name.startswith("LLaMA_7B") or model_name.startswith("CodeLLaMA_7B"):
+    if model_name.startswith("LLaMA") or model_name.startswith("CodeLLaMA") or model_name.startswith("LLaVA"):
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("CodeLLaMA_7B") or model_name.startswith("LLaVA_7B"):
             embed_dim = 4096
             hidden_dim = 11008
         elif model_name.startswith("LLaMA_13B") or model_name.startswith("CodeLLaMA_13B"):

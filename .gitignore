@@ -32,6 +32,7 @@ voicechat
 profile_*
 !profile_*.cc
 libtorch/
+checkpoints/
 
 transformer/chat
 transformer/output.wav

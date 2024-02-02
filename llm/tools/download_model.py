@@ -86,6 +86,10 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/7lu8rz8z5npe2nccfr66n/OPT_6.7B.zip?rlkey=5dtie29ncqscifs2g4ylpwnz7&dl=1",  # noqa: E501
             "md5sum": "6d061dc64ccc60864391f484b5e564d0",
         },
+        "LLaVA_7B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/rztjmc76yhtvudxiru03b/LLaVA_7B_CLIP_ViT-L.zip?rlkey=s1xy8ocw2ctioqziutucjim8w&dl=1",  # noqa: E501
+            "md5sum": "9fa1bc2f8c9b06b46c1f37bd2b17702c",
+        },
     },
     "QM_x86": {
         "LLaMA_7B_awq_int4": {
@@ -119,6 +123,10 @@ Qmodels = {
         "opt_6.7B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/uj4z3kp5wd3cvaaiyppvs/OPT_6.7B.zip?rlkey=yw5dxd18ajsc20g3mr2rqvnnt&dl=1",  # noqa: E501
             "md5sum": "4aba1bee864029d06d1fec67f4d95a22",
+        },
+        "LLaVA_7B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/x81yfi26oonbu02xne2kp/LLaVA_7B_CLIP_ViT-L.zip?rlkey=8h5cz6aund96k2841wmcrnv5z&dl=1",  # noqa: E501
+            "md5sum": "f903927fe3d02d9db7fb8f0c6587c136",
         },
     },
     "QM_CUDA": {
