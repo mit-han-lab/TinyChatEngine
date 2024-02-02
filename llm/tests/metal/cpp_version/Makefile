@@ -1,4 +1,5 @@
-CXX = /opt/homebrew/opt/llvm/bin/clang++
+CXX = g++
+# CXX = /opt/homebrew/opt/llvm/bin/clang++
 CXXFLAGS = -std=c++17 -stdlib=libc++ -O3
 
 # Executable and source files
