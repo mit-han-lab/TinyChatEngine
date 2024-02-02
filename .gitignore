@@ -34,7 +34,6 @@ profile_*
 libtorch/
 checkpoints/
 
-transformer/chat
-transformer/output.wav
-transformer/tmpfile
-transformer/TTS
+output.wav
+tmpfile
+TTS/

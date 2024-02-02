@@ -66,8 +66,7 @@ static void sayInBackground(const std::string& text) {
 }
 
 std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, std::string clip_param_path, void* clip_model_ptr, int model_type, 
-                          std::string text, std::string second_text, std::string img_path, const struct opt_params generation_config, 
-                          std::string voc_path, bool interactive, bool voicechat) {
+                          std::string text, std::string img_path, const struct opt_params generation_config, std::string voc_path, bool interactive, bool voicechat) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -79,11 +78,6 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
     llama_vocab vocab = llama_init_vocab(voc_path.c_str());
     const int n = llama_tokenize(vocab, text.c_str(), input_ids.data(), input_ids.size(), true);
     input_ids.resize(n);
-
-    // Tokenize second-part text
-    std::vector<int> second_input_ids(max_token);
-    const int m = llama_tokenize(vocab, second_text.c_str(), second_input_ids.data(), second_input_ids.size(), true);
-    second_input_ids.resize(m);
 
     bool is_codellama = false;
     if (llama_param_path.find("CodeLLaMA") != std::string::npos) {
@@ -101,22 +95,11 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
             break;
         }
     }
-    n_consumed = 0;
-    while ((int)second_input_ids.size() > n_consumed) {
-        embd.push_back(second_input_ids[n_consumed]);
-        last_n_tokens.erase(last_n_tokens.begin());
-        last_n_tokens.push_back(second_input_ids[n_consumed]);
-        ++n_consumed;
-
-        if ((int)embd.size() >= generation_config.n_batch) {
-            break;
-        }
-    }
-    
 
     bool previous_two_hash = false;
     int break_cnt = 2;
     bool new_prompt = true;
+    static bool first_prompt = true;
     static bool has_past_kv = false;
     static std::vector<Matrix3D<float>> past_keys, past_values;
     int n_remain = generation_config.n_predict;
@@ -137,17 +120,12 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                 model_input = {input_ids_mat, past_keys, past_values};
             } else {
                 // Load and preprocess image
-                // printf("Loading and preprocessing image...\n");
                 auto image_embed = load_image(img_path, clip_model_ptr);
-                // printf("Image loaded and preprocessed.\n");
-                
-                sqlen = input_ids.size() + 576 + second_input_ids.size();
+                sqlen = input_ids.size() + 576;
                 int first_sqlen = input_ids.size();
-                int second_sqlen = second_input_ids.size();
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, first_sqlen);
                 Matrix3D<float> image_embed_mat(image_embed->embed, 1, 576, 4096);
-                Matrix3D<int> second_input_ids_mat(second_input_ids.data(), 1, 1, second_sqlen);
-                model_input = {input_ids_mat, image_embed_mat, second_input_ids_mat};
+                model_input = {input_ids_mat, image_embed_mat};
             }
             if (!new_prompt) STATS_START("Inference latency");
             model_output = model->forward(llama_param_path, model_input);
@@ -165,18 +143,12 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, sqlen);
                 model_input = {input_ids_mat, past_keys, past_values};
             } else {
-                // Load and preprocess image
-                // printf("Loading and preprocessing image...\n");
                 auto image_embed = load_image(img_path, clip_model_ptr);
-                // printf("Image loaded and preprocessed.\n");
-                
-                sqlen = input_ids.size() + 576 + second_input_ids.size();
+                sqlen = input_ids.size() + 576;
                 int first_sqlen = input_ids.size();
-                int second_sqlen = second_input_ids.size();
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, first_sqlen);
                 Matrix3D<float> image_embed_mat(image_embed->embed, 1, 576, 4096);
-                Matrix3D<int> second_input_ids_mat(second_input_ids.data(), 1, 1, second_sqlen);
-                model_input = {input_ids_mat, image_embed_mat, second_input_ids_mat};
+                model_input = {input_ids_mat, image_embed_mat};
             }
             if (!new_prompt) STATS_START("Inference latency");
             model_output = model->forward(model_input);
@@ -188,6 +160,10 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                    generation_config.n_vocab * sizeof(float));
         }
         has_past_kv = true;
+
+        if (first_prompt) {
+            break;
+        }
 
         // Generate
         const int n_ctx = generation_config.n_ctx;
@@ -334,7 +310,10 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
         sayInBackground(output);
     }
 
-    if (interactive) std::cout << std::endl;
+    if (interactive && !first_prompt) {
+        std::cout << std::endl;
+    }
+    first_prompt = false;
 
     Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();

@@ -390,78 +390,90 @@ int main(int argc, char* argv[]) {
         generation_config.temp = 0.2f;
         generation_config.n_vocab = 32000;
 
-        bool first_prompt = true;
+        int prompt_iter = 0;
 
         if (format_id == FP32) {
             Fp32CLIPVisionTransformer clip_model = Fp32CLIPVisionTransformer(clip_m_path, get_opt_model_config(clip_model_id));
             Fp32LlamaForCausalLM llama_model = Fp32LlamaForCausalLM(llama_m_path, get_opt_model_config(llama_model_id));
-            std::cout << "Finished!" << std::endl;
 
             // Get input from the user
             while (true) {
                 std::string input;
-                if (use_voicechat){
-                    int result = std::system("./application/sts_utils/listen");
-                    std::ifstream in("tmpfile");
-                    std::getline(in, input);
-                    result = std::system("rm tmpfile");
-                    (void)result;
-                    std::cout << input << std::endl;
-                } else {
-                    std::cout << "USER: ";
-                    std::getline(std::cin, input);
+                if (prompt_iter == 1) {
+                    std::cout << "Finished!" << std::endl;
                 }
-                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
-                    break;
-                std::cout << "ASSISTANT: " << std::endl;
+                if (prompt_iter > 0) {
+                    if (use_voicechat){
+                        int result = std::system("./application/sts_utils/listen");
+                        std::ifstream in("tmpfile");
+                        std::getline(in, input);
+                        result = std::system("rm tmpfile");
+                        (void)result;
+                        std::cout << input << std::endl;
+                    } else {
+                        std::cout << "USER: ";
+                        std::getline(std::cin, input);
+                    }
+                    if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                        break;
+                    std::cout << "ASSISTANT: " << std::endl;
+                }
 
-                std::string second_input;
-                if (first_prompt) {
-                    second_input = "\n" + input + "\n### ASSISTANT:";
-                    input = "A chat between a user and an assistant.\n\n### USER: ";
-                    first_prompt = false;
+                if (prompt_iter == 0) {
+                    input = "This is a chat between a user and an assistant.\n\n### USER: ";
+                    prompt_iter += 1;
+                }
+                else if (prompt_iter == 1) {
+                    input = "\n" + input + "\n### ASSISTANT:";
+                    prompt_iter += 1;
                 }
                 else {
                     input = "### USER: " + input + "\n### ASSISTANT: \n";
                 }
 
-                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_FP32, input, second_input, img_path, generation_config, "models/llama_vocab.bin", true, false);
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_FP32, input, img_path, generation_config, "models/llama_vocab.bin", true, false);
             }
         } else if (format_id == INT4) {
             Fp32CLIPVisionTransformer clip_model = Fp32CLIPVisionTransformer(clip_m_path, get_opt_model_config(clip_model_id));
             llama_m_path = "INT4/" + llama_m_path;
             Int4LlamaForCausalLM llama_model = Int4LlamaForCausalLM(llama_m_path, get_opt_model_config(llama_model_id));
-            std::cout << "Finished!" << std::endl;
-            
+
             // Get input from the user
             while (true) {
-                std::string input;
-                if (use_voicechat){
-                    int result = std::system("./application/sts_utils/listen");
-                    std::ifstream in("tmpfile");
-                    std::getline(in, input);
-                    result = std::system("rm tmpfile");
-                    (void)result;
-                    std::cout << input << std::endl;
-                } else {
-                    std::cout << "USER: ";
-                    std::getline(std::cin, input);
+                if (prompt_iter == 1) {
+                    std::cout << "Finished!" << std::endl;
                 }
-                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
-                    break;
-                std::cout << "ASSISTANT: " << std::endl;
-                
-                std::string second_input;
-                if (first_prompt) {
-                    second_input = "\n" + input + "\n### ASSISTANT:";
-                    input = "A chat between a user and an assistant.\n\n### USER: ";
-                    first_prompt = false;
+                std::string input;
+                if (prompt_iter > 0) {
+                    if (use_voicechat){
+                        int result = std::system("./application/sts_utils/listen");
+                        std::ifstream in("tmpfile");
+                        std::getline(in, input);
+                        result = std::system("rm tmpfile");
+                        (void)result;
+                        std::cout << input << std::endl;
+                    } else {
+                        std::cout << "USER: ";
+                        std::getline(std::cin, input);
+                    }
+                    if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                        break;
+                    std::cout << "ASSISTANT: " << std::endl;
+                }
+
+                if (prompt_iter == 0) {
+                    input = "This is a chat between a user and an assistant.\n\n### USER: ";
+                    prompt_iter += 1;
+                }
+                else if (prompt_iter == 1) {
+                    input = "\n" + input + "\n### ASSISTANT:";
+                    prompt_iter += 1;
                 }
                 else {
                     input = "### USER: " + input + "\n### ASSISTANT: \n";
                 }
 
-                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_INT4, input, second_input, img_path, generation_config, "models/llama_vocab.bin", true, use_voicechat);
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_INT4, input, img_path, generation_config, "models/llama_vocab.bin", true, use_voicechat);
             }
         } else {
             std::cout << std::endl;

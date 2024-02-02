@@ -70,49 +70,29 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(std::string param_path,
     int batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
     int sqlen;
     if (input.is_llava) {
-        // printf("aldscjoadfj\n");
-        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y + input.second_input_ids.m_dim_z;
+        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y;
     } else {
         sqlen = input.input_ids.m_dim_z;
     }
 
     // Input token -> Embedding
-    // printf("kewqfpo8fj\n");
-    // printf("sqlen: %d\n", sqlen);
-    // float inputs_embeds_buf[sqlen * this->embed_dim];
     Matrix3D<float> inputs_embeds(inputs_embeds_buf, 1, sqlen, this->embed_dim);
-    // printf("h98wehgr\n");
 
     if (input.is_llava) {
         int first_input_ids_size = input.input_ids.m_dim_z;
         int image_embed_size = input.image_embed.m_dim_y;
-        int second_input_ids_size = input.second_input_ids.m_dim_z;
-        // float first_input_ids_buf[first_input_ids_size * this->embed_dim];
-        // float image_embed_buf[image_embed_size * this->embed_dim];
-        // float second_input_ids_buf[second_input_ids_size * this->embed_dim];
-        // printf("0ur43freqb\n");
         Matrix3D<float> first_input_embeds(first_input_ids_buf, 1, first_input_ids_size, this->embed_dim);
         Matrix3D<float> image_embeds(image_embed_buf, 1, image_embed_size, this->embed_dim);
-        Matrix3D<float> second_input_embeds(second_input_ids_buf, 1, second_input_ids_size, this->embed_dim);
-        // printf("mlkavshd\n");
+        
         this->embed_tokens.forward(input.input_ids, first_input_embeds);
-        // printf("vbfeo\n");
         memcpy(image_embed_buf, input.image_embed.m_data, image_embed_size * this->embed_dim * sizeof(float));
-        // printf("198h3f\n");
-        this->embed_tokens.forward(input.second_input_ids, second_input_embeds);
-        // printf("987yeq\n");
+        
         memcpy(inputs_embeds_buf, first_input_ids_buf, first_input_ids_size * this->embed_dim * sizeof(float));
-        // printf("adlvja\n");
         memcpy(inputs_embeds_buf + first_input_ids_size * this->embed_dim, image_embed_buf,
                image_embed_size * this->embed_dim * sizeof(float));
-        // printf("vodihosd\n");
-        memcpy(inputs_embeds_buf + first_input_ids_size * this->embed_dim + image_embed_size * this->embed_dim,
-               second_input_ids_buf, second_input_ids_size * this->embed_dim * sizeof(float));
-        // printf("nvfosheio\n");
     } else {
         this->embed_tokens.forward(input.input_ids, inputs_embeds);
     }
-    // printf("efjoisd\n");
 
     if (input.has_past_keys_values) {
         past_key_values_length = input.past_keys[0].m_dim_y;
@@ -121,13 +101,11 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(std::string param_path,
     // Attention mask
     Matrix3D<float> causal_attention_mask =
         this->prepare_decoder_attention_mask(sqlen + past_key_values_length, past_key_values_length);
-    // printf("ndfshjdv\n");
     // Go through each layer
     Matrix3D<float> hidden_states = inputs_embeds;
     std::vector<Matrix3D<float>> past_keys, past_values;
     for (int i = 0; i < this->layers.size(); i++) {
         std::string path = param_path + "/layer" + std::to_string(i);
-        // printf("poefwjkds\n");
         if (!input.has_past_keys_values) {
             struct Int4llamaDecoderLayer_input l_i = {hidden_states, causal_attention_mask};
             struct Int4llamaDecoderLayer_output l_o = this->layers[i].forward(path, l_i, i);
@@ -147,7 +125,6 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(std::string param_path,
     // Layernorm
     Matrix3D<float> last_hidden_states(last_hidden_states_buf, 1, sqlen, this->embed_dim);
     this->norm.forward(hidden_states, last_hidden_states, rms_norm_eps);
-    // printf("jdsf\n");
     struct Int4llamaDecoder_output output = {last_hidden_states, past_keys, past_values};
     PROFILE_END(profile_name);
     return output;

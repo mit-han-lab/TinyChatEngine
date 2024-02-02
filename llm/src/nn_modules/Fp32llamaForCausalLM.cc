@@ -26,7 +26,7 @@ struct Fp32LlamaForCausalLM_output Fp32LlamaForCausalLM::forward(const struct Fp
     } else {
         struct Fp32llamaDecoder_input decoder_input;
         if (input.is_llava) {
-            decoder_input = {input.input_ids, input.image_embed, input.second_input_ids};
+            decoder_input = {input.input_ids, input.image_embed};
             decoder_input.has_past_keys_values = false;
             decoder_input.is_llava = true;
         } else {
@@ -40,7 +40,7 @@ struct Fp32LlamaForCausalLM_output Fp32LlamaForCausalLM::forward(const struct Fp
     // Get logits
     int sqlen;
     if (input.is_llava) {
-        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y + input.second_input_ids.m_dim_z;
+        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y;
     } else {
         sqlen = input.input_ids.m_dim_z;
     }

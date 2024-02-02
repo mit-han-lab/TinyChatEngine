@@ -109,7 +109,7 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
                           std::string voc_path, bool interactive);
 
 std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, std::string clip_param_path, void* clip_model_ptr, int model_type, 
-                          std::string text, std::string second_text, std::string img_path, const struct opt_params generation_config, 
-                          std::string voc_path, bool interactive, bool voicechat);
+                          std::string text, std::string img_path, const struct opt_params generation_config, std::string voc_path, bool interactive, 
+                          bool voicechat);
 
 #endif  // GENERATE_H

@@ -70,7 +70,7 @@ struct Fp32llamaDecoder_output Fp32llamaDecoder::forward(const struct Fp32llamaD
     int batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
     int sqlen;
     if (input.is_llava) {
-        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y + input.second_input_ids.m_dim_z;
+        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y;
     } else {
         sqlen = input.input_ids.m_dim_z;
     }
@@ -87,32 +87,15 @@ struct Fp32llamaDecoder_output Fp32llamaDecoder::forward(const struct Fp32llamaD
     if (input.is_llava) {
         int first_input_ids_size = input.input_ids.m_dim_z;
         int image_embed_size = input.image_embed.m_dim_y;
-        int second_input_ids_size = input.second_input_ids.m_dim_z;
-// #ifdef _WIN32
-//         std::vector<float> first_input_ids_buf_vec(first_input_ids_size * this->embed_dim);
-//         float *first_input_ids_buf = &first_input_ids_buf_vec.front();
-//         std::vector<float> image_embed_buf_vec(image_embed_size * this->embed_dim);
-//         float *image_embed_buf = &image_embed_buf_vec.front();
-//         std::vector<float> second_input_ids_buf_vec(second_input_ids_size * this->embed_dim);
-//         float *second_input_ids_buf = &second_input_ids_buf_vec.front();
-// #else
-//         float first_input_ids_buf[first_input_ids_size * this->embed_dim];
-//         float image_embed_buf[image_embed_size * this->embed_dim];
-//         float second_input_ids_buf[second_input_ids_size * this->embed_dim];
-// #endif
         Matrix3D<float> first_input_embeds(first_input_ids_buf, 1, first_input_ids_size, this->embed_dim);
         Matrix3D<float> image_embeds(image_embed_buf, 1, image_embed_size, this->embed_dim);
-        Matrix3D<float> second_input_embeds(second_input_ids_buf, 1, second_input_ids_size, this->embed_dim);
 
         this->embed_tokens.forward(input.input_ids, first_input_embeds);
         memcpy(image_embed_buf, input.image_embed.m_data, image_embed_size * this->embed_dim * sizeof(float));
-        this->embed_tokens.forward(input.second_input_ids, second_input_embeds);
 
         memcpy(inputs_embeds_buf, first_input_ids_buf, first_input_ids_size * this->embed_dim * sizeof(float));
         memcpy(inputs_embeds_buf + first_input_ids_size * this->embed_dim, image_embed_buf,
                image_embed_size * this->embed_dim * sizeof(float));
-        memcpy(inputs_embeds_buf + first_input_ids_size * this->embed_dim + image_embed_size * this->embed_dim,
-               second_input_ids_buf, second_input_ids_size * this->embed_dim * sizeof(float));
     } else {
         this->embed_tokens.forward(input.input_ids, inputs_embeds);
     }

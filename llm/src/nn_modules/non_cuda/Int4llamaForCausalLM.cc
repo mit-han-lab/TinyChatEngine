@@ -26,7 +26,7 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(std::string par
     } else {
         struct Int4llamaDecoder_input decoder_input;
         if (input.is_llava) {
-            decoder_input = {input.input_ids, input.image_embed, input.second_input_ids};
+            decoder_input = {input.input_ids, input.image_embed};
             decoder_input.has_past_keys_values = false;
             decoder_input.is_llava = true;
         } else {
@@ -41,6 +41,7 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(std::string par
     int sqlen;
     if (input.is_llava) {
         sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y + input.second_input_ids.m_dim_z;
+        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y;
     } else {
         sqlen = input.input_ids.m_dim_z;
     }

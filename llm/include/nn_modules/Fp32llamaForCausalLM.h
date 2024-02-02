@@ -28,6 +28,11 @@ struct Fp32LlamaForCausalLM_input {
         has_past_keys_values = false;
         is_llava = true;
     }
+    Fp32LlamaForCausalLM_input(Matrix3D<int> input_ids_, Matrix3D<float> image_embed_)
+        : input_ids(input_ids_), image_embed(image_embed_) {
+        has_past_keys_values = false;
+        is_llava = true;
+    }
 };
 
 class Fp32LlamaForCausalLM {
