@@ -14,6 +14,7 @@
 .vscode/
 
 assets/
+models/
 *.bin
 !llama_vocab.bin
 !starcoder_vocab.bin
@@ -31,8 +32,8 @@ voicechat
 profile_*
 !profile_*.cc
 libtorch/
+checkpoints/
 
-llm/chat
-llm/output.wav
-llm/tmpfile
-llm/TTS
+output.wav
+tmpfile
+TTS/

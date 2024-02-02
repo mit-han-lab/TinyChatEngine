@@ -4,9 +4,9 @@ Usage:
    python model_quantizer.py --model_path <path to TinyEngine modelt> --method <Quantization method>
 
 Example commands:
-   python model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
+   python tools/model_quantizer.py --model_path models/LLaMA_7B_2_chat --method QM_x86
 
-   python model_quantizer.py --model_path FP32/models/OPT_125m --method QM_ARM --output_path INT4
+   python tools/model_quantizer.py --model_path FP32/models/OPT_125m --method QM_ARM --output_path INT4
 
 """
 import argparse
@@ -130,9 +130,14 @@ def _quantize_model(
         layer_num = 40
     elif model_name_size.startswith("StarCoder"):
         layer_num = 40
+    elif model_name_size.startswith("LLaVA_7B"):
+        layer_num = 32
+    elif model_name_size.startswith("VILA_7B"):
+        layer_num = 32
     else:
         raise ValueError(
-            "Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B', 'LLaMA_13B', 'CodeLLaMA_7B', 'CodeLLaMA_13B', or 'StarCoder'."
+            "Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B', 'LLaMA_13B', 'CodeLLaMA_7B', \
+            'CodeLLaMA_13B', 'StarCoder', 'LLaVA_7B', or 'VILA_7B'."
         )
 
     # Check quantization method
@@ -274,9 +279,11 @@ def _quantize_model(
 
             print(f"Quantization of layer {idx} finished.")
 
-    # LLaMA
-    elif model_name.startswith("LLaMA") or model_name.startswith("CodeLLaMA"):
-        if model_name.startswith("LLaMA_7B") or model_name.startswith("CodeLLaMA_7B"):
+    # LLaMA / LLaVA / VILA
+    elif model_name.startswith("LLaMA") or model_name.startswith("CodeLLaMA") or model_name.startswith("LLaVA") \
+         or model_name.startswith("VILA"):
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("CodeLLaMA_7B") or model_name.startswith("LLaVA_7B") \
+            or model_name.startswith("VILA_7B"):
             embed_dim = 4096
             hidden_dim = 11008
         elif model_name.startswith("LLaMA_13B") or model_name.startswith("CodeLLaMA_13B"):
@@ -285,10 +292,17 @@ def _quantize_model(
         else:
             raise NotImplementedError(f"{model_name} not supported.")
         
-        if model_name.startswith("LLaMA_7B") or model_name.startswith("LLaMA_13B"):
+        if model_name.startswith("LLaMA_7B") or model_name.startswith("LLaMA_13B") or model_name.startswith("LLaVA_7B"):
             vocab_size = 32000
+        elif model_name.startswith("VILA_7B"):
+            vocab_size = 32001
         elif model_name.startswith("CodeLLaMA_7B") or model_name.startswith("CodeLLaMA_13B"):
             vocab_size = 32016
+        
+        if model_name.startswith("LLaVA_7B") or model_name.startswith("VILA_7B"):
+            max_seq_len = 4096
+        else:
+            max_seq_len = 2048
 
         # Quantize lm_head
         file_path = f"{prefix}"
@@ -386,14 +400,14 @@ def _quantize_model(
                 if file_size_bytes % bytes_per_element != 0:
                     raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
                 array_size = file_size_bytes // bytes_per_element
-                _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
-                # cos_cached.bin
+                _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, max_seq_len, 128)
+                # sin_cached.bin
                 weight_path = f"{file_path}/sin_cached.bin"
                 file_size_bytes = os.path.getsize(weight_path)
                 if file_size_bytes % bytes_per_element != 0:
                     raise ValueError(f"Invalid file size of {weight_path}. Expected multiple of element number.")
                 array_size = file_size_bytes // bytes_per_element
-                _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, 2048, 128)
+                _write_fp16_to_file(os.path.join(output_path, weight_path), weight_path, array_size, 1, max_seq_len, 128)
                 file_path = f"{prefix}/decoder/layer{idx}/self_attn/qk_bmm"
                 weight_path = f"{file_path}/alpha.bin"
                 file_size_bytes = os.path.getsize(weight_path)

@@ -24,6 +24,7 @@ https://github.com/ggerganov/llama.cpp
 #include "Int4OPTForCausalLM.h"
 #include "Int4llamaForCausalLM.h"
 #include "Int4GPTBigCodeForCausalLM.h"
+#include "Fp32CLIPVisionTransformer.h"
 #include "OPTForCausalLM.h"
 #include "OPTTokenizer.h"
 #include "operators.h"
@@ -100,11 +101,15 @@ std::vector<int> OPTGenerate(void* model, int model_type, std::vector<int> input
                              const struct opt_params generation_config, Encoder* encoder = NULL,
                              bool interactive = false, bool voicechat = false);
 
-enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4, StarCoder_FP32, StarCoder_INT4 };
+enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4, StarCoder_FP32, StarCoder_INT4, LLaVA_FP32, LLaVA_INT4 };
 std::string LLaMAGenerate(std::string param_path, void* model, int model_type, std::string text, const struct opt_params generation_config,
                           std::string voc_path, bool interactive, bool voicechat);
 
 std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
                           std::string voc_path, bool interactive);
+
+std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, std::string clip_param_path, void* clip_model_ptr, int model_type, 
+                          std::string text, std::string img_path, const struct opt_params generation_config, std::string voc_path, bool interactive, 
+                          bool voicechat);
 
 #endif  // GENERATE_H

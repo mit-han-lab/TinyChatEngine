@@ -16,7 +16,6 @@ Fp32LlamaForCausalLM::Fp32LlamaForCausalLM(std::string param_path, const struct 
 
 struct Fp32LlamaForCausalLM_output Fp32LlamaForCausalLM::forward(const struct Fp32LlamaForCausalLM_input &input) {
     PROFILE_START(profile_name);
-    int sqlen = input.input_ids.m_dim_z;
 
     struct Fp32llamaDecoder_output decoder_output;
 
@@ -24,13 +23,27 @@ struct Fp32LlamaForCausalLM_output Fp32LlamaForCausalLM::forward(const struct Fp
     if (input.has_past_keys_values) {
         struct Fp32llamaDecoder_input decoder_input = {input.input_ids, input.past_keys, input.past_values};
         decoder_output = this->decoder.forward(decoder_input);
-
     } else {
-        struct Fp32llamaDecoder_input decoder_input = {input.input_ids};
+        struct Fp32llamaDecoder_input decoder_input;
+        if (input.is_llava) {
+            decoder_input = {input.input_ids, input.image_embed};
+            decoder_input.has_past_keys_values = false;
+            decoder_input.is_llava = true;
+        } else {
+            decoder_input = {input.input_ids};
+            decoder_input.has_past_keys_values = false;
+            decoder_input.is_llava = false;
+        }
         decoder_output = this->decoder.forward(decoder_input);
     }
 
     // Get logits
+    int sqlen;
+    if (input.is_llava) {
+        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y;
+    } else {
+        sqlen = input.input_ids.m_dim_z;
+    }
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
     this->lm_head.forward(decoder_output.last_hidden_state, logits);
 

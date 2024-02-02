@@ -1,19 +1,24 @@
-"""Implementation of exporting LLaMA PyTorch model to TinyChatEngine format.
+"""Implementation of exporting VILA PyTorch model to TinyChatEngine format.
 
 Usage:
-   python llama_exporter.py <path of hugging face model checkpoint> <output dir>
+   python vila_exporter.py <path of hugging face model checkpoint> <output dir>
 
 Example commandline:
-   python tools/llama_exporter.py --model models/llama2-chat/hf7B --output models/LLaMA_7B_2_chat
+   python tools/vila_exporter.py --model models/vila-7b --output models/VILA_7B
 """
+
 import argparse
 import math
 import os
 import struct
-
 import torch
-from transformers import LlamaForCausalLM
-
+from transformers import AutoProcessor, AutoModelForCausalLM, AutoConfig
+from llava.conversation import SeparatorStyle, conv_templates
+from llava.eval.utils import preprocess_image
+from llava.model import *
+from llava.model.utils import KeywordsStoppingCriteria
+from llava.model.visual_attn_scale import new_attention_forward
+from llava.utils import disable_torch_init
 
 @torch.no_grad()
 def _export_model(model, prefix):
@@ -23,6 +28,18 @@ def _export_model(model, prefix):
     with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
         f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
     _export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
+
+    # Export to Clip's folder "models/CLIP_ViT_Large"
+    _export_mm_projector(model.model.mm_projector, f"models/CLIP_ViT_Large/mm_projector")
+
+
+def _export_mm_projector(mm_projector, prefix):
+    outpath = prefix
+    os.makedirs(outpath, exist_ok=True)
+    with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
+        f.write(mm_projector.weight.cpu().float().numpy().tobytes())
+    with open(os.path.join(f"{outpath}", "bias.bin"), "wb") as f:
+        f.write(mm_projector.bias.cpu().float().numpy().tobytes())
 
 
 def _export_embed_tokens(embed_tokens, prefix):
@@ -99,10 +116,10 @@ def _export_attention_params(attn, prefix: str):
 
 
 def main():
-    """Export a LLaMA model to TinyChatEngine format."""
-    parser = argparse.ArgumentParser(description="export LLaMA pytorch model to TinyChatEngine format.")
+    """Export a VILA model to TinyChatEngine format."""
+    parser = argparse.ArgumentParser(description="export VILA pytorch model to TinyChatEngine format.")
     parser.add_argument("--hf_path", type=str, help="Path to huggingface model hub", default=None)
-    parser.add_argument("--model", type=str, help="Path of the LLaMA torch model")
+    parser.add_argument("--model", type=str, help="Path of the VILA torch model")
     parser.add_argument("--output", type=str, help="Output directory of the exported model")
 
     args = parser.parse_args()
@@ -118,33 +135,40 @@ def main():
 
         print("Loading model...")
         if args.model.endswith(".pt"):
-            if args.model.split("/")[-1].lower().startswith("llama-2"):
-                if args.model.split("-")[2].lower() == "7b":
-                    print("Loading LLaMA 7B model...");
-                    model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16)
-                elif args.model.split("-")[2].lower() == "13b":
-                    print("Loading LLaMA 13B model...");
-                    model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-13b-hf", torch_dtype=torch.float16)
-            elif args.model.split("/")[-1].lower().startswith("codellama"):
+            if args.model.split("/")[-1].lower().startswith("vila"):
                 if args.model.split("-")[1].lower() == "7b":
-                    print("Loading CodaLLaMA 7B model...");
-                    model = LlamaForCausalLM.from_pretrained("codellama/CodeLlama-7b-Instruct-hf", torch_dtype=torch.float16)
+                    print("Loading VILA 7B model...")
+                    # config = AutoConfig.from_pretrained("Efficient-Large-Model/vila-7b", trust_remote_code=True)
+                    # processor = AutoProcessor.from_pretrained("Efficient-Large-Model/vila-7b")
+                    # model = AutoModelForCausalLM.from_pretrained("Efficient-Large-Model/vila-7b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                    config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila-7b", trust_remote_code=True)
+                    # processor = AutoProcessor.from_pretrained("/home/wweichen/workspace/models/LLM/vila-7b")
+                    model = AutoModelForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila-7b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
                 elif args.model.split("-")[1].lower() == "13b":
-                    print("Loading CodaLLaMA 13B model...");
-                    model = LlamaForCausalLM.from_pretrained("codellama/CodeLlama-13b-Instruct-hf", torch_dtype=torch.float16)
+                    print("Loading VILA 13B model...")
+                    config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", trust_remote_code=True)
+                    # processor = AutoProcessor.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b")
+                    model = AutoModelForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                else:
+                    print("Model size not supported.")
+                    return
             else:
-                print("Model not supported.")
+                print("Model type not supported.")
                 return
             
             model.load_state_dict(torch.load(args.model))
         else:
-            model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
+            config = AutoConfig.from_pretrained(args.model, trust_remote_code=True)
+            # processor = AutoProcessor.from_pretrained(args.model)
+            # model = AutoModelForCausalLM.from_pretrained(args.model, config=config, torch_dtype=torch.float32, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+            model = LlavaLlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.float32, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
     else:
-        model = LlamaForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.bfloat16)
+        # processor = AutoProcessor.from_pretrained(args.hf_path)
+        model = AutoModelForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.float16)
 
-    print("Start exporting LLaMA model...")
+    print("Start exporting VILA model...")
     _export_model(model, args.output)
-    print("Finished exporting LLaMA model.")
+    print("Finished exporting VILA model.")
 
 
 if __name__ == "__main__":

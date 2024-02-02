@@ -21,18 +21,18 @@ void add(Matrix3D<T> a, Matrix3D<T> b, Matrix3D<T> c) {
     PROFILE_END("Int4GPTBigCodeDecoderLayer::add");
 }
 
-static const float GELU_COEF_A    = 0.044715f;
-static const float SQRT_2_OVER_PI = 0.79788456080286535587989211986876f;
-inline static float Gelu_imp(float x) {
-    return 0.5f * x * (1.0f + tanhf(SQRT_2_OVER_PI * x * (1.0f + GELU_COEF_A * x * x)));
-}
-inline static void Gelu(Matrix3D<float> a) {
-    PROFILE_START("Int4GPTBigCodeDecoderLayer::Gelu");
-    for (int i = 0; i < a.length(); i++) {
-        a.m_data[i] = Gelu_imp(a.m_data[i]);
-    }
-    PROFILE_END("Int4GPTBigCodeDecoderLayer::Gelu");
-}
+// static const float GELU_COEF_A    = 0.044715f;
+// static const float SQRT_2_OVER_PI = 0.79788456080286535587989211986876f;
+// inline static float Gelu_imp(float x) {
+//     return 0.5f * x * (1.0f + tanhf(SQRT_2_OVER_PI * x * (1.0f + GELU_COEF_A * x * x)));
+// }
+// inline static void Gelu(Matrix3D<float> a) {
+//     PROFILE_START("Int4GPTBigCodeDecoderLayer::Gelu");
+//     for (int i = 0; i < a.length(); i++) {
+//         a.m_data[i] = Gelu_imp(a.m_data[i]);
+//     }
+//     PROFILE_END("Int4GPTBigCodeDecoderLayer::Gelu");
+// }
 
 Int4GPTBigCodeDecoderLayer::Int4GPTBigCodeDecoderLayer(std::string param_path, const model_config config, int layer_idx) {
     if (layer_idx == 0) {

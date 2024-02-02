@@ -29,6 +29,10 @@ Fp32llamaDecoder::Fp32llamaDecoder(std::string param_path, const struct model_co
     allocate_aligned_memory(pos_embeds_buf, config.max_sqlen * config.embed_dim * sizeof(float));
     allocate_aligned_memory(last_hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
     allocate_aligned_memory(hidden_states_buf, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(inputs_embeds_buf, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(first_input_ids_buf, 50 * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(image_embed_buf, 576 * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(second_input_ids_buf, (config.max_sqlen-626) * config.embed_dim * sizeof(float));
 
     this->voc_size = config.vocsize;
     this->embed_dim = config.embed_dim;
@@ -63,17 +67,38 @@ Fp32llamaDecoder::Fp32llamaDecoder(std::string param_path, const struct model_co
 // Fp32llamaDecoder:
 struct Fp32llamaDecoder_output Fp32llamaDecoder::forward(const struct Fp32llamaDecoder_input &input) {
     PROFILE_START(profile_name);
-    int sqlen = input.input_ids.m_dim_z, batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
+    int batch_size = input.input_ids.m_dim_x, past_key_values_length = 0;
+    int sqlen;
+    if (input.is_llava) {
+        sqlen = input.input_ids.m_dim_z + input.image_embed.m_dim_y;
+    } else {
+        sqlen = input.input_ids.m_dim_z;
+    }
 
     // Input token -> Embedding
-#ifdef _WIN32
-    std::vector<float> inputs_embeds_buf_vec(sqlen * this->embed_dim);
-    float *inputs_embeds_buf = &inputs_embeds_buf_vec.front();
-#else
-    float inputs_embeds_buf[sqlen * this->embed_dim];
-#endif
+// #ifdef _WIN32
+//     std::vector<float> inputs_embeds_buf_vec(sqlen * this->embed_dim);
+//     float *inputs_embeds_buf = &inputs_embeds_buf_vec.front();
+// #else
+//     float inputs_embeds_buf[sqlen * this->embed_dim];
+// #endif
     Matrix3D<float> inputs_embeds(inputs_embeds_buf, 1, sqlen, this->embed_dim);
-    this->embed_tokens.forward(input.input_ids, inputs_embeds);
+
+    if (input.is_llava) {
+        int first_input_ids_size = input.input_ids.m_dim_z;
+        int image_embed_size = input.image_embed.m_dim_y;
+        Matrix3D<float> first_input_embeds(first_input_ids_buf, 1, first_input_ids_size, this->embed_dim);
+        Matrix3D<float> image_embeds(image_embed_buf, 1, image_embed_size, this->embed_dim);
+
+        this->embed_tokens.forward(input.input_ids, first_input_embeds);
+        memcpy(image_embed_buf, input.image_embed.m_data, image_embed_size * this->embed_dim * sizeof(float));
+
+        memcpy(inputs_embeds_buf, first_input_ids_buf, first_input_ids_size * this->embed_dim * sizeof(float));
+        memcpy(inputs_embeds_buf + first_input_ids_size * this->embed_dim, image_embed_buf,
+               image_embed_size * this->embed_dim * sizeof(float));
+    } else {
+        this->embed_tokens.forward(input.input_ids, inputs_embeds);
+    }
 
     if (input.has_past_keys_values) {
         past_key_values_length = input.past_keys[0].m_dim_y;

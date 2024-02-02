@@ -1,2 +1,5 @@
 requests
 tqdm
+torch
+transformers
+pillow
