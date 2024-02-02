@@ -17,7 +17,8 @@ var searchData=
   ['llama_5ftokenizer_14',['llama_tokenizer',['../structllama__tokenizer.html',1,'']]],
   ['llama_5fvocab_15',['llama_vocab',['../structllama__vocab.html',1,'']]],
   ['llamarmsnorm_16',['LlamaRMSNorm',['../classLlamaRMSNorm.html',1,'']]],
-  ['llm_20compression_3a_20smoothquant_20and_20awq_17',['LLM Compression: SmoothQuant and AWQ',['../index.html#autotoc_md4',1,'']]],
-  ['llm_20inference_20engine_3a_20tinychatengine_18',['LLM Inference Engine: TinyChatEngine',['../index.html#autotoc_md5',1,'']]],
-  ['llm_20inference_20library_19',['TinyChatEngine: On-Device LLM Inference Library',['../index.html#autotoc_md0',1,'']]]
+  ['llava_5fimage_5fembed_17',['llava_image_embed',['../structllava__image__embed.html',1,'']]],
+  ['llm_20compression_3a_20smoothquant_20and_20awq_18',['LLM Compression: SmoothQuant and AWQ',['../index.html#autotoc_md4',1,'']]],
+  ['llm_20inference_20engine_3a_20tinychatengine_19',['LLM Inference Engine: TinyChatEngine',['../index.html#autotoc_md5',1,'']]],
+  ['llm_20inference_20library_20',['TinyChatEngine: On-Device LLM Inference Library',['../index.html#autotoc_md0',1,'']]]
 ];

@@ -11,5 +11,6 @@ var searchData=
   ['llama_5fsp_5fsymbol_8',['llama_sp_symbol',['../structllama__sp__symbol.html',1,'']]],
   ['llama_5ftokenizer_9',['llama_tokenizer',['../structllama__tokenizer.html',1,'']]],
   ['llama_5fvocab_10',['llama_vocab',['../structllama__vocab.html',1,'']]],
-  ['llamarmsnorm_11',['LlamaRMSNorm',['../classLlamaRMSNorm.html',1,'']]]
+  ['llamarmsnorm_11',['LlamaRMSNorm',['../classLlamaRMSNorm.html',1,'']]],
+  ['llava_5fimage_5fembed_12',['llava_image_embed',['../structllava__image__embed.html',1,'']]]
 ];
