@@ -13,7 +13,7 @@
 .vs/
 .vscode/
 
-assets/
+llm/assets/
 models/
 *.bin
 !llama_vocab.bin
