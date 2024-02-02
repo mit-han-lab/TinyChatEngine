@@ -84,11 +84,14 @@ TinyChatEngine: On-Device LLM Inference Library</h1>
 Code LLaMA Demo on an NVIDIA GeForce RTX 4070 laptop:</h3>
 <p><img src="coding_demo_gpu.gif" alt="" class="inline" title="coding_demo_gpu"/>    </p>
 <h3><a class="anchor" id="autotoc_md2"></a>
+VLM Demo on an Apple MacBook Pro (M1, 2021):</h3>
+<p><img src="vlm_demo_m1.gif" alt="" class="inline" title="vlm_demo_m1"/>    </p>
+<h3><a class="anchor" id="autotoc_md3"></a>
 LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):</h3>
 <p><img src="chat_demo_m1.gif" alt="" class="inline" title="chat_demo_m1"/>    </p>
-<h2><a class="anchor" id="autotoc_md3"></a>
+<h2><a class="anchor" id="autotoc_md4"></a>
 Overview</h2>
-<h3><a class="anchor" id="autotoc_md4"></a>
+<h3><a class="anchor" id="autotoc_md5"></a>
 LLM Compression: SmoothQuant and AWQ</h3>
 <p><a href="https://github.com/mit-han-lab/smoothquant">SmoothQuant</a>: Smooth the activation outliers by migrating the quantization difficulty from activations to weights, with a mathematically equal transformation (100*1 = 10*10).</p>
 <div class="image">
@@ -96,7 +99,7 @@ LLM Compression: SmoothQuant and AWQ</h3>
 <div class="caption">
 smoothquant_intuition</div></div>
     <p><a href="https://github.com/mit-han-lab/llm-awq">AWQ (Activation-aware Weight Quantization)</a>: Protect salient weight channels by analyzing activation magnitude as opposed to the weights.</p>
-<h3><a class="anchor" id="autotoc_md5"></a>
+<h3><a class="anchor" id="autotoc_md6"></a>
 LLM Inference Engine: TinyChatEngine</h3>
 <ul>
 <li><b>Universal</b>: x86 (Intel/AMD), ARM (Apple M1/M2, Raspberry Pi), CUDA (Nvidia GPU).</li>
@@ -108,22 +111,23 @@ LLM Inference Engine: TinyChatEngine</h3>
 <img src="overview.png" alt=""/>
 <div class="caption">
 overview</div></div>
-    <h2><a class="anchor" id="autotoc_md6"></a>
+    <h2><a class="anchor" id="autotoc_md7"></a>
 News</h2>
 <ul>
+<li>**(2024/02)** 🔥We extended the support for vision language models (VLM). Feel free to try running LLaVA on your edge device.</li>
 <li>**(2024/01)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our <a href="https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC">demo video</a> and follow the instructions to deploy it on your device!</li>
 <li>**(2023/10)** We extended the support for the coding assistant Code Llama. Feel free to check out.</li>
 <li>**(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability &gt;= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md7"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 Prerequisites</h2>
-<h3><a class="anchor" id="autotoc_md8"></a>
+<h3><a class="anchor" id="autotoc_md9"></a>
 MacOS</h3>
 <p>For MacOS, install boost and llvm by</p>
 <div class="fragment"><div class="line">brew install boost</div>
 <div class="line">brew install llvm</div>
 </div><!-- fragment --><p>For M1/M2 users, install Xcode from AppStore to enable the metal compiler for GPU support.</p>
-<h3><a class="anchor" id="autotoc_md9"></a>
+<h3><a class="anchor" id="autotoc_md10"></a>
 Windows with CPU</h3>
 <p>For Windows, download and install the GCC compiler with MSYS2. Follow this tutorial: <a href="https://code.visualstudio.com/docs/cpp/config-mingw">https://code.visualstudio.com/docs/cpp/config-mingw</a> for installation.</p>
 <ul>
@@ -133,14 +137,14 @@ Windows with CPU</h3>
 </div><!-- fragment --><ul>
 <li>Add binary directories (e.g., C:\msys64\mingw64\bin and C:\msys64\usr\bin) to the environment path</li>
 </ul>
-<h3><a class="anchor" id="autotoc_md10"></a>
+<h3><a class="anchor" id="autotoc_md11"></a>
 Windows with Nvidia GPU (Experimental)</h3>
 <ul>
 <li>Install CUDA toolkit for Windows (<a href="https://developer.nvidia.com/cuda-toolkit">link</a>). When installing CUDA on your PC, please change the installation path to another one that does not include "spaces".</li>
 <li>Install Visual Studio with C and C++ support: Follow the <a href="https://learn.microsoft.com/en-us/cpp/build/vscpp-step-0-installation?view=msvc-170">Instruction</a>.</li>
 <li>Follow the instructions below and use x64 Native Tools Command Prompt from Visual Studio to compile TinyChatEngine.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine</h2>
 <p>Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.</p>
 <ul>
@@ -187,7 +191,7 @@ Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine</h2>
 <div class="line">...</div>
 </div><!-- fragment --></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md12"></a>
+<h2><a class="anchor" id="autotoc_md13"></a>
 Deploy speech-to-speech chatbot with TinyChatEngine <a href="https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC">[Demo]</a></h2>
 <p>TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Here, we provide very easy-to-follow instructions to deploy speech-to-speech chatbot (LLaMA2-7B-chat) with TinyChatEngine.</p>
 <ul>
@@ -199,7 +203,34 @@ Deploy speech-to-speech chatbot with TinyChatEngine <a href="https://youtu.be/Bw
 </div><!-- fragment --></li>
 <li>If you encounter any issues or errors during setup, please explore here to follow the step-by-step guide to debug.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md14"></a>
+Deploy vision language model (VLM) chatbot with TinyChatEngine</h2>
+<p>TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide very easy-to-follow instructions to deploy vision language model chatbot (LLaVA-1.5) with TinyChatEngine.</p>
+<ul>
+<li>Follow the instructions above to setup the basic environment, i.e., Prerequisites and Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine.</li>
+<li>To demonstrate images in the terminal, please download and install the following toolkit.<ul>
+<li>Install <a href="https://github.com/AnonymouX47/termvisage">termvisage</a>.</li>
+<li>(For MacOS) Install <a href="https://iterm2.com/index.html">iTerm2</a>.</li>
+<li>(For other OS) Please refer to <a href="https://github.com/AnonymouX47/termvisage?tab=readme-ov-file#requirements">here</a> to get the appropriate terminal ready.</li>
+</ul>
+</li>
+<li>(Optional) To enable the speech-to-speech chatbot for VLM, please follow the instruction above to run the shell script to set up the environment.</li>
+<li>Download the quantized LLaVA model from our model zoo.<ul>
+<li>On an x86 device (e.g., Intel/AMD laptop) <div class="fragment"><div class="line">python tools/download_model.py --model LLaVA_7B_awq_int4_CLIP_ViT-L --QM QM_x86</div>
+</div><!-- fragment --></li>
+<li>On an ARM device (e.g., M1/M2 Macbook, Raspberry Pi) <div class="fragment"><div class="line">python tools/download_model.py --model LLaVA_7B_awq_int4_CLIP_ViT-L --QM QM_ARM</div>
+</div><!-- fragment --></li>
+</ul>
+</li>
+<li>(For MacOS) Start the chatbot locally. Please use an appropriate terminal (e.g., iTerm2).<ul>
+<li>Image/Text to text <div class="fragment"><div class="line">./scripts/llava.sh ../assets/figures/pedestrian.png</div>
+</div><!-- fragment --></li>
+<li>Image/Speech to speech <code>bash ./scripts/voice_llava.sh ../assets/figures/pedestrian.png </code></li>
+<li>For other OS, please modify Line 4 in <a href="llm/scripts/llava.sh">llava.sh</a> and <a href="llm/scripts/voice_llava.sh">voice_llava.sh</a> to use the correct terminal.</li>
+</ul>
+</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md15"></a>
 Backend Support</h2>
 <p>| Precision | x86<br  />
  (Intel/AMD CPU) | ARM<br  />
@@ -208,10 +239,10 @@ Backend Support</h2>
 <li>For Raspberry Pi, we recommend using the board with 8GB RAM. Our testing was primarily conducted on Raspberry Pi 4 Model B Rev 1.4 with aarch64. For other versions, please feel free to try it out and let us know if you encounter any issues.</li>
 <li>For Nvidia GPU, our CUDA backend can support Nvidia GPUs with compute capability &gt;= 6.1. For the GPUs with compute capability &lt; 6.1, please feel free to try it out but we haven't tested it yet and thus cannot guarantee the results.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md14"></a>
+<h2><a class="anchor" id="autotoc_md16"></a>
 Quantization and Model Support</h2>
 <p>The goal of TinyChatEngine is to support various quantization methods on various devices. For example, At present, it supports the quantized weights for int8 opt models that originate from <a href="https://github.com/mit-han-lab/smoothquant">smoothquant</a> using the provided conversion script <a href="llm/tools/opt_smooth_exporter.py">opt_smooth_exporter.py</a>. For LLaMA models, scripts are available for converting Huggingface format checkpoints to our int4 wegiht <a href="llm/tools/llama_exporter.py">format</a>, and for quantizing them to specific methods <a href="llm/tools/model_quantizer.py">based on your device</a>. Before converting and quantizing your models, it is recommended to apply the fake quantization from <a href="https://github.com/mit-han-lab/llm-awq">AWQ</a> to achieve better accuracy. We are currently working on supporting more models, please stay tuned!</p>
-<h3><a class="anchor" id="autotoc_md15"></a>
+<h3><a class="anchor" id="autotoc_md17"></a>
 Device-specific int4 Weight Reordering</h3>
 <p>To mitigate the runtime overheads associated with weight reordering, TinyChatEngine conducts this process offline during model conversion. In this section, we will explore the weight layouts of QM_ARM and QM_x86. These layouts are tailored for ARM and x86 CPUs, supporting 128-bit SIMD and 256-bit SIMD operations, respectively. We also support QM_CUDA for Nvidia GPUs, including server and edge GPUs.</p>
 <table class="markdownTable">
@@ -227,7 +258,7 @@ Device-specific int4 Weight Reordering</h3>
 <ul>
 <li>Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, [w0, w1, ... , w30, w31], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence [w0, w16, w1, w17, ..., w15, w31] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md16"></a>
+<h2><a class="anchor" id="autotoc_md18"></a>
 Download and Deploy Models from our Model Zoo</h2>
 <p>We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.</p>
 <table class="doxtable">
@@ -253,6 +284,12 @@ Download and Deploy Models from our Model Zoo</h2>
 <td rowspan="2">CodeLLaMA_7B_Instruct </td><td>fp32 </td><td>CodeLLaMA_7B_Instruct_fp32  </td><td>✅  </td><td>✅  </td><td></td></tr>
 <tr>
 <td>int4 </td><td>CodeLLaMA_7B_Instruct_awq_int4 </td><td>✅  </td><td>✅  </td><td>✅   </td></tr>
+<tr>
+<td>LLaVA-1.5 </td><td>int4 </td><td>LLaVA_7B_awq_int4_CLIP_ViT-L  </td><td>✅  </td><td>✅  </td><td></td></tr>
+<tr>
+<td rowspan="2">StarCoder </td><td>fp32 </td><td>StarCoder_15.5B_fp32  </td><td>✅  </td><td>✅  </td><td></td></tr>
+<tr>
+<td>int4 </td><td>StarCoder_15.5B_awq_int4 </td><td>✅  </td><td>✅  </td><td></td></tr>
 <tr>
 <td rowspan="3">opt-6.7B </td><td>fp32 </td><td>opt_6.7B_fp32 </td><td>✅  </td><td>✅  </td><td></td></tr>
 <tr>
@@ -292,12 +329,12 @@ Download and Deploy Models from our Model Zoo</h2>
 <div class="line">./chat LLaMA2_7B_chat INT4</div>
 </div><!-- fragment --></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md17"></a>
+<h2><a class="anchor" id="autotoc_md19"></a>
 Related Projects</h2>
 <p><a href="https://github.com/mit-han-lab/tinyengine">TinyEngine: Memory-efficient and High-performance Neural Network Library for Microcontrollers</a></p>
 <p><a href="https://github.com/mit-han-lab/smoothquant">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></p>
 <p><a href="https://github.com/mit-han-lab/llm-awq">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></p>
-<h2><a class="anchor" id="autotoc_md18"></a>
+<h2><a class="anchor" id="autotoc_md20"></a>
 Acknowledgement</h2>
 <p><a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a></p>
 <p><a href="https://github.com/ggerganov/whisper.cpp">whisper.cpp</a></p>
