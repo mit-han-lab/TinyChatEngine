@@ -12,13 +12,12 @@
 #include "matmul_metal_imp.h"
 
 namespace matmul {
-    // naive float*float matmul
-void MatmulOperator::rms_norm_metal(const struct matmul_params *params, float eps) {
+void MatmulOperator::rms_norm_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, float eps) {
     int i, j, k;
     const struct matrix *A = &params->A, *C = &params->C;
 
-    MetalMatMulParams matmulparams = {m: (unsigned int)A->row, n: (unsigned int)C->column, k: (unsigned int)A->column, eps: eps, type_size: sizeof(A[0])};
+    MetalMatMulParams matmulparams = {m_dim_x: m_dim_x, m_dim_y: m_dim_x, m_dim_z: m_dim_z, eps: eps, type_size: sizeof(short)}; //it uses half* in cuda
     MetalMatmulBuffers bufferparams = {A: A->data_ptr, C: C->data_ptr};
     MetalIMP::run_rms_norm(matmulparams, &bufferparams);
 };
-}  // namespace matmul
+}

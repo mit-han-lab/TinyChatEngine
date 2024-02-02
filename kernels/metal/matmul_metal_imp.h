@@ -45,10 +45,10 @@ class MetalIMP {
     static void run_silu(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
     static void run_gelu(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
     static void run_gelu_quick(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
-    static void run_rms_norm(MetalMatMulParams param, MetalMatmulBuffers *bufferParams); // TODO: to be fixed
-    static void run_soft_max(MetalMatMulParams param, MetalMatmulBuffers *bufferParams); // TODO: to be fixed
-    static void run_soft_max_4(MetalMatMulParams param, MetalMatmulBuffers *bufferParams); // TODO: to be fixed
-    static void run_rope(MetalMatMulParams param, MetalMatmulBuffers *bufferParams); // TODO: to be fixed
+    static void run_rms_norm(MetalMatMulParams param, MetalMatmulBuffers *bufferParams); 
+    static void run_soft_max(MetalMatMulParams param, MetalMatmulBuffers *bufferParams); 
+    static void run_soft_max_4(MetalMatMulParams param, MetalMatmulBuffers *bufferParams); 
+    static void run_rope(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
 
 
     // static void sendComputeCommand();

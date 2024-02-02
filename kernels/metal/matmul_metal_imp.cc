@@ -214,10 +214,10 @@ void MetalIMP::run_batch_add(MetalMatMulParams param, MetalMatmulBuffers *buffer
 
 
     *_mParamsPtr = param;
-    unsigned int m, n, k;
-    m = param.m;
-    n = param.n;
-    k = param.k;
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
 
     // assign the buffers to hold our data and the result.
     _mBufferA = getBufferfromPtr((void *)bufferParams->A);
@@ -245,9 +245,9 @@ void MetalIMP::run_batch_add(MetalMatMulParams param, MetalMatmulBuffers *buffer
     computeEncoder->setBuffer(_mParams, 0, 3);
 
     MTL::Size threadgroupSize = MTL::Size::Make(8, 8, 1);
-    MTL::Size gridSize = MTL::Size::Make((n + threadgroupSize.width - 1) / threadgroupSize.width,
-                                (m + threadgroupSize.height - 1) / threadgroupSize.height,
-                                              1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
 
     // Encode the compute command.
     computeEncoder->dispatchThreads(gridSize, threadgroupSize);
@@ -276,10 +276,10 @@ void MetalIMP::run_relu(MetalMatMulParams param, MetalMatmulBuffers *bufferParam
 
 
     *_mParamsPtr = param;
-    unsigned int m, n, k;
-    m = param.m; // row1
-    // n = param.n; // col2/3
-    k = param.k; // col1
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
 
     // assign the buffers to hold our data and the result.
     _mBufferA = getBufferfromPtr((void *)bufferParams->A);
@@ -304,9 +304,9 @@ void MetalIMP::run_relu(MetalMatMulParams param, MetalMatmulBuffers *bufferParam
     computeEncoder->setBuffer(_mBufferResult, 0, 1);
 
     MTL::Size threadgroupSize = MTL::Size::Make(8, 8, 1);
-    MTL::Size gridSize = MTL::Size::Make((k + threadgroupSize.width - 1) / threadgroupSize.width,
-                                (m + threadgroupSize.height - 1) / threadgroupSize.height,
-                                              1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
 
     SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
     _mMatmulFunctionPSO->release();
@@ -320,10 +320,10 @@ void MetalIMP::run_silu(MetalMatMulParams param, MetalMatmulBuffers *bufferParam
 
 
     *_mParamsPtr = param;
-    unsigned int m, n, k;
-    m = param.m; // row1
-    // n = param.n; // col2/3
-    k = param.k; // col1
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
 
     // assign the buffers to hold our data and the result.
     _mBufferA = getBufferfromPtr((void *)bufferParams->A);
@@ -348,9 +348,9 @@ void MetalIMP::run_silu(MetalMatMulParams param, MetalMatmulBuffers *bufferParam
     computeEncoder->setBuffer(_mBufferResult, 0, 1);
 
     MTL::Size threadgroupSize = MTL::Size::Make(8, 8, 1);
-    MTL::Size gridSize = MTL::Size::Make((k + threadgroupSize.width - 1) / threadgroupSize.width,
-                                (m + threadgroupSize.height - 1) / threadgroupSize.height,
-                                              1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
 
     SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
     _mMatmulFunctionPSO->release();
@@ -364,10 +364,10 @@ void MetalIMP::run_gelu(MetalMatMulParams param, MetalMatmulBuffers *bufferParam
 
 
     *_mParamsPtr = param;
-    unsigned int m, n, k;
-    m = param.m; // row1
-    // n = param.n; // col2/3
-    k = param.k; // col1
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
 
     // assign the buffers to hold our data and the result.
     _mBufferA = getBufferfromPtr((void *)bufferParams->A);
@@ -392,9 +392,9 @@ void MetalIMP::run_gelu(MetalMatMulParams param, MetalMatmulBuffers *bufferParam
     computeEncoder->setBuffer(_mBufferResult, 0, 1);
 
     MTL::Size threadgroupSize = MTL::Size::Make(8, 8, 1);
-    MTL::Size gridSize = MTL::Size::Make((k + threadgroupSize.width - 1) / threadgroupSize.width,
-                                (m + threadgroupSize.height - 1) / threadgroupSize.height,
-                                              1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
 
     SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
     _mMatmulFunctionPSO->release();
@@ -408,10 +408,10 @@ void MetalIMP::run_gelu_quick(MetalMatMulParams param, MetalMatmulBuffers *buffe
 
 
     *_mParamsPtr = param;
-    unsigned int m, n, k;
-    m = param.m; // row1
-    // n = param.n; // col2/3
-    k = param.k; // col1
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
 
     // assign the buffers to hold our data and the result.
     _mBufferA = getBufferfromPtr((void *)bufferParams->A);
@@ -436,25 +436,26 @@ void MetalIMP::run_gelu_quick(MetalMatMulParams param, MetalMatmulBuffers *buffe
     computeEncoder->setBuffer(_mBufferResult, 0, 1);
 
     MTL::Size threadgroupSize = MTL::Size::Make(8, 8, 1);
-    MTL::Size gridSize = MTL::Size::Make((k + threadgroupSize.width - 1) / threadgroupSize.width,
-                                (m + threadgroupSize.height - 1) / threadgroupSize.height,
-                                              1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
 
     SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
     _mMatmulFunctionPSO->release();
 }
 
 void MetalIMP::run_rms_norm(MetalMatMulParams param, MetalMatmulBuffers *bufferParams){
-    setupLibrary("kernel void kernel_rms_norm");
+    setupLibrary("kernel_rms_norm");
 
     _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
     _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
 
 
     *_mParamsPtr = param;
-    unsigned int m, n, k;
-    m = param.m; // row1
-    k = param.k; // col1
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
 
     // assign the buffers to hold our data and the result.
     _mBufferA = getBufferfromPtr((void *)bufferParams->A);
@@ -481,10 +482,157 @@ void MetalIMP::run_rms_norm(MetalMatMulParams param, MetalMatmulBuffers *bufferP
 
     computeEncoder->setThreadgroupMemoryLength(param.type_size * N_SIMDWIDTH, 0);
 
-    MTL::Size threadgroupSize = MTL::Size::Make(16, 16, 1);
-    MTL::Size gridSize = MTL::Size::Make((k + threadgroupSize.width - 1) / threadgroupSize.width,
-                                (m + threadgroupSize.height - 1) / threadgroupSize.height,
-                                              1);
+    MTL::Size threadgroupSize = MTL::Size::Make(N_SIMDWIDTH, N_SIMDWIDTH, 1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
+
+    SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
+    _mMatmulFunctionPSO->release();
+}
+
+void MetalIMP::run_soft_max(MetalMatMulParams param, MetalMatmulBuffers *bufferParams){
+    setupLibrary("kernel_soft_max");
+
+    _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
+    _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
+
+
+    *_mParamsPtr = param;
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
+
+    // assign the buffers to hold our data and the result.
+    _mBufferA = getBufferfromPtr((void *)bufferParams->A);
+    _mBufferB = getBufferfromPtr((void *)bufferParams->B);
+    _mBufferResult = getBufferfromPtr((void *)bufferParams->C);
+
+    if (!_mBufferA || !_mBufferResult) {
+        std::cerr << "Failed to locate some buffer!" << std::endl;
+        exit(-1);
+    }
+
+    // Create a command buffer to hold commands.
+    MTL::CommandBuffer *commandBuffer = _mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+
+    // Start a compute pass.
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    // Encode the pipeline state object and its parameters.
+    computeEncoder->setComputePipelineState(_mMatmulFunctionPSO);
+    computeEncoder->setBuffer(_mBufferA, 0, 0);
+    computeEncoder->setBuffer(_mBufferB, 0, 1);
+    computeEncoder->setBuffer(_mBufferResult, 0, 2);
+    computeEncoder->setBuffer(_mParams, 0, 3);
+
+    computeEncoder->setThreadgroupMemoryLength(param.type_size * N_SIMDWIDTH, 0);
+
+    MTL::Size threadgroupSize = MTL::Size::Make(N_SIMDWIDTH, N_SIMDWIDTH, 1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
+
+    SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
+    _mMatmulFunctionPSO->release();
+}
+
+void MetalIMP::run_soft_max_4(MetalMatMulParams param, MetalMatmulBuffers *bufferParams){
+    setupLibrary("kernel_soft_max_4");
+
+    _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
+    _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
+
+
+    *_mParamsPtr = param;
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
+
+    // assign the buffers to hold our data and the result.
+    _mBufferA = getBufferfromPtr((void *)bufferParams->A);
+    _mBufferB = getBufferfromPtr((void *)bufferParams->B);
+    _mBufferResult = getBufferfromPtr((void *)bufferParams->C);
+
+    if (!_mBufferA || !_mBufferResult) {
+        std::cerr << "Failed to locate some buffer!" << std::endl;
+        exit(-1);
+    }
+
+    // Create a command buffer to hold commands.
+    MTL::CommandBuffer *commandBuffer = _mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+
+    // Start a compute pass.
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    // Encode the pipeline state object and its parameters.
+    computeEncoder->setComputePipelineState(_mMatmulFunctionPSO);
+    computeEncoder->setBuffer(_mBufferA, 0, 0);
+    computeEncoder->setBuffer(_mBufferB, 0, 1);
+    computeEncoder->setBuffer(_mBufferResult, 0, 2);
+    computeEncoder->setBuffer(_mParams, 0, 3);
+
+    computeEncoder->setThreadgroupMemoryLength(param.type_size * N_SIMDWIDTH, 0);
+
+    MTL::Size threadgroupSize = MTL::Size::Make(N_SIMDWIDTH, N_SIMDWIDTH, 1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
+
+    SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
+    _mMatmulFunctionPSO->release();
+}
+
+void MetalIMP::run_rope(MetalMatMulParams param, MetalMatmulBuffers *bufferParams){
+    setupLibrary("kernel_soft_max_4");
+
+    _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
+    _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
+
+
+    *_mParamsPtr = param;
+    unsigned int x, y, z;
+    x = param.m_dim_x;
+    y = param.m_dim_y;
+    z = param.m_dim_z;
+
+    // assign the buffers to hold our data and the result.
+    _mBufferA = getBufferfromPtr((void *)bufferParams->A);
+    _mBufferB = getBufferfromPtr((void *)bufferParams->B);
+    _mBufferResult = getBufferfromPtr((void *)bufferParams->C);
+
+    if (!_mBufferA || !_mBufferResult) {
+        std::cerr << "Failed to locate some buffer!" << std::endl;
+        exit(-1);
+    }
+
+    // Create a command buffer to hold commands.
+    MTL::CommandBuffer *commandBuffer = _mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+
+    // Start a compute pass.
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    // Encode the pipeline state object and its parameters.
+    computeEncoder->setComputePipelineState(_mMatmulFunctionPSO);
+    computeEncoder->setBuffer(_mBufferA, 0, 0);
+    computeEncoder->setBuffer(_mBufferB, 0, 1);
+    computeEncoder->setBuffer(_mBufferResult, 0, 2);
+    computeEncoder->setBuffer(_mParams, 0, 3);
+
+    computeEncoder->setThreadgroupMemoryLength(param.type_size * N_SIMDWIDTH, 0);
+
+    MTL::Size threadgroupSize = MTL::Size::Make(N_SIMDWIDTH, N_SIMDWIDTH, 1);
+    MTL::Size gridSize = MTL::Size::Make((y + threadgroupSize.width - 1) / threadgroupSize.width,
+                                (x + threadgroupSize.height - 1) / threadgroupSize.height,
+                                              z);
 
     SendEncode(gridSize, threadgroupSize, commandBuffer, computeEncoder);
     _mMatmulFunctionPSO->release();

@@ -138,15 +138,17 @@ class MatmulOperator {
     void gemv_forward_cuda(const struct matmul_params *params);
     // metal 
     void mat_mul_metal(const struct matmul_params *params); 
-    void batch_add_metal(const struct matmul_params *params);
-    void relu_metal(const struct matmul_params *params);
-    void silu_metal(const struct matmul_params *params);
-    void gelu_metal(const struct matmul_params *params);
-    void gelu_quick_metal(const struct matmul_params *params);
-    void rms_norm_metal(const struct matmul_params *params, float eps);
-    void soft_max_metal(const struct matmul_params *params); // TODO: to be fixed
-    void soft_max_4_metal(const struct matmul_params *params); // TODO: to be fixed
-    void rope_metal(const struct matmul_params *params); // TODO: to be fixed
+    void batch_add_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+    void relu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+    void silu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+    void gelu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+    void gelu_quick_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+    void rms_norm_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, float eps);
+    void soft_max_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale); 
+    void soft_max_4_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale);
+    void rope_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z,
+int n_past, int n_dims, int mode, int n_orig_ctx, float freq_base, float freq_scale, float ext_factor, float attn_factor,
+float beta_fast, float beta_slow);
 
 
 

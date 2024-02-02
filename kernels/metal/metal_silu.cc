@@ -12,13 +12,12 @@
 #include "matmul_metal_imp.h"
 
 namespace matmul {
-    // naive float*float matmul
-void MatmulOperator::silu_metal(const struct matmul_params *params) {
+void MatmulOperator::silu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z) {
     int i, j, k;
     const struct matrix *A = &params->A, *C = &params->C;
 
-    MetalMatMulParams matmulparams = {m: (unsigned int)A->row, n: (unsigned int)C->column, k: (unsigned int)A->column};
+    MetalMatMulParams matmulparams = {m_dim_x: m_dim_x, m_dim_y: m_dim_x, m_dim_z: m_dim_z};
     MetalMatmulBuffers bufferparams = {A: A->data_ptr, C: C->data_ptr};
     MetalIMP::run_silu(matmulparams, &bufferparams);
 };
-}  // namespace matmul
+}

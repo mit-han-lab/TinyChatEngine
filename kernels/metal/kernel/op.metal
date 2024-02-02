@@ -1,7 +1,12 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#define N_SIMDWIDTH 32 // assuming SIMD group size is 32
+using namespace metal;
+
+#define N_SIMDWIDTH 32
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define SWAP(x, y) { auto tmp = (x); (x) = (y); (y) = tmp; }
 
  /* CUDA */
 //  __global__ void batch_Add_cuda(Matrix3D<half> input, Matrix3D<half> input2, Matrix3D<half> output) {
@@ -19,8 +24,8 @@ kernel void kernel_batch_add(device const float* inputA,
                              device float* output,
                              constant MetalMatMulParams& params,
                              uint3 id[[thread_position_in_grid]]) {
-    const uint m = param.m;
-    const uint n = param.k;
+    const uint m = param.m_dim_x;
+    const uint n = param.m_dim_y;
 
     const uint idx = id.x;
     const uint idy = id.y;
@@ -82,8 +87,8 @@ kernel void kernel_rms_norm(
         uint tiisg[[thread_index_in_simdgroup]],
         uint   ntg[[threads_per_threadgroup]]) {
     device const float4 * x = (device const float4 *) ((device const char *) src0 + tgpig*nb01);
-    unsigned int ne00 = params.m;
-    unsigned int nb01 = params.k*param.type_size;
+    unsigned int ne00 = params.m_dim_x;
+    unsigned int nb01 = params.m_dim_y*param.type_size;
     float eps = param.eps;
     float4 sumf = 0;
     float all_sum = 0;
@@ -126,16 +131,23 @@ kernel void kernel_soft_max(
         device const float * src0,
         device const float * src1,
         device       float * dst,
-        constant   int64_t & ne00,
-        constant   int64_t & ne01,
-        constant   int64_t & ne02,
-        constant     float & scale,
+        constant MetalMatMulParams& params,
+        // constant   int64_t & ne00,
+        // constant   int64_t & ne01,
+        // constant   int64_t & ne02,
+        // constant     float & scale,
         threadgroup float  * buf [[threadgroup(0)]],
         uint  tgpig[[threadgroup_position_in_grid]],
         uint  tpitg[[thread_position_in_threadgroup]],
         uint  sgitg[[simdgroup_index_in_threadgroup]],
         uint  tiisg[[thread_index_in_simdgroup]],
         uint    ntg[[threads_per_threadgroup]]) {
+    const int64_t ne00 = params.m_dim_x;
+    const int64_t ne01 = params.m_dim_y;
+    const int64_t ne02 = params.m_dim_z;
+    const int64_t scale = params.scale;
+
+
     const int64_t i03 = (tgpig) / (ne02*ne01);
     const int64_t i02 = (tgpig - i03*ne02*ne01) / ne01;
     const int64_t i01 = (tgpig - i03*ne02*ne01 - i02*ne01);
@@ -213,16 +225,22 @@ kernel void kernel_soft_max_4(
         device const float * src0,
         device const float * src1,
         device       float * dst,
-        constant   int64_t & ne00,
-        constant   int64_t & ne01,
-        constant   int64_t & ne02,
-        constant     float & scale,
+        constant MetalMatMulParams& params,
+        // constant   int64_t & ne00,
+        // constant   int64_t & ne01,
+        // constant   int64_t & ne02,
+        // constant     float & scale,
         threadgroup float  * buf [[threadgroup(0)]],
         uint  tgpig[[threadgroup_position_in_grid]],
         uint  tpitg[[thread_position_in_threadgroup]],
         uint  sgitg[[simdgroup_index_in_threadgroup]],
         uint  tiisg[[thread_index_in_simdgroup]],
         uint    ntg[[threads_per_threadgroup]]) {
+    const int64_t ne00 = params.m_dim_x;
+    const int64_t ne01 = params.m_dim_y;
+    const int64_t ne02 = params.m_dim_z;
+    const int64_t scale = params.scale;
+
     const int64_t i03 = (tgpig) / (ne02*ne01);
     const int64_t i02 = (tgpig - i03*ne02*ne01) / ne01;
     const int64_t i01 = (tgpig - i03*ne02*ne01 - i02*ne01);
@@ -336,75 +354,105 @@ static void rope_yarn_corr_dims(
     dims[1] = min(n_dims - 1.0f, ceil(rope_yarn_corr_factor(n_dims, n_orig_ctx, beta_slow, freq_base)));
 }
 
-typedef void (rope_t)(
-        device const    void * src0,
-        device const int32_t * src1,
-        device         float * dst,
-        constant     int64_t & ne00,
-        constant     int64_t & ne01,
-        constant     int64_t & ne02,
-        constant     int64_t & ne03,
-        constant    uint64_t & nb00,
-        constant    uint64_t & nb01,
-        constant    uint64_t & nb02,
-        constant    uint64_t & nb03,
-        constant     int64_t & ne0,
-        constant     int64_t & ne1,
-        constant     int64_t & ne2,
-        constant     int64_t & ne3,
-        constant    uint64_t & nb0,
-        constant    uint64_t & nb1,
-        constant    uint64_t & nb2,
-        constant    uint64_t & nb3,
-        constant         int & n_past,
-        constant         int & n_dims,
-        constant         int & mode,
-        constant         int & n_orig_ctx,
-        constant       float & freq_base,
-        constant       float & freq_scale,
-        constant       float & ext_factor,
-        constant       float & attn_factor,
-        constant       float & beta_fast,
-        constant       float & beta_slow,
-        uint  tiitg[[thread_index_in_threadgroup]],
-        uint3 tptg[[threads_per_threadgroup]],
-        uint3 tgpig[[threadgroup_position_in_grid]]);
+// typedef void (rope_t)(
+//         device const    void * src0,
+//         device const int32_t * src1,
+//         device         float * dst,
+//         constant     int64_t & ne00,
+//         constant     int64_t & ne01,
+//         constant     int64_t & ne02,
+//         constant     int64_t & ne03,
+//         constant    uint64_t & nb00,
+//         constant    uint64_t & nb01,
+//         constant    uint64_t & nb02,
+//         constant    uint64_t & nb03,
+//         constant     int64_t & ne0,
+//         constant     int64_t & ne1,
+//         constant     int64_t & ne2,
+//         constant     int64_t & ne3,
+//         constant    uint64_t & nb0,
+//         constant    uint64_t & nb1,
+//         constant    uint64_t & nb2,
+//         constant    uint64_t & nb3,
+//         constant         int & n_past,
+//         constant         int & n_dims,
+//         constant         int & mode,
+//         constant         int & n_orig_ctx,
+//         constant       float & freq_base,
+//         constant       float & freq_scale,
+//         constant       float & ext_factor,
+//         constant       float & attn_factor,
+//         constant       float & beta_fast,
+//         constant       float & beta_slow,
+//         uint  tiitg[[thread_index_in_threadgroup]],
+//         uint3 tptg[[threads_per_threadgroup]],
+//         uint3 tgpig[[threadgroup_position_in_grid]]);
 
-// TODO: to be fixed
-template<typename T>
+// // TODO: to be fixed
+// template<typename T>
 kernel void kernel_rope(
         device const    void * src0,
         device const int32_t * src1,
         device         float * dst,
-        constant     int64_t & ne00,
-        constant     int64_t & ne01,
-        constant     int64_t & ne02,
-        constant     int64_t & ne03,
-        constant    uint64_t & nb00,
-        constant    uint64_t & nb01,
-        constant    uint64_t & nb02,
-        constant    uint64_t & nb03,
-        constant     int64_t & ne0,
-        constant     int64_t & ne1,
-        constant     int64_t & ne2,
-        constant     int64_t & ne3,
-        constant    uint64_t & nb0,
-        constant    uint64_t & nb1,
-        constant    uint64_t & nb2,
-        constant    uint64_t & nb3,
-        constant         int & n_past,
-        constant         int & n_dims,
-        constant         int & mode,
-        constant         int & n_orig_ctx,
-        constant       float & freq_base,
-        constant       float & freq_scale,
-        constant       float & ext_factor,
-        constant       float & attn_factor,
-        constant       float & beta_fast,
-        constant       float & beta_slow,
+        constant MetalMatMulParams& params,
+        // constant     int64_t & ne00,
+        // constant     int64_t & ne01,
+        // constant     int64_t & ne02,
+        // constant     int64_t & ne03,
+        // constant    uint64_t & nb00,
+        // constant    uint64_t & nb01,
+        // constant    uint64_t & nb02,
+        // constant    uint64_t & nb03,
+        // constant     int64_t & ne0,
+        // constant     int64_t & ne1,
+        // constant     int64_t & ne2,
+        // constant     int64_t & ne3,
+        // constant    uint64_t & nb0,
+        // constant    uint64_t & nb1,
+        // constant    uint64_t & nb2,
+        // constant    uint64_t & nb3,
+        // constant         int & n_past,
+        // constant         int & n_dims,
+        // constant         int & mode,
+        // constant         int & n_orig_ctx,
+        // constant       float & freq_base,
+        // constant       float & freq_scale,
+        // constant       float & ext_factor,
+        // constant       float & attn_factor,
+        // constant       float & beta_fast,
+        // constant       float & beta_slow,
         uint  tiitg[[thread_index_in_threadgroup]],
         uint3 tptg[[threads_per_threadgroup]],
         uint3 tgpig[[threadgroup_position_in_grid]]) {
+    constant     int64_t ne00 = param.m_dim_x;
+    constant     int64_t ne01 = param.m_dim_y;
+    constant     int64_t ne02 = param.m_dim_z;
+    constant     int64_t ne03 = 0;
+    constant    uint64_t nb00 = param.m_dim_x*param.type_size;
+    constant    uint64_t nb01 = param.m_dim_y*param.type_size;
+    constant    uint64_t nb02 = param.m_dim_z*param.type_size;
+    constant    uint64_t nb03 = 0;
+    constant     int64_t ne0 = param.m_dim_x;
+    constant     int64_t ne1 = param.m_dim_y;
+    constant     int64_t ne2 = param.m_dim_z;
+    constant     int64_t ne3 = 0;
+    constant    uint64_t nb0 = param.m_dim_x*param.type_size;
+    constant    uint64_t nb1 = param.m_dim_y*param.type_size;
+    constant    uint64_t nb2 = param.m_dim_z*param.type_size;
+    constant    uint64_t nb3 = 0;
+
+    int n_past = param.n_past;
+    int n_dims = param.n_dims;
+    int mode = param.mode;
+    int n_orig_ctx = param.n_orig_ctx;
+    float freq_base = param.freq_base;
+    float freq_scale = param.freq_scale;
+    float ext_factor = param.ext_factor;
+    float attn_factor = param.attn_factor;
+    float beta_fast = param.beta_fast;
+    float beta_slow = param.beta_slow;
+
+
     const int64_t i3 = tgpig[2];
     const int64_t i2 = tgpig[1];
     const int64_t i1 = tgpig[0];
@@ -472,8 +520,8 @@ kernel void kernel_rope(
     }
 }
 
-template [[host_name("kernel_rope_f32")]] kernel rope_t kernel_rope<float>;
-template [[host_name("kernel_rope_f16")]] kernel rope_t kernel_rope<half>;
+// template [[host_name("kernel_rope_f32")]] kernel rope_t kernel_rope<float>;
+// template [[host_name("kernel_rope_f16")]] kernel rope_t kernel_rope<half>;
 
 /*
 Performance comparision with the test case:
