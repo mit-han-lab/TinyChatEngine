@@ -34,9 +34,9 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 
 ## News
 
+- **(2024/01)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and follow the [instructions](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to deploy it on your device!
 - **(2023/10)** We extended the support for the coding assistant [Code Llama](#download-and-deploy-models-from-our-model-zoo). Feel free to check out.
 - **(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability >= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!
-- **(2023/09)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and [step-by-step guide](llm/application/README.md) to deploy it on your device!
 
 
 ## Prerequisites
@@ -131,6 +131,27 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   * Analyze input/output (I/O) operations and their handling by the operating system
   ...
   ```
+
+
+## Deploy speech-to-speech chatbot with TinyChatEngine [[Demo]](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC)
+
+TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Here, we provide very easy-to-follow instructions to deploy speech-to-speech chatbot (LLaMA2-7B-chat) with TinyChatEngine. 
+
+- Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine](#step-by-step-to-deploy-llama2-7b-chat-with-tinychatengine).
+
+- Run the shell script to set up the environment for speech-to-speech chatbot.
+  ```bash
+  cd llm
+  ./voicechat_setup.sh
+  ```
+
+- Start the speech-to-speech chat locally.
+  ```bash
+  ./chat -v  # chat.exe -v on Windows
+  ```
+
+- If you encounter any issues or errors during setup, please explore [here](llm/application/README.md) to follow the step-by-step guide to debug.
+
 
 ## Backend Support
 
@@ -364,12 +385,6 @@ make chat -j
 ```
 
 
-## Experimental Features
-
-### Voice Chatbot [[Demo]](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC)
-
-TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Explore our step-by-step guide [here](llm/application/README.md) to seamlessly deploy a speech-to-speech chatbot locally on your device!
-
 ## Related Projects
 
 [TinyEngine: Memory-efficient and High-performance Neural Network Library for Microcontrollers](https://github.com/mit-han-lab/tinyengine)
@@ -377,6 +392,7 @@ TinyChatEngine offers versatile capabilities suitable for various applications. 
 [SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models](https://github.com/mit-han-lab/smoothquant)
 
 [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://github.com/mit-han-lab/llm-awq)
+
 
 ## Acknowledgement
 

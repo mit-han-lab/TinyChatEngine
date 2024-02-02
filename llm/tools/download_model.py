@@ -50,6 +50,10 @@ models = {
         "url": "https://www.dropbox.com/scl/fi/zvmdw8cdf7j0j3a99q8sx/OPT_125m.zip?rlkey=qehxgfs21m36wvm7ratwy1r5d&dl=1",
         "md5sum": "816958aed84120b763942ba83c1b010f",
     },
+    "StarCoder_15.5B_fp32": {
+        "url": "https://www.dropbox.com/scl/fi/vc1956by8v275t0ol6vw5/StarCoder_15.5B.zip?rlkey=aydnpd9w9jhgtlfqo5krkd0yx&dl=1",
+        "md5sum": "e3e9301866f47ab84817b46467ac49f6",
+    },
 }
 
 Qmodels = {
@@ -90,6 +94,10 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/rztjmc76yhtvudxiru03b/LLaVA_7B_CLIP_ViT-L.zip?rlkey=s1xy8ocw2ctioqziutucjim8w&dl=1",  # noqa: E501
             "md5sum": "9fa1bc2f8c9b06b46c1f37bd2b17702c",
         },
+        "StarCoder_15.5B_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/fe4dkrnzc25bt166w6bby/StarCoder_15.5B.zip?rlkey=ml1x96uep2k03z78ci7s1c0yb&dl=1",
+            "md5sum": "0f16236c0aec0b32b553248cc78b8caf",
+        },
     },
     "QM_x86": {
         "LLaMA_7B_awq_int4": {
@@ -127,6 +135,10 @@ Qmodels = {
         "LLaVA_7B_awq_int4_CLIP_ViT-L": {
             "url": "https://www.dropbox.com/scl/fi/x81yfi26oonbu02xne2kp/LLaVA_7B_CLIP_ViT-L.zip?rlkey=8h5cz6aund96k2841wmcrnv5z&dl=1",  # noqa: E501
             "md5sum": "f903927fe3d02d9db7fb8f0c6587c136",
+        },
+        "StarCoder_15.5B_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/86o2cblncmfd3xvuyyaqc/StarCoder_15.5B.zip?rlkey=2gswnyq9xihencaduddylpb2k&dl=1",
+            "md5sum": "48383ce0bf01b137069e3612cab8525f",
         },
     },
     "QM_CUDA": {

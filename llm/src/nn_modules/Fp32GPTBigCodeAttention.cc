@@ -71,11 +71,11 @@ Fp32GPTBigCodeAttention::Fp32GPTBigCodeAttention(std::string param_path, const s
 
     float *c_attn_weight, *c_proj_weight;
     // allocate_aligned_memory(c_attn_weight, (config.embed_dim * (config.embed_dim + 2 * this->kv_dim) * sizeof(float)));
-    allocate_aligned_memory(c_attn_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(float)) / 2);
+    allocate_aligned_memory(c_attn_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(float)));
     allocate_aligned_memory(c_proj_weight, (config.embed_dim * config.embed_dim * sizeof(float)));
     float *c_attn_bias, *c_proj_bias;
     // allocate_aligned_memory(c_attn_bias, ((config.embed_dim + 2 * this->kv_dim) * sizeof(float)));
-    allocate_aligned_memory(c_attn_bias, (config.embed_dim * 3 * sizeof(float)) / 2);
+    allocate_aligned_memory(c_attn_bias, (config.embed_dim * 3 * sizeof(float)));
     allocate_aligned_memory(c_proj_bias, (config.embed_dim * sizeof(float)));
 
     // this->c_attn =
