@@ -39,7 +39,7 @@ class MetalIMP {
     static void SendEncode(MTL::Size gridSize, MTL::Size threadgroupSize, MTL::CommandBuffer *commandBuffer, MTL::ComputeCommandEncoder *computeEncoder);
 
     static void run_mat_mul_accelerator_int4_fast_no_offset(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
-    static void run_naive_mat_mul(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
+    static void run_f32_mat_mul(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
     static void run_batch_add(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
     static void run_relu(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);
     static void run_silu(MetalMatMulParams param, MetalMatmulBuffers *bufferParams);

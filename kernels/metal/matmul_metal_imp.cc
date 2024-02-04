@@ -160,7 +160,7 @@ void MetalIMP::run_mat_mul_accelerator_int4_fast_no_offset(MetalMatMulParams par
     _mMatmulFunctionPSO->release();
 }
 
-void MetalIMP::run_naive_mat_mul(MetalMatMulParams param, MetalMatmulBuffers *bufferParams) {
+void MetalIMP::run_f32_mat_mul(MetalMatMulParams param, MetalMatmulBuffers *bufferParams) {
     setupLibrary("matmul");
     _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
     _mParamsPtr = (MetalMatMulParams *)_mParams->contents();
@@ -590,7 +590,7 @@ void MetalIMP::run_soft_max_4(MetalMatMulParams param, MetalMatmulBuffers *buffe
 }
 
 void MetalIMP::run_rope(MetalMatMulParams param, MetalMatmulBuffers *bufferParams){
-    setupLibrary("kernel_soft_max_4");
+    setupLibrary("kernel_rope");
 
     _mParams = _mDevice->newBuffer(sizeof(MetalMatMulParams), MTL::ResourceStorageModeShared);
     _mParamsPtr = (MetalMatMulParams *)_mParams->contents();

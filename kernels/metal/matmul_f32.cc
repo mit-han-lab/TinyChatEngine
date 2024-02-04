@@ -13,7 +13,7 @@
 
 namespace matmul {
     // naive float*float matmul
-void MatmulOperator::mat_mul_metal(const struct matmul_params *params) {
+void MatmulOperator::mat_mul_f32_metal(const struct matmul_params *params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;
@@ -25,6 +25,6 @@ void MatmulOperator::mat_mul_metal(const struct matmul_params *params) {
     MetalMatMulParams matmulparams = {(unsigned int)A->row, (unsigned int)C->column, (unsigned int)A->column,
                                       (unsigned int)block_size};
     MetalMatmulBuffers bufferparams = {A->data_ptr, C->data_ptr, scale, offset, (unsigned char*)B->data_ptr};
-    MetalIMP::run_mat_mul_accelerator_int4_fast_no_offset(matmulparams, &bufferparams);
+    MetalIMP::run_f32_mat_mul(matmulparams, &bufferparams);
 };
 }  // namespace matmul

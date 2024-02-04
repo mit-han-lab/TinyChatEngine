@@ -137,7 +137,7 @@ class MatmulOperator {
     //// GEMV
     void gemv_forward_cuda(const struct matmul_params *params);
     // metal 
-    void mat_mul_metal(const struct matmul_params *params); 
+    void mat_mul_f32_metal(const struct matmul_params *params); 
     void batch_add_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
     void relu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
     void silu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
