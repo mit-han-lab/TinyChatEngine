@@ -17,10 +17,24 @@ typedef struct  {
 
 // For customized MatmulInt4 use
 typedef struct {
-    unsigned int height1;
-    unsigned int width3;
-    unsigned int width1;
+    unsigned int width1, height1, width2, height2, width3, height3, outputsize, arraySize1, arraySize2;
     unsigned int group_size;
+
+    unsigned int m_dim_x, m_dim_y, m_dim_z;
+    unsigned int type_size; // for nb
+    float eps; // rms_nor
+    float scale; // for softmax
+    
+    int n_past;
+    int n_dims;
+    int mode;
+    int n_orig_ctx;
+    float freq_base;
+    float freq_scale;
+    float ext_factor;
+    float attn_factor;
+    float beta_fast;
+    float beta_slow;
 } MetalMatMulParams;
 
 // should be inside metal header
