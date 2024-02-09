@@ -50,6 +50,14 @@ models = {
         "url": "https://www.dropbox.com/scl/fi/zvmdw8cdf7j0j3a99q8sx/OPT_125m.zip?rlkey=qehxgfs21m36wvm7ratwy1r5d&dl=1",
         "md5sum": "816958aed84120b763942ba83c1b010f",
     },
+    "LLaVA_7B_CLIP_ViT-L_fp32": {
+        "url": "https://www.dropbox.com/scl/fi/h3w1jghi7n7a45y5j3rsi/LLaVA_7B_CLIP_ViT-L.zip?rlkey=u2oikuvbc3q1hj8i7n5unf816&dl=1",  # noqa: E501
+        "md5sum": "dc4df9a17c7810333a6b9d561f4b8218",
+    },
+    "VILA_7B_CLIP_ViT-L_fp32": {
+        "url": "https://www.dropbox.com/scl/fi/rqkynmsqj3ok7kea2t0eu/VILA_7B_CLIP_ViT-L.zip?rlkey=o3ngwaoqa3fs7uydso0j6ttmp&dl=1",  # noqa: E501
+        "md5sum": "aff0f1614ad6ef1aefb352de6fc3015a",
+    },
     "StarCoder_15.5B_fp32": {
         "url": "https://www.dropbox.com/scl/fi/vc1956by8v275t0ol6vw5/StarCoder_15.5B.zip?rlkey=aydnpd9w9jhgtlfqo5krkd0yx&dl=1",
         "md5sum": "e3e9301866f47ab84817b46467ac49f6",
@@ -94,6 +102,10 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/rztjmc76yhtvudxiru03b/LLaVA_7B_CLIP_ViT-L.zip?rlkey=s1xy8ocw2ctioqziutucjim8w&dl=1",  # noqa: E501
             "md5sum": "9fa1bc2f8c9b06b46c1f37bd2b17702c",
         },
+        "VILA_7B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/isza3m151qfb2e3uc6zay/VILA_7B_CLIP_ViT-L.zip?rlkey=y4zj23gib0b2diqiygpdszy8f&dl=1",  # noqa: E501
+            "md5sum": "46b6d2dec3def6122640411e168e08ff",
+        },
         "StarCoder_15.5B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/fe4dkrnzc25bt166w6bby/StarCoder_15.5B.zip?rlkey=ml1x96uep2k03z78ci7s1c0yb&dl=1",
             "md5sum": "0f16236c0aec0b32b553248cc78b8caf",
@@ -135,6 +147,10 @@ Qmodels = {
         "LLaVA_7B_awq_int4_CLIP_ViT-L": {
             "url": "https://www.dropbox.com/scl/fi/x81yfi26oonbu02xne2kp/LLaVA_7B_CLIP_ViT-L.zip?rlkey=8h5cz6aund96k2841wmcrnv5z&dl=1",  # noqa: E501
             "md5sum": "f903927fe3d02d9db7fb8f0c6587c136",
+        },
+        "VILA_7B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/ndh08lwykyv2mks0py9av/VILA_7B_CLIP_ViT-L.zip?rlkey=fy7i02205bvk109pgal3ir8p4&dl=1",  # noqa: E501
+            "md5sum": "412f4a845bd31fb058920582d88cec18",
         },
         "StarCoder_15.5B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/86o2cblncmfd3xvuyyaqc/StarCoder_15.5B.zip?rlkey=2gswnyq9xihencaduddylpb2k&dl=1",

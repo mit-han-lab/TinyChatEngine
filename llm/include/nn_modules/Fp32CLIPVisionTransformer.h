@@ -26,9 +26,9 @@ struct Fp32CLIPVisionTransformer_input {
 
 class Fp32CLIPVisionTransformer {
    public:
-    Fp32CLIPVisionTransformer(std::string param_path, const struct model_config config);
+    Fp32CLIPVisionTransformer(std::string param_path, const struct model_config config, bool is_vila);
     Fp32CLIPVisionTransformer(){};
-    struct Fp32CLIPVisionTransformer_output forward(const struct Fp32CLIPVisionTransformer_input& input);
+    struct Fp32CLIPVisionTransformer_output forward(const struct Fp32CLIPVisionTransformer_input& input, bool is_vila);
     Embedding embed_positions;
     Conv2D embed_patch;
     LayerNorm pre_layernorm;
