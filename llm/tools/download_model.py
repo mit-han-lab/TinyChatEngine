@@ -54,6 +54,10 @@ models = {
         "url": "https://www.dropbox.com/scl/fi/h3w1jghi7n7a45y5j3rsi/LLaVA_7B_CLIP_ViT-L.zip?rlkey=u2oikuvbc3q1hj8i7n5unf816&dl=1",  # noqa: E501
         "md5sum": "dc4df9a17c7810333a6b9d561f4b8218",
     },
+    "LLaVA_13B_CLIP_ViT-L_fp32": {
+        "url": "https://www.dropbox.com/scl/fi/0uroj92srmo6z4ib4xr43/LLaVA_13B_CLIP_ViT-L.zip?rlkey=34x3r8yfh8ztiqbisg5z64hmd&dl=1",  # noqa: E501
+        "md5sum": "3d4afd8051c779c014ba69aec7886961",
+    },
     "VILA_7B_CLIP_ViT-L_fp32": {
         "url": "https://www.dropbox.com/scl/fi/rqkynmsqj3ok7kea2t0eu/VILA_7B_CLIP_ViT-L.zip?rlkey=o3ngwaoqa3fs7uydso0j6ttmp&dl=1",  # noqa: E501
         "md5sum": "aff0f1614ad6ef1aefb352de6fc3015a",
@@ -102,6 +106,10 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/rztjmc76yhtvudxiru03b/LLaVA_7B_CLIP_ViT-L.zip?rlkey=s1xy8ocw2ctioqziutucjim8w&dl=1",  # noqa: E501
             "md5sum": "9fa1bc2f8c9b06b46c1f37bd2b17702c",
         },
+        "LLaVA_13B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/hzqrq72xrk2uwupkktmpk/LLaVA_13B_CLIP_ViT-L.zip?rlkey=zit6e00fic7vdygrlg0cybivq&dl=1",  # noqa: E501
+            "md5sum": "fec078d99449df73c0f1236377b53eb3",
+        },
         "VILA_7B_awq_int4_CLIP_ViT-L": {
             "url": "https://www.dropbox.com/scl/fi/isza3m151qfb2e3uc6zay/VILA_7B_CLIP_ViT-L.zip?rlkey=y4zj23gib0b2diqiygpdszy8f&dl=1",  # noqa: E501
             "md5sum": "46b6d2dec3def6122640411e168e08ff",
@@ -147,6 +155,10 @@ Qmodels = {
         "LLaVA_7B_awq_int4_CLIP_ViT-L": {
             "url": "https://www.dropbox.com/scl/fi/x81yfi26oonbu02xne2kp/LLaVA_7B_CLIP_ViT-L.zip?rlkey=8h5cz6aund96k2841wmcrnv5z&dl=1",  # noqa: E501
             "md5sum": "f903927fe3d02d9db7fb8f0c6587c136",
+        },
+        "LLaVA_13B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/7u8wihmvvr9jlio2rjw2f/LLaVA_13B_CLIP_ViT-L.zip?rlkey=bimpaaemyb3rp30wgkznytkuv&dl=1",  # noqa: E501
+            "md5sum": "f22e8d5d754c64f0aa34d5531d3059bc",
         },
         "VILA_7B_awq_int4_CLIP_ViT-L": {
             "url": "https://www.dropbox.com/scl/fi/ndh08lwykyv2mks0py9av/VILA_7B_CLIP_ViT-L.zip?rlkey=fy7i02205bvk109pgal3ir8p4&dl=1",  # noqa: E501
