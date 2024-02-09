@@ -339,6 +339,22 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
             <td>  </td>
         </tr>
         <tr>
+            <td rowspan="2">LLaVA-v1.5-13B</td>
+            <td> fp32</td>
+            <td> LLaVA_13B_CLIP_ViT-L_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td> int4</td>
+            <td> LLaVA_13B_awq_int4_CLIP_ViT-L </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
+        </tr>
+        <tr>
             <td rowspan="2">LLaVA-v1.5-7B</td>
             <td> fp32</td>
             <td> LLaVA_7B_CLIP_ViT-L_fp32 </td>
