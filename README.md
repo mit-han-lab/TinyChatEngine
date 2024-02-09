@@ -159,7 +159,7 @@ TinyChatEngine offers versatile capabilities suitable for various applications. 
 
 ## Deploy vision language model (VLM) chatbot with TinyChatEngine
 
-TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide very easy-to-follow instructions to deploy vision language model chatbot (VILA) with TinyChatEngine.
+TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide very easy-to-follow instructions to deploy vision language model chatbot (VILA-7B) with TinyChatEngine.
 
 - Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine](#step-by-step-to-deploy-llama2-7b-chat-with-tinychatengine).
 
@@ -170,7 +170,7 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
 
 - (Optional) To enable the speech-to-speech chatbot for VLM, please follow the [instruction above](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to run the shell script to set up the environment.
 
-- Download the quantized VILA model from our model zoo.
+- Download the quantized VILA-7B model from our model zoo.
 
   - On an x86 device (e.g., Intel/AMD laptop)
     ```bash
