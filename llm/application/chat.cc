@@ -95,8 +95,10 @@ int NUM_THREAD = 5;
 
 int main(int argc, char* argv[]) {
     bool use_voicechat = false;
+    bool concurrent = false;
 
-    // Check for optional arguments
+
+    // Check for -v argument
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-v") == 0) {
             use_voicechat = true;
@@ -106,6 +108,23 @@ int main(int argc, char* argv[]) {
             }
             --argc;
             break;
+        }
+    }
+
+   // Check for -concurrent argument only if -v is passed
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--concurrent") == 0) {
+            if (use_voicechat) {
+                concurrent = true;
+                for (int j = i; j < argc - 1; ++j) {
+                    argv[j] = argv[j + 1];
+                }
+                --argc;
+                break;
+            } else {
+                std::cerr << "Error: --concurrent can only be used with -v." << std::endl;
+                return 1; 
+            }
         }
     }
 
@@ -286,7 +305,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-                LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
+                LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, use_voicechat, concurrent);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -348,7 +367,7 @@ int main(int argc, char* argv[]) {
                         input = "### Human: " + input + "\n### Assistant: \n";
                     }
                 }
-                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, use_voicechat);
+                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, use_voicechat, concurrent);
             }
         } else {
             std::cout << std::endl;
@@ -772,7 +791,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, use_voicechat);
+                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, use_voicechat, concurrent);
         } else if (format_id == FP32) {
             Fp32OPTForCausalLM model = Fp32OPTForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl << std::endl;
@@ -807,7 +826,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, use_voicechat);
+                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, use_voicechat, concurrent);
         } else if (format_id == INT4) {
             Int4OPTForCausalLM model = Int4OPTForCausalLM("INT4/" + m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl << std::endl;
@@ -843,7 +862,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, use_voicechat);
+                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, use_voicechat, concurrent);
         }
 #endif  // QN_CUDA
     }

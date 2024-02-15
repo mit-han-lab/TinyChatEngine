@@ -15,6 +15,9 @@ say "$1"
 # for edge devices
 # echo "$1" | ./TTS/piper/piper --model ./TTS/en_US-ryan-low.onnx --output_file output.wav && aplay output.wav
 
+#EmotiVoice
+# python EmotiVoice/frontend.py "$1" > EmotiVoice/data/inference/text && python EmotiVoice/inference_am_vocoder_joint.py --logdir prompt_tts_open_source_joint --config_folder EmotiVoice/config/joint --checkpoint g_00140000 --test_file EmotiVoice/data/inference/text &> /dev/null && afplay ./EmotiVoice/outputs/prompt_tts_open_source_joint/test_audio/audio/g_00140000/1.wav
+
 # Eleven Labs
 # To use it, install the elevenlabs module from pip (pip install elevenlabs)
 # It's possible to use the API for free with limited number of characters. To increase this limit register to https://beta.elevenlabs.io to get an api key and paste it after 'ELEVEN_API_KEY='

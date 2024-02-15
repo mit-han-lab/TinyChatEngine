@@ -99,11 +99,11 @@ void sample_top_p(OPT_token_data_array* candidates, float p, size_t min_keep);
 
 std::vector<int> OPTGenerate(void* model, int model_type, std::vector<int> input_ids,
                              const struct opt_params generation_config, Encoder* encoder = NULL,
-                             bool interactive = false, bool voicechat = false);
+                             bool interactive = false, bool voicechat = false, bool concurrent = false);
 
 enum { OPT_INT8, LLaMA_FP32, LLaMA_INT4, OPT_FP32, OPT_INT4, StarCoder_FP32, StarCoder_INT4, LLaVA_FP32, LLaVA_INT4, VILA_FP32, VILA_INT4};
 std::string LLaMAGenerate(std::string param_path, void* model, int model_type, std::string text, const struct opt_params generation_config,
-                          std::string voc_path, bool interactive, bool voicechat);
+                          std::string voc_path, bool interactive, bool voicechat, bool concurrent);
 
 std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
                           std::string voc_path, bool interactive);

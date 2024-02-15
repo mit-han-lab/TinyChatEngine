@@ -33,7 +33,7 @@ profile_*
 libtorch/
 checkpoints/
 
-llm/chat
-llm/output.wav
-llm/tmpfile
-llm/TTS
+chat
+output.wav
+tmpfile
+TTS/
