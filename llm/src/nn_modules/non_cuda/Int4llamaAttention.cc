@@ -358,7 +358,9 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
 
     // QK_BMM
     Matrix3D<float> attn_weights(attn_weights_arr, this->num_heads, sqlen, tgz);
+    PROFILE_START(profile_name + "::qk_bmm");
     this->qk_bmm.forward(query_states, final_key_states, attn_weights);
+    PROFILE_END(profile_name + "::qk_bmm");
 
     // Add mask
     batch_Add(attn_weights, input.attention_mask, attn_weights);
@@ -370,7 +372,9 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
 
     // Softmax QK
     Matrix3D<float> attn_probs(attn_weights_arr, this->num_heads, sqlen, tgz);
+    PROFILE_START(profile_name + "::softmax");
     softmax(attn_weights, attn_probs, 2);
+    PROFILE_END(profile_name + "::softmax");
 
     // Legacy implementation
     // Matrix3D<float> value_states_transpose(value_states_transpose_arr, this->num_heads, this->head_dim, tgz);
@@ -380,7 +384,9 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
 
     // PV_BMM: This implementation avoid additional data movement and is much faster
     Matrix3D<float> attn_output(attn_output_arr, this->num_heads, sqlen, this->head_dim);
+    PROFILE_START(profile_name + "::pv_bmm");
     this->pv_bmm.forward_weight_untransposed(attn_probs, final_value_states, attn_output);
+    PROFILE_END(profile_name + "::pv_bmm");
 
     Matrix3D<float> attn_output_transpose(attn_output_transpose_arr, 1, sqlen, this->num_heads * this->head_dim);
     this->unshape(attn_output, attn_output_transpose, sqlen);
