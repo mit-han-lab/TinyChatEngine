@@ -11,9 +11,6 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 ### Code LLaMA Demo on an NVIDIA GeForce RTX 4070 laptop:
 ![coding_demo_gpu](assets/figures/coding_demo_gpu.gif)
 
-### VLM Demo on an Apple MacBook Pro (M1, 2021):
-![vlm_demo_m1](assets/figures/vlm_demo_m1.gif)
-
 ### LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):
 ![chat_demo_m1](assets/figures/chat_demo_m1.gif)
 
@@ -37,8 +34,6 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 
 ## News
 
-- **(2024/02)** 🔥We extended the support for vision language models (VLM). Feel free to try running [LLaVA](#deploy-vision-language-model-vlm-chatbot-with-tinychatengine) on your edge device.
-- **(2024/01)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and follow the [instructions](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to deploy it on your device!
 - **(2023/10)** We extended the support for the coding assistant [Code Llama](#download-and-deploy-models-from-our-model-zoo). Feel free to check out.
 - **(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability >= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!
 
@@ -135,64 +130,6 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   * Analyze input/output (I/O) operations and their handling by the operating system
   ...
   ```
-
-
-## Deploy speech-to-speech chatbot with TinyChatEngine [[Demo]](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC)
-
-TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Here, we provide very easy-to-follow instructions to deploy speech-to-speech chatbot (LLaMA2-7B-chat) with TinyChatEngine. 
-
-- Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine](#step-by-step-to-deploy-llama2-7b-chat-with-tinychatengine).
-
-- Run the shell script to set up the environment for speech-to-speech chatbot.
-  ```bash
-  cd llm
-  ./voicechat_setup.sh
-  ```
-
-- Start the speech-to-speech chat locally.
-  ```bash
-  ./chat -v  # chat.exe -v on Windows
-  ```
-
-- If you encounter any issues or errors during setup, please explore [here](llm/application/README.md) to follow the step-by-step guide to debug.
-
-
-## Deploy vision language model (VLM) chatbot with TinyChatEngine
-
-TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide very easy-to-follow instructions to deploy vision language model chatbot (LLaVA-1.5) with TinyChatEngine.
-
-- Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine](#step-by-step-to-deploy-llama2-7b-chat-with-tinychatengine).
-
-- To demonstrate images in the terminal, please download and install the following toolkit.
-  - Install [termvisage](https://github.com/AnonymouX47/termvisage).
-  - (For MacOS) Install [iTerm2](https://iterm2.com/index.html).
-  - (For other OS) Please refer to [here](https://github.com/AnonymouX47/termvisage?tab=readme-ov-file#requirements) to get the appropriate terminal ready.
-
-- (Optional) To enable the speech-to-speech chatbot for VLM, please follow the [instruction above](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to run the shell script to set up the environment.
-
-- Download the quantized LLaVA model from our model zoo.
-
-  - On an x86 device (e.g., Intel/AMD laptop)
-    ```bash
-    python tools/download_model.py --model LLaVA_7B_awq_int4_CLIP_ViT-L --QM QM_x86
-    ```
-  - On an ARM device (e.g., M1/M2 Macbook, Raspberry Pi)
-    ```bash
-    python tools/download_model.py --model LLaVA_7B_awq_int4_CLIP_ViT-L --QM QM_ARM
-    ```
-
-- (For MacOS) Start the chatbot locally. Please use an appropriate terminal (e.g., iTerm2).
-  - Image/Text to text
-    ```bash
-    ./scripts/llava.sh ../assets/figures/pedestrian.png
-    ```
-
-  - Image/Speech to speech
-    ```bash
-    ./scripts/voice_llava.sh ../assets/figures/pedestrian.png
-    ```
-  
-  - For other OS, please modify Line 4 in [llava.sh](llm/scripts/llava.sh) and [voice_llava.sh](llm/scripts/voice_llava.sh) to use the correct terminal.
 
 
 ## Backend Support
