@@ -1,4 +1,7 @@
 #include <metal_stdlib>
+#include "operators.h"
+#include "utils.h"
+
 using namespace metal;
 
 using namespace metal;
@@ -8,17 +11,23 @@ using namespace metal;
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define SWAP(x, y) { auto tmp = (x); (x) = (y); (y) = tmp; }
 
- /* CUDA */
-//  __global__ void batch_Add_cuda(Matrix3D<half> input, Matrix3D<half> input2, Matrix3D<half> output) {
-//     int i = blockIdx.x * blockDim.x + threadIdx.x;
-//     int j = blockIdx.y * blockDim.y + threadIdx.y;
-//     int k = blockIdx.z * blockDim.z + threadIdx.z;
+kernel void EmbeddingKernel(device Matrix3D_int& input_id [[buffer(0)]],
+                            device Matrix3D_half& output [[buffer(1)]],
+                            device float* lookup [[buffer(2)]],
+                            const unsigned int embed_dim [[buffer(3)]],
+                            uint id [[thread_position_in_grid]]) {
+    if (id < input_id.m_dim_z) {
+        int token_id = input_id(0, 0, id);
+        device half* output_sample_ptr = &output.m_data[id * embed_dim];
+        device float* target_embed = &lookup[token_id * embed_dim];
+        
+        for (int j = 0; j < embed_dim; ++j) {
+            output_sample_ptr[j] = half(target_embed[j]);
+        }
+    }
+}
 
-//     //// half version
-//     if (i < input.m_dim_x && j < input.m_dim_y && k < input.m_dim_z) {
-//         output(i, j, k) = __hadd(input(i, j, k), input2(0, j, k));
-//     }
-// }
+
 kernel void kernel_batch_add(device const float* inputA,
                              device const float* inputB,
                              device float* output,

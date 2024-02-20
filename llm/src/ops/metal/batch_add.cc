@@ -1,5 +1,6 @@
 #include "operators.h"
 
+// done
 void batch_Add(const Matrix3D<float> &input, const Matrix3D<float> &input2, Matrix3D<float> &output) {
     struct matmul_params params;
     params.A.data_ptr = input.m_data;
