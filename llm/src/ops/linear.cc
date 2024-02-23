@@ -207,12 +207,16 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
     else
         params.bias.data_ptr = this->bias.m_data;
 #endif
+#ifdef QM_ARM
     if (params.A.row == 1) {
         op.gemv_accelerator_int8_int4_fast_no_offset(&params);
     } else {
         op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
         // op.gemm_accelerator_int8_int4_fast_no_offset(&params);
     }
+#else
+    op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
+#endif
 #else
     op.mat_mul_accelerator_int4_fast_no_offset(&params);
 #endif
