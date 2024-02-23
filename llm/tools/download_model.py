@@ -59,8 +59,8 @@ models = {
         "md5sum": "3d4afd8051c779c014ba69aec7886961",
     },
     "VILA_7B_CLIP_ViT-L_fp32": {
-        "url": "https://www.dropbox.com/scl/fi/rqkynmsqj3ok7kea2t0eu/VILA_7B_CLIP_ViT-L.zip?rlkey=o3ngwaoqa3fs7uydso0j6ttmp&dl=1",  # noqa: E501
-        "md5sum": "aff0f1614ad6ef1aefb352de6fc3015a",
+        "url": "",  # noqa: E501
+        "md5sum": "",
     },
     "StarCoder_15.5B_fp32": {
         "url": "https://www.dropbox.com/scl/fi/vc1956by8v275t0ol6vw5/StarCoder_15.5B.zip?rlkey=aydnpd9w9jhgtlfqo5krkd0yx&dl=1",
@@ -111,8 +111,8 @@ Qmodels = {
             "md5sum": "fec078d99449df73c0f1236377b53eb3",
         },
         "VILA_7B_awq_int4_CLIP_ViT-L": {
-            "url": "https://www.dropbox.com/scl/fi/isza3m151qfb2e3uc6zay/VILA_7B_CLIP_ViT-L.zip?rlkey=y4zj23gib0b2diqiygpdszy8f&dl=1",  # noqa: E501
-            "md5sum": "46b6d2dec3def6122640411e168e08ff",
+            "url": "https://www.dropbox.com/scl/fi/9axqkn8e95p7zxy97ixjx/VILA_7B_CLIP_ViT-L.zip?rlkey=mud5qg3rr3yec12qcvsltca5w&dl=1",  # noqa: E501
+            "md5sum": "29aa8688b59dfde21d0b0b0b94b0ac27",
         },
         "StarCoder_15.5B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/fe4dkrnzc25bt166w6bby/StarCoder_15.5B.zip?rlkey=ml1x96uep2k03z78ci7s1c0yb&dl=1",
@@ -161,8 +161,8 @@ Qmodels = {
             "md5sum": "f22e8d5d754c64f0aa34d5531d3059bc",
         },
         "VILA_7B_awq_int4_CLIP_ViT-L": {
-            "url": "https://www.dropbox.com/scl/fi/ndh08lwykyv2mks0py9av/VILA_7B_CLIP_ViT-L.zip?rlkey=fy7i02205bvk109pgal3ir8p4&dl=1",  # noqa: E501
-            "md5sum": "412f4a845bd31fb058920582d88cec18",
+            "url": "https://www.dropbox.com/scl/fi/25cw3ob1oar6p3maxg6lq/VILA_7B_CLIP_ViT-L.zip?rlkey=b4vr29gvsdxlj9bg3i5cwsnjn&dl=1",  # noqa: E501
+            "md5sum": "7af675198ec3c73d440ccc96b2722813",
         },
         "StarCoder_15.5B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/86o2cblncmfd3xvuyyaqc/StarCoder_15.5B.zip?rlkey=2gswnyq9xihencaduddylpb2k&dl=1",
