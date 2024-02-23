@@ -13,24 +13,36 @@ import os
 import struct
 import torch
 from transformers import AutoProcessor, AutoModelForCausalLM, AutoConfig
-from llava.conversation import SeparatorStyle, conv_templates
-from llava.eval.utils import preprocess_image
-from llava.model import *
-from llava.model.utils import KeywordsStoppingCriteria
-from llava.model.visual_attn_scale import new_attention_forward
-from llava.utils import disable_torch_init
+
+# from llava.conversation import SeparatorStyle, conv_templates
+# from llava.eval.utils import preprocess_image
+# from llava.model import *
+# from llava.model.utils import KeywordsStoppingCriteria
+# from llava.model.visual_attn_scale import new_attention_forward
+# from llava.utils import disable_torch_init
+import sys
+sys.path.append('../../../LLaVA')
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import get_model_name_from_path
+from llava.eval.run_llava import eval_model
+from llava import LlavaLlamaForCausalLM
 
 @torch.no_grad()
 def _export_model(model, prefix):
 
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
-    with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
-        f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
-    _export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
+    # with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
+    #     f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
+    # _export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
 
     # Export to Clip's folder "models/CLIP_ViT_Large"
-    _export_mm_projector(model.model.mm_projector, f"models/CLIP_ViT_Large/mm_projector")
+    # _export_mm_projector(model.model.mm_projector, f"models/CLIP_ViT_Large/mm_projector")
+    for idx, mm_projector in enumerate(model.model.mm_projector):
+        if idx == 0 or idx == 2:
+            # _export_mm_projector(mm_projector, os.path.join(outpath, f"mm_projector_{idx}"))
+            # Export to Clip's folder "models/CLIP_ViT_Large"
+            _export_mm_projector(mm_projector, f"models/CLIP_ViT_Large/mm_projector_{idx}")
 
 
 def _export_mm_projector(mm_projector, prefix):
@@ -136,19 +148,19 @@ def main():
         print("Loading model...")
         if args.model.endswith(".pt"):
             if args.model.split("/")[-1].lower().startswith("vila"):
-                if args.model.split("-")[1].lower() == "7b":
+                if args.model.split("-")[2].lower() == "7b":
                     print("Loading VILA 7B model...")
                     # config = AutoConfig.from_pretrained("Efficient-Large-Model/vila-7b", trust_remote_code=True)
                     # processor = AutoProcessor.from_pretrained("Efficient-Large-Model/vila-7b")
                     # model = AutoModelForCausalLM.from_pretrained("Efficient-Large-Model/vila-7b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
-                    config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila-7b", trust_remote_code=True)
+                    # config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila_llava-7b", trust_remote_code=True)
                     # processor = AutoProcessor.from_pretrained("/home/wweichen/workspace/models/LLM/vila-7b")
-                    model = AutoModelForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila-7b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                    model = LlavaLlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila_llava-7b", torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
                 elif args.model.split("-")[1].lower() == "13b":
                     print("Loading VILA 13B model...")
                     config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", trust_remote_code=True)
                     # processor = AutoProcessor.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b")
-                    model = AutoModelForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                    model = LlavaLlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
                 else:
                     print("Model size not supported.")
                     return
@@ -156,7 +168,7 @@ def main():
                 print("Model type not supported.")
                 return
             
-            model.load_state_dict(torch.load(args.model))
+            model.load_state_dict(torch.load(args.model), strict=False)
         else:
             config = AutoConfig.from_pretrained(args.model, trust_remote_code=True)
             # processor = AutoProcessor.from_pretrained(args.model)

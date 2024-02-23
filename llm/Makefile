@@ -113,7 +113,8 @@ else ifeq ($(shell uname -p),arm)
 	# Use NEON with int8 runtime quantization is faster
 	else
 		LIB_SRC += $(wildcard $(LIB_DIR)/neon/*.cc)
-		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a
+		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a -DACCELERATE_NEW_LAPACK -DACCELERATE_LAPACK_ILP64
+		LDFLAGS += -framework Accelerate
 		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	endif
 else ifneq ($(or $(filter armv6%,$(UNAME_M)), $(filter armv7%,$(UNAME_M)), $(filter armv8%,$(UNAME_M))),)
@@ -125,6 +126,7 @@ else
 	# @echo "Device unsupported! Using the reference implementation will largely impacts the performance.
 	LIB_REF_SRC = $(wildcard $(LIB_DIR)/ref/*.cc)
 	LIB_SRC += $(LIB_REF_SRC)
+	CXXFLAGS += -DQM_REF
 endif
 
 # $(info $(LIB_SRC))

@@ -60,7 +60,7 @@ index 4c7f7d1..60845f4 100644
      const int n_new_line = !use_vad ? std::max(1, params.length_ms / params.step_ms - 1) : 1; // number of steps to print new line
  
 +    if (use_vad){
-+        fprintf(stderr, "USER: ");
++        fprintf(stderr, "USER: [Start speaking] ");
 +    }
 +
      params.no_timestamps  = !use_vad;
@@ -112,7 +112,7 @@ index 4c7f7d1..60845f4 100644
 -        }
 -
 -        fprintf(stderr, "\n");
-+        } 
++        }
 +        // fprintf(stderr, "\n");
      }
  

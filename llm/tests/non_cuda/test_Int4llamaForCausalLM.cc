@@ -10,7 +10,7 @@ int NUM_THREAD = 8;
 
 void test_Int4LlamaForCausalLM() {
     struct model_config config = get_opt_model_config(LLaMA_7B);
-    const int num_heads = config.num_heads, embed_dim = config.embed_dim, sqlen = 9, b = 1,
+    const int num_heads = config.num_heads, embed_dim = config.embed_dim, sqlen = 600, b = 1,
               hidden_dim = config.hidden_dim;
     const int voc_size = config.vocsize, padding_idx = 1, num_layers = config.num_layers;
     MemoryAllocator mem_buf;

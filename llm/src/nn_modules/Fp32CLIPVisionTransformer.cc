@@ -4,7 +4,7 @@
 #include <cstring>
 #include <iostream>
 
-Fp32CLIPVisionTransformer::Fp32CLIPVisionTransformer(std::string param_path, const struct model_config config) {
+Fp32CLIPVisionTransformer::Fp32CLIPVisionTransformer(std::string param_path, const struct model_config config, bool is_vila) {
     allocate_aligned_memory(patch_embeds_buf, 24 * 24 * config.embed_dim * sizeof(float));  // TODO
     allocate_aligned_memory(class_embeds_buf, config.embed_dim * sizeof(float));
     allocate_aligned_memory(pos_embeds_buf, 577 * config.embed_dim * sizeof(float));
@@ -12,7 +12,11 @@ Fp32CLIPVisionTransformer::Fp32CLIPVisionTransformer(std::string param_path, con
     allocate_aligned_memory(hidden_states_buf, 577 * config.embed_dim * sizeof(float));
     allocate_aligned_memory(embeddings_buf, 577 * config.embed_dim * sizeof(float));
     allocate_aligned_memory(mm_proj_0_arr, 576 * config.hidden_dim * sizeof(float));
+    // if (is_vila) {
+    //     mm_proj_2_arr = nullptr;
+    // } else {
     allocate_aligned_memory(mm_proj_2_arr, 576 * config.hidden_dim * sizeof(float));
+    // }
 
     this->encoder = Fp32CLIPEncoder(param_path + "/encoder", config);
 
@@ -57,23 +61,29 @@ Fp32CLIPVisionTransformer::Fp32CLIPVisionTransformer(std::string param_path, con
     // Projection
     float *mm_proj_0_weight, *mm_proj_2_weight;
     allocate_aligned_memory(mm_proj_0_weight, config.embed_dim * config.hidden_dim * sizeof(float));
-    allocate_aligned_memory(mm_proj_2_weight, config.hidden_dim * config.hidden_dim * sizeof(float));
     float *mm_proj_0_bias, *mm_proj_2_bias;
     allocate_aligned_memory(mm_proj_0_bias, (config.hidden_dim * sizeof(float)));
-    allocate_aligned_memory(mm_proj_2_bias, (config.hidden_dim * sizeof(float)));
+    // if (is_vila) {
+    //     this->mm_proj_0 = 
+    //         Linear_FP(Matrix3D<float>(mm_proj_0_weight, 1, config.hidden_dim, config.embed_dim), param_path + "/mm_projector/weight.bin",
+    //                   Matrix3D<float>(mm_proj_0_bias, 1, 1, config.hidden_dim), (param_path + "/mm_projector/bias.bin"));
+    //     this->mm_proj_0.has_bias = true;
+    // } else {
     this->mm_proj_0 = 
         Linear_FP(Matrix3D<float>(mm_proj_0_weight, 1, config.hidden_dim, config.embed_dim), param_path + "/mm_projector_0/weight.bin",
-                  Matrix3D<float>(mm_proj_0_bias, 1, 1, config.hidden_dim), (param_path + "/mm_projector_0/bias.bin"));
+                    Matrix3D<float>(mm_proj_0_bias, 1, 1, config.hidden_dim), (param_path + "/mm_projector_0/bias.bin"));
     this->mm_proj_0.has_bias = true;
-    
+    allocate_aligned_memory(mm_proj_2_weight, config.hidden_dim * config.hidden_dim * sizeof(float));
+    allocate_aligned_memory(mm_proj_2_bias, (config.hidden_dim * sizeof(float)));
     this->mm_proj_2 = 
         Linear_FP(Matrix3D<float>(mm_proj_2_weight, 1, config.hidden_dim, config.hidden_dim), param_path + "/mm_projector_2/weight.bin",
-                  Matrix3D<float>(mm_proj_2_bias, 1, 1, config.hidden_dim), (param_path + "/mm_projector_2/bias.bin"));
+                    Matrix3D<float>(mm_proj_2_bias, 1, 1, config.hidden_dim), (param_path + "/mm_projector_2/bias.bin"));
     this->mm_proj_2.has_bias = true;
+    // }
 };
 
 // Fp32CLIPVisionTransformer:
-struct Fp32CLIPVisionTransformer_output Fp32CLIPVisionTransformer::forward(const struct Fp32CLIPVisionTransformer_input &input) {
+struct Fp32CLIPVisionTransformer_output Fp32CLIPVisionTransformer::forward(const struct Fp32CLIPVisionTransformer_input &input, bool is_vila) {
     PROFILE_START(profile_name);
     int sqlen = input.input_image.m_dim_z, batch_size = input.input_image.m_dim_x, past_key_values_length = 0;
 
@@ -130,18 +140,21 @@ struct Fp32CLIPVisionTransformer_output Fp32CLIPVisionTransformer::forward(const
     memcpy(last_hidden_states.m_data, encoder_output.last_hidden_state.m_data + this->embed_dim, 
            last_hidden_states.length() * sizeof(float));
 
-    // LLaVA Projector
-    Matrix3D<float> mm_proj_0(mm_proj_0_arr, last_hidden_states.m_dim_x, last_hidden_states.m_dim_y,
-                              this->hidden_dim);
+    // Projection 1
+    Matrix3D<float> mm_proj_0(mm_proj_0_arr, last_hidden_states.m_dim_x, last_hidden_states.m_dim_y, this->hidden_dim);
     this->mm_proj_0.forward(last_hidden_states, mm_proj_0);
-    
+    struct Fp32CLIPVisionTransformer_output output;
+    // if (is_vila) {
+    //     output = {mm_proj_0, encoder_output.past_keys, encoder_output.past_values};
+    // } else {
     // GELU
     Gelu(mm_proj_0);
-
+    // LLaVA Projection 2
     Matrix3D<float> mm_proj_2(mm_proj_2_arr, last_hidden_states.m_dim_x, last_hidden_states.m_dim_y, this->hidden_dim);
     this->mm_proj_2.forward(mm_proj_0, mm_proj_2);
+    output = {mm_proj_2, encoder_output.past_keys, encoder_output.past_values};
+    // }
 
-    struct Fp32CLIPVisionTransformer_output output = {mm_proj_2, encoder_output.past_keys, encoder_output.past_values};
     PROFILE_END(profile_name);
     return output;
 }
