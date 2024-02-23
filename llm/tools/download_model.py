@@ -59,8 +59,8 @@ models = {
         "md5sum": "3d4afd8051c779c014ba69aec7886961",
     },
     "VILA_7B_CLIP_ViT-L_fp32": {
-        "url": "",  # noqa: E501
-        "md5sum": "",
+        "url": "https://www.dropbox.com/scl/fi/4oi3g3uypx2hgmw6hkahy/VILA_7B_CLIP_ViT-L.zip?rlkey=0393uexrzh4ofevkr0yaldefd&dl=1",  # noqa: E501
+        "md5sum": "d2201fd2853da56c3e2b4b7043b1d37a",
     },
     "StarCoder_15.5B_fp32": {
         "url": "https://www.dropbox.com/scl/fi/vc1956by8v275t0ol6vw5/StarCoder_15.5B.zip?rlkey=aydnpd9w9jhgtlfqo5krkd0yx&dl=1",
