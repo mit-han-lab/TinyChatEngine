@@ -128,11 +128,13 @@ $(function() { codefold.init(0); });
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>   <span class="keyword">private</span>:</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordtype">void</span> unshape(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> shaped, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> unshape, <span class="keywordtype">int</span> sqlen);</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="keywordtype">void</span> shape(<a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> unshape, <a class="code hl_class" href="classMatrix3D.html">Matrix3D&lt;float&gt;</a> shaped, <span class="keywordtype">int</span> sqlen);</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keywordtype">int</span> embed_dim, num_heads, head_dim;</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <a class="code hl_class" href="classLinear__FP.html">Linear_FP</a> k_proj, v_proj, q_proj, out_proj;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_class" href="classBMM__F32T.html">BMM_F32T</a> qk_bmm, pv_bmm;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    std::string profile_name = <span class="stringliteral">&quot;Fp32CLIPAttention&quot;</span>;</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>};</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="comment">// void shape_qkv(Matrix3D&lt;float&gt; unshape, Matrix3D&lt;float&gt; shaped_q, Matrix3D&lt;float&gt; shaped_k,</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="comment">//                                       Matrix3D&lt;float&gt; shaped_v, int sqlen);</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordtype">int</span> embed_dim, num_heads, head_dim;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_class" href="classLinear__FP.html">Linear_FP</a> k_proj, v_proj, q_proj, out_proj, qkv_proj;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <a class="code hl_class" href="classBMM__F32T.html">BMM_F32T</a> qk_bmm, pv_bmm;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    std::string profile_name = <span class="stringliteral">&quot;Fp32CLIPAttention&quot;</span>;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>};</div>
 </div>
 <div class="ttc" id="aclassBMM__F32T_html"><div class="ttname"><a href="classBMM__F32T.html">BMM_F32T</a></div><div class="ttdef"><b>Definition</b> BMM_F32T.h:3</div></div>
 <div class="ttc" id="aclassFp32CLIPAttention_html"><div class="ttname"><a href="classFp32CLIPAttention.html">Fp32CLIPAttention</a></div><div class="ttdef"><b>Definition</b> Fp32CLIPAttention.h:31</div></div>
