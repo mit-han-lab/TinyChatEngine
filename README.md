@@ -52,7 +52,6 @@ For MacOS, install boost and llvm by
 ```bash
 brew install boost
 brew install llvm
-brew install accelerate
 ```
 
 For M1/M2 users, install Xcode from AppStore to enable the metal compiler for GPU support.
