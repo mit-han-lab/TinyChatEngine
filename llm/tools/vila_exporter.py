@@ -32,12 +32,17 @@ def _export_model(model, prefix):
 
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
-    with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
-        f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
-    _export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
+    # with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
+    #     f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
+    # _export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
 
     # Export to Clip's folder "models/CLIP_ViT_Large"
-    _export_mm_projector(model.model.mm_projector, f"models/CLIP_ViT_Large/mm_projector")
+    # _export_mm_projector(model.model.mm_projector, f"models/CLIP_ViT_Large/mm_projector")
+    for idx, mm_projector in enumerate(model.model.mm_projector):
+        if idx == 0 or idx == 2:
+            # _export_mm_projector(mm_projector, os.path.join(outpath, f"mm_projector_{idx}"))
+            # Export to Clip's folder "models/CLIP_ViT_Large"
+            _export_mm_projector(mm_projector, f"models/CLIP_ViT_Large/mm_projector_{idx}")
 
 
 def _export_mm_projector(mm_projector, prefix):
@@ -150,7 +155,7 @@ def main():
                     # model = AutoModelForCausalLM.from_pretrained("Efficient-Large-Model/vila-7b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
                     # config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila_llava-7b", trust_remote_code=True)
                     # processor = AutoProcessor.from_pretrained("/home/wweichen/workspace/models/LLM/vila-7b")
-                    model = LlavaLlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila_llava-7b", torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                    model = LlavaLlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila_llava-7b", torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
                 elif args.model.split("-")[1].lower() == "13b":
                     print("Loading VILA 13B model...")
                     config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", trust_remote_code=True)
