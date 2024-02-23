@@ -195,6 +195,7 @@ int main(int argc, char* argv[]) {
         if (use_voicechat){
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
             std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
             std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
         }
@@ -382,6 +383,7 @@ int main(int argc, char* argv[]) {
         if (use_voicechat){
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
             std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
             std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
         }
@@ -500,6 +502,7 @@ int main(int argc, char* argv[]) {
         if (use_voicechat){
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
             std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
             std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
         }
