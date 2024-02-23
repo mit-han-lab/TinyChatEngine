@@ -121,7 +121,12 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                 model_input = {input_ids_mat, past_keys, past_values};
             } else {
                 // Load and preprocess image
+                // auto start = std::chrono::high_resolution_clock::now();
                 auto image_embed = load_image(img_path, clip_model_ptr, is_vila);
+                // auto end = std::chrono::high_resolution_clock::now();
+                // std::chrono::duration<double> elapsed = end - start;
+                // std::cout << "Image loading time: " << elapsed.count() << " s\n";
+
                 sqlen = input_ids.size() + 576;
                 int first_sqlen = input_ids.size();
                 Matrix3D<int> input_ids_mat(input_ids.data(), 1, 1, first_sqlen);
@@ -129,7 +134,15 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                 model_input = {input_ids_mat, image_embed_mat};
             }
             if (!new_prompt) STATS_START("Inference latency");
+            // auto start = std::chrono::high_resolution_clock::now();
             model_output = model->forward(llama_param_path, model_input);
+            // auto end = std::chrono::high_resolution_clock::now();
+            // std::chrono::duration<double> elapsed = end - start;
+            // static bool flag = true;
+            // if (flag) {
+            //     std::cout << "Inference time: " << elapsed.count() << " s\n";
+            //     flag = false;
+            // }
             if (!new_prompt) STATS_END("Inference latency");
             past_keys = model_output.past_keys;
             past_values = model_output.past_values;

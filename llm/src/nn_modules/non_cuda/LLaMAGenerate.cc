@@ -7,7 +7,6 @@
 #include <string>
 #include <sstream>
 
-
 // Function to speak in the background
 void sayInBackground(const std::string& text) {
     std::string command = "./application/sts_utils/speak \"" + text + "\"";
@@ -235,7 +234,7 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
                     output = output.substr(lastPos + 1); // Skip the last period and space
                     std::thread sayThread(sayInBackground, output_copy);
                     sayThread.detach(); 
-                } 
+                }
             } 
         }
 

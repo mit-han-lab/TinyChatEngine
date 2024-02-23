@@ -21,6 +21,7 @@ static float *value_states_unshape_arr;
 static float *value_states_arr;
 static float *query_states_arr;
 static float *value_states_transpose_arr;
+static float *qkv_states_unshape_arr;
 
 struct transpose_1_2idx_float_arg {
     int start_idx, end_idx;
@@ -98,6 +99,8 @@ void Fp32CLIPAttention::initialized_memory(const struct model_config config) {
             allocate_aligned_memory(value_states_arr_cache[i][j], config.max_sqlen * config.embed_dim * sizeof(float));
         }
     }
+
+    // allocate_aligned_memory(qkv_states_unshape_arr, config.max_sqlen * config.embed_dim * 3 * sizeof(float));
 }
 
 inline void Fp32CLIPAttention::shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen) {
@@ -119,6 +122,39 @@ inline void Fp32CLIPAttention::shape(Matrix3D<float> unshape, Matrix3D<float> sh
     PROFILE_END("Fp32CLIPAttention::shape");
 }
 
+// inline void Fp32CLIPAttention::shape_qkv(Matrix3D<float> unshape, Matrix3D<float> shaped_q, Matrix3D<float> shaped_k,
+//                                           Matrix3D<float> shaped_v, int sqlen) {
+//     PROFILE_START("Fp32CLIPAttention::shape_qkv");
+//     assert(unshape.m_dim_x == 1);  // bsz == 1
+//     assert(unshape.m_dim_y == sqlen);
+//     assert(unshape.m_dim_z == this->num_heads * this->head_dim * 3);
+//     assert(shaped_q.m_dim_x == this->num_heads);
+//     assert(shaped_q.m_dim_y == sqlen);
+//     assert(shaped_q.m_dim_z == this->head_dim);
+//     assert(shaped_k.m_dim_x == this->num_heads);
+//     assert(shaped_k.m_dim_y == sqlen);
+//     assert(shaped_k.m_dim_z == this->head_dim);
+//     assert(shaped_v.m_dim_x == this->num_heads);
+//     assert(shaped_v.m_dim_y == sqlen);
+//     assert(shaped_v.m_dim_z == this->head_dim);
+
+//     for (int i = 0; i < this->num_heads; i++) {
+//         for (int j = 0; j < sqlen; j++) {
+//             for (int k = 0; k < this->head_dim; k++) {
+//                 shaped_q(i, j, k) = unshape(0, j, i * this->head_dim + k);
+//             }
+//             for (int k = this->embed_dim; k < this->embed_dim + this->head_dim; k++) {
+//                 shaped_k(i, j, k - this->embed_dim) = unshape(0, j, i * this->head_dim + k);
+//             }
+//             for (int k = this->embed_dim * 2; k < this->embed_dim * 2 + this->head_dim; k++) {
+//                 shaped_v(i, j, k - this->embed_dim * 2) = unshape(0, j, i * this->head_dim + k);
+//             }
+//         }
+//     }
+
+//     PROFILE_END("Fp32CLIPAttention::shape_qkv");
+// }
+
 inline void Fp32CLIPAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen) {
     PROFILE_START("Fp32CLIPAttention::unshpae");
     assert(unshape.m_dim_x == 1);  // bsz == 1
@@ -139,15 +175,17 @@ inline void Fp32CLIPAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> u
 }
 
 Fp32CLIPAttention::Fp32CLIPAttention(std::string param_path, const struct model_config config) {
-    float *q_weight, *k_weight, *v_weight, *o_weight;
+    float *q_weight, *k_weight, *v_weight, *qkv_weight, *o_weight;
     allocate_aligned_memory(q_weight, config.embed_dim * config.embed_dim * sizeof(float));
     allocate_aligned_memory(k_weight, config.embed_dim * config.embed_dim * sizeof(float));
     allocate_aligned_memory(v_weight, config.embed_dim * config.embed_dim * sizeof(float));
+    // allocate_aligned_memory(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(uint8_t)) / 2);
     allocate_aligned_memory(o_weight, config.embed_dim * config.embed_dim * sizeof(float));
-    float *q_bias, *k_bias, *v_bias, *o_bias;
+    float *q_bias, *k_bias, *v_bias, *qkv_bias, *o_bias;
     allocate_aligned_memory(q_bias, (config.embed_dim * sizeof(float)));
     allocate_aligned_memory(k_bias, (config.embed_dim * sizeof(float)));
     allocate_aligned_memory(v_bias, (config.embed_dim * sizeof(float)));
+    // allocate_aligned_memory(qkv_bias, (config.embed_dim * sizeof(float)));
     allocate_aligned_memory(o_bias, (config.embed_dim * sizeof(float)));
     this->q_proj =
         Linear_FP(Matrix3D<float>(q_weight, 1, config.embed_dim, config.embed_dim), param_path + "/q_proj/weight.bin",
@@ -161,6 +199,10 @@ Fp32CLIPAttention::Fp32CLIPAttention(std::string param_path, const struct model_
         Linear_FP(Matrix3D<float>(v_weight, 1, config.embed_dim, config.embed_dim), param_path + "/v_proj/weight.bin",
                   Matrix3D<float>(v_bias, 1, 1, config.embed_dim), (param_path + "/v_proj/bias.bin"));
     this->v_proj.has_bias = true;
+    // this->qkv_proj =
+    //     Linear_FP(Matrix3D<float>(qkv_weight, 1, config.embed_dim * 3, config.embed_dim), param_path + "/qkv_proj/weight.bin",
+    //               Matrix3D<float>(qkv_bias, 1, 1, config.embed_dim), (param_path + "/qkv_proj/bias.bin"));
+    // this->qkv_proj.has_bias = true;
     this->out_proj =
         Linear_FP(Matrix3D<float>(o_weight, 1, config.embed_dim, config.embed_dim), param_path + "/out_proj/weight.bin",
                   Matrix3D<float>(o_bias, 1, 1, config.embed_dim), (param_path + "/out_proj/bias.bin"));
@@ -213,6 +255,14 @@ struct Fp32CLIPAttention_output Fp32CLIPAttention::forward(const struct Fp32CLIP
     Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
     this->shape(value_states_unshape, value_states, sqlen);
 
+    // // Fused QKV
+    // Matrix3D<float> qkv_states_unshape(qkv_states_unshape_arr, b, sqlen, embed_dim * 3);
+    // this->qkv_proj.forward(input.hidden_states, qkv_states_unshape);
+    // Matrix3D<float> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
+    // Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
+    // Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
+    // this->shape_qkv(qkv_states_unshape, query_states, key_states, value_states, sqlen);
+    
     // Concate with past key, value if exists
     PROFILE_START(profile_name + "::cat_past_keys_values");
     int tgz = sqlen;

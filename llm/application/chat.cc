@@ -191,6 +191,14 @@ int main(int argc, char* argv[]) {
     if (isLLaMA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
+        // Voicechat instructions
+        if (use_voicechat){
+            std::cout << "You are using the TinyVoiceChat." << std::endl;
+            std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+            std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
+        }
+
         // Load model
         std::cout << "Loading model... " << std::flush;
         int model_id = model_config[target_model];
@@ -370,6 +378,14 @@ int main(int argc, char* argv[]) {
     } else if (isLLaVA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
+        // Voicechat instructions
+        if (use_voicechat){
+            std::cout << "You are using the TinyVoiceChat." << std::endl;
+            std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+            std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
+        }
+
         // Load model
         std::cout << "Loading model... " << std::flush;
         std::string clip_m_path = model_path["Clip_ViT_Large"];
@@ -480,6 +496,14 @@ int main(int argc, char* argv[]) {
     } else if (isVILA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
+        // Voicechat instructions
+        if (use_voicechat){
+            std::cout << "You are using the TinyVoiceChat." << std::endl;
+            std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+            std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
+        }
+
         // Load model
         std::cout << "Loading model... " << std::flush;
         std::string clip_m_path = model_path["Clip_ViT_Large"];
@@ -497,6 +521,7 @@ int main(int argc, char* argv[]) {
         generation_config.repeat_penalty = 1.1f;
         generation_config.temp = 0.2f;
         generation_config.n_vocab = 32000;
+        generation_config.top_p = 1.0f;
 
         int prompt_iter = 0;
 
