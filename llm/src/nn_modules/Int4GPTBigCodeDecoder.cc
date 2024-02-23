@@ -110,8 +110,8 @@ struct Int4GPTBigCodeDecoder_output Int4GPTBigCodeDecoder::forward(const struct 
     // printf(("Before get_position_embed\n");
     // Matrix3D<float> pos_embeds = this->get_position_embed(sqlen, past_key_values_length);
 #ifdef _WIN32
-    std::vector<float> position_ids_buf_vec(sqlen);
-    float *position_ids_buf = &position_ids_buf_vec.front();
+    std::vector<int> position_ids_buf_vec(sqlen);
+    int *position_ids_buf = &position_ids_buf_vec.front();
     std::vector<float> pos_embeds_buf_vec(sqlen * this->embed_dim);
     float *pos_embeds_buf = &pos_embeds_buf_vec.front();
 #else
