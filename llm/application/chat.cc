@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
         int format_id = data_format_list[target_data_format];
 
         // Voicechat instructions
-        if (use_voicechat){
+        if (use_voicechat) {
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
             std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) {
             // Get input from the user
             while (true) {
                 std::string input;
-                if (use_voicechat){
+                if (use_voicechat) {
                     int result = std::system("./application/sts_utils/listen");
                     std::ifstream in("tmpfile");
                     std::getline(in, input);
@@ -280,7 +280,7 @@ int main(int argc, char* argv[]) {
             // Get input from the user
             while (true) {
                 std::string input;
-                if (use_voicechat){
+                if (use_voicechat) {
                     int result = std::system("./application/sts_utils/listen");
                     std::ifstream in("tmpfile");
                     std::getline(in, input);
@@ -380,7 +380,7 @@ int main(int argc, char* argv[]) {
         int format_id = data_format_list[target_data_format];
 
         // Voicechat instructions
-        if (use_voicechat){
+        if (use_voicechat) {
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
             std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
@@ -419,7 +419,7 @@ int main(int argc, char* argv[]) {
                     std::cout << "Finished!" << std::endl;
                 }
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
                         std::getline(in, input);
@@ -461,7 +461,7 @@ int main(int argc, char* argv[]) {
                 }
                 std::string input;
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
                         std::getline(in, input);
@@ -499,7 +499,7 @@ int main(int argc, char* argv[]) {
         int format_id = data_format_list[target_data_format];
 
         // Voicechat instructions
-        if (use_voicechat){
+        if (use_voicechat) {
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
             std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
@@ -539,7 +539,7 @@ int main(int argc, char* argv[]) {
                     std::cout << "Finished!" << std::endl;
                 }
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
                         std::getline(in, input);
@@ -581,7 +581,7 @@ int main(int argc, char* argv[]) {
                 }
                 std::string input;
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
                         std::getline(in, input);
@@ -640,7 +640,7 @@ int main(int argc, char* argv[]) {
             
             // Get input from the user
             std::string input;
-            if (use_voicechat){
+            if (use_voicechat) {
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
@@ -663,7 +663,7 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             std::string input;
-            if (use_voicechat){
+            if (use_voicechat) {
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);
@@ -686,7 +686,7 @@ int main(int argc, char* argv[]) {
 
             // Get input from the user
             std::string input;
-            if (use_voicechat){
+            if (use_voicechat) {
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
                 std::getline(in, input);

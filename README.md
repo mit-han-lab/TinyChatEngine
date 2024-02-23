@@ -159,7 +159,7 @@ TinyChatEngine offers versatile capabilities suitable for various applications. 
 
 ## Deploy vision language model (VLM) chatbot with TinyChatEngine
 
-TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide very easy-to-follow instructions to deploy vision language model chatbot (VILA-7B) with TinyChatEngine.
+TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide easy-to-follow instructions to deploy vision language model chatbot (VILA-7B) with TinyChatEngine. We recommend using M1/M2 MacBooks for this VLM feature.
 
 - Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine](#step-by-step-to-deploy-llama2-7b-chat-with-tinychatengine).
 

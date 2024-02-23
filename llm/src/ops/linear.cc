@@ -211,8 +211,9 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
     if (params.A.row == 1) {
         op.gemv_accelerator_int8_int4_fast_no_offset(&params);
     } else {
-        op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
-        // op.gemm_accelerator_int8_int4_fast_no_offset(&params);
+        // op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
+        op.gemm_accelerator_int8_int4_fast_no_offset(&params);
+        // op.gemm_accelerator_int8_int4_fast_no_offset_v2(&params);
     }
 #else
     op.mat_mul_accelerator_int8_int4_fast_no_offset(&params);
