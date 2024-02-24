@@ -127,6 +127,9 @@ class Linear_FP_int4 {
 #ifdef USE_INT8_INT4_PRODUCT
     static void initialize_memory(const int block_size);
 #endif
+#ifdef QM_ARM
+    static void initialize_weight_memory();
+#endif
     Matrix3D<uint8_t> weight;
     Matrix3D<float> scale, zero_point;
     Matrix3D<float> offset;

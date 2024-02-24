@@ -26,6 +26,14 @@ void linear(Matrix3D<T> &a, Matrix3D<T> &b, Matrix3D<T> &c) {
     }
 }
 
+#ifdef QM_ARM
+#define MAX_WEIGHT_BUFFER 32000 * 4096
+static float *w_fp32;
+void Linear_FP_int4::initialize_weight_memory() {
+    allocate_aligned_memory(w_fp32, MAX_LINEAR_LENGTH * sizeof(float));
+}
+#endif
+
 void Linear_FP::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     Matrix3D<float> b = this->weight;
     const int m = a.m_dim_y, n = b.m_dim_y, k = a.m_dim_z, b_size = b.m_dim_x;
@@ -208,6 +216,8 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
         params.bias.data_ptr = this->bias.m_data;
 #endif
 #ifdef QM_ARM
+    if (!w_fp32) this->initialize_weight_memory();
+    params.B.data_ptr = w_fp32;
     if (params.A.row == 1) {
         op.gemv_accelerator_int8_int4_fast_no_offset(&params);
     } else {

@@ -38,25 +38,46 @@ void fp32_ref_matmul(const struct matmul_params *params) {
     }
 }
 
-void fp32_matmul_cblas_gemm(const struct matmul_params *params) {
+void fp32_matmul_transposed_cblas_gemm(const struct matmul_params *params) {
+    const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
+    float *data_A = A->data_ptr, *data_B = B->data_ptr, *data_C = C->data_ptr;
+    float alpha = params->alpha;
+
+    assert(A->column == B->column);
+    assert(C->row == A->row);
+    assert(C->column == B->row);
+    int m = C->row, n = C->column, k = A->column;
+
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                          m, n, k,
+                         alpha,    data_A, k,
+                                  data_B, k,
+                         0.0f,    data_C, n);
+}
+
+void MatmulOperator::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
+    // fp32_ref_matmul(params);
+    fp32_matmul_transposed_cblas_gemm(params);
+}
+
+void fp32_matmul_untransposed_cblas_gemm(const struct matmul_params *params) {
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     float *data_A = A->data_ptr, *data_B = B->data_ptr, *data_C = C->data_ptr;
 
     assert(A->column == B->row);
     assert(C->row == A->row);
     assert(C->column == B->column);
-    int m = A->row, n = B->column, k = A->column;
+    int m = C->row, n = C->column, k = A->column;
 
     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                           m, n, k,
-                         1.0f,    data_A, m,
-                                  data_B, k,
-                         0.0f,    data_C, m);
+                         1.0f,    data_A, k,
+                                  data_B, n,
+                         0.0f,    data_C, n);
 }
 
-void MatmulOperator::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
-    fp32_ref_matmul(params);
-    // fp32_matmul_cblas_gemm(params);
+void MatmulOperator::mat_mul_accelerator_untransposed_fastover_column(const struct matmul_params *params) {
+    fp32_matmul_untransposed_cblas_gemm(params);
 }
 
 void fp32_ref_matmul_bias(const struct matmul_params *params) {
