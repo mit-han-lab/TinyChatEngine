@@ -151,7 +151,7 @@ TinyChatEngine offers versatile capabilities suitable for various applications. 
 
 - Start the speech-to-speech chat locally.
   ```bash
-  ./chat -v  # chat.exe -v on Windows
+  ./voicechat  # chat.exe -v on Windows
   ```
 
 - If you encounter any issues or errors during setup, please explore [here](llm/application/README.md) to follow the step-by-step guide to debug.
@@ -169,6 +169,10 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
   - (For other OS) Please refer to [here](https://github.com/AnonymouX47/termvisage?tab=readme-ov-file#requirements) to get the appropriate terminal ready.
 
 - (Optional) To enable the speech-to-speech chatbot for VLM, please follow the [instruction above](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to run the shell script to set up the environment.
+  ```bash
+  cd llm
+  ./voicechat_setup.sh
+  ```
 
 - Download the quantized VILA-7B model from our model zoo.
 
@@ -184,12 +188,12 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
 - (For MacOS) Start the chatbot locally. Please use an appropriate terminal (e.g., iTerm2).
   - Image/Text to text
     ```bash
-    ./scripts/vila.sh ../assets/figures/vlm_demo/pedestrian.png
+    ./vila ../assets/figures/vlm_demo/pedestrian.png
     ```
 
   - Image/Speech to speech
     ```bash
-    ./scripts/voice_vila.sh ../assets/figures/vlm_demo/pedestrian.png
+    ./voice_vila ../assets/figures/vlm_demo/pedestrian.png
     ```
 
     - There are several images under the path `../assets/figures/vlm_demo`. Feel free to try different images with VILA on your device!
