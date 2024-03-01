@@ -1,9 +1,11 @@
-#include "Generate.h"
-#include "common.h"
-#include "utils.h"
 #include <thread>
 #include <string>
 #include <sstream>
+
+#include "Generate.h"
+#include "common.h"
+#include "utils.h"
+#include "interface.h"
 
 // Function to speak in the background
 void speakInBackground(const std::string& text) {
@@ -33,7 +35,7 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
     }
 
     if (encoder == NULL) interactive = false;
-    if (interactive) std::cout << "ASSISTANT: " << std::endl;
+    if (interactive) std::cout << "ASSISTANT: ";
 
     bool has_past_kv = false;
     std::vector<Matrix3D<int8_t>> past_keys_int8, past_values_int8;
@@ -222,8 +224,12 @@ std::vector<int> OPTGenerate(void *model_ptr, int model_type, std::vector<int> i
     }
     if (interactive) std::cout << std::endl;
 
+    // Set prompt color
+    set_print_yellow();
     Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
+    // Reset color
+    set_print_reset();
 
     return generate_ids;
 }

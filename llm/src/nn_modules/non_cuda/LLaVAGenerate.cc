@@ -1,11 +1,12 @@
+#include <thread>
+#include <string>
+#include <sstream>
 
 #include "Generate.h"
 #include "LLaMATokenizer.h"
 #include "common.h"
 #include "utils.h"
-#include <thread>
-#include <string>
-#include <sstream>
+#include "interface.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -329,8 +330,13 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
     }
     first_prompt = false;
 
+    // Set prompt color
+    set_print_yellow();
     Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
+    // Reset color
+    set_print_reset();
+
     return output;
 }
 

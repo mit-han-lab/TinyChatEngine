@@ -99,9 +99,9 @@ struct thread_args {
     int start_i, end_i, blk_size;
 };
 
-
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
+
 namespace matmul {
 class MatmulOperator {
    public:
