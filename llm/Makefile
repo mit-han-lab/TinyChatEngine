@@ -113,7 +113,7 @@ else ifeq ($(shell uname -p),arm)
 	# Use NEON with int8 runtime quantization is faster
 	else
 		LIB_SRC += $(wildcard $(LIB_DIR)/neon/*.cc)
-		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a -DACCELERATE_NEW_LAPACK -DACCELERATE_LAPACK_ILP64
+		CXXFLAGS += -march=native -DUSE_INT8_INT4_PRODUCT -DQM_ARM -fPIC -march=armv8.2-a -DACCELERATE_NEW_LAPACK -DACCELERATE_LAPACK_ILP64 -DUSE_ACCELERATE
 		LDFLAGS += -framework Accelerate
 		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include
 	endif
