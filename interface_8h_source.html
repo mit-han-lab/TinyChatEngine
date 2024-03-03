@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.10.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>TinyChatEngine: Member List</title>
+<title>TinyChatEngine: llm/include/interface.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -48,6 +48,11 @@ $(function() {
 /* @license-end */
 </script>
 <div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() { codefold.init(0); });
+/* @license-end */
+</script>
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -69,21 +74,28 @@ $(function() {
 </div>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_de8631210e3161dd519eee1a642cf623.html">llm</a></li><li class="navelem"><a class="el" href="dir_6a23dd2f4b74efa88df1553988330e41.html">include</a></li>  </ul>
+</div>
 </div><!-- top -->
 <div class="header">
-  <div class="headertitle"><div class="title">a8w4_thread_args Member List</div></div>
+  <div class="headertitle"><div class="title">interface.h</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>This is the complete list of members for <a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a>, including all inherited members.</p>
-<table class="directory">
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>end_i</b> (defined in <a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a>)</td><td class="entry"><a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>end_j</b> (defined in <a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a>)</td><td class="entry"><a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>params</b> (defined in <a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a>)</td><td class="entry"><a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>start_i</b> (defined in <a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a>)</td><td class="entry"><a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>start_j</b> (defined in <a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a>)</td><td class="entry"><a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>tile_size</b> (defined in <a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a>)</td><td class="entry"><a class="el" href="structa8w4__thread__args.html">a8w4_thread_args</a></td><td class="entry"></td></tr>
-</table></div><!-- contents -->
+<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef INTERFACE_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define INTERFACE_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="keywordtype">void</span> set_print_black();</div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="keywordtype">void</span> set_print_red();</div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keywordtype">void</span> set_print_yellow();</div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="keywordtype">void</span> set_print_bold_yellow();</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keywordtype">void</span> set_print_blue();</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keywordtype">void</span> set_print_white();</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keywordtype">void</span> set_print_reset();</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#endif</span></div>
+</div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.10.0

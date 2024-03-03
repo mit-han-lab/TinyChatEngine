@@ -199,13 +199,13 @@ Deploy speech-to-speech chatbot with TinyChatEngine <a href="https://youtu.be/Bw
 <li>Run the shell script to set up the environment for speech-to-speech chatbot. <div class="fragment"><div class="line">cd llm</div>
 <div class="line">./voicechat_setup.sh</div>
 </div><!-- fragment --></li>
-<li>Start the speech-to-speech chat locally. <div class="fragment"><div class="line">./chat -v  # chat.exe -v on Windows</div>
+<li>Start the speech-to-speech chat locally. <div class="fragment"><div class="line">./voicechat  # chat.exe -v on Windows</div>
 </div><!-- fragment --></li>
 <li>If you encounter any issues or errors during setup, please explore here to follow the step-by-step guide to debug.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md14"></a>
 Deploy vision language model (VLM) chatbot with TinyChatEngine</h2>
-<p>TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide very easy-to-follow instructions to deploy vision language model chatbot (VILA-7B) with TinyChatEngine.</p>
+<p>TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide easy-to-follow instructions to deploy vision language model chatbot (VILA-7B) with TinyChatEngine. We recommend using M1/M2 MacBooks for this VLM feature.</p>
 <ul>
 <li>Follow the instructions above to setup the basic environment, i.e., Prerequisites and Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine.</li>
 <li>To demonstrate images in the terminal, please download and install the following toolkit.<ul>
@@ -214,7 +214,9 @@ Deploy vision language model (VLM) chatbot with TinyChatEngine</h2>
 <li>(For other OS) Please refer to <a href="https://github.com/AnonymouX47/termvisage?tab=readme-ov-file#requirements">here</a> to get the appropriate terminal ready.</li>
 </ul>
 </li>
-<li>(Optional) To enable the speech-to-speech chatbot for VLM, please follow the instruction above to run the shell script to set up the environment.</li>
+<li>(Optional) To enable the speech-to-speech chatbot for VLM, please follow the instruction above to run the shell script to set up the environment. <div class="fragment"><div class="line">cd llm</div>
+<div class="line">./voicechat_setup.sh</div>
+</div><!-- fragment --></li>
 <li>Download the quantized VILA-7B model from our model zoo.<ul>
 <li>On an x86 device (e.g., Intel/AMD laptop) <div class="fragment"><div class="line">python tools/download_model.py --model VILA_7B_awq_int4_CLIP_ViT-L --QM QM_x86</div>
 </div><!-- fragment --></li>
@@ -223,9 +225,9 @@ Deploy vision language model (VLM) chatbot with TinyChatEngine</h2>
 </ul>
 </li>
 <li>(For MacOS) Start the chatbot locally. Please use an appropriate terminal (e.g., iTerm2).<ul>
-<li>Image/Text to text <div class="fragment"><div class="line">./scripts/vila.sh ../assets/figures/vlm_demo/pedestrian.png</div>
+<li>Image/Text to text <div class="fragment"><div class="line">./vila ../assets/figures/vlm_demo/pedestrian.png</div>
 </div><!-- fragment --></li>
-<li>Image/Speech to speech <code>bash ./scripts/voice_vila.sh ../assets/figures/vlm_demo/pedestrian.png </code><ul>
+<li>Image/Speech to speech <code>bash ./voice_vila ../assets/figures/vlm_demo/pedestrian.png </code><ul>
 <li>There are several images under the path <code>../assets/figures/vlm_demo</code>. Feel free to try different images with VILA on your device!</li>
 </ul>
 </li>
