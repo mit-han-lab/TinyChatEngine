@@ -1,11 +1,12 @@
+#include <thread>
+#include <string>
+#include <sstream>
 
 #include "Generate.h"
 #include "LLaMATokenizer.h"
 #include "common.h"
 #include "utils.h"
-#include <thread>
-#include <string>
-#include <sstream>
+#include "interface.h"
 
 // Function to speak in the background
 void sayInBackground(const std::string& text) {
@@ -247,7 +248,12 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
 
     if (interactive) std::cout << std::endl;
 
+    // Set prompt color
+    set_print_yellow();
     Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
+    // Reset color
+    set_print_reset();
+    
     return output;
 }

@@ -1,11 +1,12 @@
+#include <thread>
+#include <string>
+#include <sstream>
 
 #include "Generate.h"
 #include "GPTBigCodeTokenizer.h"
 #include "common.h"
 #include "utils.h"
-#include <thread>
-#include <string>
-#include <sstream>
+#include "interface.h"
 
 std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
                           std::string voc_path, bool interactive) {
@@ -171,7 +172,12 @@ std::string GPTBigCodeGenerate(std::string param_path, void *model_ptr, int mode
 
     if (interactive) std::cout << std::endl;
 
+    // Set prompt color
+    set_print_yellow();
     Profiler::getInstance().report_internal();
     Profiler::getInstance().reset();
+    // Reset color
+    set_print_reset();
+
     return output;
 }

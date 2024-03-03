@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "Generate.h"
+#include "interface.h"
 
 std::map<std::string, int> model_config = {
     {"OPT_125m", OPT_125M},       {"OPT_1.3B", OPT_1_3B}, {"OPT_6.7B", OPT_6_7B},         {"LLaMA_7B", LLaMA_7B},
@@ -114,7 +115,10 @@ int main(int argc, char* argv[]) {
     std::string img_path = "images/monalisa.jpg";
     Profiler::getInstance().for_demo = true;
 
+    // Set prompt color
+    set_print_yellow();
     std::cout << "TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine" << std::endl;
+    
     if (argc >= 3 && argc <= 5) {
         auto target_str = argv[1];
         target_model = argv[1];
@@ -192,7 +196,7 @@ int main(int argc, char* argv[]) {
         int format_id = data_format_list[target_data_format];
 
         // Voicechat instructions
-        if (use_voicechat){
+        if (use_voicechat) {
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
             std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
@@ -224,26 +228,38 @@ int main(int argc, char* argv[]) {
 
         if (format_id == FP32) {
             Fp32LlamaForCausalLM model = Fp32LlamaForCausalLM(m_path, get_opt_model_config(model_id));
-            std::cout << "Finished!" << std::endl;
+            std::cout << "Finished!" << std::endl << std::endl;
 
             // Get input from the user
             while (true) {
                 std::string input;
-                if (use_voicechat){
+                if (use_voicechat) {
+                    // Set prompt color
+                    set_print_yellow();
                     int result = std::system("./application/sts_utils/listen");
                     std::ifstream in("tmpfile");
+                    // set user input color
+                    set_print_red();
                     std::getline(in, input);
                     result = std::system("rm tmpfile");
                     (void)result;
                     std::cout << input << std::endl;
+                    // reset color
+                    set_print_reset();
                 } else {
+                    // Set prompt color
+                    set_print_yellow();
                     std::cout << "USER: ";
+                    // set user input color
+                    set_print_red();
                     std::getline(std::cin, input);
+                    // reset color
+                    set_print_reset();
                 }
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
                 if (instruct) {
-                    std::cout << "ASSISTANT: " << std::endl;
+                    std::cout << "ASSISTANT: ";
                     if (isCodeLLaMA(target_model)) {
                         if (first_prompt) {
                             input = "<s>[INST] " + input + " [/INST] ";
@@ -275,26 +291,38 @@ int main(int argc, char* argv[]) {
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
             Int4LlamaForCausalLM model = Int4LlamaForCausalLM(m_path, get_opt_model_config(model_id));
-            std::cout << "Finished!" << std::endl;
+            std::cout << "Finished!" << std::endl << std::endl;
             
             // Get input from the user
             while (true) {
                 std::string input;
-                if (use_voicechat){
+                if (use_voicechat) {
+                    // Set prompt color
+                    set_print_yellow();
                     int result = std::system("./application/sts_utils/listen");
                     std::ifstream in("tmpfile");
+                    // set user input color
+                    set_print_red();
                     std::getline(in, input);
                     result = std::system("rm tmpfile");
                     (void)result;
                     std::cout << input << std::endl;
+                    // reset color
+                    set_print_reset();
                 } else {
+                    // Set prompt color
+                    set_print_yellow();
                     std::cout << "USER: ";
+                    // set user input color
+                    set_print_red();
                     std::getline(std::cin, input);
+                    // reset color
+                    set_print_reset();
                 }
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
                 if (instruct) {
-                    std::cout << "ASSISTANT: " << std::endl;
+                    std::cout << "ASSISTANT: ";
                     if (isCodeLLaMA(target_model)) {
                         if (first_prompt) {
                             input = "<s>[INST] " + input + " [/INST] ";
@@ -347,28 +375,40 @@ int main(int argc, char* argv[]) {
 
         if (format_id == FP32) {
             Fp32GPTBigCodeForCausalLM model = Fp32GPTBigCodeForCausalLM(m_path, get_opt_model_config(model_id));
-            std::cout << "Finished!" << std::endl;
+            std::cout << "Finished!" << std::endl << std::endl;
 
             // Get input from the user
             while (true) {
+                // Set prompt color
+                set_print_yellow();
                 std::cout << "USER: ";
                 std::string input;
+                // set user input color
+                set_print_red();
                 std::getline(std::cin, input);
                 std::cout << input;
+                // reset color
+                set_print_reset();
 
                 GPTBigCodeGenerate(m_path, &model, StarCoder_FP32, input, generation_config, "models/starcoder_vocab.bin", true);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
             Int4GPTBigCodeForCausalLM model = Int4GPTBigCodeForCausalLM(m_path, get_opt_model_config(model_id));
-            std::cout << "Finished!" << std::endl;
+            std::cout << "Finished!" << std::endl << std::endl;
 
             // Get input from the user
             while (true) {
+                // Set prompt color
+                set_print_yellow();
                 std::cout << "USER: ";
                 std::string input;
+                // set user input color
+                set_print_red();
                 std::getline(std::cin, input);
                 std::cout << input;
+                // reset color
+                set_print_reset();
 
                 GPTBigCodeGenerate(m_path, &model, StarCoder_INT4, input, generation_config, "models/starcoder_vocab.bin", true);    
             }
@@ -380,7 +420,7 @@ int main(int argc, char* argv[]) {
         int format_id = data_format_list[target_data_format];
 
         // Voicechat instructions
-        if (use_voicechat){
+        if (use_voicechat) {
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
             std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
@@ -416,23 +456,39 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::string input;
                 if (prompt_iter == 1) {
-                    std::cout << "Finished!" << std::endl;
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "Finished!" << std::endl << std::endl;
+                    // reset color
+                    set_print_reset();
                 }
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
+                        // Set prompt color
+                        set_print_yellow();
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
+                        // set user input color
+                        set_print_red();
                         std::getline(in, input);
                         result = std::system("rm tmpfile");
                         (void)result;
                         std::cout << input << std::endl;
+                        // reset color
+                        set_print_reset();
                     } else {
+                        // Set prompt color
+                        set_print_yellow();
                         std::cout << "USER: ";
+                        // set user input color
+                        set_print_red();
                         std::getline(std::cin, input);
+                        // reset color
+                        set_print_reset();
                     }
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                         break;
-                    std::cout << "ASSISTANT: " << std::endl;
+                    std::cout << "ASSISTANT: ";
                 }
 
                 if (prompt_iter == 0) {
@@ -457,24 +513,40 @@ int main(int argc, char* argv[]) {
             // Get input from the user
             while (true) {
                 if (prompt_iter == 1) {
-                    std::cout << "Finished!" << std::endl;
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "Finished!" << std::endl << std::endl;
+                    // reset color
+                    set_print_reset();
                 }
                 std::string input;
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
+                        // Set prompt color
+                        set_print_yellow();
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
+                        // set user input color
+                        set_print_red();
                         std::getline(in, input);
                         result = std::system("rm tmpfile");
                         (void)result;
                         std::cout << input << std::endl;
+                        // reset color
+                        set_print_reset();
                     } else {
+                        // Set prompt color
+                        set_print_yellow();
                         std::cout << "USER: ";
+                        // set user input color
+                        set_print_red();
                         std::getline(std::cin, input);
+                        // reset color
+                        set_print_reset();
                     }
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                         break;
-                    std::cout << "ASSISTANT: " << std::endl;
+                    std::cout << "ASSISTANT: ";
                 }
 
                 if (prompt_iter == 0) {
@@ -499,7 +571,7 @@ int main(int argc, char* argv[]) {
         int format_id = data_format_list[target_data_format];
 
         // Voicechat instructions
-        if (use_voicechat){
+        if (use_voicechat) {
             std::cout << "You are using the TinyVoiceChat." << std::endl;
             std::cout << "*Usage instructions*" << std::endl;
             std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
@@ -536,23 +608,39 @@ int main(int argc, char* argv[]) {
             while (true) {
                 std::string input;
                 if (prompt_iter == 1) {
-                    std::cout << "Finished!" << std::endl;
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "Finished!" << std::endl << std::endl;
+                    // reset color
+                    set_print_reset();
                 }
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
+                        // Set prompt color
+                        set_print_yellow();
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
+                        // set user input color
+                        set_print_red();
                         std::getline(in, input);
                         result = std::system("rm tmpfile");
                         (void)result;
                         std::cout << input << std::endl;
+                        // reset color
+                        set_print_reset();
                     } else {
+                        // Set prompt color
+                        set_print_yellow();
                         std::cout << "USER: ";
+                        // set user input color
+                        set_print_red();
                         std::getline(std::cin, input);
+                        // reset color
+                        set_print_reset();
                     }
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                         break;
-                    std::cout << "ASSISTANT: " << std::endl;
+                    std::cout << "ASSISTANT: ";
                 }
 
                 if (prompt_iter == 0) {
@@ -577,24 +665,40 @@ int main(int argc, char* argv[]) {
             // Get input from the user
             while (true) {
                 if (prompt_iter == 1) {
-                    std::cout << "Finished!" << std::endl;
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "Finished!" << std::endl << std::endl;
+                    // reset color
+                    set_print_reset();
                 }
                 std::string input;
                 if (prompt_iter > 0) {
-                    if (use_voicechat){
+                    if (use_voicechat) {
+                        // Set prompt color
+                        set_print_yellow();
                         int result = std::system("./application/sts_utils/listen");
                         std::ifstream in("tmpfile");
+                        // set user input color
+                        set_print_red();
                         std::getline(in, input);
                         result = std::system("rm tmpfile");
                         (void)result;
                         std::cout << input << std::endl;
+                        // reset color
+                        set_print_reset();
                     } else {
+                        // Set prompt color
+                        set_print_yellow();
                         std::cout << "USER: ";
+                        // set user input color
+                        set_print_red();
                         std::getline(std::cin, input);
+                        // reset color
+                        set_print_reset();
                     }
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                         break;
-                    std::cout << "ASSISTANT: " << std::endl;
+                    std::cout << "ASSISTANT: ";
                 }
 
                 if (prompt_iter == 0) {
@@ -636,20 +740,32 @@ int main(int argc, char* argv[]) {
         generation_config.n_predict = 512;
         if (format_id == QINT8) {
             OPTForCausalLM model = OPTForCausalLM("INT8/" + m_path, get_opt_model_config(model_id));
-            std::cout << "Finished!" << std::endl;
+            std::cout << "Finished!" << std::endl << std::endl;
             
             // Get input from the user
             std::string input;
-            if (use_voicechat){
+            if (use_voicechat) {
+                // Set prompt color
+                set_print_yellow();
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
+                // set user input color
+                set_print_red();
                 std::getline(in, input);
                 result = std::system("rm tmpfile");
                 (void)result;
                 std::cout << input << std::endl;
+                // reset color
+                set_print_reset();
             } else {
+                // Set prompt color
+                set_print_yellow();
                 std::cout << "USER: ";
+                // set user input color
+                set_print_red();
                 std::getline(std::cin, input);
+                // reset color
+                set_print_reset();
             }
             std::vector<int> input_ids = encoder.encode(input);
             std::string decoded = encoder.decode(input_ids);
@@ -659,20 +775,32 @@ int main(int argc, char* argv[]) {
                 OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, use_voicechat);
         } else if (format_id == FP32) {
             Fp32OPTForCausalLM model = Fp32OPTForCausalLM(m_path, get_opt_model_config(model_id));
-            std::cout << "Finished!" << std::endl;
+            std::cout << "Finished!" << std::endl << std::endl;
 
             // Get input from the user
             std::string input;
-            if (use_voicechat){
+            if (use_voicechat) {
+                // Set prompt color
+                set_print_yellow();
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
+                // set user input color
+                set_print_red();
                 std::getline(in, input);
                 result = std::system("rm tmpfile");
                 (void)result;
                 std::cout << input << std::endl;
+                // reset color
+                set_print_reset();
             } else {
+                // Set prompt color
+                set_print_yellow();
                 std::cout << "USER: ";
+                // set user input color
+                set_print_red();
                 std::getline(std::cin, input);
+                // reset color
+                set_print_reset();
             }
             std::vector<int> input_ids = encoder.encode(input);
             std::string decoded = encoder.decode(input_ids);
@@ -682,20 +810,32 @@ int main(int argc, char* argv[]) {
                 OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, use_voicechat);
         } else if (format_id == INT4) {
             Int4OPTForCausalLM model = Int4OPTForCausalLM("INT4/" + m_path, get_opt_model_config(model_id));
-            std::cout << "Finished!" << std::endl;
+            std::cout << "Finished!" << std::endl << std::endl;
 
             // Get input from the user
             std::string input;
-            if (use_voicechat){
+            if (use_voicechat) {
+                // Set prompt color
+                set_print_yellow();
                 int result = std::system("./application/sts_utils/listen");
                 std::ifstream in("tmpfile");
+                // set user input color
+                set_print_red();
                 std::getline(in, input);
                 result = std::system("rm tmpfile");
                 (void)result;
                 std::cout << input << std::endl;
+                // reset color
+                set_print_reset();
             } else {
+                // Set prompt color
+                set_print_yellow();
                 std::cout << "USER: ";
+                // set user input color
+                set_print_red();
                 std::getline(std::cin, input);
+                // reset color
+                set_print_reset();
             }
             
             std::vector<int> input_ids = encoder.encode(input);

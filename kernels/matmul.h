@@ -99,15 +99,16 @@ struct thread_args {
     int start_i, end_i, blk_size;
 };
 
-
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
+
 namespace matmul {
 class MatmulOperator {
    public:
     void mat_mul_transposed(const struct matmul_params *params);
     void mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params);
     void mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params *params);
+    void mat_mul_accelerator_untransposed_fastover_column(const struct matmul_params *params);
     // int8
     void naive_mat_mul_int8(const struct matmul_params *params);
     void mat_mul_accelerator_int8_fast_32unroll_over_column(const struct matmul_params *params);
@@ -125,6 +126,8 @@ class MatmulOperator {
     void mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
     void gemv_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
     void gemm_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
+    void gemm_accelerator_int8_int4_fast_no_offset_v2(struct matmul_params *params);
+    void cblas_gemm_accelerator_no_offset(struct matmul_params *params);
     void naive_mat_mul_int4(const struct matmul_params *params);
     void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
     // cuda

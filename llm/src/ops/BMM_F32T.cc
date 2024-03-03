@@ -38,11 +38,15 @@ void BMM_F32T::forward(const Matrix3D<float> &a, const Matrix3D<float> &weight, 
         //     op.mat_mul_transposed_fastover_column((const struct matmul_params
         //     *)&params);
         // else
+#ifdef QM_ARM
+        op.mat_mul_accelerator_transposed_fastover_column(&params);
+#else
         op.mat_mul_transposed(&params);  // TODO: optimize this
         // TODO: apply SIMD here
         for (int i = 0; i < m * n; i++) {
             params.C.data_ptr[i] *= this->alpha;
         }
+#endif
         params.A.data_ptr += m * k;
         params.B.data_ptr += k * n;
         params.C.data_ptr += m * n;
@@ -83,11 +87,18 @@ void BMM_F32T::forward_weight_untransposed(const Matrix3D<float> &a, const Matri
     for (int i = 0; i < m * n * a.m_dim_x; i++) {
         params.C.data_ptr[i] = 0;
     }
-
+#ifdef QM_ARM
+    for (int bz = 0; bz < a.m_dim_x; bz++) {
+        op.mat_mul_accelerator_untransposed_fastover_column(&params);
+        params.A.data_ptr += m * k;
+        params.B.data_ptr += k * n;
+        params.C.data_ptr += m * n;
+    }
+#else
     for (int bz = 0; bz < a.m_dim_x; bz++) {
         float *data_A = params.A.data_ptr + bz * m * k, *data_B = params.B.data_ptr + bz * k * n,
               *data_C = params.C.data_ptr + bz * m * n;
-        for (int i = 0; i < m; i++)
+        for (int i = 0; i < m; i++) {
             for (int kk = 0; kk < k; kk++) {
                 float Aikk0 = data_A[i * k + kk];
                 for (int j = 0; j < n; j++) {
@@ -95,7 +106,9 @@ void BMM_F32T::forward_weight_untransposed(const Matrix3D<float> &a, const Matri
                     data_C[i * n + j] += Aikk0 * Bjk0;
                 }
             }
+        }
     }
+#endif
 
     PROFILE_END(profile_name);
 }
