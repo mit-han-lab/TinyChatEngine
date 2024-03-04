@@ -38,7 +38,7 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 ## News
 
 - **(2024/02)** 🔥We extended the support for vision language models (VLM). Feel free to try running [VILA](#deploy-vision-language-model-vlm-chatbot-with-tinychatengine) on your edge device.
-- **(2024/01)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and follow the [instructions](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to deploy it on your device!
+<!-- - **(2024/01)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and follow the [instructions](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to deploy it on your device! -->
 - **(2023/10)** We extended the support for the coding assistant [Code Llama](#download-and-deploy-models-from-our-model-zoo). Feel free to check out.
 - **(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability >= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!
 
@@ -137,7 +137,7 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   ```
 
 
-## Deploy speech-to-speech chatbot with TinyChatEngine [[Demo]](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC)
+<!-- ## Deploy speech-to-speech chatbot with TinyChatEngine [[Demo]](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC)
 
 TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Here, we provide very easy-to-follow instructions to deploy speech-to-speech chatbot (LLaMA2-7B-chat) with TinyChatEngine. 
 
@@ -155,7 +155,7 @@ TinyChatEngine offers versatile capabilities suitable for various applications. 
   ```
 
 - If you encounter any issues or errors during setup, please explore [here](llm/application/README.md) to follow the step-by-step guide to debug.
-
+ -->
 
 ## Deploy vision language model (VLM) chatbot with TinyChatEngine
 
@@ -168,11 +168,11 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
   - (For MacOS) Install [iTerm2](https://iterm2.com/index.html).
   - (For other OS) Please refer to [here](https://github.com/AnonymouX47/termvisage?tab=readme-ov-file#requirements) to get the appropriate terminal ready.
 
-- (Optional) To enable the speech-to-speech chatbot for VLM, please follow the [instruction above](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to run the shell script to set up the environment.
+<!-- - (Optional) To enable the speech-to-speech chatbot for VLM, please follow the [instruction above](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to run the shell script to set up the environment.
   ```bash
   cd llm
   ./voicechat_setup.sh
-  ```
+  ``` -->
 
 - Download the quantized VILA-7B model from our model zoo.
 
@@ -191,15 +191,15 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
     ./vila ../assets/figures/vlm_demo/pedestrian.png
     ```
 
-  - Image/Speech to speech
+  <!-- - Image/Speech to speech
     ```bash
     ./voice_vila ../assets/figures/vlm_demo/pedestrian.png
-    ```
+    ``` -->
 
     - There are several images under the path `../assets/figures/vlm_demo`. Feel free to try different images with VILA on your device!
 
-  - For other OS, please modify Line 4 in [vila.sh](llm/scripts/vila.sh) and [voice_vila.sh](llm/scripts/voice_vila.sh) to use the correct terminal.
-
+  <!-- - For other OS, please modify Line 4 in [vila.sh](llm/scripts/vila.sh) and [voice_vila.sh](llm/scripts/voice_vila.sh) to use the correct terminal. -->
+  - For other OS, please modify Line 4 in [vila.sh](llm/scripts/vila.sh) to use the correct terminal.
 
 ## Backend Support
 
