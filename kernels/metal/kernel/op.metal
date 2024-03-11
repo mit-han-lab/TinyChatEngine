@@ -544,10 +544,16 @@ matmulInt4_SIMD_Q4Interleave_unroll16(GPU): 1800 ms, 133 GOP/s
 matmulInt4_SIMD_Q4Interleave_unroll32(GPU): 1500 ms, 160 GOP/s
 */
 
-
+#define QK4_0 32
+#define QR4_0 2
+#define nl 2
+typedef struct {
+    half    d;             // delta
+    uint8_t qs[QK4_0 / 2]; // nibbles / quants
+} block_q;
 
 template <typename type4x4>
-void dequantize_q4_0(device const block_q4_0 *xb, short il, thread type4x4 & reg) {
+void dequantize_q4_0(device const block_q *xb, short il, thread type4x4 & reg) {
     device const uint16_t * qs = ((device const uint16_t *)xb + 1);
     const float d1 = il ? (xb->d / 16.h) : xb->d;
     const float d2 = d1 / 256.f;
@@ -561,8 +567,6 @@ void dequantize_q4_0(device const block_q4_0 *xb, short il, thread type4x4 & reg
     }
 }
 
-// each block_q contains 16*nl weights
-template<typename block_q, short nl, void (*dequantize_func)(device const block_q *, short, thread half4x4 &)>
 void kernel_mul_mm_impl(device const  uchar * src0,
                         device const  uchar * src1,
                         device        float * dst,
@@ -622,7 +626,7 @@ void kernel_mul_mm_impl(device const  uchar * src0,
     for (int loop_k = 0; loop_k < ne00; loop_k += BLOCK_SIZE_K) {
         // load data and store to threadgroup memory
         half4x4 temp_a;
-        dequantize_func(x, il, temp_a);
+        dequantize_q4_0(x, il, temp_a);
         threadgroup_barrier(mem_flags::mem_threadgroup);
 
         #pragma unroll(16)
@@ -693,70 +697,6 @@ void kernel_mul_mm_impl(device const  uchar * src0,
         }
     }
 }
-
-template<typename block_q, short nl, void (*dequantize_func)(device const block_q *, short, thread half4x4 &)>
-kernel void kernel_mul_mm(device const  uchar * src0,
-                          device const  uchar * src1,
-                          device        float * dst,
-                          constant    int64_t & ne00,
-                          constant    int64_t & ne02,
-                          constant   uint64_t & nb01,
-                          constant   uint64_t & nb02,
-                          constant    int64_t & ne12,
-                          constant   uint64_t & nb10,
-                          constant   uint64_t & nb11,
-                          constant   uint64_t & nb12,
-                          constant    int64_t & ne0,
-                          constant    int64_t & ne1,
-                          constant       uint & r2,
-                          constant       uint & r3,
-                          threadgroup   uchar * shared_memory [[threadgroup(0)]],
-                          uint3                 tgpig[[threadgroup_position_in_grid]],
-                          uint                  tiitg[[thread_index_in_threadgroup]],
-                          uint                  sgitg[[simdgroup_index_in_threadgroup]]) {
-    kernel_mul_mm_impl<block_q, nl, dequantize_func>(
-        src0,
-        src1,
-        dst,
-        ne00,
-        ne02,
-        nb01,
-        nb02,
-        ne12,
-        nb10,
-        nb11,
-        nb12,
-        ne0,
-        ne1,
-        r2,
-        r3,
-        shared_memory,
-        tgpig,
-        tiitg,
-        sgitg);
-}
-
-typedef void (mat_mm_t)(
-        device const  uchar * src0,
-        device const  uchar * src1,
-        device        float * dst,
-        constant    int64_t & ne00,
-        constant    int64_t & ne02,
-        constant   uint64_t & nb01,
-        constant   uint64_t & nb02,
-        constant    int64_t & ne12,
-        constant   uint64_t & nb10,
-        constant   uint64_t & nb11,
-        constant   uint64_t & nb12,
-        constant    int64_t & ne0,
-        constant    int64_t & ne1,
-        constant       uint & r2,
-        constant       uint & r3,
-        threadgroup   uchar *,
-        uint3, uint, uint);
-
-template [[host_name("kernel_mul_mm_q4_0_f32")]] kernel mat_mm_t kernel_mul_mm<block_q4_0, 2,     dequantize_q4_0>;
-
 
 kernel void matmul(device const float* inA,
                     device const float* inB, // column major

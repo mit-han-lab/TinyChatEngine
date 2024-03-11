@@ -20,5 +20,6 @@ void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
     op.rope_metal(&params, query.m_dim_x, query.m_dim_y, query.m_dim_z, n_past, n_dims, mode, n_orig_ctx, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow ); 
-
+    // In llama.cpp: 
+    // 
 }

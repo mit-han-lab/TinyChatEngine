@@ -42,10 +42,10 @@ const char * fn_name = "matmul";
 
 
 // main
-unsigned int height1 = 96;
-unsigned int width1 = 4096;
-unsigned int height2 = 4096;
-unsigned int width2 = 32000;
+unsigned int height1 = 320*320;
+unsigned int width1 = 320;
+unsigned int height2 = 320;
+unsigned int width2 = 320*320;
 float *A1, *Anorm, *A3;
 unsigned char *A2;
 matmul_param *param;
@@ -251,11 +251,11 @@ void metal_rms_compute(){
                                               1);
     
     // Dispatch and Run Computation
-    
+    auto start = high_resolution_clock::now();
     computeEncoder->dispatchThreadgroups(gridSize, threadgroupSize);
     computeEncoder->endEncoding();
     commandBuffer->commit();
-    auto start = high_resolution_clock::now();
+    
     commandBuffer->waitUntilCompleted();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
@@ -312,7 +312,7 @@ void test_normal_matmul(){
 
 void test_matmulInt4(){
     // not considering offset atm
-    fn_name = "matmulInt4";
+    fn_name = "matmulInt4"; 
     fn_name = "matmulUInt4_SIMD_Q4Interleave_unroll32";
     Int4_buffer = new MetalMatmulBuffers;
     Int4_params = new MetalMatMulParams;
@@ -372,9 +372,134 @@ void test_rms_nor(){
     
 }
 
-int main(){
+void test_matmul_llama(){
+    // m: 1, n = 32000, k = 4096 (lm_head)
+    // m: 1, n = 4096, k = 4096 (Q, K, V, out projections)
+    // m: 1, n = 4096, k = 11008 (down_proj)
+    // m: 1, n = 11008, k = 4096 (up_proj and gate_proj)
+
+    // in ggml doc: https://github.com/ggerganov/whisper.cpp/blob/master/ggml.h
+    // ne[GGML_MAX_DIMS] => number of elements
+        // ne10 => number of elements of src1 along dim_0
+    // nb[GGML_MAX_DIMS] => stride in bytes:
+        // nb[0] = ggml_type_size(type)
+        // nb[1] = nb[0]   * (ne[0] / ggml_blck_size(type)) + padding
+        // nb[i] = nb[i-1] * ne[i-1]
+
+    fn_name = "kernel_mul_mm_impl";
+    int bs = 1;
+    int m = 1;
+    int n = 32000;
+    int k = 4096;
+    int hidden_size = bs*m*k;
+    int weight_size = bs*n*k;
+    int output_size = bs*m*n;
+    unsigned char* src0 = new unsigned char[hidden_size];
+    unsigned char* src1 = new unsigned char[weight_size];
+    float* dst = new float[output_size];
+    generateRandomCharArray(src0, hidden_size);
+    generateRandomCharArray(src1, weight_size);
+    // generateRandomFloatArray(dst, arraySize);
+    metal_init();
+    // Initialization of GPU vals
+    MTL::CommandBuffer *commandBuffer = mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    bM1 = metal_newBuf(sizeof(unsigned char), hidden_size);
+    bM2 = metal_newBuf(sizeof(unsigned char), weight_size);
+    bM3 = metal_newBuf(sizeof(float), output_size);
+    MTL::Buffer *bne00 = metal_newBuf(sizeof(int64_t), 1);
+    MTL::Buffer *bne02 = metal_newBuf(sizeof(int64_t), 1);
+    MTL::Buffer *bnb01 = metal_newBuf(sizeof(uint64_t), 1);
+    MTL::Buffer *bnb02 = metal_newBuf(sizeof(uint64_t), 1);
+    MTL::Buffer *bne12 = metal_newBuf(sizeof(int64_t), 1);
+    MTL::Buffer *bnb10 = metal_newBuf(sizeof(uint64_t), 1);
+    MTL::Buffer *bnb11 = metal_newBuf(sizeof(uint64_t), 1);
+    MTL::Buffer *bnb12 = metal_newBuf(sizeof(uint64_t), 1);
+    MTL::Buffer *bne0 = metal_newBuf(sizeof(int64_t), 1);
+    MTL::Buffer *bne1 = metal_newBuf(sizeof(int64_t), 1);
+    MTL::Buffer *br2 = metal_newBuf(sizeof(uint), 1);
+    MTL::Buffer *br3 = metal_newBuf(sizeof(uint), 1);
+
+    computeEncoder->setComputePipelineState(mfnPipelineState);
+    computeEncoder->setBuffer(bM1, 0, 0);
+    computeEncoder->setBuffer(bM2, 0, 1);
+    computeEncoder->setBuffer(bM3, 0, 2);
+    computeEncoder->setBuffer(bne00, 0, 3);
+    computeEncoder->setBuffer(bne02, 0, 4);
+    computeEncoder->setBuffer(bnb01, 0, 5);
+    computeEncoder->setBuffer(bnb02, 0, 6);
+    computeEncoder->setBuffer(bne12, 0, 7);
+    computeEncoder->setBuffer(bnb10, 0, 8);
+    computeEncoder->setBuffer(bnb11, 0, 9);
+    computeEncoder->setBuffer(bnb12, 0, 10);
+    computeEncoder->setBuffer(bne0, 0, 11);
+    computeEncoder->setBuffer(bne1, 0, 12);
+    computeEncoder->setBuffer(br2, 0, 13);
+    computeEncoder->setBuffer(br3, 0, 14);
+    computeEncoder->setThreadgroupMemoryLength(8192, 1); // from https://github.com/ggerganov/llama.cpp/blob/d5ab29757ebc59a30f03e408294ec20628a6374e/ggml-metal.m#L1315
+
     
-    test_rms_nor();
+    int64_t ne00 = bs;
+    int64_t ne01 = m;
+    int64_t ne02 = k;
+    int64_t ne03 = 1;
+    uint64_t nb00 = sizeof(unsigned char);
+    uint64_t nb01 = nb00*ne00; //nb[0] * (ne[0] / ggml_blck_size(type)) + padding BUG: ggml_blck_size
+    uint64_t nb02 = nb01 * ne01;
+    int64_t ne10 = bs;
+    int64_t ne11 = n;
+    int64_t ne12 = k;
+    int64_t ne13 = 1;
+    uint64_t nb10 = sizeof(unsigned char);
+    uint64_t nb11 = nb10*ne10;
+    uint64_t nb12 = nb11 * ne11;
+    int64_t ne0 = bs;
+    int64_t ne1 = m;
+    uint r2 = ne12/ne02;
+    uint r3 = ne13/ne03;
+    memcpy(bM1->contents(), src0, hidden_size*sizeof(unsigned char));
+    memcpy(bM2->contents(), src1, weight_size*sizeof(unsigned char));
+    memcpy(bM3->contents(), dst, output_size*sizeof(float));
+    memcpy(bne00->contents(), &ne00, sizeof(ne00));
+    memcpy(bne02->contents(), &ne02, sizeof(ne02));
+    memcpy(bnb01->contents(), &nb01, sizeof(nb01));
+    memcpy(bnb02->contents(), &nb02, sizeof(nb02));
+    memcpy(bne12->contents(), &ne12, sizeof(ne12));
+    memcpy(bnb10->contents(), &nb10, sizeof(nb10));
+    memcpy(bnb11->contents(), &nb11, sizeof(nb11));
+    memcpy(bnb12->contents(), &nb12, sizeof(nb12));
+    memcpy(bne0->contents(), &ne0, sizeof(ne0));
+    memcpy(bne1->contents(), &ne1, sizeof(ne1));
+    memcpy(br2->contents(), &r2, sizeof(r2));
+    memcpy(br3->contents(), &r3, sizeof(r3));
+    
+    // Assuming you have already configured the threadgroup size and number of threadgroups based on your kernel and data
+    MTL::Size threadgroupSize = MTL::Size::Make(128, 1, 1);
+    MTL::Size numThreadgroups = MTL::Size::Make((ne11 + 31)/32, (ne01 + 63)/64, ne12*ne13); // from https://github.com/ggerganov/llama.cpp/blob/d5ab29757ebc59a30f03e408294ec20628a6374e/ggml-metal.m#L1405
+    
+    // Dispatch the kernel
+    computeEncoder->dispatchThreadgroups(numThreadgroups, threadgroupSize);
+    
+    // Finish encoding and commit the command buffer
+    computeEncoder->endEncoding();
+    commandBuffer->commit();
+    auto start = high_resolution_clock::now();
+    commandBuffer->waitUntilCompleted();
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << duration.count() << std::endl;
+    for (int i = 0; i < 10; ++i) {
+        std::cout << dst[i] << " " << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+int main(){
+    test_matmul_llama();
+    // test_matmulInt4();
     return 0;
 }
 
