@@ -34,7 +34,7 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
     params.block_size = QK;
 
     matmul::MatmulOperator op = matmul::MatmulOperator();
-    op.mat_mul_accelerator_int4_fast_no_offset(&params); //BUG: gemv and matmul int4? (llama.cpp matmul needed)
+    op.mat_mul_int4_f32_metal(&params); //BUG: gemv and matmul int4? (llama.cpp matmul needed)
 
     PROFILE_END(profile_name);
     return;

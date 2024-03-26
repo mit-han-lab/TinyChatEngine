@@ -137,18 +137,23 @@ class MatmulOperator {
     //// GEMV
     void gemv_forward_cuda(const struct matmul_params *params);
     // metal 
-    void mat_mul_f32_metal(const struct matmul_params *params); 
-    void batch_add_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
-    void relu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
-    void silu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
-    void gelu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
-    void gelu_quick_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
-    void rms_norm_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, float eps);
-    void soft_max_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale); 
-    void soft_max_4_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale);
-    void rope_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z,
-int n_past, int n_dims, int mode, int n_orig_ctx, float freq_base, float freq_scale, float ext_factor, float attn_factor,
-float beta_fast, float beta_slow);
+    void mat_mul_int4_f32_metal(const struct matmul_params *params); 
+    void mat_mul_f32_f32_metal(const struct matmul_params *params); 
+    void mat_vec_int4_f32_metal(const struct matmul_params *params); 
+    void mat_vec_f32_f32_metal(const struct matmul_params *params); 
+//     void batch_add_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void mat_mul_f32_metal(const struct matmul_params *params); 
+//     void batch_add_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void relu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void silu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void gelu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void gelu_quick_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void rms_norm_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, float eps);
+//     void soft_max_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale); 
+//     void soft_max_4_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale);
+//     void rope_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z,
+// int n_past, int n_dims, int mode, int n_orig_ctx, float freq_base, float freq_scale, float ext_factor, float attn_factor,
+// float beta_fast, float beta_slow);
 
 
 
