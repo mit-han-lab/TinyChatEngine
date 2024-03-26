@@ -103,6 +103,11 @@ void generateRandomCharArray(unsigned char* array, uint arraySize) {
         array[i] = static_cast<unsigned char>(distrib(gen));
     }
 }
+void generateOnesCharArray(unsigned char* array, uint arraySize) {
+    for (int i = 0; i < arraySize; ++i) {
+        array[i] = 1;
+    }
+}
 
 // Metal functions
 void metal_init(){
@@ -399,6 +404,8 @@ void test_matmul_llama(){
     float* dst = new float[output_size];
     generateRandomCharArray(src0, hidden_size);
     generateRandomCharArray(src1, weight_size);
+    // generateOnesCharArray(src0, hidden_size);
+    // generateOnesCharArray(src1, weight_size);
     // generateRandomFloatArray(dst, arraySize);
     metal_init();
     // Initialization of GPU vals
@@ -439,7 +446,7 @@ void test_matmul_llama(){
     computeEncoder->setBuffer(bne1, 0, 12);
     computeEncoder->setBuffer(br2, 0, 13);
     computeEncoder->setBuffer(br3, 0, 14);
-    computeEncoder->setThreadgroupMemoryLength(8192, 1); // from https://github.com/ggerganov/llama.cpp/blob/d5ab29757ebc59a30f03e408294ec20628a6374e/ggml-metal.m#L1315
+    computeEncoder->setThreadgroupMemoryLength(8192, 0); // from https://github.com/ggerganov/llama.cpp/blob/d5ab29757ebc59a30f03e408294ec20628a6374e/ggml-metal.m#L1315
 
     
     int64_t ne00 = bs;
@@ -475,6 +482,17 @@ void test_matmul_llama(){
     memcpy(bne1->contents(), &ne1, sizeof(ne1));
     memcpy(br2->contents(), &r2, sizeof(r2));
     memcpy(br3->contents(), &r3, sizeof(r3));
+
+    std::cout << "src0: ";
+    for (int i = 0; i < 10; ++i) {
+        std::cout << src0[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "bM1: ";
+    for (int i = 0; i < 10; ++i) {
+        std::cout << ((unsigned char*)(bM1->contents()))[i] << " ";
+    }
+    std::cout << std::endl;
     
     // Assuming you have already configured the threadgroup size and number of threadgroups based on your kernel and data
     MTL::Size threadgroupSize = MTL::Size::Make(128, 1, 1);
@@ -490,10 +508,32 @@ void test_matmul_llama(){
     commandBuffer->waitUntilCompleted();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << duration.count() << std::endl;
+    std::cout << "Metal GPU Duration: " << duration.count() << " ms" << std::endl;
+
+    memcpy(dst, bM3->contents(), output_size * sizeof(float));
+
+    // print dst
+    std::cout << "dst: ";
     for (int i = 0; i < 10; ++i) {
-        std::cout << dst[i] << " " << std::endl;
+        std::cout << dst[i] << " ";
     }
+    // for (int i = 0; i < output_size; ++i) {
+    //     if (dst[i] != 0) {
+    //         std::cout << dst[i] << " ";
+    //     }
+    // }
+    std::cout << std::endl;
+
+    // print bM3
+    std::cout << "bM3: ";
+    for (int i = 0; i < 10; ++i) {
+        std::cout << ((float*)(bM3->contents()))[i] << " ";
+    }
+    // for (int i = 0; i < output_size; ++i) {
+    //     if (((float*)(bM3->contents()))[i] != 0) {
+    //         std::cout << ((float*)(bM3->contents()))[i] << " ";
+    //     }
+    // }
     std::cout << std::endl;
 }
 
