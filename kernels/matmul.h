@@ -122,7 +122,7 @@ class MatmulOperator {
     // void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);
     // int4
     void mat_mul_accelerator_int4_fast(const struct matmul_params *params);
-    void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params);
+    void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params); //also supported by metal
     void mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
     void gemv_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
     void gemm_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
@@ -141,6 +141,26 @@ class MatmulOperator {
     void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
     //// GEMV
     void gemv_forward_cuda(const struct matmul_params *params);
+    // metal 
+    void mat_mul_int4_f32_metal(const struct matmul_params *params); 
+    void mat_mul_f32_f32_metal(const struct matmul_params *params); 
+    void mat_vec_int4_f32_metal(const struct matmul_params *params); 
+    void mat_vec_f32_f32_metal(const struct matmul_params *params); 
+//     void batch_add_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void mat_mul_f32_metal(const struct matmul_params *params); 
+//     void batch_add_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void relu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void silu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void gelu_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void gelu_quick_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z);
+//     void rms_norm_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, float eps);
+//     void soft_max_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale); 
+//     void soft_max_4_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z, int64_t scale);
+//     void rope_metal(const struct matmul_params *params, unsigned int m_dim_x, unsigned int m_dim_y, unsigned int m_dim_z,
+// int n_past, int n_dims, int mode, int n_orig_ctx, float freq_base, float freq_scale, float ext_factor, float attn_factor,
+// float beta_fast, float beta_slow);
+
+
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);
