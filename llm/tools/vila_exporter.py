@@ -32,9 +32,9 @@ def _export_model(model, prefix):
 
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
-    # with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
-    #     f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
-    # _export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
+    with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
+        f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
+    _export_llama_model(model.model, os.path.join(f"{outpath}", "decoder"))
 
     # Export to Clip's folder "models/CLIP_ViT_Large"
     # _export_mm_projector(model.model.mm_projector, f"models/CLIP_ViT_Large/mm_projector")
@@ -161,6 +161,9 @@ def main():
                     config = AutoConfig.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", trust_remote_code=True)
                     # processor = AutoProcessor.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b")
                     model = LlavaLlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila-13b", config=config, torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                elif args.model.split("-")[2].lower() == "2.7b":
+                    print("Loading VILA 2.7B model...")
+                    model = LlavaLlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/vila_llava-2.7b", torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
                 else:
                     print("Model size not supported.")
                     return
