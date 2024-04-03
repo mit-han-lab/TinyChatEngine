@@ -81,11 +81,16 @@ def _export_Linearfp_GQAtoMHA(op, prefix):
 
     # Load weight
     weight_data = op._parameters["weight"].cpu().float().squeeze().numpy()
-    # Duplicate weight along the first axis (head_dim, hidden_dim) -> (n_heads * head_dim, hidden_dim)
-    if len(weight_data.shape) == 2:
-        repeat_weight_data = np.tile(weight_data, (n_kv_groups, 1))
-    elif len(weight_data.shape) == 1:
-        repeat_weight_data = np.tile(weight_data, (n_kv_groups))
+    # Reshape weight
+    # Original size is (n_kv_head, head_dim)
+    # Reshape to (n_kv_head, head_dim * n_kv_groups)
+    weight_data = weight_data.reshape((embed_dim, embed_dim // n_kv_groups))
+    # # Duplicate weight along the first axis (head_dim, hidden_dim) -> (n_heads * head_dim, hidden_dim)
+    # if len(weight_data.shape) == 2:
+    #     repeat_weight_data = np.tile(weight_data, (n_kv_groups, 1))
+    # elif len(weight_data.shape) == 1:
+    #     repeat_weight_data = np.tile(weight_data, (n_kv_groups))
+    repeat_weight_data = np.tile(weight_data, (1, n_kv_groups))
 
     with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
         f.write(repeat_weight_data.tobytes())
