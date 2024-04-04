@@ -1,0 +1,2 @@
+# !/bin/bash
+./chat -v Mistral_7B INT4 5
