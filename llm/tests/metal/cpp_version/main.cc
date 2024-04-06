@@ -396,9 +396,10 @@ void test_matmul_llama(){
     int m = 1;
     int n = 32000;
     int k = 4096;
-    int hidden_size = bs*m*k;
-    int weight_size = bs*n*k;
-    int output_size = bs*m*n;
+    int block_size = 32;
+    int hidden_size = bs * m * k;
+    int weight_size = bs * n * k;
+    int output_size = bs * m * n;
     unsigned char* src0 = new unsigned char[hidden_size];
     unsigned char* src1 = new unsigned char[weight_size];
     float* dst = new float[output_size];
@@ -449,27 +450,27 @@ void test_matmul_llama(){
     computeEncoder->setThreadgroupMemoryLength(8192, 0); // from https://github.com/ggerganov/llama.cpp/blob/d5ab29757ebc59a30f03e408294ec20628a6374e/ggml-metal.m#L1315
 
     
-    int64_t ne00 = bs;
-    int64_t ne01 = m;
-    int64_t ne02 = k;
+    int64_t ne00 = k;
+    int64_t ne01 = n;
+    int64_t ne02 = bs;
     int64_t ne03 = 1;
     uint64_t nb00 = sizeof(unsigned char);
-    uint64_t nb01 = nb00*ne00; //nb[0] * (ne[0] / ggml_blck_size(type)) + padding BUG: ggml_blck_size
+    uint64_t nb01 = nb00 * ne00 / block_size;  // nb[0] * (ne[0] / ggml_blck_size(type)) + padding; BUG: ggml_blck_size
     uint64_t nb02 = nb01 * ne01;
-    int64_t ne10 = bs;
-    int64_t ne11 = n;
-    int64_t ne12 = k;
+    int64_t ne10 = k;
+    int64_t ne11 = m;
+    int64_t ne12 = bs;
     int64_t ne13 = 1;
     uint64_t nb10 = sizeof(unsigned char);
-    uint64_t nb11 = nb10*ne10;
+    uint64_t nb11 = nb10 * ne10;
     uint64_t nb12 = nb11 * ne11;
-    int64_t ne0 = bs;
+    int64_t ne0 = n;
     int64_t ne1 = m;
-    uint r2 = ne12/ne02;
-    uint r3 = ne13/ne03;
-    memcpy(bM1->contents(), src0, hidden_size*sizeof(unsigned char));
-    memcpy(bM2->contents(), src1, weight_size*sizeof(unsigned char));
-    memcpy(bM3->contents(), dst, output_size*sizeof(float));
+    uint r2 = ne12 / ne02;
+    uint r3 = ne13 / ne03;
+    memcpy(bM1->contents(), src0, hidden_size * sizeof(unsigned char));
+    memcpy(bM2->contents(), src1, weight_size * sizeof(unsigned char));
+    memcpy(bM3->contents(), dst, output_size * sizeof(float));
     memcpy(bne00->contents(), &ne00, sizeof(ne00));
     memcpy(bne02->contents(), &ne02, sizeof(ne02));
     memcpy(bnb01->contents(), &nb01, sizeof(nb01));
