@@ -59,7 +59,7 @@ models = {
         "md5sum": "3d4afd8051c779c014ba69aec7886961",
     },
     "VILA_2.7B_CLIP_ViT-L_fp32": {
-        "url": "",  # noqa: E501
+        "url": "https://www.dropbox.com/scl/fi/f1vfgtwhr88yhpd8aabwp/VILA_2.7B_CLIP_ViT-L.zip?rlkey=qesrenbana7elbwk0szu53nzj&dl=1",  # noqa: E501
         "md5sum": "48455c57594ea1a6b44496fda3877c75",
     },
     "VILA_7B_CLIP_ViT-L_fp32": {
