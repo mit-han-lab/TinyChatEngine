@@ -60,7 +60,7 @@ models = {
     },
     "VILA_2.7B_CLIP_ViT-L_fp32": {
         "url": "",  # noqa: E501
-        "md5sum": "",
+        "md5sum": "48455c57594ea1a6b44496fda3877c75",
     },
     "VILA_7B_CLIP_ViT-L_fp32": {
         "url": "https://www.dropbox.com/scl/fi/4oi3g3uypx2hgmw6hkahy/VILA_7B_CLIP_ViT-L.zip?rlkey=0393uexrzh4ofevkr0yaldefd&dl=1",  # noqa: E501
@@ -190,7 +190,7 @@ Qmodels = {
         },
         "Mistral_7B_v0.2_Instruct_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/2f7djt8z8lhkd60velfb3/Mistral_7B_v0.2_Instruct.zip?rlkey=gga6mh8trxf6durck4y4cyihe&dl=1",
-            "md5sum": "954245def853726e62481967ae196b7c",
+            "md5sum": "22e8692d7481807b4151f28c54f112da",
         },
     },
     "QM_CUDA": {
