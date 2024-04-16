@@ -24,6 +24,142 @@ typedef struct {
     uint8_t qs[QK4_0 / 2]; // nibbles / quants
 } block_q4_0;
 
+kernel void half2float(device const half* halfArray [[buffer(0)]],
+                       device float* floatArray [[buffer(1)]],
+                       constant int& N [[buffer(2)]],
+                       uint index [[thread_position_in_grid]]) {
+    if (index < N) {
+        floatArray[index] = halfArray[index]; // Implicit conversion from half to float
+    }
+}
+
+kernel void kernel_prepare_decoder_attention_mask_half(device half* data,
+                                                constant int& length,
+                                                constant int& past_length,
+                                                uint2 gid[[thread_position_in_grid]]) {
+    int i = gid.x;
+    int j = gid.y;
+
+    if (i < length - past_length && j < length) {
+        const half min = -HALF_MAX;
+        // Assuming 'data' represents a flat array of Matrix3D.
+        // Calculating index for 'causal_attention_mask(0, i, j)'
+        int index = i * length + j; // Assuming '0 * length * length' is omitted for simplicity
+
+        if (i + past_length < j) {
+            data[index] = min;
+        } else {
+            data[index] = 0;
+        }
+    }
+}
+
+kernel void kernel_add_half(device half* a [[buffer(0)]],
+                     device half* b [[buffer(1)]],
+                     device half* c [[buffer(2)]],
+                     constant int& length [[buffer(3)]],
+                     uint id [[thread_position_in_grid]]) {
+    if (id < length) {
+        c[id] = a[id] + b[id]; // Using native '+' operator for half types
+    }
+}
+
+kernel void kernel_SiLuMul_half(device half* a [[buffer(0)]],
+                         device half* b [[buffer(1)]],
+                         constant int& length [[buffer(2)]],
+                         uint id [[thread_position_in_grid]]) {
+    const half scalar_one = 1.0h;
+
+    if (id < length) {
+        half v = a[id];
+        half silu_v = v * (scalar_one / (scalar_one + exp(-v)));
+        a[id] = silu_v * b[id];
+    }
+}
+
+template<typename T>
+kernel void kernel_shape_qkv(device T* unshape,
+                             device T* shaped_q,
+                             device T* shaped_k,
+                             device T* shaped_v,
+                             constant int& num_heads,
+                             constant int& sqlen,
+                             constant int& head_dim,
+                             uint3 gid[[thread_position_in_grid]]) {
+
+    int i = gid.x;
+    int j = gid.y;
+    int k = gid.z;
+    int embed_dim = head_dim * num_heads;
+
+    if (i < num_heads && j < sqlen && k < head_dim) {
+        // Calculate 1D index for the 3D access in a flattened array.
+        int unshape_index = j * num_heads * head_dim + i * head_dim + k;
+        int q_index = i * sqlen * head_dim + j * head_dim + k;
+        int k_index = q_index + num_heads * sqlen * head_dim;
+        int v_index = k_index + num_heads * sqlen * head_dim;
+
+        shaped_q[q_index] = unshape[unshape_index];
+        shaped_k[k_index] = unshape[unshape_index + embed_dim];
+        shaped_v[v_index] = unshape[unshape_index + 2 * embed_dim];
+    }
+}
+
+template<typename T>
+kernel void kernel_unshape(device T* shaped,
+                           device T* unshape,
+                           constant int& num_heads,
+                           constant int& sqlen,
+                           constant int& head_dim,
+                           uint3 gid[[thread_position_in_grid]]) {
+    int i = gid.x;
+    int j = gid.y;
+    int k = gid.z;
+
+    if (i < num_heads && j < sqlen && k < head_dim) {
+        // Calculate 1D index for the 3D access in a flattened array.
+        int shaped_index = i * sqlen * head_dim + j * head_dim + k;
+        int unshape_index = j * num_heads * head_dim + i * head_dim + k;
+
+        unshape[unshape_index] = shaped[shaped_index];
+    }
+}
+
+template<typename T>
+kernel void kernel_transpose_1_2idx(const device <T>* input,
+                                   device <T>* output,
+                                   device int& input_m_dim_x,
+                                   device int& input_m_dim_y,
+                                   device int& input_m_dim_z,
+                                   device int& output_m_dim_y,
+                                   device int& output_m_dim_z,
+                                   uint3 gid[[thread_position_in_grid]]) {
+    int i = gid.x;
+    int j = gid.y;
+    int k = gid.z;
+
+    if (i < input_m_dim_x && j < input_m_dim_y && k < input_m_dim_z) {
+        output[i * output_m_dim_y * output_m_dim_z + k * output_m_dim_z + j] =
+            input[i * input_m_dim_y * input_m_dim_z + j * input_m_dim_z + k];
+    }
+}
+
+template<typename T>
+kernel void kernel_check_inf_half(device half* a [[ buffer(0) ]],
+                           constant int& total [[ buffer(1) ]],
+                           uint gid [[thread_position_in_grid]]) {
+    int i = gid;
+
+    if (i < total) {
+        bool infCheck = isinf(a[i]);
+        bool nanCheck = isnan(a[i]);
+        
+        if (infCheck || nanCheck) {
+            a[i] = -HALF_MAX;  // Metal defines HALF_MAX, the maximum value for half precision
+        }
+    }
+}
+
 kernel void kernel_embedding(device Matrix3D<int> input_id [[buffer(0)]],
                             device Matrix3D<half> output [[buffer(1)]],
                             device float* lookup [[buffer(2)]],

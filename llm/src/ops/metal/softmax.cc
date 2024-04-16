@@ -13,11 +13,7 @@ void softmax(Matrix3D<half> input, Matrix3D<half> output) {
     params.C.row = output.m_dim_y;
     params.C.column = output.m_dim_z;
     params.C.data_ptr = output.m_data;
-
-    struct metal_constants op_constants = new (struct metal_constants);
-    op_constants.scales = this->scales;
-    struct metal_cgraph *graph = new (struct metal_cgraph);
-    graph->n_nodes = 1;
-    graph->mm_nodes[0] = params;
-    metal_graph_compute(METAL_KERNEL_SOFT_MAX, graph);
+    params.scale = this->scales;
+    params.op = METAL_KERNEL_SOFT_MAX;
+    add_node(&params);
 }

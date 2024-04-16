@@ -13,6 +13,7 @@ struct metal_kernel {
 };
 
 struct metal_context * ctx;
+struct metal_cgraph * mgraph;
 
 enum {
     MTLGPUFamilyApple1 = 1001, 
@@ -22,6 +23,14 @@ enum {
 };
 
 enum metal_kernel_type {
+    METAL_KERNEL_HALF2FLOAT,
+    METAL_KERNEL_PREPARE_DECODER_ATTENTION_MASK_HALF,
+    METAL_KERNEL_SILUMUL_HALF,
+    METAL_KERNEL_ADD_HALF,
+    METAL_KERNEL_SHAPE_QKV,
+    METAL_KERNEL_UNSHAPE,
+    METAL_KERNEL_TRANSPOSE_1_2IDX,
+    METAL_KERNEL_CHECK_INF_HALF,
     METAL_KERNEL_EMBEDDING,
     METAL_KERNEL_BATCH_ADD,
     METAL_KERNEL_RELU,
@@ -64,10 +73,12 @@ struct metal_constants {
 };
 
 struct metal_params {
-    struct matrix A, B, C, bias;
+    struct matrix A, B, C, D, bias;
     struct optimization_params opt_params;
     float alpha, beta;
     float16_t half_alpha;
+    // batch_size
+    int bs;
     // for int4
     float *scales, *offset, *zero_point;
     float16_t *half_scales;
@@ -77,17 +88,30 @@ struct metal_params {
     // for int8 activation
     float *A_scales;
     int8_t A_zero_point;
+    // op
+    metal_kernel_type op;
+    // consts
+    float eps; //rms_norm
+    float scale; //softmax
+    int embed_dim; //embed
+    int n_orig_ctx;
+    int n_past;
+    int n_dims;
+    int mode;
+    int freq_base;
+    int freq_scale;
+    int ext_factor;
+    int attn_factor;
+    int beta_fast;
+    int beta_slow;
+    //
+    int sqlen, past_sqlen, num_heads, head_dim, input_m_dim_z;
 };
 
 struct metal_cgraph{
+    int capacity;
     int n_nodes;
     const struct metal_params ** mm_nodes; // matmul ops (A, B, C)
-    struct metal_constants op_constants;
-
-    // for kernel_embedding
-    Matrix3D<int> input_id;
-    Matrix3D<half> output;
-    float* lookup;
 };
 
 void *allocateSharedMem(size_t size);
@@ -95,5 +119,6 @@ void init();
 static void metal_free(struct metal_context * ctx);
 static enum status metal_graph_compute(metal_kernel_type op, 
     struct metal_cgraph * metal_data);
+void add_node(const struct metal_params * new_node);
 
 #endif

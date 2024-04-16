@@ -17,10 +17,8 @@ void LlamaRMSNorm_metal::forward(const Matrix3D<half> &x, Matrix3D<half> &output
     params.C.column = output.m_dim_z;
     params.C.half_data_ptr = output.m_data;
 
-    struct metal_constants op_constants = new (struct metal_constants);
-    op_constants.eps = eps;
-    struct metal_cgraph *graph = new (struct metal_cgraph);
-    graph->n_nodes = 1;
-    graph->mm_nodes[0] = params;
-    metal_graph_compute(METAL_KERNEL_RMS_NORM, graph);
+    params.op = METAL_KERNEL_RMS_NORM;
+    params.eps = eps;
+    add_node(&params);
+    return;
 }

@@ -1,7 +1,6 @@
 #include "operators.h"
 #include "metal_compute.h"
 
-// done
 void batch_Add(const Matrix3D<float> &input, const Matrix3D<float> &input2, Matrix3D<float> &output) {
     const struct metal_params params;
 
@@ -17,8 +16,6 @@ void batch_Add(const Matrix3D<float> &input, const Matrix3D<float> &input2, Matr
     params.A.data_ptr = input.m_data;
     params.B.data_ptr = input2.m_data;
     params.C.data_ptr = output.m_data;
-    struct metal_cgraph *graph = new (struct metal_cgraph);
-    graph->n_nodes = 1;
-    graph->mm_nodes[0] = params;
-    metal_graph_compute(METAL_KERNEL_BATCH_ADD, graph);
+    params.op = METAL_KERNEL_BATCH_ADD;
+    add_node(&params);
 }

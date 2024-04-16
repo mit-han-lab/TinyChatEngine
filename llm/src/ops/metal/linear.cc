@@ -1,6 +1,7 @@
 #include <cassert>
 #include "operators.h"
 #include "utils.h"
+#include "metal_compute.h"
 
 
 // TODO: incorporate gemv from llama.cpp
@@ -18,7 +19,7 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
     assert(output.m_dim_z > num_thread);
     assert(output.m_dim_z % (num_thread * 2) == 0);  // unroll column by 2
 
-    struct matmul_params params;
+    struct metal_params params;
     params.A.row = x.m_dim_y;
     params.A.column = x.m_dim_z;
     params.A.half_data_ptr = x.m_data;
@@ -32,9 +33,8 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
     params.half_scales = this->scale.m_data;
     params.int32_zero_point = this->zero_point.m_data;
     params.block_size = QK;
-
-    matmul::MatmulOperator op = matmul::MatmulOperator();
-    op.mat_mul_int4_f32_metal(&params); //BUG: gemv and matmul int4? (llama.cpp matmul needed)
+    params.op = METAL_KERNEL_MUL_MM_INT4_F32;
+    add_node(&params);
 
     PROFILE_END(profile_name);
     return;

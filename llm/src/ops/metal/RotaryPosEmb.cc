@@ -1,8 +1,9 @@
 #include <cmath>
 #include "operators.h"
+#include "metal_compute.h"
 
 // TODO: match constants on metal
-void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<half> cos, Matrix3D<half> sin, int start_idx, int len) {
+void RotaryPosEmb_metal_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<half> cos, Matrix3D<half> sin, int start_idx, int len) {
     struct matmul_params params;
     params.A.row = query.m_dim_y;
     params.A.column = query.m_dim_z;
@@ -18,7 +19,17 @@ void RotaryPosEmb_cuda_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3
     params.int32_zero_point = this->zero_point.m_data;
     params.block_size = QK;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
-    op.rope_metal(&params, query.m_dim_x, query.m_dim_y, query.m_dim_z, n_past, n_dims, mode, n_orig_ctx, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow ); 
-
+    params.n_orig_ctx = 1;
+    params.n_past = 1;
+    params.n_dims = 3;
+    params.mode = 1;
+    params.freq_base = 1;
+    params.freq_scale = 1;
+    params.ext_factor = 1;
+    params.attn_factor = 1;
+    params.beta_fast = 1;
+    params.beta_slow = 1;
+    params.op = METAL_KERNEL_ROPE;
+    add_node(&params);
+    return;
 }
