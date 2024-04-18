@@ -753,8 +753,8 @@ int main(int argc, char* argv[]) {
 
         struct opt_params generation_config;
         generation_config.n_predict = 512;
-        generation_config.repeat_penalty = 1.1f;
-        generation_config.temp = 0.2f;
+        generation_config.repeat_penalty = 1.0f;
+        generation_config.temp = 0.3f;
         generation_config.n_vocab = 32000;
 
         bool first_prompt = true;
@@ -796,7 +796,7 @@ int main(int argc, char* argv[]) {
                 }
 
                 if (first_prompt) {
-                    input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
                     first_prompt = false;
                 }
                 else {
@@ -843,7 +843,7 @@ int main(int argc, char* argv[]) {
                 }
 
                 if (first_prompt) {
-                    input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
                     first_prompt = false;
                 }
                 else {

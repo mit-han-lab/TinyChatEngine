@@ -132,7 +132,7 @@ Qmodels = {
         },
         "Misitral_7B_v0.2_Instruct_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/ssr6bn9a6l9d4havu04om/Mistral_7B_v0.2_Instruct.zip?rlkey=73yqj6pw300o3izwr43etjqkr&dl=1",
-            "md5sum": "af20c96de302c503a9fcfd5877ed0600",
+            "md5sum": "ee96bcdee3d09046719f7d31d7f023f4",
         },
     },
     "QM_x86": {

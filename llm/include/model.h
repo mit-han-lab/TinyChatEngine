@@ -65,7 +65,7 @@ const struct model_config vila_2_7B(1, 20, 32, 2048, 2560, 6912, 32000, 1, 1e-5)
 const struct model_config vila_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-5);
 const struct model_config vila_13B(1, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-5);
 const struct model_config clip_vit_large(1, 16, 23, 2048, 1024, 4096, 0, 1, 0, 336, 14, 768, 4096); // llava's and vila's clip model uses only 23 layers out of 24
-const struct model_config mistral_7B(1, 32, 32, 2048, 4096, 14336, 32000, 1, 1e-5);
+const struct model_config mistral_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-6);
 
 static struct model_config get_opt_model_config(int choise) {
     struct model_config ret;
