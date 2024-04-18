@@ -84,15 +84,15 @@ def _export_Linearfp_GQAtoMHA(op, prefix):
     # Reshape weight
     # Original size is (n_kv_head, head_dim)
     # Reshape to (n_kv_head, head_dim * n_kv_groups)
-    # weight_data = weight_data.reshape((embed_dim, embed_dim // n_kv_groups))
-    weight_data = weight_data.reshape((embed_dim // n_kv_groups, embed_dim))
+    weight_data = weight_data.reshape((embed_dim, embed_dim // n_kv_groups))
+    # weight_data = weight_data.reshape((embed_dim // n_kv_groups, embed_dim))
     # # Duplicate weight along the first axis (head_dim, hidden_dim) -> (n_heads * head_dim, hidden_dim)
     # if len(weight_data.shape) == 2:
     #     repeat_weight_data = np.tile(weight_data, (n_kv_groups, 1))
     # elif len(weight_data.shape) == 1:
     #     repeat_weight_data = np.tile(weight_data, (n_kv_groups))
-    # repeat_weight_data = np.tile(weight_data, (1, n_kv_groups))
-    repeat_weight_data = np.tile(weight_data, (n_kv_groups, 1))
+    repeat_weight_data = np.tile(weight_data, (1, n_kv_groups))
+    # repeat_weight_data = np.tile(weight_data, (n_kv_groups, 1))
 
     with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
         f.write(repeat_weight_data.tobytes())
@@ -146,9 +146,9 @@ def main():
         print("Loading model...")
         if args.model.endswith(".pt"):
             if args.model.split("/")[-1].lower().startswith("mistral"):
-                if args.model.split("-")[-4].lower() == "7b":
+                if args.model.split("-")[2].lower() == "7b":
                     print("Loading Mistral 7B model...")
-                    model = MistralForCausalLM.from_pretrained("/home/wweichen/workspace/models/LLM/Mistral-7B-Instruct-v0.2", torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                    model = MistralForCausalLM.from_pretrained("/home/wweichen/workspace/models/llm/Mistral-7B-Instruct-v0.2", torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
             else:
                 print("Model not supported.")
                 return
