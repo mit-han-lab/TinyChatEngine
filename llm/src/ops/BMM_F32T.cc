@@ -38,7 +38,7 @@ void BMM_F32T::forward(const Matrix3D<float> &a, const Matrix3D<float> &weight, 
         //     op.mat_mul_transposed_fastover_column((const struct matmul_params
         //     *)&params);
         // else
-#ifdef QM_ARM
+#ifdef USE_ACCELERATE
         op.mat_mul_accelerator_transposed_fastover_column(&params);
 #else
         op.mat_mul_transposed(&params);  // TODO: optimize this
@@ -87,7 +87,7 @@ void BMM_F32T::forward_weight_untransposed(const Matrix3D<float> &a, const Matri
     for (int i = 0; i < m * n * a.m_dim_x; i++) {
         params.C.data_ptr[i] = 0;
     }
-#ifdef QM_ARM
+#ifdef USE_ACCELERATE
     for (int bz = 0; bz < a.m_dim_x; bz++) {
         op.mat_mul_accelerator_untransposed_fastover_column(&params);
         params.A.data_ptr += m * k;

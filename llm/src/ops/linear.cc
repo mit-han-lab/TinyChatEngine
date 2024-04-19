@@ -26,7 +26,7 @@ void linear(Matrix3D<T> &a, Matrix3D<T> &b, Matrix3D<T> &c) {
     }
 }
 
-#ifdef QM_ARM
+#ifdef USE_ACCELERATE
 #define MAX_WEIGHT_BUFFER 32000 * 4096
 static float *w_fp32;
 void Linear_FP_int4::initialize_weight_memory() {
