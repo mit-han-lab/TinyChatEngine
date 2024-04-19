@@ -4,8 +4,11 @@
 #include <stdio.h>
 #include <cmath>
 #include <cstdlib>
-#include <Accelerate/Accelerate.h>
 #include <arm_neon.h>
+
+#ifdef USE_ACCELERATE
+#include <Accelerate/Accelerate.h>
+#endif
 
 #include "../matmul.h"
 #include "common.h"
@@ -1265,6 +1268,7 @@ static void* matmul_int8_int4_no_offset_over_column_packed(void* args) {
     return NULL;
 }
 
+#ifdef USE_ACCELERATE
 inline static void* fp32_matmul_transposed_cblas_gemm(void* args) {
     struct a8w4_thread_args* mat_args = (struct a8w4_thread_args*)args;
     const struct matmul_params* params = mat_args->params;
@@ -1286,6 +1290,7 @@ inline static void* fp32_matmul_transposed_cblas_gemm(void* args) {
     
     return NULL;
 }
+#endif
 
 namespace matmul {
 void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {
@@ -1433,6 +1438,7 @@ void MatmulOperator::gemm_accelerator_int8_int4_fast_no_offset_v2(struct matmul_
     pool_wait(pool);
 };
 
+#ifdef USE_ACCELERATE
 void MatmulOperator::cblas_gemm_accelerator_no_offset(struct matmul_params* params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
@@ -1470,5 +1476,6 @@ void MatmulOperator::cblas_gemm_accelerator_no_offset(struct matmul_params* para
     // Join threads
     pool_wait(pool);
 };
+#endif
 
 }  // namespace matmul
