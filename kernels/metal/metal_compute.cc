@@ -310,23 +310,23 @@ static enum status metal_graph_compute(struct metal_cgraph * mg) {
                 struct matrix src0 = curr_node->A;
                 struct matrix src1 = curr_node->B;
                 struct matrix dst  = curr_node->C;
-                // TODO: ne[0], nb[0] calculation & order
-                const int64_t  ne00 = src0.row;
-                const int64_t  ne01 = src0.column;
-                const int64_t  ne02 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1;
+                // TODO: double check the placement of parameters
+                const int64_t  ne00 = src0.row; // k
+                const int64_t  ne01 = src0.column;  // n
+                const int64_t  ne02 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1; // bs
                 const int64_t  ne03 = 1;
 
-                const uint64_t nb00 = (op == METAL_KERNEL_MUL_MM_INT4_F32) || (op == METAL_KERNEL_MUL_MV_INT4_F32) ? sizeof(uint8_t) : sizeof(float);
+                const uint64_t nb00 = sizeof(unsigned char);
                 const uint64_t nb01 = nb00*ne00/block_size;
                 const uint64_t nb02 = nb01*ne01;
                 const uint64_t nb03 = nb02*ne02;
 
-                const int64_t  ne10 = src1.row;
-                const int64_t  ne11 = src1.column;
-                const int64_t  ne12 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1;
+                const int64_t  ne10 = src1.row; // k
+                const int64_t  ne11 = src1.column; // m
+                const int64_t  ne12 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1; // bs
                 const int64_t  ne13 = 1;
 
-                const uint64_t nb10 = sizeof(float);
+                const uint64_t nb10 = sizeof(unsigned char);
                 const uint64_t nb11 = nb10*ne10;
                 const uint64_t nb12 = nb11*ne11;
                 const uint64_t nb13 = nb12*ne12;
@@ -336,7 +336,7 @@ static enum status metal_graph_compute(struct metal_cgraph * mg) {
                 const int64_t  ne2  = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1;
                 const int64_t  ne3  = 1;
 
-                const uint64_t nb0  = sizeof(float);
+                const uint64_t nb0  = sizeof(unsigned char);
                 const uint64_t nb1  = nb0*ne0;
                 const uint64_t nb2  = nb1*ne1;
                 const uint64_t nb3  = nb2*ne2;
@@ -405,15 +405,6 @@ static enum status metal_graph_compute(struct metal_cgraph * mg) {
                     break;
                 case (METAL_KERNEL_RMS_NORM):
                     int nth = 32; // SIMD width
-                    const int64_t  ne00 = src0.row;
-                    const int64_t  ne01 = src0.column;
-                    const int64_t  ne02 = 1;
-                    const int64_t  ne03 = 1;
-                    // TODO: nb00 should be half?
-                    const uint64_t nb00 = sizeof(half);
-                    const uint64_t nb01 = nb00*ne00;
-                    const uint64_t nb02 = nb01*ne01;
-                    const uint64_t nb03 = nb02*ne02;
                     MTL::Buffer *id_src0 = getBufferfromPtr(src0.half_data_ptr);
                     MTL::Buffer *id_src1 = getBufferfromPtr(src1.half_data_ptr);
                     MTL::Buffer *id_dst  = getBufferfromPtr(dst.half_data_ptr);
@@ -441,10 +432,6 @@ static enum status metal_graph_compute(struct metal_cgraph * mg) {
                         }
                         encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     }
-                    const int64_t  ne00 = src0.row;
-                    const int64_t  ne01 = src0.column;
-                    const int64_t  ne02 = 1;
-                    const int64_t  ne03 = 1;
                     const float scale = curr_node->scale;
                     MTL::Buffer *id_src0 = getBufferfromPtr(src0.half_data_ptr);
                     MTL::Buffer *id_src1 = getBufferfromPtr(src1.data_ptr);

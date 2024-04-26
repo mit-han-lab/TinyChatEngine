@@ -19,16 +19,16 @@ void RotaryPosEmb_metal_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix
     params.int32_zero_point = this->zero_point.m_data;
     params.block_size = QK;
 
-    params.n_orig_ctx = 1;
-    params.n_past = 1;
-    params.n_dims = 3;
-    params.mode = 1;
-    params.freq_base = 1;
-    params.freq_scale = 1;
-    params.ext_factor = 1;
-    params.attn_factor = 1;
-    params.beta_fast = 1;
-    params.beta_slow = 1;
+    params.n_orig_ctx = 4096;
+    params.n_past = 0;
+    params.n_dims = 128;
+    params.mode = 0;
+    params.freq_base = 10000.0;
+    params.freq_scale = 1.0;
+    params.ext_factor = 0.0;
+    params.attn_factor = 1.0;
+    params.beta_fast = 32.0;
+    params.beta_slow = 1.0;
     params.op = METAL_KERNEL_ROPE;
     add_node(&params);
     return;
