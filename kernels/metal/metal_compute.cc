@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <iostream>
 
+#include <dispatch/dispatch.h>
 #include <dispatch/queue.h>
 #include "metal_compute.h"
 
