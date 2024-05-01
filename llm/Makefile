@@ -64,8 +64,11 @@ $(info Detected CUDA_PATH: $(CUDA_HOME))
 	LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc)
 	LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
 	INCLUDE_DIRS += -I./include/ops/cuda
+else ifdef USE_METAL
+$(info Metal is available!)
+	LIB_SRC += $(wildcard src/nn_modules/metal/*.cc)
 else
-$(info CUDA is unavailable!)
+$(info CUDA and Metal are unavailable!)
 	LIB_SRC += $(wildcard src/nn_modules/non_cuda/*.cc)
 endif
 
@@ -105,7 +108,7 @@ else ifeq ($(shell uname -p),arm)
 	# For ARM A-series (such as Mac M1) with Metal GPU
 	ifdef USE_METAL
 		LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp -I$(LIB_DIR)/metal
-		LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc)
+		LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc) $(wildcard src/nn_modules/metal/*.cc) $(wildcard src/ops/cuda/*.cu)
 		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
 		LIB += -framework Metal -framework Foundation -framework MetalKit
 		TARGET += default.metallib library.air
@@ -192,6 +195,9 @@ $(TEST_TARGET_GENERAL): %: tests/%.cc $(OBJS)
 ifdef CUDA_AVAILABLE
 $(TEST_TARGET_IF_CUDA): %: tests/cuda/%.cu $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $@ $^ $(LIB) $(LDFLAGS)
+else ifdef USE_METAL
+$(TEST_TARGET_IF_CUDA): %: tests/metal/%.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $@ $^ $(LIB) $(LDFLAGS)
 else
 $(TEST_TARGET_IF_CUDA): %: tests/non_cuda/%.cc $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $@ $^ $(LIB) $(LDFLAGS)
@@ -211,6 +217,12 @@ profile_Int4llamaForCausalLM: tests/cuda/test_Int4llamaForCausalLM.cu $(PROFILE_
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 
 profile_ops: tests/cuda/test_ops.cu $(PROFILE_OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
+else ifdef USE_METAL
+profile_Int4llamaForCausalLM: tests/metal/test_Int4llamaForCausalLM.cc $(PROFILE_OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
+
+profile_ops: tests/metal/test_ops.cc $(PROFILE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -DPROFILER -o $@ $^ $(LIB) $(LDFLAGS)
 else
 profile_Int4llamaForCausalLM: tests/non_cuda/test_Int4llamaForCausalLM.cc $(PROFILE_OBJS)
