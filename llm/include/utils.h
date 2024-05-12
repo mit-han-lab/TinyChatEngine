@@ -48,6 +48,11 @@ void print_first_k_elelment(std::string name, const int32_t* arr, int k, int sta
 void print_first_k_elelment(std::string name, const float* arr, int k, int start_idx = 0);
 
 #ifdef QM_METAL
+typedef half_float::half float16_t;
+typedef float16_t half;
+int make_divisible_c(int c, int divisor);
+int calculate_zeros_width(int in_features, int group_size=128, int pack_num=8);
+void read_to_array_half(const char* path, half* array, int size);
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
 #else

@@ -4,6 +4,8 @@ struct Int4LlamaForCausalLM_output {
     Matrix3D<float> logits;
 #ifdef QM_CUDA
     std::vector<Matrix3D<float16_t>> past_keys, past_values;
+#elif defined(QM_METAL)
+    std::vector<Matrix3D<float16_t>> past_keys, past_values;
 #else
     std::vector<Matrix3D<float>> past_keys, past_values;
 #endif
@@ -13,6 +15,8 @@ struct Int4LlamaForCausalLM_input {
     bool has_past_keys_values;
 #ifdef QM_CUDA
     std::vector<Matrix3D<float16_t>> past_keys, past_values;
+#elif defined(QM_METAL)
+    std::vector<Matrix3D<float16_t>> past_keys, past_values;
 #else
     std::vector<Matrix3D<float>> past_keys, past_values;
 #endif
@@ -20,6 +24,9 @@ struct Int4LlamaForCausalLM_input {
     Int4LlamaForCausalLM_input() {}
     Int4LlamaForCausalLM_input(Matrix3D<int> input_ids_) : input_ids(input_ids_) { has_past_keys_values = false; }
 #ifdef QM_CUDA
+    Int4LlamaForCausalLM_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float16_t>> past_keys_,
+                               std::vector<Matrix3D<float16_t>> past_values_)
+#elif defined(QM_METAL)
     Int4LlamaForCausalLM_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float16_t>> past_keys_,
                                std::vector<Matrix3D<float16_t>> past_values_)
 #else
@@ -41,6 +48,10 @@ class Int4LlamaForCausalLM {
     void free_cuda_memory();
     int* lm_head_weight = nullptr;
     float16_t* logits_output_half = nullptr;
+#elif defined(QM_METAL)
+    void metal_free();
+    int* lm_head_weight = nullptr;
+    float16_t* logits_output_half = nullptr;
 #else
     uint8_t* lm_head_weight;
 #endif
@@ -49,6 +60,8 @@ class Int4LlamaForCausalLM {
     std::string profile_name = "Int4LlamaForCausalLM";
     Int4llamaDecoder decoder;
 #ifdef QM_CUDA
+    Linear_half_int4 lm_head;
+#elif defined(QM_METAL)
     Linear_half_int4 lm_head;
 #else
     Linear_FP_int4 lm_head;

@@ -10,6 +10,9 @@ struct Int4llamaDecoder_output {
 #ifdef QM_CUDA
     Matrix3D<float16_t> last_hidden_state;
     std::vector<Matrix3D<float16_t>> past_keys, past_values;
+#elif defined(QM_METAL)
+    Matrix3D<float16_t> last_hidden_state;
+    std::vector<Matrix3D<float16_t>> past_keys, past_values;
 #else
     Matrix3D<float> last_hidden_state;
     std::vector<Matrix3D<float>> past_keys, past_values;
@@ -20,12 +23,17 @@ struct Int4llamaDecoder_input {
     bool has_past_keys_values;
 #ifdef QM_CUDA
     std::vector<Matrix3D<float16_t>> past_keys, past_values;
+#elif defined(QM_METAL)
+    std::vector<Matrix3D<float16_t>> past_keys, past_values;
 #else
     std::vector<Matrix3D<float>> past_keys, past_values;
 #endif
 
     Int4llamaDecoder_input(Matrix3D<int> input_ids_) : input_ids(input_ids_) { has_past_keys_values = false; }
 #ifdef QM_CUDA
+    Int4llamaDecoder_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float16_t>> past_keys_,
+                           std::vector<Matrix3D<float16_t>> past_values_)
+#elif defined(QM_METAL)
     Int4llamaDecoder_input(Matrix3D<int> input_ids_, std::vector<Matrix3D<float16_t>> past_keys_,
                            std::vector<Matrix3D<float16_t>> past_values_)
 #else
@@ -51,6 +59,15 @@ class Int4llamaDecoder {
     void free_cuda_memory();
     Embedding embed_tokens;
     LlamaRMSNorm_cuda norm;
+
+    float16_t* attention_mask_buf = nullptr;
+    float16_t* last_hidden_states_buf = nullptr;
+    float* hidden_states_buf = nullptr;
+    float16_t* hidden_states_half_buf = nullptr;
+#elif defined(QM_METAL)
+    void metal_free();
+    Embedding embed_tokens;
+    LlamaRMSNorm_metal norm;
 
     float16_t* attention_mask_buf = nullptr;
     float16_t* last_hidden_states_buf = nullptr;

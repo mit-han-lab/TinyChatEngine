@@ -6,12 +6,20 @@
 #include "utils.h"
 
 void prepare_decoder_attention_mask_half(Matrix3D<float16_t> causal_attention_mask, int length, int past_length){
-    const struct metal_params params;
-
+    struct metal_params params;
     params.A.half_data_ptr = causal_attention_mask.m_data;
     params.sqlen = length;
     params.past_sqlen = past_length;
     params.op = METAL_KERNEL_PREPARE_DECODER_ATTENTION_MASK_HALF;
+    add_node(&params);
+}
+
+void float2half(Matrix3D<float> hidden_states_buf, Matrix3D<float16_t> hidden_states_half_buf, int sq_embed){
+    struct metal_params params;
+    params.A.data_ptr = hidden_states_buf.m_data;
+    params.B.half_data_ptr = hidden_states_half_buf.m_data;
+    params.sqlen = sq_embed;
+    params.op = METAL_KERNEL_FLOAT2HALF;
     add_node(&params);
 }
 
@@ -66,7 +74,7 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(std::string param_path,
     int threadsPerBlock_1D = 1024;
     int blocksPerGrid =(sqlen * this->embed_dim + threadsPerBlock_1D - 1) / threadsPerBlock_1D;
     // METAL: more kernels
-    float2half<<<blocksPerGrid, threadsPerBlock_1D>>>(hidden_states_buf, hidden_states_half_buf, sqlen * this->embed_dim);
+    float2half(hidden_states_float, hidden_states, sqlen * this->embed_dim);
 
     if (input.has_past_keys_values) {
         past_key_values_length = input.past_keys[0].m_dim_y;
@@ -107,12 +115,4 @@ struct Int4llamaDecoder_output Int4llamaDecoder::forward(std::string param_path,
     PROFILE_END(profile_name);
 
     return output;
-}
-
-void Int4llamaDecoder::free_cuda_memory() {
-    free_aligned_memory_gpu(attention_mask_buf);
-    free_aligned_memory_gpu(last_hidden_states_buf);
-    free_aligned_memory_gpu(hidden_states_buf);
-    free_aligned_memory_gpu(hidden_states_half_buf);
-    free_aligned_memory_gpu(norm_weight_ptr);
 }

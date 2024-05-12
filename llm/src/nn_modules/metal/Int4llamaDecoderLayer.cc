@@ -9,9 +9,8 @@ static float16_t *up_proj_arr = nullptr;
 static float16_t *down_proj_arr = nullptr;
 static float16_t *hidden_states_arr = nullptr;
 
-void add_half(Matrix3D<float16_t> a, Matrix3D<float16_t> b, Matrix3D<float16_t> c){
-    const struct metal_params params;
-
+void add_half(Matrix3D<float16_t> a, Matrix3D<float16_t> b, Matrix3D<float16_t> c, int num_heads){
+    struct metal_params params;
     params.A.half_data_ptr = a.m_data;
     params.B.half_data_ptr = b.m_data;
     params.C.half_data_ptr = c.m_data;
@@ -22,11 +21,11 @@ void add_half(Matrix3D<float16_t> a, Matrix3D<float16_t> b, Matrix3D<float16_t> 
 }
 
 void SiLuMul_half(Matrix3D<float16_t> gate_proj, Matrix3D<float16_t> up_proj){
-    const struct metal_params params;
+    struct metal_params params;
 
     params.A.half_data_ptr = gate_proj.m_data;
     params.B.half_data_ptr = up_proj.m_data;
-    params.sqlen = a.length();
+    params.sqlen = gate_proj.length();
     params.op = METAL_KERNEL_SILUMUL_HALF;
     add_node(&params);
 }
@@ -90,7 +89,7 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
     int threadsPerBlock = 1024;
     int blocksPerGrid =(input.hidden_states.length() + threadsPerBlock - 1) / threadsPerBlock;
     // METAL: add interface
-    add_half(input.hidden_states, attn_output.attn_output, residual_add);
+    add_half(input.hidden_states, attn_output.attn_output, residual_add, this->num_attention_heads);
 
     Matrix3D<float16_t> post_attention_layernorm(final_layer_norm_arr, input.hidden_states.m_dim_x,
                                              input.hidden_states.m_dim_y, input.hidden_states.m_dim_z);
@@ -112,25 +111,11 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
 
     int blocksPerGrid3 =(residual_add.length() + threadsPerBlock - 1) / threadsPerBlock;
     // METAL: add interface
-    add_half(residual_add, down_proj, residual_add);
+    add_half(residual_add, down_proj, residual_add, this->num_attention_heads);
 
     struct Int4llamaDecoderLayer_output output(residual_add, attn_output.attn_probs_reshaped,
                                                attn_output.past_key_value);
     PROFILE_END(profile_name);
 
     return output;
-}
-
-void Int4llamaDecoderLayer::free_cuda_memory() {
-    free_aligned_memory_gpu(hidden_states_half_arr);
-    free_aligned_memory_gpu(final_layer_norm_arr);
-    free_aligned_memory_gpu(gate_proj_arr);
-    free_aligned_memory_gpu(up_proj_arr);
-    free_aligned_memory_gpu(down_proj_arr);
-    free_aligned_memory_gpu(hidden_states_arr);
-    free_aligned_memory_gpu(input_layernorm_weight_ptr);
-    free_aligned_memory_gpu(post_attention_layernorm_ptr);
-    free_aligned_memory_gpu(gate_proj_weight);
-    free_aligned_memory_gpu(down_proj_weight);
-    free_aligned_memory_gpu(up_proj_weight);
 }

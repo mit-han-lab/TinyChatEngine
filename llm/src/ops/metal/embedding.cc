@@ -1,8 +1,8 @@
-#include "operators.h"
+#include "../../../include/operators.h"
 #include "utils.h"
 #include "metal_compute.h"
 
-void load_Embedding_params_metal(Embedding_cuda& op, std::string prefix) {
+void load_Embedding_params_metal(Embedding_metal& op, std::string prefix) {
     op.lookup.load((prefix + "/weight.bin").c_str());
 }
 

@@ -107,8 +107,8 @@ else ifeq ($(shell uname -p),arm)
 	LIB += -L/opt/homebrew/opt/boost/lib
 	# For ARM A-series (such as Mac M1) with Metal GPU
 	ifdef USE_METAL
-		LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp -I$(LIB_DIR)/metal
-		LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc) $(wildcard src/nn_modules/metal/*.cc) $(wildcard src/ops/cuda/*.cu)
+		LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp -I$(LIB_DIR)/metal/src
+		LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc) $(wildcard src/nn_modules/metal/*.cc)
 		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
 		LIB += -framework Metal -framework Foundation -framework MetalKit
 		TARGET += default.metallib library.air
@@ -131,7 +131,6 @@ else
 endif
 
 # $(info $(LIB_SRC))
-
 SRC_DIR = src
 SRC = $(wildcard src/*.cc)
 SRC += $(wildcard src/nn_modules/*.cc)

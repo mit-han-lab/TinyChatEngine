@@ -1,7 +1,7 @@
 #ifndef METAL_COMPUTE_H
 #define METAL_COMPUTE_H
 
-#include "../matmul.h"
+#include "../../matmul.h"
 #include "operators.h"
 #include "Foundation/Foundation.hpp"
 #include "Metal/Metal.hpp"
@@ -23,6 +23,7 @@ enum {
 };
 
 enum metal_kernel_type {
+    METAL_KERNEL_FLOAT2HALF,
     METAL_KERNEL_HALF2FLOAT,
     METAL_KERNEL_PREPARE_DECODER_ATTENTION_MASK_HALF,
     METAL_KERNEL_SILUMUL_HALF,
@@ -105,7 +106,7 @@ struct metal_params {
     int beta_fast;
     int beta_slow;
     //
-    int sqlen, past_sqlen, num_heads, head_dim, input_m_dim_z;
+    int sqlen, past_sqlen, num_heads, head_dim, input_m_dim_z, tgz ;
 };
 
 struct metal_cgraph{
@@ -117,7 +118,7 @@ struct metal_cgraph{
 void *allocateSharedMem(size_t size);
 void init();
 static void metal_free(struct metal_context * ctx);
-static enum status metal_graph_compute(metal_kernel_type op, 
+enum status metal_graph_compute(
     struct metal_cgraph * metal_data);
 void add_node(const struct metal_params * new_node);
 

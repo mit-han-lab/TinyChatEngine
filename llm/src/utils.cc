@@ -24,6 +24,39 @@ void read_to_array(const char* path, T* array, int size) {
     }
 }
 
+void read_to_array_half(const char* path, half* array, int size) {
+    std::ifstream infile(path, std::ios::binary | std::ios::in);
+    if (infile.fail()) {
+        std::cout << strerror(errno) << ": " << path << std::endl;
+        throw("Expected error...");
+    } else {
+        infile.read(reinterpret_cast<char*>(array), size * sizeof(half));
+        infile.close();
+    }
+}
+
+int make_divisible_c(int c, int divisor) {
+    return (c + divisor - 1) / divisor;
+}
+
+int calculate_zeros_width(int in_features, int group_size, int pack_num) {
+    int size_multiplier;
+
+    if (group_size >= 128) {
+        size_multiplier = 1;
+    } else if (group_size == 64) {
+        size_multiplier = 2;
+    } else if (group_size == 32) {
+        size_multiplier = 4;
+    } else {
+        throw std::runtime_error("The group_size of calculate_zeros_width should be 128, 64 or 32.");
+    }
+
+    int base_width = make_divisible_c(in_features / group_size, pack_num);
+    base_width = make_divisible_c(base_width, size_multiplier) * size_multiplier;
+    return base_width;
+}
+
 struct max_error_info {
     int idx;
     float a1, a2;
@@ -186,12 +219,12 @@ void print_first_k_elelment(std::string name, const float* arr, int k, int start
 // 2. make a mapping (unordered_map) between MTL::Buffer and memory address
 // 3. when GPU want to access some address space, use the table to get the corresponding MTL::Buffer object
 // Befenits: not to worry about memory alignment, better performance
-#include "matmul_metal_int4_imp.h"
+#include "metal_compute.h"
 
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size) {
     // allocate and get the pointer
-    void* void_ptr = MetalMatmulInt4IMP::allocateSharedMem(size);
+    void* void_ptr = allocateSharedMem(size);
     if (void_ptr == NULL) {
         std::cerr << "Metal memory allocation failed." << std::endl;
         exit(-1);

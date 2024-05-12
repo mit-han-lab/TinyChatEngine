@@ -56,7 +56,7 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
     half qk_bmm_alpha;
     read_to_array_half((param_path + "/qk_bmm/alpha_half.bin").c_str(), &qk_bmm_alpha, 1);
     this->qk_bmm = BMM_F16T(qk_bmm_alpha);
-    this->pv_bmm = BMM_F16T(__float2half(1.0f));
+    this->pv_bmm = BMM_F16T((half)(1.0f)); //float2half?
 
     this->embed_dim = config.embed_dim;
     this->num_heads = config.num_heads;
@@ -66,7 +66,7 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
 }
 
 void shape_qkv(Matrix3D<float16_t> qkv_states_unshape, Matrix3D<float16_t> query_states, Matrix3D<float16_t> key_states, Matrix3D<float16_t> value_states, int num_heads, int sqlen, int head_dim){
-    const struct metal_params params;
+    struct metal_params params;
 
     params.A.half_data_ptr = qkv_states_unshape.m_data;
     params.B.half_data_ptr = query_states.m_data;
@@ -80,7 +80,7 @@ void shape_qkv(Matrix3D<float16_t> qkv_states_unshape, Matrix3D<float16_t> query
 }
 
 void unshape(Matrix3D<float16_t> attn_output, Matrix3D<float16_t> attn_output_transpose, int num_heads, int sqlen, int head_dim){
-    const struct metal_params params;
+    struct metal_params params;
 
     params.A.half_data_ptr = attn_output.m_data;
     params.B.half_data_ptr = attn_output_transpose.m_data;
@@ -92,7 +92,7 @@ void unshape(Matrix3D<float16_t> attn_output, Matrix3D<float16_t> attn_output_tr
 }
 
 void check_inf_half(Matrix3D<float16_t> attn_weights){
-    const struct metal_params params;
+    struct metal_params params;
 
     params.A.half_data_ptr = attn_weights.m_data;
     params.sqlen = attn_weights.length();
@@ -102,12 +102,12 @@ void check_inf_half(Matrix3D<float16_t> attn_weights){
 }
 
 void transpose_1_2idx(Matrix3D<float16_t> final_value_states, Matrix3D<float16_t> value_states_transpose, int num_heads, int sqlen, int head_dim, int tgz){
-    const struct metal_params params;
+    struct metal_params params;
 
     params.A.half_data_ptr = final_value_states.m_data;
     params.A.row = final_value_states.m_dim_x;
     params.A.column = final_value_states.m_dim_y;
-    params.m_dim_z = final_value_states.m_dim_z;
+    params.input_m_dim_z = final_value_states.m_dim_z;
     params.B.half_data_ptr = value_states_transpose.m_data;
     params.B.row = value_states_transpose.m_dim_x;
     params.B.column = value_states_transpose.m_dim_y;
@@ -158,33 +158,33 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     int start_idx = 0;
     if (input.has_past_key_value) start_idx = input.past_key.m_dim_y;
 
-    dim3 grid(num_heads, 1, 1);
-    dim3 block(sqlen, 1, 1);
+    // dim3 grid(num_heads, 1, 1);
+    // dim3 block(sqlen, 1, 1);
     // METAL: ROPE metal
     RotaryPosEmb_metal_forward(query_states, key_states, this->rotary_pos_emb.cos, this->rotary_pos_emb.sin, start_idx, sqlen);
 
     // int tgz = sqlen;
-    if (input.has_past_key_value) {
-        // assert(input.past_key.m_dim_z == this->head_dim);
-        // tgz += input.past_key.m_dim_y;
-        float16_t *val_ptr = ret_value_states, *key_ptr = ret_key_states;
-        int past_block = input.past_key.m_dim_y * input.past_key.m_dim_z;
-        int sq_block = sqlen * this->head_dim;
-#pragma unroll
-        for (int i = 0; i < input.past_key.m_dim_x; i++) {
-            cudaMemcpyAsync(val_ptr, &input.past_value.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
-            val_ptr += past_block;
-            cudaMemcpyAsync(val_ptr, &value_states.m_data[sq_block * i], sq_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
-            val_ptr += sq_block;
-            cudaMemcpyAsync(key_ptr, &input.past_key.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
-            key_ptr += past_block;
-            cudaMemcpyAsync(key_ptr, &key_states.m_data[sq_block * i], sq_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
-            key_ptr += sq_block;
-        }
-    } else {
-        cudaMemcpyAsync(ret_value_states, value_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float16_t), cudaMemcpyDeviceToDevice);
-        cudaMemcpyAsync(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float16_t), cudaMemcpyDeviceToDevice);
-    }
+//     if (input.has_past_key_value) {
+//         // assert(input.past_key.m_dim_z == this->head_dim);
+//         // tgz += input.past_key.m_dim_y;
+//         float16_t *val_ptr = ret_value_states, *key_ptr = ret_key_states;
+//         int past_block = input.past_key.m_dim_y * input.past_key.m_dim_z;
+//         int sq_block = sqlen * this->head_dim;
+// #pragma unroll
+//         for (int i = 0; i < input.past_key.m_dim_x; i++) {
+//             cudaMemcpyAsync(val_ptr, &input.past_value.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
+//             val_ptr += past_block;
+//             cudaMemcpyAsync(val_ptr, &value_states.m_data[sq_block * i], sq_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
+//             val_ptr += sq_block;
+//             cudaMemcpyAsync(key_ptr, &input.past_key.m_data[past_block * i], past_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
+//             key_ptr += past_block;
+//             cudaMemcpyAsync(key_ptr, &key_states.m_data[sq_block * i], sq_block * sizeof(float16_t), cudaMemcpyDeviceToDevice);
+//             key_ptr += sq_block;
+//         }
+//     } else {
+//         cudaMemcpyAsync(ret_value_states, value_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float16_t), cudaMemcpyDeviceToDevice);
+//         cudaMemcpyAsync(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float16_t), cudaMemcpyDeviceToDevice);
+//     }
 
     Matrix3D<float16_t> attn_weights(attn_weights_arr, this->num_heads, sqlen, tgz);
     this->qk_bmm.forward(query_states, final_key_states, attn_weights);
@@ -194,7 +194,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     //             (sqlen + threadsPerBlock2.y - 1) / threadsPerBlock2.y,
     //             (tgz + threadsPerBlock2.z - 1) / threadsPerBlock2.z);
     // METAL: Metal
-    batch_Add(attn_weights, input.attention_mask, attn_weights);
+    batch_Add_metal(attn_weights, input.attention_mask, attn_weights);
 
     int threadsPerBlock_1D = 1024;
     int blocksPerGrid_1D =(attn_weights.length() + threadsPerBlock_1D - 1) / threadsPerBlock_1D;
@@ -202,8 +202,8 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     check_inf_half(attn_weights);
 
     Matrix3D<float16_t> attn_probs(attn_weights_arr, this->num_heads, sqlen, tgz);
-    dim3 threadsPerBlock3(64, 16);
-    dim3 numBlocks3((this->num_heads + threadsPerBlock3.x - 1) / threadsPerBlock3.x, (sqlen + threadsPerBlock3.y - 1) / threadsPerBlock3.y);
+    // dim3 threadsPerBlock3(64, 16);
+    // dim3 numBlocks3((this->num_heads + threadsPerBlock3.x - 1) / threadsPerBlock3.x, (sqlen + threadsPerBlock3.y - 1) / threadsPerBlock3.y);
     // METAL: Metal
     softmax(attn_weights, attn_probs);
 
@@ -232,26 +232,4 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     PROFILE_END(profile_name);
 
     return output;
-}
-
-void Int4llamaAttention::free_cuda_memory() {
-    free_aligned_memory_gpu(attn_weights_arr);
-    free_aligned_memory_gpu(attn_output_half_arr);
-    free_aligned_memory_gpu(attn_output_arr);
-    free_aligned_memory_gpu(attn_output_transpose_arr);
-    free_aligned_memory_gpu(key_states_arr);
-    free_aligned_memory_gpu(value_states_arr);
-    free_aligned_memory_gpu(query_states_arr);
-    free_aligned_memory_gpu(value_states_transpose_arr);
-    free_aligned_memory_gpu(key_states_arr_cache);
-    free_aligned_memory_gpu(value_states_arr_cache);
-    free_aligned_memory_gpu(cos_buf);
-    free_aligned_memory_gpu(sin_buf);
-    free_aligned_memory_gpu(o_weight);
-    free_aligned_memory_gpu(qkv_states_unshape_arr);
-
-    if(cache_num) {
-        free(cache_num);
-        cache_num = nullptr;
-    }
 }

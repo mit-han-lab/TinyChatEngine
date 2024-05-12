@@ -1,8 +1,9 @@
 #include <cmath>
-#include "operators.h"
+#include "../../../include/operators.h"
+#include "utils.h"
 
 
-void softmax(Matrix3D<half> input, Matrix3D<half> output) {
+void softmax_metal(Matrix3D<half> input, Matrix3D<half> output) {
     const struct metal_params params;
     params.A.row = input.m_dim_y;
     params.A.column = input.m_dim_z;

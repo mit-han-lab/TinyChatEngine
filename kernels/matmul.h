@@ -16,6 +16,9 @@ typedef half_float::half naive_float16_t;
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
 typedef half float16_t;
+#elif defined(QM_METAL)
+typedef half_float::half float16_t;
+typedef float16_t half;
 #elif defined(__ARM_NEON)
 typedef __fp16 float16_t;
 #elif defined(__x86_64__)
@@ -98,6 +101,11 @@ struct thread_args {
     const struct matmul_params *params;
     int start_i, end_i, blk_size;
 };
+
+// #ifdef QM_METAL
+// #include "metal/include/metal_compute.h"
+// // typedef half_float::half half;
+// #endif
 
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))

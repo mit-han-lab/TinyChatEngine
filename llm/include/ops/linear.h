@@ -218,4 +218,43 @@ class Linear_half_int4 {
 };
 #endif
 
+#ifdef QM_METAL
+class Linear_half_int4 {
+   public:
+    Linear_half_int4(Matrix3D<int> weight_, std::string weight_path) : weight(weight_) {
+        int output_channel = this->weight.m_dim_y, input_channel = this->weight.m_dim_z * 8;
+        
+        float16_t *scale_ptr;
+        // float16_t *offset_ptr;  // TODO: Currently, we don't need offset
+        int *zero_point_ptr;
+        // length of int8_t weight = elements / 2
+        // length of scales/offset = elements / QK = weight / (QK/2)
+        // length of zero_point = 1
+        // assert((weight.m_dim_z * 8) % (QK) == 0);
+        allocate_aligned_memory(scale_ptr, output_channel * calculate_zeros_width(input_channel, QK) * 8 * sizeof(float16_t));
+        // allocate_aligned_memory(offset_ptr, (this->weight.length() * 8 * sizeof(float16_t)) / QK);  // TODO: Currently, we don't need offset
+        // Currently, we don't need offset
+        allocate_aligned_memory(zero_point_ptr, output_channel * calculate_zeros_width(input_channel, QK) * sizeof(int));
+
+        scale = Matrix3D<float16_t>(scale_ptr, 1, output_channel, calculate_zeros_width(input_channel, QK) * 8);
+        // offset = Matrix3D<float16_t>(offset_ptr, x, y, z);  // TODO: Currently, we don't need offset
+        zero_point = Matrix3D<int>(zero_point_ptr, 1, output_channel, calculate_zeros_width(input_channel, QK));
+        weight.load((weight_path + "/weight_int4.bin").c_str());
+        // offset.load((weight_path + "/offset_int4.bin").c_str());  // TODO: Currently, we don't need offset
+        scale.load((weight_path + "/scaling_factor_int4.bin").c_str());
+        zero_point.load((weight_path + "/zero_point_int4.bin").c_str());
+    };
+    Linear_half_int4(){};
+    // void forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output);
+    void forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output);
+    Matrix3D<int> weight;
+    Matrix3D<float16_t> scale;
+    Matrix3D<float16_t> offset;  // TODO: Currently, we don't need offset
+    Matrix3D<int> zero_point;
+
+   private:
+    std::string profile_name = "Linear_half_int4";
+};
+#endif
+
 #endif

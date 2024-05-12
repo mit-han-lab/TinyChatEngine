@@ -7,12 +7,8 @@
 
 #include <dispatch/dispatch.h>
 #include <dispatch/queue.h>
-#include "metal_compute.h"
+#include "../include/metal_compute.h"
 
-#undef MIN
-#undef MAX
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define block_size 32
 
 void *allocateSharedMem(size_t size) {
@@ -103,6 +99,9 @@ void init() {
 
         // simd_sum and simd_max requires MTLGPUFamilyApple7
         // TODO: syntax error
+        METAL_ADD_KERNEL(METAL_KERNEL_FLOAT2HALF "float2half", true);
+        METAL_ADD_KERNEL(METAL_KERNEL_HALF2FLOAT, "half2float", true);
+        METAL_ADD_KERNEL(METAL_KERNEL_PREPARE_DECODER_ATTENTION_MASK_HALF, "kernel_prepare_decoder_attention_mask_half", true);
         METAL_ADD_KERNEL(METAL_KERNEL_SILUMUL_HALF, "SiLuMul_half", true);
         METAL_ADD_KERNEL(METAL_KERNEL_ADD_HALF, "add_half", true);
         METAL_ADD_KERNEL(METAL_KERNEL_SHAPE_QKV, "shape_qkv", true);
@@ -149,7 +148,7 @@ static void metal_free(struct metal_context * ctx) {
     free(ctx);
 }
 
-static enum status metal_graph_compute(struct metal_cgraph * mg) {
+enum status metal_graph_compute(struct metal_cgraph * mg) {
     // in TinyChatEngine, inputs are operations and grouped tensors 
     MTL::ComputePassDescriptor* edesc = MTL::ComputePassDescriptor::computePassDescriptor();
     edesc->setDispatchType(MTL::DispatchTypeSerial);
@@ -186,6 +185,17 @@ static enum status metal_graph_compute(struct metal_cgraph * mg) {
                 continue;
             }
             switch (op) {
+                case (METAL_KERNEL_FLOAT2FLOAT):
+                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).data_ptr); 
+                    MTL::Buffer *id_dst = getBufferfromPtr((curr_node->B).half_data_ptr); 
+                    encoder->setComputePipelineState(ctx->kernels[op].pipeline);
+                    encoder->setBuffer(id_src0, offs_src0, 0);
+                    encoder->setBuffer(id_dst, offs_src1, 1);
+                    encoder->setBytes(&curr_node->sqlen, sizeof(int), 2);
+                    MTL::Size ThreadperGroup = MTL::Size::Make(1024, 1, 1);
+                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
+                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
+                    break;
                 case (METAL_KERNEL_HALF2FLOAT):
                     MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
                     MTL::Buffer *id_dst = getBufferfromPtr((curr_node->B).data_ptr); 

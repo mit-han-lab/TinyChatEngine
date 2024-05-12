@@ -1,4 +1,4 @@
-#include "operators.h"
+#include "../../../include/operators.h"
 #include "utils.h"
 #include "metal_compute.h"
 

@@ -44,13 +44,12 @@ __global__ void softmax_cuda(Matrix3D<float16_t> input, Matrix3D<float16_t> outp
 #endif
 
 #ifdef QM_METAL
-#include "ops/metal/BMM_F16T.cuh"
-#include "ops/metal/Embedding.cuh"
-#include "ops/metal/LlamaRMSNorm.cuh"
-#include "ops/metal/RotaryPosEmb.cuh"
-
-void batch_Add_metal(const Matrix3D<float> input, const Matrix3D<float> input2, Matrix3D<float> output);
-void softmax_metal(Matrix3D<float16_t> input, Matrix3D<float16_t> output);
+#include "ops/metal/BMM_F16T.h"
+#include "ops/metal/Embedding.h"
+#include "ops/metal/LlamaRMSNorm.h"
+#include "ops/metal/RotaryPosEmb.h"
+#include "ops/metal/batch_add.h"
+#include "ops/metal/softmax.h"
 #endif
 
 #endif  // OPERATORS_H

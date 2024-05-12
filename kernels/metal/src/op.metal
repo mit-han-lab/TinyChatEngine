@@ -4,8 +4,6 @@
 
 using namespace metal;
 
-using namespace metal;
-
 #define N_SIMDWIDTH 32
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
@@ -24,7 +22,16 @@ typedef struct {
     uint8_t qs[QK4_0 / 2]; // nibbles / quants
 } block_q4_0;
 
-kernel void half2float(device const half* halfArray [[buffer(0)]],
+kernel void kernel_float2half(device const half* floatArray [[buffer(0)]],
+                       device float* halfArray [[buffer(1)]],
+                       constant int& N [[buffer(2)]],
+                       uint index [[thread_position_in_grid]]) {
+    if (index < N) {
+        halfArray[index] = floatArray[index]; // Implicit conversion from half to float
+    }
+}
+
+kernel void kernel_half2float(device const half* halfArray [[buffer(0)]],
                        device float* floatArray [[buffer(1)]],
                        constant int& N [[buffer(2)]],
                        uint index [[thread_position_in_grid]]) {

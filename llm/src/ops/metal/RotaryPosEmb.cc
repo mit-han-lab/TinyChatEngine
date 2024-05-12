@@ -1,8 +1,8 @@
 #include <cmath>
-#include "operators.h"
+#include "../../../include/operators.h"
+#include "utils.h"
 #include "metal_compute.h"
 
-// TODO: match constants on metal
 void RotaryPosEmb_metal_forward(Matrix3D<half> query, Matrix3D<half> key, Matrix3D<half> cos, Matrix3D<half> sin, int start_idx, int len) {
     struct matmul_params params;
     params.A.row = query.m_dim_y;

@@ -10,6 +10,13 @@ struct Int4llamaDecoderLayer_output {
 
     Int4llamaDecoderLayer_output(Matrix3D<float16_t> hidden_states_, Matrix3D<float16_t> attentions_,
                                  std::pair<Matrix3D<float16_t>, Matrix3D<float16_t>> past_key_value_) {
+#elif defined(QM_METAL)
+    Matrix3D<float16_t> hidden_states;
+    Matrix3D<float16_t> attentions;
+    std::pair<Matrix3D<float16_t>, Matrix3D<float16_t>> past_key_value;
+
+    Int4llamaDecoderLayer_output(Matrix3D<float16_t> hidden_states_, Matrix3D<float16_t> attentions_,
+                                 std::pair<Matrix3D<float16_t>, Matrix3D<float16_t>> past_key_value_) {
 #else
     Matrix3D<float> hidden_states;
     Matrix3D<float> attentions;
@@ -31,6 +38,12 @@ struct Int4llamaDecoderLayer_input {
     Matrix3D<float16_t> past_key, past_value;
 
     Int4llamaDecoderLayer_input(Matrix3D<float16_t> hidden_states_, Matrix3D<float16_t> attention_mask_) {
+#elif defined(QM_METAL)
+    Matrix3D<float16_t> hidden_states;
+    Matrix3D<float16_t> attention_mask;
+    Matrix3D<float16_t> past_key, past_value;
+
+    Int4llamaDecoderLayer_input(Matrix3D<float16_t> hidden_states_, Matrix3D<float16_t> attention_mask_) {
 #else
     Matrix3D<float> hidden_states;
     Matrix3D<float> attention_mask;
@@ -46,11 +59,14 @@ struct Int4llamaDecoderLayer_input {
 #ifdef QM_CUDA
     Int4llamaDecoderLayer_input(Matrix3D<float16_t> hidden_states_, Matrix3D<float16_t> attention_mask_,
                                 Matrix3D<float16_t> past_key_, Matrix3D<float16_t> past_value_){
+#elif defined(QM_METAL)
+    Int4llamaDecoderLayer_input(Matrix3D<float16_t> hidden_states_, Matrix3D<float16_t> attention_mask_,
+                                Matrix3D<float16_t> past_key_, Matrix3D<float16_t> past_value_){
 #else
     Int4llamaDecoderLayer_input(Matrix3D<float> &hidden_states_, Matrix3D<float> &attention_mask_,
                                 Matrix3D<float> past_key_, Matrix3D<float> past_value_) {
 #endif
-        hidden_states = hidden_states_;
+    hidden_states = hidden_states_;
     attention_mask = attention_mask_;
     past_key = past_key_;
     past_value = past_value_;
@@ -72,6 +88,10 @@ class Int4llamaDecoderLayer {
 #ifdef QM_CUDA
     void free_cuda_memory();
     LlamaRMSNorm_cuda input_layernorm, post_attention_layernorm;
+    Linear_half_int4 gate_proj, down_proj, up_proj;
+#elif defined(QM_METAL)
+    void metal_free();
+    LlamaRMSNorm_metal input_layernorm, post_attention_layernorm;
     Linear_half_int4 gate_proj, down_proj, up_proj;
 
 #if !(DEC_SHARED_MEM)
