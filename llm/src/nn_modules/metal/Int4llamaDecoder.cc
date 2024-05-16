@@ -40,7 +40,7 @@ Int4llamaDecoder::Int4llamaDecoder(std::string param_path, const struct model_co
     // Embedding
     Matrix3D<float> embweight(new float[voc_size * embed_dim], 1, voc_size, embed_dim);
     // METAL: Metal Embedding
-    this->embed_tokens = Embedding(embed_dim, voc_size, padding_idx, embweight); // METAL: how to deal with aliasing
+    this->embed_tokens = Embedding(embed_dim, voc_size, padding_idx, embweight); // METAL
     load_Embedding_params(this->embed_tokens, param_path + "/embed_tokens");
 
     allocate_aligned_memory(norm_weight_ptr, embed_dim * sizeof(float));

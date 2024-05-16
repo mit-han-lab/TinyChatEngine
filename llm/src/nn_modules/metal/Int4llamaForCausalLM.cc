@@ -46,7 +46,7 @@ struct Int4LlamaForCausalLM_output Int4LlamaForCausalLM::forward(std::string par
     Matrix3D<float> logits(logits_output, 1, sqlen, this->decoder.voc_size);
     half2float(logits_output_half, logits_output, sqlen * this->decoder.voc_size);
 
-    // waituntilcompleted
+    // compute all metal nodes
     metal_graph_compute(mgraph);
     struct Int4LlamaForCausalLM_output LMoutput = {logits, decoder_output.past_keys, decoder_output.past_values};
     PROFILE_END(profile_name);

@@ -42,7 +42,7 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
     allocate_aligned_memory(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
     allocate_aligned_memory(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(int)) / 8);
     this->o_proj = Linear_half_int4(Matrix3D<int>(o_weight, 1, config.embed_dim, config.embed_dim / 8),
-                                  param_path + "/o_proj");
+                                  param_path + "/o_proj"); // TODO: type match
     this->qkv_proj = Linear_half_int4(Matrix3D<int>(qkv_weight, 1, config.embed_dim, config.embed_dim * 3 / 8), 
                                   param_path + "/qkv_proj");
 
@@ -196,8 +196,8 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     // METAL: Metal
     batch_Add_metal(attn_weights, input.attention_mask, attn_weights);
 
-    int threadsPerBlock_1D = 1024;
-    int blocksPerGrid_1D =(attn_weights.length() + threadsPerBlock_1D - 1) / threadsPerBlock_1D;
+    // int threadsPerBlock_1D = 1024;
+    // int blocksPerGrid_1D =(attn_weights.length() + threadsPerBlock_1D - 1) / threadsPerBlock_1D;
     // METAL: more kernels needed
     check_inf_half(attn_weights);
 

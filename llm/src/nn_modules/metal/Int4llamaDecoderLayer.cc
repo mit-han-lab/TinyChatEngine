@@ -86,8 +86,8 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
 
     Matrix3D<float16_t> residual_add(hidden_states_half_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y,
                                  input.hidden_states.m_dim_z);
-    int threadsPerBlock = 1024;
-    int blocksPerGrid =(input.hidden_states.length() + threadsPerBlock - 1) / threadsPerBlock;
+    // int threadsPerBlock = 1024;
+    // int blocksPerGrid =(input.hidden_states.length() + threadsPerBlock - 1) / threadsPerBlock;
     // METAL: add interface
     add_half(input.hidden_states, attn_output.attn_output, residual_add, this->num_attention_heads);
 
@@ -102,14 +102,14 @@ struct Int4llamaDecoderLayer_output Int4llamaDecoderLayer::forward(std::string p
     Matrix3D<float16_t> up_proj(up_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->hidden_dim);
     this->up_proj.forward(post_attention_layernorm, up_proj);
 
-    int blocksPerGrid2 =(gate_proj.length() + threadsPerBlock - 1) / threadsPerBlock;
+    // int blocksPerGrid2 =(gate_proj.length() + threadsPerBlock - 1) / threadsPerBlock;
     // METAL: add interface
     SiLuMul_half(gate_proj, up_proj);
 
     Matrix3D<float16_t> down_proj(down_proj_arr, input.hidden_states.m_dim_x, input.hidden_states.m_dim_y, this->embed_dim);
     this->down_proj.forward(gate_proj, down_proj);
 
-    int blocksPerGrid3 =(residual_add.length() + threadsPerBlock - 1) / threadsPerBlock;
+    // int blocksPerGrid3 =(residual_add.length() + threadsPerBlock - 1) / tchreadsPerBlock;
     // METAL: add interface
     add_half(residual_add, down_proj, residual_add, this->num_attention_heads);
 

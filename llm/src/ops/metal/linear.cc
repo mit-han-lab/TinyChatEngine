@@ -3,8 +3,6 @@
 #include "utils.h"
 #include "metal_compute.h"
 
-
-// TODO: incorporate gemv from llama.cpp
 void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t> &output) {
     const int num_thread = 8;
     Matrix3D<int> b = this->weight;

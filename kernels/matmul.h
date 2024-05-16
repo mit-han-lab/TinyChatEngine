@@ -102,11 +102,10 @@ struct thread_args {
     int start_i, end_i, blk_size;
 };
 
-// #ifdef QM_METAL
-// #include "metal/include/metal_compute.h"
-// // typedef half_float::half half;
-// #endif
-
+#ifdef QM_METAL
+#include "metal/include/metal_compute.h"
+// typedef half_float::half half;
+#endif
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
