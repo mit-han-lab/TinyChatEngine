@@ -16,7 +16,7 @@ void BMM_F16T::forward(const Matrix3D<half> &a, const Matrix3D<half> &weight, Ma
     assert(a.m_dim_y == c.m_dim_y);  // m
     assert(b.m_dim_y == c.m_dim_z);  // n
 
-    const struct metal_params params;
+    struct metal_params params;
     params.A.row = a.m_dim_y;
     params.A.column = a.m_dim_z;
     params.A.half_data_ptr = a.m_data;
@@ -44,7 +44,7 @@ void BMM_F16T::forward_weight_untransposed(const Matrix3D<half> &a, const Matrix
     assert(a.m_dim_y == c.m_dim_y);  // m
     assert(b.m_dim_z == c.m_dim_z);  // n
 
-    struct matmul_params params;
+    struct metal_params params;
     params.A.row = a.m_dim_y;
     params.A.column = a.m_dim_z;
     params.A.half_data_ptr = a.m_data;

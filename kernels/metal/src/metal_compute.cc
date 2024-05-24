@@ -75,54 +75,57 @@ void init() {
     ctx->support_simdgroup_mm = ctx->device->supportsFamily((MTL::GPUFamily)MTLGPUFamilyApple7);
 
 
-    // load kernels
-    {
-        NS::Error *error = nullptr;
-        for (int i = 0; i < METAL_KERNEL_TYPE_COUNT; ++i) {
-            ctx->kernels[i].pipeline = nullptr;
-        }
-#define METAL_ADD_KERNEL(e, name, supported) \
+// Assuming necessary headers and namespaces are included
+
+// load kernels
+{
+    NS::Error *error = nullptr;
+    for (int i = 0; i < METAL_KERNEL_TYPE_COUNT; ++i) {
+        ctx->kernels[i].pipeline = nullptr;
+    }
+
+    #define METAL_ADD_KERNEL(e, name, supported) \
         if (supported) { \
             struct metal_kernel * kernel = &ctx->kernels[e]; \
-            const char * str = "kernel_" + name; \
-            auto str = NS::String::string(str, NS::ASCIIStringEncoding); \
+            std::string kernel_name = "kernel_"; \
+            kernel_name += name; \
+            auto str = NS::String::string(kernel_name.c_str(), NS::ASCIIStringEncoding); \
             MTL::Function * metal_function = metal_library->newFunction(str); \
             kernel->pipeline  = ctx->device->newComputePipelineState(metal_function, &error); \
             metal_function->release(); \
             if (error) { \
-                printf("load pipeline error"); \
-                return nullptr; \
-            } \    
+                printf("load pipeline error\n"); \
+            } \
         } else { \
-            printf("kernel name not supported "); \
+            printf("kernel name not supported\n"); \
         }
 
-        // simd_sum and simd_max requires MTLGPUFamilyApple7
-        // TODO: syntax error
-        METAL_ADD_KERNEL(METAL_KERNEL_FLOAT2HALF "float2half", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_HALF2FLOAT, "half2float", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_PREPARE_DECODER_ATTENTION_MASK_HALF, "kernel_prepare_decoder_attention_mask_half", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_SILUMUL_HALF, "SiLuMul_half", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_ADD_HALF, "add_half", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_SHAPE_QKV, "shape_qkv", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_UNSHAPE, "unshape", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_TRANSPOSE_1_2IDX, "transpose_1_2idx", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_CHECK_INF_HALF, "check_inf_half", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_EMBEDDING, "embedding", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_BATCH_ADD, "batch_add", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_RELU, "relu", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_SILU, "silu", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_GELU, "gelu", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_GELU_QUICK, "gelu_quick", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_RMS_NORM, "rms_norm", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_SOFT_MAX, "soft_max", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_SOFT_MAX_4, "soft_max_4", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_ROPE, "rope", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_MUL_MM_INT4_F32, "mul_mm_int4_f32", true);
-        METAL_ADD_KERNEL(METAL_KERNEL_MUL_MV_INT4_F32, "mul_mv_int4_f32", true);  
-        METAL_ADD_KERNEL(METAL_KERNEL_MUL_MM_F32_F32, "mul_mm_f32_f32", true);  
-        METAL_ADD_KERNEL(METAL_KERNEL_MUL_MV_F32_F32, "mul_mv_f32_f32", true);          
-    }
+    // simd_sum and simd_max requires MTLGPUFamilyApple7
+    METAL_ADD_KERNEL(METAL_KERNEL_FLOAT2HALF, "float2half", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_HALF2FLOAT, "half2float", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_PREPARE_DECODER_ATTENTION_MASK_HALF, "kernel_prepare_decoder_attention_mask_half", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_SILUMUL_HALF, "SiLuMul_half", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_ADD_HALF, "add_half", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_SHAPE_QKV, "shape_qkv", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_UNSHAPE, "unshape", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_TRANSPOSE_1_2IDX, "transpose_1_2idx", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_CHECK_INF_HALF, "check_inf_half", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_EMBEDDING, "embedding", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_BATCH_ADD, "batch_add", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_RELU, "relu", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_SILU, "silu", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_GELU, "gelu", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_GELU_QUICK, "gelu_quick", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_RMS_NORM, "rms_norm", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_SOFT_MAX, "soft_max", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_SOFT_MAX_4, "soft_max_4", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_ROPE, "rope", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_MUL_MM_INT4_F32, "mul_mm_int4_f32", true);
+    METAL_ADD_KERNEL(METAL_KERNEL_MUL_MV_INT4_F32, "mul_mv_int4_f32", true);  
+    METAL_ADD_KERNEL(METAL_KERNEL_MUL_MM_F32_F32, "mul_mm_f32_f32", true);  
+    METAL_ADD_KERNEL(METAL_KERNEL_MUL_MV_F32_F32, "mul_mv_f32_f32", true);          
+}
+
     metal_library->release();
     has_init = true;
 }
@@ -167,12 +170,19 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
     MTL::CommandBuffer **command_buffers = command_buffer_builder;
     for (int iter = 0; iter < n_cb; ++iter){
         const int cb_idx = iter;
+        int nth = 0;
         size_t offs_src0 = 0;
         size_t offs_src1 = 0;
         size_t offs_src2 = 0;
         size_t offs_dst  = 0;
         MTL::CommandBuffer *command_buffer  = command_buffers[cb_idx];
         MTL::ComputeCommandEncoder *encoder = command_buffer->computeCommandEncoder(edesc);
+        MTL::Buffer *id_src0 = nullptr;
+        MTL::Buffer *id_src1 = nullptr;
+        MTL::Buffer *id_src2 = nullptr;
+        MTL::Buffer *id_dst = nullptr;
+        MTL::Size ThreadperGroup;
+        MTL::Size ThreadpergroupsperGrid;
 
         const int node_start =                                      (cb_idx + 0) * n_nodes_per_cb;
         const int node_end   = MIN((cb_idx == n_cb - 1) ? n_nodes : (cb_idx + 1) * n_nodes_per_cb, n_nodes);
@@ -184,68 +194,107 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                 encoder->memoryBarrier(MTL::BarrierScopeBuffers);
                 continue;
             }
+            struct matrix src0 = curr_node ? curr_node->A : (struct matrix){0}; // Initialize to default if curr_node is NULL
+            struct matrix src1 = curr_node ? curr_node->B : (struct matrix){0}; // Initialize to default if curr_node is NULL
+            struct matrix dst  = curr_node ? curr_node->C : (struct matrix){0}; // Initialize to default if curr_node is NULL
+
+            // Validity check to ensure src0, src1, and dst are valid matrices
+            bool is_src0_valid = curr_node && (curr_node->A.row > 0) && (curr_node->A.column > 0);
+            bool is_src1_valid = curr_node && (curr_node->B.row > 0) && (curr_node->B.column > 0);
+            bool is_dst_valid  = curr_node && (curr_node->C.row > 0) && (curr_node->C.column > 0);
+
+            // TODO: double check the placement of parameters
+            const int64_t  ne00 = is_src0_valid ? src0.row    : 0; // k
+            const int64_t  ne01 = is_src0_valid ? src0.column : 0;  // n
+            const int64_t  ne02 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1; // bs
+            const int64_t  ne03 = 1;
+
+            const uint64_t nb00 = is_src0_valid ? sizeof(unsigned char) :0;
+            const uint64_t nb01 = is_src0_valid ? nb00*ne00/block_size  :0;
+            const uint64_t nb02 = is_src0_valid ? nb01*ne01             :0;
+            const uint64_t nb03 = is_src0_valid ? nb02*ne02             :0;
+
+            const int64_t  ne10 = is_src1_valid ? src1.row    : 0; // k
+            const int64_t  ne11 = is_src1_valid ? src1.column : 0; // m
+            const int64_t  ne12 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1; // bs
+            const int64_t  ne13 = 1;
+
+            const uint64_t nb10 = is_src1_valid ? sizeof(unsigned char) : 0;
+            const uint64_t nb11 = is_src1_valid ? nb10*ne10             : 0;
+            const uint64_t nb12 = is_src1_valid ? nb11*ne11             : 0;
+            const uint64_t nb13 = is_src1_valid ? nb12*ne12             : 0;
+
+            const int64_t  ne0  = is_dst_valid ? dst.row    : 0;
+            const int64_t  ne1  = is_dst_valid ? dst.column : 0;
+            const int64_t  ne2  = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1;
+            const int64_t  ne3  = 1;
+
+            const uint64_t nb0  = is_dst_valid ? sizeof(unsigned char) : 0;
+            const uint64_t nb1  = is_dst_valid ? nb0*ne0               : 0;
+            const uint64_t nb2  = is_dst_valid ? nb1*ne1               : 0;
+            const uint64_t nb3  = is_dst_valid ? nb2*ne2               : 0;
             switch (op) {
-                case (METAL_KERNEL_FLOAT2FLOAT):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).data_ptr); 
-                    MTL::Buffer *id_dst = getBufferfromPtr((curr_node->B).half_data_ptr); 
+                case (METAL_KERNEL_FLOAT2HALF):
+                    {id_src0 = getBufferfromPtr((curr_node->A).data_ptr); 
+                    id_dst = getBufferfromPtr((curr_node->B).half_data_ptr); 
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_dst, offs_src1, 1);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 2);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(1024, 1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    ThreadperGroup = MTL::Size::Make(1024, 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_HALF2FLOAT):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
-                    MTL::Buffer *id_dst = getBufferfromPtr((curr_node->B).data_ptr); 
+                    {id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
+                    id_dst = getBufferfromPtr((curr_node->B).data_ptr); 
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_dst, offs_src1, 1);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 2);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(1024, 1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    ThreadperGroup = MTL::Size::Make(1024, 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_PREPARE_DECODER_ATTENTION_MASK_HALF):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
+                    {id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 1);
                     encoder->setBytes(&curr_node->past_sqlen, sizeof(int), 2);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(32, 32, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->sqlen - curr_node->past_sqlen + 32 - 1) / 32,
+                    ThreadperGroup = MTL::Size::Make(32, 32, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->sqlen - curr_node->past_sqlen + 32 - 1) / 32,
                    (curr_node->sqlen + 32 - 1) / 32, 1);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_SILUMUL_HALF):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
-                    MTL::Buffer *id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr);
+                    {id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
+                    id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr);
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_src1, offs_src1, 1);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 2);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(1024, 1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    ThreadperGroup = MTL::Size::Make(1024, 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_ADD_HALF):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
-                    MTL::Buffer *id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr);
-                    MTL::Buffer *id_src2  = getBufferfromPtr((curr_node->C).half_data_ptr);
+                    {id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
+                    id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr);
+                    id_src2  = getBufferfromPtr((curr_node->C).half_data_ptr);
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_src1, offs_src1, 1);
                     encoder->setBuffer(id_src2,  offs_src2, 2);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 3);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(1024, 1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    ThreadperGroup = MTL::Size::Make(1024, 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) / 1024, 1, 1);
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_SHAPE_QKV):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); //input_ids int
-                    MTL::Buffer *id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr); //output half
-                    MTL::Buffer *id_src2  = getBufferfromPtr((curr_node->C).half_data_ptr);
+                    {id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); //input_ids int
+                    id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr); //output half
+                    id_src2  = getBufferfromPtr((curr_node->C).half_data_ptr);
                     MTL::Buffer *id_src3  = getBufferfromPtr((curr_node->D).half_data_ptr);
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
@@ -255,30 +304,30 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                     encoder->setBytes(&curr_node->num_heads, sizeof(int), 4);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 5);
                     encoder->setBytes(&curr_node->head_dim, sizeof(int), 6);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(16, 1, 64);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->num_heads + 16 - 1) / 16,
-                (curr_node->sqlen + 1 - 1) / 1y,
+                    ThreadperGroup = MTL::Size::Make(16, 1, 64);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->num_heads + 16 - 1) / 16,
+                (curr_node->sqlen + 1 - 1) / 1,
                 (curr_node->head_dim + 64 - 1) / 64);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_UNSHAPE):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
-                    MTL::Buffer *id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr); 
+                    {id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
+                    id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr); 
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_src1, offs_src1, 1);
                     encoder->setBytes(&curr_node->num_heads, sizeof(int), 2);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 3);
                     encoder->setBytes(&curr_node->head_dim, sizeof(int), 4);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(16, 1, 64);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->num_heads + 16 - 1) / 16,
+                    ThreadperGroup = MTL::Size::Make(16, 1, 64);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->num_heads + 16 - 1) / 16,
                 (curr_node->sqlen + 1 - 1) / 1,
                 (curr_node->head_dim + 64 - 1) / 64);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_TRANSPOSE_1_2IDX):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
-                    MTL::Buffer *id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr); 
+                    {id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr); 
+                    id_src1 = getBufferfromPtr((curr_node->B).half_data_ptr); 
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_src1, offs_src1, 1);
@@ -287,24 +336,24 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                     encoder->setBytes(&curr_node->input_m_dim_z, sizeof(int), 4);
                     encoder->setBytes(&curr_node->B.row, sizeof(int), 5);
                     encoder->setBytes(&curr_node->B.column, sizeof(int), 6);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(8, 4, 32);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->num_heads + 8 - 1) / 8,
+                    ThreadperGroup = MTL::Size::Make(8, 4, 32);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->num_heads + 8 - 1) / 8,
                 (curr_node->tgz + 4 - 1) / 4,
                 (curr_node->head_dim + 32 - 1) / 32);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_CHECK_INF_HALF):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr);
+                   { id_src0 = getBufferfromPtr((curr_node->A).half_data_ptr);
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBytes(&curr_node->sqlen, sizeof(int), 1);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(1024, 1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) /1024, 1, 1);
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    ThreadperGroup = MTL::Size::Make(1024, 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->sqlen + 1024 - 1) /1024, 1, 1);
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_EMBEDDING):
-                    MTL::Buffer *id_src0 = getBufferfromPtr((curr_node->A).int32_data_ptr); //input_ids int
-                    MTL::Buffer *id_dst  = getBufferfromPtr((curr_node->C).half_data_ptr); //output half
+                    {id_src0 = getBufferfromPtr((curr_node->A).int32_data_ptr); //input_ids int
+                    id_dst  = getBufferfromPtr((curr_node->C).half_data_ptr); //output half
                     MTL::Buffer *id_lookup  = getBufferfromPtr((curr_node->B).data_ptr); //fp32
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
@@ -313,51 +362,18 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                     encoder->setBytes(&curr_node->embed_dim, sizeof(int), 3);
                     int threadsPerBlock = 1024;
                     int blocksPerGrid = (curr_node->A.column + threadsPerBlock - 1) / threadsPerBlock;
-                    MTL::Size ThreadperGroup = MTL::Size::Make(threadsPerBlock, 1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make((curr_node->A.column + threadsPerBlock - 1) / threadsPerBlock, 1, 1);
+                    ThreadperGroup = MTL::Size::Make(threadsPerBlock, 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make((curr_node->A.column + threadsPerBlock - 1) / threadsPerBlock, 1, 1);
                     // Dispatch the kernel
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
-                struct matrix src0 = curr_node->A;
-                struct matrix src1 = curr_node->B;
-                struct matrix dst  = curr_node->C;
-                // TODO: double check the placement of parameters
-                const int64_t  ne00 = src0.row; // k
-                const int64_t  ne01 = src0.column;  // n
-                const int64_t  ne02 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1; // bs
-                const int64_t  ne03 = 1;
-
-                const uint64_t nb00 = sizeof(unsigned char);
-                const uint64_t nb01 = nb00*ne00/block_size;
-                const uint64_t nb02 = nb01*ne01;
-                const uint64_t nb03 = nb02*ne02;
-
-                const int64_t  ne10 = src1.row; // k
-                const int64_t  ne11 = src1.column; // m
-                const int64_t  ne12 = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1; // bs
-                const int64_t  ne13 = 1;
-
-                const uint64_t nb10 = sizeof(unsigned char);
-                const uint64_t nb11 = nb10*ne10;
-                const uint64_t nb12 = nb11*ne11;
-                const uint64_t nb13 = nb12*ne12;
-
-                const int64_t  ne0  = dst.row;
-                const int64_t  ne1  = dst.column;
-                const int64_t  ne2  = (curr_node && curr_node->bs != 0) ? curr_node->bs : 1;
-                const int64_t  ne3  = 1;
-
-                const uint64_t nb0  = sizeof(unsigned char);
-                const uint64_t nb1  = nb0*ne0;
-                const uint64_t nb2  = nb1*ne1;
-                const uint64_t nb3  = nb2*ne2;
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case METAL_KERNEL_MUL_MM_INT4_F32:
                 case METAL_KERNEL_MUL_MV_INT4_F32:
                 case METAL_KERNEL_MUL_MM_F32_F32:
                 case METAL_KERNEL_MUL_MV_F32_F32:
-                    MTL::Buffer *id_src0 = (op == METAL_KERNEL_MUL_MM_INT4_F32) || (op == METAL_KERNEL_MUL_MV_INT4_F32) ? getBufferfromPtr(src0.int4_data_ptr) : getBufferfromPtr(src0.data_ptr);
-                    MTL::Buffer *id_src1 = getBufferfromPtr(src1.data_ptr);
-                    MTL::Buffer *id_dst  = getBufferfromPtr(dst.data_ptr);
+                   { id_src0 = (op == METAL_KERNEL_MUL_MM_INT4_F32) || (op == METAL_KERNEL_MUL_MV_INT4_F32) ? getBufferfromPtr(src0.int4_data_ptr) : getBufferfromPtr(src0.data_ptr);
+                    id_src1 = getBufferfromPtr(src1.data_ptr);
+                    id_dst  = getBufferfromPtr(dst.data_ptr);
                     const uint r2 = ne12/ne02;
                     const uint r3 = ne13/ne03;
                     int ne11_mm_min = 1;
@@ -383,42 +399,42 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                         encoder->setBytes(&r2, sizeof(r2), 13);
                         encoder->setBytes(&r3, sizeof(r3), 14);
                         encoder->setThreadgroupMemoryLength(8192, 0);
-                        MTL::Size ThreadperGroup = MTL::Size::Make(128, 1, 1);
-                        MTL::Size ThreadgroupsperGrid = MTL::Size::Make((ne11 + 31)/32, (ne01 + 63)/64, ne12*ne13); // from https://github.com/ggerganov/llama.cpp/blob/d5ab29757ebc59a30f03e408294ec20628a6374e/ggml-metal.m#L1405
+                        ThreadperGroup = MTL::Size::Make(128, 1, 1);
+                        ThreadpergroupsperGrid = MTL::Size::Make((ne11 + 31)/32, (ne01 + 63)/64, ne12*ne13); // from https://github.com/ggerganov/llama.cpp/blob/d5ab29757ebc59a30f03e408294ec20628a6374e/ggml-metal.m#L1405
                         // Dispatch the kernel
-                        encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
+                        encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
                     }
-                    break;
+                    break;}
                 case (METAL_KERNEL_BATCH_ADD):
-                    MTL::Buffer *id_src0 = getBufferfromPtr(src0.fp16_data_ptr);
-                    MTL::Buffer *id_src1 = getBufferfromPtr(src1.int32_data_ptr);
-                    MTL::Buffer *id_dst  = getBufferfromPtr(dst.fp16_data_ptr);
+                    {id_src0 = getBufferfromPtr(src0.fp16_data_ptr);
+                    id_src1 = getBufferfromPtr(src1.int32_data_ptr);
+                    id_dst  = getBufferfromPtr(dst.fp16_data_ptr);
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_src1, offs_src1, 1);
                     encoder->setBuffer(id_dst,  offs_src2, 2);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(src0.row, src0.column, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make(1, 1, 1); 
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    ThreadperGroup = MTL::Size::Make(src0.row, src0.column, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make(1, 1, 1); 
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_RELU):
                 case (METAL_KERNEL_SILU):
                 case (METAL_KERNEL_GELU):
                 case (METAL_KERNEL_GELU_QUICK):
-                    MTL::Buffer *id_src0 = getBufferfromPtr(src0.data_ptr);
-                    MTL::Buffer *id_dst  = getBufferfromPtr(dst.data_ptr);
+                    {id_src0 = getBufferfromPtr(src0.data_ptr);
+                    id_dst  = getBufferfromPtr(dst.data_ptr);
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_dst,  offs_src2, 1);
-                    MTL::Size ThreadperGroup = MTL::Size::Make(src0.length,1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make(1, 1, 1); 
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    ThreadperGroup = MTL::Size::Make(src0.length(), 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make(1, 1, 1);
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
                 case (METAL_KERNEL_RMS_NORM):
-                    int nth = 32; // SIMD width
-                    MTL::Buffer *id_src0 = getBufferfromPtr(src0.half_data_ptr);
-                    MTL::Buffer *id_src1 = getBufferfromPtr(src1.half_data_ptr);
-                    MTL::Buffer *id_dst  = getBufferfromPtr(dst.half_data_ptr);
+                    {nth = 32; // SIMD width
+                    id_src0 = getBufferfromPtr(src0.half_data_ptr);
+                    id_src1 = getBufferfromPtr(src1.half_data_ptr);
+                    id_dst  = getBufferfromPtr(dst.half_data_ptr);
                     // TODO: add src1 (weights)
                     encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     encoder->setBuffer(id_src0, offs_src0, 0);
@@ -428,10 +444,10 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                     encoder->setBytes(&(curr_node->eps), sizeof(curr_node->eps), 4);
                     encoder->setThreadgroupMemoryLength(32*sizeof(float), 0); 
                     encoder->dispatchThreadgroups(MTL::Size::Make(src0.row, 1, 1), MTL::Size::Make(src0.row, 1, 1));
-                    break;
+                    break;}
                 case (METAL_KERNEL_SOFT_MAX):
                 case (METAL_KERNEL_SOFT_MAX_4):
-                    int nth = 32; // SIMD width
+                    {nth = 32; // SIMD width
                     if (ne00%4 == 0) {
                         while (nth < ne00/4 && nth < 256) {
                             nth *= 2;
@@ -443,10 +459,10 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                         }
                         encoder->setComputePipelineState(ctx->kernels[op].pipeline);
                     }
-                    const float scale = curr_node->scale;
-                    MTL::Buffer *id_src0 = getBufferfromPtr(src0.half_data_ptr);
-                    MTL::Buffer *id_src1 = getBufferfromPtr(src1.data_ptr);
-                    MTL::Buffer *id_dst  = getBufferfromPtr(dst.data_ptr);
+                    float scale = curr_node->scale;
+                    id_src0 = getBufferfromPtr(src0.half_data_ptr);
+                    id_src1 = getBufferfromPtr(src1.data_ptr);
+                    id_dst  = getBufferfromPtr(dst.data_ptr);
                     encoder->setBuffer(id_src0, offs_src0, 0);
                     encoder->setBuffer(id_src1, offs_src1, 1);
                     encoder->setBuffer(id_dst,  offs_src2, 2);
@@ -456,12 +472,12 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                     encoder->setBytes(&scale, sizeof(scale), 6);
                     encoder->setThreadgroupMemoryLength(32*sizeof(float), 0); 
                     encoder->dispatchThreadgroups(MTL::Size::Make(ne01*ne02*ne03, 1, 1), MTL::Size::Make(nth, 1, 1));
-                    break;
+                    break;}
                 case (METAL_KERNEL_ROPE):
-                    MTL::Buffer *id_src0 = getBufferfromPtr(src0.half_data_ptr);
-                    MTL::Buffer *id_src1 = getBufferfromPtr(src1.int32_data_ptr);
-                    MTL::Buffer *id_dst  = getBufferfromPtr(dst.half_data_ptr);
-                    const int nth = MIN(1024, ne00);
+                    {id_src0 = getBufferfromPtr(src0.half_data_ptr);
+                    id_src1 = getBufferfromPtr(src1.int32_data_ptr);
+                    id_dst  = getBufferfromPtr(dst.half_data_ptr);
+                    nth  = MIN(1024, ne00);
 
                     const int n_past     = curr_node->n_past;     //((int32_t *) dst.op_params)[0];
                     const int n_dims     = curr_node->n_dims;     //((int32_t *) dst.op_params)[1];
@@ -509,11 +525,11 @@ enum status metal_graph_compute(struct metal_cgraph * mg) {
                     encoder->setBytes(&beta_fast, sizeof(float), 27);
                     encoder->setBytes(&beta_slow, sizeof(float), 28);
 
-                    MTL::Size ThreadperGroup = MTL::Size::Make(nth, 1, 1);
-                    MTL::Size ThreadgroupsperGrid = MTL::Size::Make(ne01, ne02, ne03); // from https://github.com/ggerganov/llama.cpp/blob/1b496a745c315022df2d919374052e6004ced8d3/ggml-metal.m#L2240
+                    ThreadperGroup = MTL::Size::Make(nth, 1, 1);
+                    ThreadpergroupsperGrid = MTL::Size::Make(ne01, ne02, ne03); // from https://github.com/ggerganov/llama.cpp/blob/1b496a745c315022df2d919374052e6004ced8d3/ggml-metal.m#L2240
                     // Dispatch the kernel
-                    encoder->dispatchThreadgroups(ThreadgroupsperGrid, ThreadperGroup);
-                    break;
+                    encoder->dispatchThreadgroups(ThreadpergroupsperGrid, ThreadperGroup);
+                    break;}
             }
             if (encoder!=nullptr){
                 encoder->endEncoding();

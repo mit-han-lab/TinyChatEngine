@@ -504,42 +504,6 @@ static void rope_yarn_corr_dims(
     dims[1] = min(n_dims - 1.0f, ceil(rope_yarn_corr_factor(n_dims, n_orig_ctx, beta_slow, freq_base)));
 }
 
-// typedef void (rope_t)(
-//         device const    void * src0,
-//         device const int32_t * src1,
-//         device         float * dst,
-//         constant     int64_t & ne00,
-//         constant     int64_t & ne01,
-//         constant     int64_t & ne02,
-//         constant     int64_t & ne03,
-//         constant    uint64_t & nb00,
-//         constant    uint64_t & nb01,
-//         constant    uint64_t & nb02,
-//         constant    uint64_t & nb03,
-//         constant     int64_t & ne0,
-//         constant     int64_t & ne1,
-//         constant     int64_t & ne2,
-//         constant     int64_t & ne3,
-//         constant    uint64_t & nb0,
-//         constant    uint64_t & nb1,
-//         constant    uint64_t & nb2,
-//         constant    uint64_t & nb3,
-//         constant         int & n_past,
-//         constant         int & n_dims,
-//         constant         int & mode,
-//         constant         int & n_orig_ctx,
-//         constant       float & freq_base,
-//         constant       float & freq_scale,
-//         constant       float & ext_factor,
-//         constant       float & attn_factor,
-//         constant       float & beta_fast,
-//         constant       float & beta_slow,
-//         uint  tiitg[[thread_index_in_threadgroup]],
-//         uint3 tptg[[threads_per_threadgroup]],
-//         uint3 tgpig[[threadgroup_position_in_grid]]);
-
-// // TODO: to be fixed
-// template<typename T>
 kernel void kernel_rope(
         device const    void * src0,
         device const int32_t * src1,

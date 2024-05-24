@@ -67,6 +67,8 @@ $(info Detected CUDA_PATH: $(CUDA_HOME))
 else ifdef USE_METAL
 $(info Metal is available!)
 	LIB_SRC += $(wildcard src/nn_modules/metal/*.cc)
+	LIB_SRC += $(wildcard src/ops/metal/*.cc)
+	INCLUDE_DIRS += -I./include/ops/metal
 else
 $(info CUDA and Metal are unavailable!)
 	LIB_SRC += $(wildcard src/nn_modules/non_cuda/*.cc)
@@ -107,8 +109,8 @@ else ifeq ($(shell uname -p),arm)
 	LIB += -L/opt/homebrew/opt/boost/lib
 	# For ARM A-series (such as Mac M1) with Metal GPU
 	ifdef USE_METAL
-		LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp -I$(LIB_DIR)/metal/src
-		LIB_SRC += $(wildcard $(LIB_DIR)/metal/*.cc) $(wildcard src/nn_modules/metal/*.cc)
+		LIB_ACC_INC = -I$(LIB_DIR)/metal/include -I$(LIB_DIR)/metal/metal-cpp 
+		LIB_SRC += $(wildcard $(LIB_DIR)/metal/src/*.cc) $(wildcard src/nn_modules/metal/*.cc)
 		INCLUDE_DIRS += -I/opt/homebrew/opt/boost/include $(LIB_ACC_INC)
 		LIB += -framework Metal -framework Foundation -framework MetalKit
 		TARGET += default.metallib library.air
