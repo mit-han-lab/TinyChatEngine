@@ -58,6 +58,10 @@ models = {
         "url": "https://www.dropbox.com/scl/fi/0uroj92srmo6z4ib4xr43/LLaVA_13B_CLIP_ViT-L.zip?rlkey=34x3r8yfh8ztiqbisg5z64hmd&dl=1",  # noqa: E501
         "md5sum": "3d4afd8051c779c014ba69aec7886961",
     },
+    "VILA_2.7B_CLIP_ViT-L_fp32": {
+        "url": "https://www.dropbox.com/scl/fi/f1vfgtwhr88yhpd8aabwp/VILA_2.7B_CLIP_ViT-L.zip?rlkey=qesrenbana7elbwk0szu53nzj&dl=1",  # noqa: E501
+        "md5sum": "48455c57594ea1a6b44496fda3877c75",
+    },
     "VILA_7B_CLIP_ViT-L_fp32": {
         "url": "https://www.dropbox.com/scl/fi/4oi3g3uypx2hgmw6hkahy/VILA_7B_CLIP_ViT-L.zip?rlkey=0393uexrzh4ofevkr0yaldefd&dl=1",  # noqa: E501
         "md5sum": "d2201fd2853da56c3e2b4b7043b1d37a",
@@ -65,6 +69,10 @@ models = {
     "StarCoder_15.5B_fp32": {
         "url": "https://www.dropbox.com/scl/fi/vc1956by8v275t0ol6vw5/StarCoder_15.5B.zip?rlkey=aydnpd9w9jhgtlfqo5krkd0yx&dl=1",
         "md5sum": "e3e9301866f47ab84817b46467ac49f6",
+    },
+    "Mistral_7B_v0.2_Instruct_fp32": {
+        "url": "",
+        "md5sum": "",
     },
 }
 
@@ -110,6 +118,10 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/hzqrq72xrk2uwupkktmpk/LLaVA_13B_CLIP_ViT-L.zip?rlkey=zit6e00fic7vdygrlg0cybivq&dl=1",  # noqa: E501
             "md5sum": "fec078d99449df73c0f1236377b53eb3",
         },
+        "VILA_2.7B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/pc9vohr7dyde2k3pbhai7/VILA_2.7B_CLIP_ViT-L.zip?rlkey=5dfayissvbj5unuuhzxzipaxk&dl=1",
+            "md5sum": "177b1a58707355c641da4f15fb3c7a71",
+        },
         "VILA_7B_awq_int4_CLIP_ViT-L": {
             "url": "https://www.dropbox.com/scl/fi/9axqkn8e95p7zxy97ixjx/VILA_7B_CLIP_ViT-L.zip?rlkey=mud5qg3rr3yec12qcvsltca5w&dl=1",  # noqa: E501
             "md5sum": "29aa8688b59dfde21d0b0b0b94b0ac27",
@@ -117,6 +129,10 @@ Qmodels = {
         "StarCoder_15.5B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/fe4dkrnzc25bt166w6bby/StarCoder_15.5B.zip?rlkey=ml1x96uep2k03z78ci7s1c0yb&dl=1",
             "md5sum": "0f16236c0aec0b32b553248cc78b8caf",
+        },
+        "Misitral_7B_v0.2_Instruct_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/ssr6bn9a6l9d4havu04om/Mistral_7B_v0.2_Instruct.zip?rlkey=73yqj6pw300o3izwr43etjqkr&dl=1",
+            "md5sum": "ee96bcdee3d09046719f7d31d7f023f4",
         },
     },
     "QM_x86": {
@@ -160,6 +176,10 @@ Qmodels = {
             "url": "https://www.dropbox.com/scl/fi/7u8wihmvvr9jlio2rjw2f/LLaVA_13B_CLIP_ViT-L.zip?rlkey=bimpaaemyb3rp30wgkznytkuv&dl=1",  # noqa: E501
             "md5sum": "f22e8d5d754c64f0aa34d5531d3059bc",
         },
+        "VILA_2.7B_awq_int4_CLIP_ViT-L": {
+            "url": "https://www.dropbox.com/scl/fi/gldsl2fh6g5f0fvwnf8kq/VILA_2.7B_CLIP_ViT-L.zip?rlkey=oj2y01xt4vwtbg7vdg4g1btxd&dl=1",
+            "md5sum": "e83ff23d58a0b91c732a9e3928aa344a",
+        },
         "VILA_7B_awq_int4_CLIP_ViT-L": {
             "url": "https://www.dropbox.com/scl/fi/25cw3ob1oar6p3maxg6lq/VILA_7B_CLIP_ViT-L.zip?rlkey=b4vr29gvsdxlj9bg3i5cwsnjn&dl=1",  # noqa: E501
             "md5sum": "7af675198ec3c73d440ccc96b2722813",
@@ -167,6 +187,10 @@ Qmodels = {
         "StarCoder_15.5B_awq_int4": {
             "url": "https://www.dropbox.com/scl/fi/86o2cblncmfd3xvuyyaqc/StarCoder_15.5B.zip?rlkey=2gswnyq9xihencaduddylpb2k&dl=1",
             "md5sum": "48383ce0bf01b137069e3612cab8525f",
+        },
+        "Mistral_7B_v0.2_Instruct_awq_int4": {
+            "url": "https://www.dropbox.com/scl/fi/2f7djt8z8lhkd60velfb3/Mistral_7B_v0.2_Instruct.zip?rlkey=gga6mh8trxf6durck4y4cyihe&dl=1",
+            "md5sum": "22e8692d7481807b4151f28c54f112da",
         },
     },
     "QM_CUDA": {
