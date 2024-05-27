@@ -92,6 +92,7 @@ def _export_Linearfp_GQAtoMHA(op, prefix):
     # elif len(weight_data.shape) == 1:
     #     repeat_weight_data = np.tile(weight_data, (n_kv_groups))
     repeat_weight_data = np.tile(weight_data, (1, n_kv_groups))
+    # repeat_weight_data = np.repeat(weight_data, n_kv_groups, axis=1)
     # repeat_weight_data = np.tile(weight_data, (n_kv_groups, 1))
 
     with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
@@ -117,8 +118,12 @@ def _export_attention_params(attn, prefix: str):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
     _export_linearfp(attn.q_proj, os.path.join(outpath, "q_proj"))
-    _export_Linearfp_GQAtoMHA(attn.k_proj, os.path.join(outpath, "k_proj"))
-    _export_Linearfp_GQAtoMHA(attn.v_proj, os.path.join(outpath, "v_proj"))
+    # # GQA to MHA
+    # _export_Linearfp_GQAtoMHA(attn.k_proj, os.path.join(outpath, "k_proj"))
+    # _export_Linearfp_GQAtoMHA(attn.v_proj, os.path.join(outpath, "v_proj"))
+    # Original
+    _export_linearfp(attn.k_proj, os.path.join(outpath, "k_proj"))
+    _export_linearfp(attn.v_proj, os.path.join(outpath, "v_proj"))
     _export_linearfp(attn.o_proj, os.path.join(outpath, "o_proj"))
     qk_bmm_alpha = 1 / math.sqrt(attn.head_dim)
     _export_BMM_F32T(qk_bmm_alpha, os.path.join(outpath, "qk_bmm"))
@@ -155,7 +160,7 @@ def main():
             
             model.load_state_dict(torch.load(args.model))
         else:
-            model = MistralForCausalLM.from_pretrained(args.model, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+            model = MistralForCausalLM.from_pretrained(args.model, torch_dtype=torch.bfloat16, low_cpu_mem_usage=False, trust_remote_code=True, offload_state_dict=True)
     else:
         model = MistralForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
 
