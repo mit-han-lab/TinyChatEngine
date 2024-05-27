@@ -59,6 +59,9 @@ class RotaryEmbedding():
             f.write(self.sin_cached[:seq_len].cpu().float().numpy().tobytes())
 
 def main():
+    # TODO: Add the ability to specify parameters from command line
+    # E.g., dim, max_position_embeddings, base, output_path, num_layers
+
     # Parse the arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_dir", type=str, default=None, help="Output directory")
@@ -66,15 +69,15 @@ def main():
     if args.output_dir:
         output_path = args.output_dir
     else:
-        output_path = "models/Mistral_7B/decoder/layer0/self_attn/rotary_emb"
+        output_path = "models/LLaMA_3_8B_Instruct/decoder/layer0/self_attn/rotary_emb"
         print(f"output_path not defined, using {output_path} by default.")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
         
     # Define the model and device is CPU
-    model = RotaryEmbedding(dim=128, max_position_embeddings=32768, base=1000000, device="cpu")
+    model = RotaryEmbedding(dim=128, max_position_embeddings=8192, base=500000, device="cpu")
     # Run the model
-    model.forward(seq_len=32768, output_path=output_path)
+    model.forward(seq_len=8192, output_path=output_path)
 
     # Copy the cos and sin to other layers
     def copy_file(src, dst):
