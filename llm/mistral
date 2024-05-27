@@ -1,2 +1,2 @@
 # !/bin/bash
-./chat Mistral_7B INT4 5
+./chat Mistral_7B INT4 5 0

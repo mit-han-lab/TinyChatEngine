@@ -5,6 +5,7 @@
 struct model_config {
     int batch;
     int num_heads;
+    int num_kv_heads;
     int num_layers;
     int max_sqlen;
     int embed_dim;
@@ -23,6 +24,19 @@ struct model_config {
                  int padding_idx, float rms_norm_eps)
         : batch(batch),
           num_heads(num_heads),
+          num_layers(num_layers),
+          max_sqlen(max_sqlen),
+          embed_dim(embed_dim),
+          hidden_dim(hidden_dim),
+          vocsize(vocsize),
+          padding_idx(padding_idx),
+          rms_norm_eps(rms_norm_eps) {}
+    // GQA/MQA models
+    model_config(int batch, int num_heads, int num_kv_heads, int num_layers, int max_sqlen, int embed_dim, int hidden_dim, int vocsize,
+                 int padding_idx, float rms_norm_eps)
+        : batch(batch),
+          num_heads(num_heads),
+          num_kv_heads(num_kv_heads),
           num_layers(num_layers),
           max_sqlen(max_sqlen),
           embed_dim(embed_dim),
@@ -54,18 +68,18 @@ enum { FP32, QINT8, INT4 };
 const struct model_config opt_6_7B(1, 32, 32, 2048, 4096, 16384, 50272, 1, 0);
 const struct model_config opt_1_3B(1, 32, 24, 2048, 2048, 8192, 50272, 1, 0);
 const struct model_config opt_125m(1, 12, 12, 2048, 768, 3072, 50272, 1, 0);
-const struct model_config llama_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-6);
-const struct model_config llama_13B(1, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-6);
-const struct model_config codellama_7B(1, 32, 32, 2048, 4096, 11008, 32016, 1, 1e-5);
-const struct model_config codellama_13B(1, 40, 40, 2048, 5120, 13824, 32016, 1, 1e-5);
+const struct model_config llama_7B(1, 32, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-6);
+const struct model_config llama_13B(1, 40, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-6);
+const struct model_config codellama_7B(1, 32, 32, 32, 2048, 4096, 11008, 32016, 1, 1e-5);
+const struct model_config codellama_13B(1, 40, 40, 40, 2048, 5120, 13824, 32016, 1, 1e-5);
 const struct model_config starcoder_15_5B(1, 48, 40, 2048, 6144, 24576, 49152, 1, 0);
-const struct model_config llava_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-5);
-const struct model_config llava_13B(1, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-5);
-const struct model_config vila_2_7B(1, 20, 32, 2048, 2560, 6912, 32000, 1, 1e-5);
-const struct model_config vila_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-5);
-const struct model_config vila_13B(1, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-5);
+const struct model_config llava_7B(1, 32, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-5);
+const struct model_config llava_13B(1, 40, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-5);
+const struct model_config vila_2_7B(1, 20, 20, 32, 2048, 2560, 6912, 32000, 1, 1e-5);
+const struct model_config vila_7B(1, 32, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-5);
+const struct model_config vila_13B(1, 40, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-5);
 const struct model_config clip_vit_large(1, 16, 23, 2048, 1024, 4096, 0, 1, 0, 336, 14, 768, 4096); // llava's and vila's clip model uses only 23 layers out of 24
-const struct model_config mistral_7B(1, 32, 32, 2048, 4096, 11008, 32000, 1, 1e-6);
+const struct model_config mistral_7B(1, 32, 8, 32, 2048, 4096, 14336, 32000, 1, 1e-5);
 
 static struct model_config get_opt_model_config(int choise) {
     struct model_config ret;

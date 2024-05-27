@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
             NUM_THREAD = atoi(argv[3]);
         }
         if (argc == 5) {
-            if (isCodeLLaMA(target_model)) {
+            if (isCodeLLaMA(target_model) or isMistral(target_model)) {
                 instruct = convertToBool(argv[4]);
             }
             else if (isLLaVA(target_model) || isVILA(target_model)) {
@@ -793,17 +793,24 @@ int main(int argc, char* argv[]) {
                     break;
                 if (instruct) {
                     std::cout << "ASSISTANT: ";
+                    if (first_prompt) {
+                        input = "<s>[INST] " + input + " [/INST] ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = " </s> <s>[INST] " + input + " [/INST] ";
+                    }
+                } else {
+                    if (first_prompt) {
+                        input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = "### Human: " + input + "\n### Assistant: \n";
+                    }
                 }
 
-                if (first_prompt) {
-                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
-                    first_prompt = false;
-                }
-                else {
-                    input = "### Human: " + input + "\n### Assistant: \n";
-                }
-
-                LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
+                MistralGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/mistral_vocab.bin", true, false);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -840,17 +847,24 @@ int main(int argc, char* argv[]) {
                     break;
                 if (instruct) {
                     std::cout << "ASSISTANT: ";
+                    if (first_prompt) {
+                        input = "<s>[INST] " + input + " [/INST] ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = " </s> <s>[INST] " + input + " [/INST] ";
+                    }
+                } else {
+                    if (first_prompt) {
+                        input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = "### Human: " + input + "\n### Assistant: \n";
+                    }
                 }
 
-                if (first_prompt) {
-                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
-                    first_prompt = false;
-                }
-                else {
-                    input = "### Human: " + input + "\n### Assistant: \n";
-                }
-
-                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, use_voicechat);
+                MistralGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/mistral_vocab.bin", true, use_voicechat);
             }
         } else {
             std::cout << std::endl;

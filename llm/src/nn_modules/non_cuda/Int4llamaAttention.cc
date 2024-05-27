@@ -22,6 +22,8 @@ static float *query_states_unshape_arr;
 static float *key_states_unshape_arr;
 static float *value_states_unshape_arr;
 // static float *qkv_states_unshape_arr;
+static float *final_key_states_arr;
+static float *final_value_states_arr;
 
 #if DEC_SHARED_MEM
 static uint8_t *q_weight, *k_weight, *v_weight, *o_weight;
@@ -60,6 +62,9 @@ void Int4llamaAttention::initialized_memory(const struct model_config config) {
     allocate_aligned_memory(query_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
     allocate_aligned_memory(key_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
     allocate_aligned_memory(value_states_unshape_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+
+    allocate_aligned_memory(final_key_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
+    allocate_aligned_memory(final_value_states_arr, config.max_sqlen * config.embed_dim * sizeof(float));
     // allocate_aligned_memory(qkv_states_unshape_arr, config.max_sqlen * config.embed_dim * 3 * sizeof(float));
 
 #if DEC_SHARED_MEM
@@ -87,19 +92,19 @@ void Int4llamaAttention::initialized_memory(const struct model_config config) {
 #endif
 }
 
-inline void Int4llamaAttention::shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen) {
+inline void Int4llamaAttention::shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int num_heads, int head_dim, int sqlen) {
     PROFILE_START("Int4llamaAttention::shape");
     assert(unshape.m_dim_x == 1);  // bsz == 1
     assert(unshape.m_dim_y == sqlen);
-    assert(unshape.m_dim_z == this->num_heads * this->head_dim);
-    assert(shaped.m_dim_x == this->num_heads);
+    assert(unshape.m_dim_z == num_heads * head_dim);
+    assert(shaped.m_dim_x == num_heads);
     assert(shaped.m_dim_y == sqlen);
-    assert(shaped.m_dim_z == this->head_dim);
+    assert(shaped.m_dim_z == head_dim);
 
-    for (int i = 0; i < this->num_heads; i++) {
+    for (int i = 0; i < num_heads; i++) {
         for (int j = 0; j < sqlen; j++) {
-            for (int k = 0; k < this->head_dim; k++) {
-                shaped(i, j, k) = unshape(0, j, i * this->head_dim + k);
+            for (int k = 0; k < head_dim; k++) {
+                shaped(i, j, k) = unshape(0, j, i * head_dim + k);
             }
         }
     }
@@ -139,39 +144,69 @@ inline void Int4llamaAttention::shape(Matrix3D<float> unshape, Matrix3D<float> s
 //     PROFILE_END("Int4llamaAttention::shape_qkv");
 // }
 
-inline void Int4llamaAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen) {
+inline void Int4llamaAttention::unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int num_heads, int head_dim, int sqlen) {
     PROFILE_START("Int4llamaAttention::unshape");
     assert(unshape.m_dim_x == 1);  // bsz == 1
     assert(unshape.m_dim_y == sqlen);
-    assert(unshape.m_dim_z == this->num_heads * this->head_dim);
-    assert(shaped.m_dim_x == this->num_heads);
+    assert(unshape.m_dim_z == num_heads * head_dim);
+    assert(shaped.m_dim_x == num_heads);
     assert(shaped.m_dim_y == sqlen);
-    assert(shaped.m_dim_z == this->head_dim);
+    assert(shaped.m_dim_z == head_dim);
 
-    for (int i = 0; i < this->num_heads; i++) {
+    for (int i = 0; i < num_heads; i++) {
         for (int j = 0; j < sqlen; j++) {
-            for (int k = 0; k < this->head_dim; k++) {
-                unshape(0, j, i * this->head_dim + k) = shaped(i, j, k);
+            for (int k = 0; k < head_dim; k++) {
+                unshape(0, j, i * head_dim + k) = shaped(i, j, k);
             }
         }
     }
     PROFILE_END("Int4llamaAttention::unshape");
 }
 
+inline void Int4llamaAttention::repeat(Matrix3D<float> input, Matrix3D<float> output, int num_heads, int num_kv_heads, int sqlen, int head_dim) {
+    PROFILE_START("Int4llamaAttention::repeat");
+    int n_repeat = num_heads / num_kv_heads;
+    assert(input.m_dim_x == num_kv_heads);
+    assert(input.m_dim_y == sqlen);
+    assert(input.m_dim_z == head_dim);
+    assert(output.m_dim_x == num_heads);
+    assert(output.m_dim_y == sqlen);
+    assert(output.m_dim_z == head_dim);
+
+    for (int i = 0; i < num_heads; i++) {
+        for (int j = 0; j < sqlen; j++) {
+            for (int k = 0; k < head_dim; k++) {
+                output(i, j, k) = input(i / n_repeat, j, k);
+            }
+        }
+    }
+    PROFILE_END("Int4llamaAttention::repeat");
+}
+
 Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config, int layer_idx) {
+    this->embed_dim = config.embed_dim;
+    this->num_heads = config.num_heads;
+    this->num_kv_heads = config.num_kv_heads;
+    assert(config.embed_dim % config.num_heads == 0);
+    this->head_dim = config.embed_dim / config.num_heads;
+
 #if !(DEC_SHARED_MEM)
     uint8_t *q_weight, *k_weight, *v_weight, *o_weight, *qkv_weight;
     allocate_aligned_memory(q_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
-    allocate_aligned_memory(k_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
-    allocate_aligned_memory(v_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
+    // allocate_aligned_memory(k_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
+    // allocate_aligned_memory(v_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
+    allocate_aligned_memory(k_weight, (config.embed_dim * config.num_kv_heads * this->head_dim * sizeof(uint8_t)) / 2);
+    allocate_aligned_memory(v_weight, (config.embed_dim * config.num_kv_heads * this->head_dim * sizeof(uint8_t)) / 2);
     allocate_aligned_memory(o_weight, (config.embed_dim * config.embed_dim * sizeof(uint8_t)) / 2);
     // allocate_aligned_memory(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(uint8_t)) / 2);
     this->q_proj =
         Linear_FP_int4(Matrix3D<uint8_t>(q_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/q_proj");
     this->k_proj =
-        Linear_FP_int4(Matrix3D<uint8_t>(k_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/k_proj");
+        // Linear_FP_int4(Matrix3D<uint8_t>(k_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/k_proj");
+        Linear_FP_int4(Matrix3D<uint8_t>(k_weight, 1, config.num_kv_heads * this->head_dim, config.embed_dim / 2), param_path + "/k_proj");
     this->v_proj =
-        Linear_FP_int4(Matrix3D<uint8_t>(v_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/v_proj");
+        // Linear_FP_int4(Matrix3D<uint8_t>(v_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/v_proj");
+        Linear_FP_int4(Matrix3D<uint8_t>(v_weight, 1, config.num_kv_heads * this->head_dim, config.embed_dim / 2), param_path + "/v_proj");
     this->o_proj =
         Linear_FP_int4(Matrix3D<uint8_t>(o_weight, 1, config.embed_dim, config.embed_dim / 2), param_path + "/o_proj");
     // this->qkv_proj =
@@ -190,11 +225,6 @@ Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct mode
     read_to_array((param_path + "/qk_bmm/alpha.bin").c_str(), &qk_bmm_alpha, 1);
     this->qk_bmm = BMM_F32T(qk_bmm_alpha);
     this->pv_bmm = BMM_F32T(1.0f);
-
-    this->embed_dim = config.embed_dim;
-    this->num_heads = config.num_heads;
-    assert(config.embed_dim % config.num_heads == 0);
-    this->head_dim = config.embed_dim / config.num_heads;
 }
 
 struct transpose_1_2idx_float_arg {
@@ -292,7 +322,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     this->q_proj.forward(input.hidden_states, query_states_unshape);
     PROFILE_END(profile_name + "::q_proj");
     Matrix3D<float> query_states(query_states_arr, this->num_heads, sqlen, this->head_dim);
-    this->shape(query_states_unshape, query_states, sqlen);
+    this->shape(query_states_unshape, query_states, this->num_heads, this->head_dim, sqlen);
 
     // Get the memory buffer
     float *ret_value_states, *ret_key_states;
@@ -307,20 +337,20 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     }
 
     // Key states
-    Matrix3D<float> key_states_unshape(key_states_unshape_arr, b, sqlen, embed_dim);
+    Matrix3D<float> key_states_unshape(key_states_unshape_arr, b, sqlen, num_kv_heads * head_dim);
     PROFILE_START(profile_name + "::k_proj");
     this->k_proj.forward(input.hidden_states, key_states_unshape);
     PROFILE_END(profile_name + "::k_proj");
-    Matrix3D<float> key_states(key_states_arr, this->num_heads, sqlen, this->head_dim);
-    this->shape(key_states_unshape, key_states, sqlen);
+    Matrix3D<float> key_states(key_states_arr, this->num_kv_heads, sqlen, this->head_dim);
+    this->shape(key_states_unshape, key_states, this->num_kv_heads, this->head_dim, sqlen);
 
     // Value states
-    Matrix3D<float> value_states_unshape(value_states_unshape_arr, b, sqlen, embed_dim);
+    Matrix3D<float> value_states_unshape(value_states_unshape_arr, b, sqlen, num_kv_heads * head_dim);
     PROFILE_START(profile_name + "::v_proj");
     this->v_proj.forward(input.hidden_states, value_states_unshape);
     PROFILE_END(profile_name + "::v_proj");
-    Matrix3D<float> value_states(value_states_arr, this->num_heads, sqlen, this->head_dim);
-    this->shape(value_states_unshape, value_states, sqlen);
+    Matrix3D<float> value_states(value_states_arr, this->num_kv_heads, sqlen, this->head_dim);
+    this->shape(value_states_unshape, value_states, this->num_kv_heads, this->head_dim, sqlen);
 
     // Rotate position
     int start_idx = 0;
@@ -349,12 +379,18 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
         }
     } else {
         // Put the data into the buffer
-        memcpy(ret_value_states, value_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float));
-        memcpy(ret_key_states, key_states_arr, (this->num_heads * tgz * this->head_dim) * sizeof(float));
+        memcpy(ret_value_states, value_states_arr, (this->num_kv_heads * tgz * this->head_dim) * sizeof(float));
+        memcpy(ret_key_states, key_states_arr, (this->num_kv_heads * tgz * this->head_dim) * sizeof(float));
     }
-    Matrix3D<float> final_value_states(ret_value_states, this->num_heads, tgz, this->head_dim);
-    Matrix3D<float> final_key_states(ret_key_states, this->num_heads, tgz, this->head_dim);
+    Matrix3D<float> final_GQA_value_states(ret_value_states, this->num_kv_heads, tgz, this->head_dim);
+    Matrix3D<float> final_GQA_key_states(ret_key_states, this->num_kv_heads, tgz, this->head_dim);
     PROFILE_END(profile_name + "::cat_past_keys_values");
+
+    // Repeat KV
+    Matrix3D<float> final_value_states(final_value_states_arr, this->num_heads, tgz, this->head_dim);
+    Matrix3D<float> final_key_states(final_key_states_arr, this->num_heads, tgz, this->head_dim);
+    this->repeat(final_GQA_value_states, final_value_states, this->num_heads, this->num_kv_heads, tgz, this->head_dim);
+    this->repeat(final_GQA_key_states, final_key_states, this->num_heads, this->num_kv_heads, tgz, this->head_dim);
 
     // QK_BMM
     Matrix3D<float> attn_weights(attn_weights_arr, this->num_heads, sqlen, tgz);
@@ -389,7 +425,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
     PROFILE_END(profile_name + "::pv_bmm");
 
     Matrix3D<float> attn_output_transpose(attn_output_transpose_arr, 1, sqlen, this->num_heads * this->head_dim);
-    this->unshape(attn_output, attn_output_transpose, sqlen);
+    this->unshape(attn_output, attn_output_transpose, this->num_heads, this->head_dim, sqlen);
 
     // Output projection
     Matrix3D<float> attn_output_fp(attn_output_fp_arr, 1, sqlen, this->num_heads * this->head_dim);
@@ -399,7 +435,7 @@ struct Int4llamaAttention_output Int4llamaAttention::forward(std::string param_p
 
     // Output assignment
     output.attn_output = attn_output_fp;
-    output.past_key_value = {final_key_states, final_value_states};
+    output.past_key_value = {final_GQA_key_states, final_GQA_value_states};
 
     PROFILE_END(profile_name);
     return output;
