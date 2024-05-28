@@ -151,7 +151,7 @@ def main():
         print("Loading model...")
         if args.model.endswith(".pt"):
             if args.model.split("/")[-1].lower().startswith("mistral"):
-                if args.model.split("-")[2].lower() == "7b":
+                if args.model.split("-")[-5].lower() == "7b":
                     print("Loading Mistral 7B model...")
                     model = MistralForCausalLM.from_pretrained("/home/wweichen/workspace/models/llm/Mistral-7B-Instruct-v0.2", torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
             else:

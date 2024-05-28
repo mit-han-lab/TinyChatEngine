@@ -153,7 +153,7 @@ def main():
             if args.model.split("/")[-1].lower().startswith("llama3"):
                 if args.model.split("-")[2].lower() == "8b":
                     print("Loading LLaMA-3 8B model...")
-                    model = LlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/llm/Meta-Llama-3-8B-Instruct", torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+                    model = LlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/llm/Meta-Llama-3-8B-Instruct", torch_dtype=torch.float16, low_cpu_mem_usage=False, trust_remote_code=True, offload_state_dict=True)
             else:
                 print("Model not supported.")
                 return
