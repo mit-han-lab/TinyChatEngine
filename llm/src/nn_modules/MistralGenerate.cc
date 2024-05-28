@@ -161,7 +161,7 @@ std::string MistralGenerate(std::string param_path, void *model_ptr, int model_t
         break_cnt = 2;
 
         bool skip = false;
-        if (id == 27332) {  // token = #
+        if (id == 27332) {  // token = ###
             break_cnt = 0;
             skip = true;
         }

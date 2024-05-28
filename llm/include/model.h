@@ -62,7 +62,7 @@ struct model_config {
           mmproj_dim(mmproj_dim) {}
 };
 
-enum { OPT_125M, OPT_1_3B, OPT_6_7B, LLaMA_7B, LLaMA_13B, CodeLLaMA_7B, CodeLLaMA_13B, StarCoder_15_5B, LLaVA_7B, LLaVA_13B, VILA_2_7B, VILA_7B, VILA_13B, Clip_ViT_Large, Mistral_7B};
+enum { OPT_125M, OPT_1_3B, OPT_6_7B, LLaMA_7B, LLaMA_13B, CodeLLaMA_7B, CodeLLaMA_13B, StarCoder_15_5B, LLaVA_7B, LLaVA_13B, VILA_2_7B, VILA_7B, VILA_13B, Clip_ViT_Large, Mistral_7B, LLaMA_3_8B, VILA1_5_8B };
 enum { FP32, QINT8, INT4 };
 
 const struct model_config opt_6_7B(1, 32, 32, 2048, 4096, 16384, 50272, 1, 0);
@@ -80,6 +80,7 @@ const struct model_config vila_7B(1, 32, 32, 32, 2048, 4096, 11008, 32000, 1, 1e
 const struct model_config vila_13B(1, 40, 40, 40, 2048, 5120, 13824, 32000, 1, 1e-5);
 const struct model_config clip_vit_large(1, 16, 23, 2048, 1024, 4096, 0, 1, 0, 336, 14, 768, 4096); // llava's and vila's clip model uses only 23 layers out of 24
 const struct model_config mistral_7B(1, 32, 8, 32, 2048, 4096, 14336, 32000, 1, 1e-5);
+const struct model_config llama_3_8B(1, 32, 8, 32, 2048, 4096, 14336, 128256, 1, 1e-5);
 
 static struct model_config get_opt_model_config(int choise) {
     struct model_config ret;
@@ -128,6 +129,12 @@ static struct model_config get_opt_model_config(int choise) {
             break;
         case Mistral_7B:
             ret = mistral_7B;
+            break;
+        case LLaMA_3_8B:
+            ret = llama_3_8B;
+            break;
+        case VILA1_5_8B:
+            ret = vila_7B;
             break;
         default:
             throw("Unsupported model choice.");

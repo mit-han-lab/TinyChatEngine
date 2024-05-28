@@ -19,6 +19,7 @@ models/
 !llama_vocab.bin
 !starcoder_vocab.bin
 !mistral_vocab.bin
+!llama3_vocab.bin
 *.zip
 *.txt
 !requirements.txt
