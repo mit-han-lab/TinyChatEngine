@@ -205,11 +205,11 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
 
 ## Backend Support
 
-| Precision | x86<br /> (Intel/AMD CPU) | ARM<br /> (Apple M1/M2 & RPi) | Nvidia GPU | Apple GPU |
-| ------ | --------------------------- | --------- | --------- | --------- |
+| Precision | x86<br /> (Intel/AMD CPU) | ARM<br /> (Apple M1/M2 & RPi) | Nvidia GPU |
+| ------ | --------------------------- | --------- | --------- |
 | FP32   |  ✅    |    ✅  |         |
-| W4A16  |      |      |  ✅  | ✅
-| W4A32  |  ✅  |  ✅  |      | ✅
+| W4A16  |      |      |  ✅  |
+| W4A32  |  ✅  |  ✅  |      |
 | W4A8   |  ✅  |  ✅  |      |
 | W8A8   |  ✅  |  ✅  |      |
 
