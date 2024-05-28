@@ -71,7 +71,7 @@ class Int4llamaAttention {
 
    private:
     std::string profile_name = "Int4llamaAttention";
-    int embed_dim, num_heads, head_dim;
+    int embed_dim, num_heads, num_kv_heads, head_dim;
 #ifdef QM_CUDA
     Linear_half_int4 o_proj, qkv_proj;
     RotaryPosEmb_cuda rotary_pos_emb;
@@ -81,9 +81,11 @@ class Int4llamaAttention {
     Linear_FP_int4 k_proj, v_proj, q_proj, o_proj, qkv_proj;
     RotaryPosEmb rotary_pos_emb;
     BMM_F32T qk_bmm, pv_bmm;
-    void unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int sqlen);
-    void shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int sqlen);
+    void unshape(Matrix3D<float> shaped, Matrix3D<float> unshape, int num_heads, int head_dim, int sqlen);
+    void shape(Matrix3D<float> unshape, Matrix3D<float> shaped, int num_heads, int head_dim, int sqlen);
     void shape_qkv(Matrix3D<float> unshape, Matrix3D<float> shaped_q, Matrix3D<float> shaped_k,
                                           Matrix3D<float> shaped_v, int sqlen);
+    void repeat(Matrix3D<float> input, Matrix3D<float> output, int num_heads, int num_kv_heads, int sqlen, int head_dim);
+
 #endif
 };

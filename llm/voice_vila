@@ -4,4 +4,4 @@ image_path="$1"
 termvisage $image_path -w 75
 echo "============================================================================================================================="
 
-./chat -v VILA_7B INT4 5 $image_path
+./chat -v VILA1.5_8B INT4 5 $image_path
