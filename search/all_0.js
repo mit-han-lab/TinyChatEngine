@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['2021_20_3a_0',['2021 :',['../index.html#autotoc_md3',1,'LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):'],['../index.html#autotoc_md2',1,'VILA Demo on an Apple MacBook Pro (M1, 2021):']]]
+  ['3_208b_20instruct_20with_20tinychatengine_0',['Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine',['../index.html#autotoc_md12',1,'']]]
 ];

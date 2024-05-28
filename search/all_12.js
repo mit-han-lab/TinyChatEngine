@@ -1,7 +1,10 @@
 var searchData=
 [
-  ['related_20projects_0',['Related Projects',['../index.html#autotoc_md18',1,'']]],
-  ['reordering_1',['Device-specific int4 Weight Reordering',['../index.html#autotoc_md16',1,'']]],
-  ['rotaryposemb_2',['RotaryPosEmb',['../classRotaryPosEmb.html',1,'']]],
-  ['rtx_204070_20laptop_3a_3',['Code LLaMA Demo on an NVIDIA GeForce RTX 4070 laptop:',['../index.html#autotoc_md1',1,'']]]
+  ['smoothquant_20and_20awq_0',['LLM Compression: SmoothQuant and AWQ',['../index.html#autotoc_md5',1,'']]],
+  ['specific_20int4_20weight_20reordering_1',['Device-specific int4 Weight Reordering',['../index.html#autotoc_md16',1,'']]],
+  ['starcoder_5fvocab_2',['starcoder_vocab',['../structstarcoder__vocab.html',1,'']]],
+  ['stbi_5fio_5fcallbacks_3',['stbi_io_callbacks',['../structstbi__io__callbacks.html',1,'']]],
+  ['step_20by_20step_20to_20deploy_20llama_203_208b_20instruct_20with_20tinychatengine_4',['Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine',['../index.html#autotoc_md12',1,'']]],
+  ['step_20to_20deploy_20llama_203_208b_20instruct_20with_20tinychatengine_5',['Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine',['../index.html#autotoc_md12',1,'']]],
+  ['support_6',['Support',['../index.html#autotoc_md14',1,'Backend Support'],['../index.html#autotoc_md15',1,'Quantization and Model Support']]]
 ];

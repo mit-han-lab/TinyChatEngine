@@ -1,10 +1,12 @@
 var searchData=
 [
-  ['smoothquant_20and_20awq_0',['LLM Compression: SmoothQuant and AWQ',['../index.html#autotoc_md5',1,'']]],
-  ['specific_20int4_20weight_20reordering_1',['Device-specific int4 Weight Reordering',['../index.html#autotoc_md16',1,'']]],
-  ['starcoder_5fvocab_2',['starcoder_vocab',['../structstarcoder__vocab.html',1,'']]],
-  ['stbi_5fio_5fcallbacks_3',['stbi_io_callbacks',['../structstbi__io__callbacks.html',1,'']]],
-  ['step_20by_20step_20to_20deploy_20llama2_207b_20chat_20with_20tinychatengine_4',['Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine',['../index.html#autotoc_md12',1,'']]],
-  ['step_20to_20deploy_20llama2_207b_20chat_20with_20tinychatengine_5',['Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine',['../index.html#autotoc_md12',1,'']]],
-  ['support_6',['Support',['../index.html#autotoc_md14',1,'Backend Support'],['../index.html#autotoc_md15',1,'Quantization and Model Support']]]
+  ['thread_5fargs_0',['thread_args',['../structthread__args.html',1,'']]],
+  ['tinychatengine_1',['TinyChatEngine',['../index.html#autotoc_md13',1,'Deploy vision language model (VLM) chatbot with TinyChatEngine'],['../index.html#autotoc_md6',1,'LLM Inference Engine: TinyChatEngine'],['../index.html#autotoc_md12',1,'Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine'],['../index.html',1,'TinyChatEngine']]],
+  ['tinychatengine_3a_20on_20device_20llm_20vlm_20inference_20library_2',['TinyChatEngine: On-Device LLM/VLM Inference Library',['../index.html#autotoc_md0',1,'']]],
+  ['to_20deploy_20llama_203_208b_20instruct_20with_20tinychatengine_3',['Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine',['../index.html#autotoc_md12',1,'']]],
+  ['token_5fscore_4',['token_score',['../structllama__vocab_1_1token__score.html',1,'llama_vocab']]],
+  ['tokenindex_5',['TokenIndex',['../structTokenIndex.html',1,'']]],
+  ['tokenizer_6',['Tokenizer',['../structTokenizer.html',1,'']]],
+  ['transpose_5f1_5f2idx_5farg_7',['transpose_1_2idx_arg',['../structtranspose__1__2idx__arg.html',1,'']]],
+  ['transpose_5f1_5f2idx_5ffloat_5farg_8',['transpose_1_2idx_float_arg',['../structtranspose__1__2idx__float__arg.html',1,'']]]
 ];
