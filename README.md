@@ -124,18 +124,16 @@ Here, we provide step-by-step instructions to deploy Llama-3-8B-Instruct with Ti
   Using model: LLaMA_3_8B_Instruct
   Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq
   Loading model... Finished!
-  USER: Write a syllabus for Operating Systems.
-  ASSISTANT:
-  Of course! Here is a sample syllabus for a college-level course on operating systems:
-  Course Title: Introduction to Operating Systems
-  Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer.
-  Course Objectives:
-  * Understand the basic architecture of an operating system
-  * Learn about processes, threads, and process scheduling algorithms
-  * Study memory management techniques such as paging and segmentation
-  * Explore file systems including file organization, storage devices, and file access methods
-  * Investigate security mechanisms to protect against malicious software attacks
-  * Analyze input/output (I/O) operations and their handling by the operating system
+  USER: Write a syllabus for the parallel computing course.
+  ASSISTANT: Here is a sample syllabus for a parallel computing course:
+  
+  **Course Title:** Parallel Computing
+  **Instructor:** [Name]
+  **Description:** This course covers the fundamental concepts of parallel computing, including parallel algorithms, programming models, and architectures. Students will learn how to design, implement, and optimize parallel programs using various languages and frameworks.
+  **Prerequisites:** Basic knowledge of computer science and programming concepts.
+  **Course Objectives:**
+  * Understand the principles of parallelism and its applications
+  * Learn how to write parallel programs using different languages (e.g., OpenMP, MPI)
   ...
   ```
 
