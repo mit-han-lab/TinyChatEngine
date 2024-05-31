@@ -7,6 +7,7 @@ float q_buf[4096], k_buf[4096];
 void RotaryPosEmb::forward(Matrix3D<float> &query, Matrix3D<float> &key, int start_idx, int len) {
     PROFILE_START(profile_name);
     int num_heads = query.m_dim_x;
+    int num_kv_heads = key.m_dim_x;
     int head_embed = cos.m_dim_z;
     int max_sqlen = cos.m_dim_y;
 
@@ -25,21 +26,40 @@ void RotaryPosEmb::forward(Matrix3D<float> &query, Matrix3D<float> &key, int sta
     // rotate_half: torch.cat((-x2, x1), dim=-1)
 
     int half = head_embed / 2;
+    // Query
     for (int b = 0; b < num_heads; b++) {
         for (int i = 0; i < len; i++) {
             // first half
             for (int j = 0; j < half; j++) {
                 q_buf[j] = -1 * query(b, i, j + half);
-                k_buf[j] = -1 * key(b, i, j + half);
+                // k_buf[j] = -1 * key(b, i, j + half);
             }
             // second half
             for (int j = half; j < head_embed; j++) {
                 q_buf[j] = query(b, i, j - half);
-                k_buf[j] = key(b, i, j - half);
+                // k_buf[j] = key(b, i, j - half);
             }
 
             for (int j = 0; j < head_embed; j++) {
                 query(b, i, j) = ((query(b, i, j) * cos(0, i + start_idx, j)) + (q_buf[j] * sin(0, i + start_idx, j)));
+                // key(b, i, j) = ((key(b, i, j) * cos(0, i + start_idx, j)) + (k_buf[j] * sin(0, i + start_idx, j)));
+            }
+        }
+    }
+
+    // Key
+    for (int b = 0; b < num_kv_heads; b++) {
+        for (int i = 0; i < len; i++) {
+            // first half
+            for (int j = 0; j < half; j++) {
+                k_buf[j] = -1 * key(b, i, j + half);
+            }
+            // second half
+            for (int j = half; j < head_embed; j++) {
+                k_buf[j] = key(b, i, j - half);
+            }
+
+            for (int j = 0; j < head_embed; j++) {
                 key(b, i, j) = ((key(b, i, j) * cos(0, i + start_idx, j)) + (k_buf[j] * sin(0, i + start_idx, j)));
             }
         }

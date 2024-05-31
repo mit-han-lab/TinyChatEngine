@@ -124,7 +124,7 @@ def _quantize_model(
         layer_num = 24
     elif model_name_size == "OPT_6.7B":
         layer_num = 32
-    elif model_name_size.startswith("LLaMA_7B") or model_name_size.startswith("CodeLLaMA_7B") or model_name_size.startswith("LLaVA_7B") or model_name_size.startswith("VILA_7B") or model_name_size.startswith("VILA_2.7B"):
+    elif model_name_size.startswith("LLaMA_3_8B") or model_name_size.startswith("LLaMA_7B") or model_name_size.startswith("CodeLLaMA_7B") or model_name_size.startswith("LLaVA_7B") or model_name_size.startswith("VILA_7B") or model_name_size.startswith("VILA_2.7B"):
         layer_num = 32
     elif model_name_size.startswith("Mistral_7B"):
         layer_num = 32
@@ -134,8 +134,9 @@ def _quantize_model(
         layer_num = 40
     else:
         raise ValueError(
-            "Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_7B', 'LLaMA_13B', 'CodeLLaMA_7B', \
-            'CodeLLaMA_13B', 'StarCoder', 'LLaVA_7B', 'LLaVA_13B', 'VILA_2.7B', 'VILA_7B', 'VILA_13B', or 'Mistral_7B'."
+            "Invalid model name. Expected 'OPT_125m', 'OPT_1.3B', 'OPT_6.7B', 'LLaMA_3_8B', 'LLaMA_7B', 'LLaMA_13B', \
+            'CodeLLaMA_7B', 'CodeLLaMA_13B', 'StarCoder', 'LLaVA_7B', 'LLaVA_13B', 'VILA_2.7B', 'VILA_7B', 'VILA_13B', \
+            or 'Mistral_7B'."
         )
 
     # Check quantization method
@@ -291,7 +292,7 @@ def _quantize_model(
         elif model_name.startswith("VILA_2.7B"):
             embed_dim = 2560
             hidden_dim = 6912
-        elif model_name.startswith("Mistral_7B"):
+        elif model_name.startswith("Mistral_7B") or model_name.startswith("LLaMA_3_8B"):
             embed_dim = 4096
             hidden_dim = 14336
         else:
@@ -299,13 +300,17 @@ def _quantize_model(
         
         if model_name.startswith("LLaMA_7B") or model_name.startswith("LLaMA_13B") or model_name.startswith("LLaVA_7B") or model_name.startswith("LLaVA_13B") or model_name.startswith("VILA_2.7B") or model_name.startswith("Mistral_7B"):
             vocab_size = 32000
-        elif model_name.startswith("VILA_2.7B") or mmodel_name.startswith("VILA_7B") or model_name.startswith("VILA_13B"):
+        elif model_name.startswith("VILA_2.7B") or model_name.startswith("VILA_7B") or model_name.startswith("VILA_13B"):
             vocab_size = 32000
         elif model_name.startswith("CodeLLaMA_7B") or model_name.startswith("CodeLLaMA_13B"):
             vocab_size = 32016
+        elif model_name.startswith("LLaMA_3_8B"):
+            vocab_size = 128256
         
         if model_name.startswith("LLaVA_7B") or model_name.startswith("LLaVA_13B") or model_name.startswith("VILA_2.7B") or model_name.startswith("VILA_7B") or model_name.startswith("VILA_13B"):
             max_seq_len = 4096
+        elif model_name.startswith("LLaMA_3_8B"):
+            max_seq_len = 8192
         elif model_name.startswith("Mistral_7B"):
             max_seq_len = 32768
         else:

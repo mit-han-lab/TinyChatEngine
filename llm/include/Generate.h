@@ -112,4 +112,10 @@ std::string LLaVAGenerate(std::string llama_param_path, void* llama_model_ptr, s
                           std::string text, std::string img_path, const struct opt_params generation_config, std::string voc_path, bool interactive, 
                           bool voicechat, bool is_vila);
 
+std::string MistralGenerate(std::string param_path, void* model, int model_type, std::string text, const struct opt_params generation_config,
+                          std::string voc_path, bool interactive, bool voicechat);
+
+std::string LLaMA3Generate(std::string param_path, void* model, int model_type, std::string text, const struct opt_params generation_config,
+                          std::string voc_path, bool interactive, bool voicechat);
+
 #endif  // GENERATE_H

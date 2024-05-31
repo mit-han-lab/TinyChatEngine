@@ -12,8 +12,8 @@ std::map<std::string, int> model_config = {
     {"CodeLLaMA_7B_Instruct", CodeLLaMA_7B},                              {"CodeLLaMA_13B_Instruct", CodeLLaMA_13B}, 
     {"StarCoder", StarCoder_15_5B}, {"StarCoder_15.5B", StarCoder_15_5B}, {"LLaVA_7B", LLaVA_7B}, {"LLaVA_13B", LLaVA_13B}, 
     {"VILA_2.7B", VILA_2_7B},       {"VILA_7B", VILA_7B},                 {"VILA_13B", VILA_13B}, {"Clip_ViT_Large", Clip_ViT_Large}, 
-    {"Mistral_7B", Mistral_7B}
-    };
+    {"Mistral_7B", Mistral_7B},     {"LLaMA_3_8B_Instruct", LLaMA_3_8B},  {"VILA1.5_8B", VILA1_5_8B},
+};
 
 std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"},
                                                  {"OPT_1.3B", "models/OPT_1.3B"},
@@ -34,11 +34,21 @@ std::map<std::string, std::string> model_path = {{"OPT_125m", "models/OPT_125m"}
                                                  {"VILA_13B", "models/VILA_13B"},
                                                  {"Clip_ViT_Large", "models/CLIP_ViT_Large"},
                                                  {"Mistral_7B", "models/Mistral_7B"},
+                                                 {"LLaMA_3_8B_Instruct", "models/LLaMA_3_8B_Instruct"},
+                                                 {"VILA1.5_8B", "models/VILA1.5_8B"},
                                                  };
 
 std::map<std::string, int> data_format_list = {
     {"FP32", FP32}, {"INT8", QINT8}, {"INT4", INT4}, {"int4", INT4}, {"fp32", FP32},
 };
+
+bool isLLaMA3(std::string s) {
+    std::string LLaMA_prefix = "LLaMA_3";
+    if (s.substr(0, LLaMA_prefix.size()) == LLaMA_prefix)
+        return true;
+    else
+        return false;
+}
 
 bool isLLaMA(std::string s) {
     std::string LLaMA_prefix = "LLaMA";
@@ -68,6 +78,14 @@ bool isStarCoder(std::string s) {
 bool isLLaVA(std::string s) {
     std::string LLaVA_prefix = "LLaVA";
     if (s.substr(0, LLaVA_prefix.size()) == LLaVA_prefix)
+        return true;
+    else
+        return false;
+}
+
+bool isVILA1_5(std::string s) {
+    std::string VILA_prefix = "VILA1.5";
+    if (s.substr(0, VILA_prefix.size()) == VILA_prefix)
         return true;
     else
         return false;
@@ -139,7 +157,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::string target_model = "LLaMA2_7B_chat";
+    std::string target_model = "LLaMA_3_8B_Instruct";
     std::string target_data_format = "INT4";
     bool instruct = true;
     std::string img_path = "images/monalisa.jpg";
@@ -157,7 +175,7 @@ int main(int argc, char* argv[]) {
             NUM_THREAD = atoi(argv[3]);
         }
         if (argc == 5) {
-            if (isCodeLLaMA(target_model)) {
+            if (isCodeLLaMA(target_model) or isMistral(target_model)) {
                 instruct = convertToBool(argv[4]);
             }
             else if (isLLaVA(target_model) || isVILA(target_model)) {
@@ -222,7 +240,134 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (isLLaMA(target_model)) {
+    if (isLLaMA3(target_model)) {
+        int format_id = data_format_list[target_data_format];
+
+        // Voicechat instructions
+        if (use_voicechat) {
+            std::cout << "You are using the TinyVoiceChat." << std::endl;
+            std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
+            std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+            std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
+        }
+
+        // Load model
+        std::cout << "Loading model... " << std::flush;
+        int model_id = model_config[target_model];
+        std::string m_path = model_path[target_model];
+
+        #ifdef MODEL_PREFIX
+        m_path = MODEL_PREFIX + m_path;
+        #endif
+
+        struct opt_params generation_config;
+        generation_config.n_predict = 2048;
+        generation_config.repeat_penalty = 1.1f;
+        generation_config.temp = 0.7f;
+        generation_config.n_vocab = 128256;
+        generation_config.top_p = 0.9f;
+
+        bool first_prompt = true;
+
+        if (format_id == FP32) {
+            Fp32LlamaForCausalLM model = Fp32LlamaForCausalLM(m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl << std::endl;
+
+            // Get input from the user
+            while (true) {
+                std::string input;
+                if (use_voicechat) {
+                    // Set prompt color
+                    set_print_yellow();
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
+                    // set user input color
+                    set_print_red();
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
+                    // reset color
+                    set_print_reset();
+                } else {
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "USER: ";
+                    // set user input color
+                    set_print_red();
+                    std::getline(std::cin, input);
+                    // reset color
+                    set_print_reset();
+                }
+                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                    break;
+                if (instruct) {
+                    std::cout << "ASSISTANT: ";
+                }
+
+                if (first_prompt) {
+                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives detailed, helpful, and polite answers to the human's questions.\n\nHuman: " + input + "\nAssistant: ";
+                    first_prompt = false;
+                }
+                else {
+                    input = "Human: " + input + "\nAssistant: \n";
+                }
+
+                LLaMA3Generate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama3_vocab.bin", true, false);
+            }
+        } else if (format_id == INT4) {
+            m_path = "INT4/" + m_path;
+            Int4LlamaForCausalLM model = Int4LlamaForCausalLM(m_path, get_opt_model_config(model_id));
+            std::cout << "Finished!" << std::endl << std::endl;
+            
+            // Get input from the user
+            while (true) {
+                std::string input;
+                if (use_voicechat) {
+                    // Set prompt color
+                    set_print_yellow();
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
+                    // set user input color
+                    set_print_red();
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
+                    // reset color
+                    set_print_reset();
+                } else {
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "USER: ";
+                    // set user input color
+                    set_print_red();
+                    std::getline(std::cin, input);
+                    // reset color
+                    set_print_reset();
+                }
+                if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                    break;
+                if (instruct) {
+                    std::cout << "ASSISTANT: ";
+                }
+
+                if (first_prompt) {
+                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives detailed, helpful, and polite answers to the human's questions.\n\nHuman: " + input + "\nAssistant: ";
+                    first_prompt = false;
+                }
+                else {
+                    input = "Human: " + input + "\nAssistant: \n";
+                }
+                    
+                LLaMA3Generate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama3_vocab.bin", true, use_voicechat);
+            }
+        } else {
+            std::cout << std::endl;
+            std::cerr << "At this time, we only support FP32 and INT4 for LLaMA_3_8B_Instruct." << std::endl;
+        }
+    } else if (isLLaMA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
         // Voicechat instructions
@@ -308,7 +453,7 @@ int main(int argc, char* argv[]) {
 
                 if (!isCodeLLaMA(target_model)) {
                     if (first_prompt) {
-                        input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                        input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
                         first_prompt = false;
                     }
                     else {
@@ -371,7 +516,7 @@ int main(int argc, char* argv[]) {
 
                 if (!isCodeLLaMA(target_model)) {
                     if (first_prompt) {
-                        input = "A chat between a human and an assistant.\n\n### Human: " + input + "\n### Assistant: \n";
+                        input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
                         first_prompt = false;
                     }
                     else {
@@ -597,6 +742,158 @@ int main(int argc, char* argv[]) {
             std::cout << std::endl;
             std::cerr << "At this time, we only support FP32 and INT4 for LLaVA_7B." << std::endl;
         }
+    } else if (isVILA1_5(target_model)) {
+        int format_id = data_format_list[target_data_format];
+
+        // Voicechat instructions
+        if (use_voicechat) {
+            std::cout << "You are using the TinyVoiceChat." << std::endl;
+            std::cout << "*Usage instructions*" << std::endl;
+            std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
+            std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+            std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
+        }
+
+        // Load model
+        std::cout << "Loading model... " << std::flush;
+        std::string clip_m_path = model_path["Clip_ViT_Large"];
+        std::string llama_m_path = model_path[target_model];
+
+        int clip_model_id = model_config["Clip_ViT_Large"];
+        int llama_model_id = model_config[target_model];
+
+        #ifdef MODEL_PREFIX
+        llama_m_path = MODEL_PREFIX + llama_m_path;
+        #endif
+
+        struct opt_params generation_config;
+        generation_config.n_predict = 512;
+        generation_config.repeat_penalty = 1.1f;
+        generation_config.temp = 0.2f;
+        generation_config.n_vocab = 32000;
+        generation_config.top_p = 1.0f;
+
+        int prompt_iter = 0;
+
+        if (format_id == FP32) {
+            Fp32CLIPVisionTransformer clip_model = Fp32CLIPVisionTransformer(clip_m_path, get_opt_model_config(clip_model_id), true);
+            Fp32LlamaForCausalLM llama_model = Fp32LlamaForCausalLM(llama_m_path, get_opt_model_config(llama_model_id));
+
+            // Get input from the user
+            while (true) {
+                std::string input;
+                if (prompt_iter == 1) {
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "Finished!" << std::endl << std::endl;
+                    // reset color
+                    set_print_reset();
+                }
+                if (prompt_iter > 0) {
+                    if (use_voicechat) {
+                        // Set prompt color
+                        set_print_yellow();
+                        int result = std::system("./application/sts_utils/listen");
+                        std::ifstream in("tmpfile");
+                        // set user input color
+                        set_print_red();
+                        std::getline(in, input);
+                        result = std::system("rm tmpfile");
+                        (void)result;
+                        std::cout << input << std::endl;
+                        // reset color
+                        set_print_reset();
+                    } else {
+                        // Set prompt color
+                        set_print_yellow();
+                        std::cout << "USER: ";
+                        // set user input color
+                        set_print_red();
+                        std::getline(std::cin, input);
+                        // reset color
+                        set_print_reset();
+                    }
+                    if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                        break;
+                    std::cout << "ASSISTANT: ";
+                }
+
+                if (prompt_iter == 0) {
+                    input = "This is a chat between a user and an assistant.\n\n### USER: ";
+                    prompt_iter += 1;
+                }
+                else if (prompt_iter == 1) {
+                    input = "\n" + input + "\n### ASSISTANT:";
+                    prompt_iter += 1;
+                }
+                else {
+                    input = "### USER: " + input + "\n### ASSISTANT: \n";
+                }
+
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, VILA_FP32, input, img_path, generation_config, "models/llama_vocab.bin", true, false, true);
+            }
+        } else if (format_id == INT4) {
+            Fp32CLIPVisionTransformer clip_model = Fp32CLIPVisionTransformer(clip_m_path, get_opt_model_config(clip_model_id), true);
+            llama_m_path = "INT4/" + llama_m_path;
+            Int4LlamaForCausalLM llama_model = Int4LlamaForCausalLM(llama_m_path, get_opt_model_config(llama_model_id));
+
+            // Get input from the user
+            while (true) {
+                if (prompt_iter == 1) {
+                    // Set prompt color
+                    set_print_yellow();
+                    std::cout << "Finished!" << std::endl << std::endl;
+                    // reset color
+                    set_print_reset();
+                }
+                std::string input;
+                if (prompt_iter > 0) {
+                    if (use_voicechat) {
+                        // Set prompt color
+                        set_print_yellow();
+                        int result = std::system("./application/sts_utils/listen");
+                        std::ifstream in("tmpfile");
+                        // set user input color
+                        set_print_red();
+                        std::getline(in, input);
+                        result = std::system("rm tmpfile");
+                        (void)result;
+                        std::cout << input << std::endl;
+                        // reset color
+                        set_print_reset();
+                    } else {
+                        // Set prompt color
+                        set_print_yellow();
+                        std::cout << "USER: ";
+                        // set user input color
+                        set_print_red();
+                        std::getline(std::cin, input);
+                        // reset color
+                        set_print_reset();
+                    }
+                    if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
+                        break;
+                    std::cout << "ASSISTANT: ";
+                }
+
+                if (prompt_iter == 0) {
+                    input = "This is a chat between a user and an assistant.\n\n### USER: ";
+                    prompt_iter += 1;
+                }
+                else if (prompt_iter == 1) {
+                    input = "\n" + input + "\n### ASSISTANT:";
+                    prompt_iter += 1;
+                }
+                else {
+                    input = "### USER: " + input + "\n### ASSISTANT: \n";
+                }
+
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, VILA_INT4, input, img_path, generation_config, "models/llama_vocab.bin", true, use_voicechat, true);
+            }
+        } else {
+            std::cout << std::endl;
+            std::cerr << "At this time, we only support FP32 and INT4 for VILA1.5_8B." << std::endl;
+        }
     } else if (isVILA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
@@ -810,19 +1107,27 @@ int main(int argc, char* argv[]) {
                 }
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
+
+                std::cout << "ASSISTANT: ";
                 if (instruct) {
-                    std::cout << "ASSISTANT: ";
+                    if (first_prompt) {
+                        input = "<s>[INST] " + input + " [/INST] ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = " </s> <s>[INST] " + input + " [/INST] ";
+                    }
+                } else {
+                    if (first_prompt) {
+                        input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = "### Human: " + input + "\n### Assistant: \n";
+                    }
                 }
 
-                if (first_prompt) {
-                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
-                    first_prompt = false;
-                }
-                else {
-                    input = "### Human: " + input + "\n### Assistant: \n";
-                }
-
-                LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false);
+                MistralGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/mistral_vocab.bin", true, false);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -857,19 +1162,27 @@ int main(int argc, char* argv[]) {
                 }
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
+
+                std::cout << "ASSISTANT: ";
                 if (instruct) {
-                    std::cout << "ASSISTANT: ";
+                    if (first_prompt) {
+                        input = "<s>[INST] " + input + " [/INST] ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = " </s> <s>[INST] " + input + " [/INST] ";
+                    }
+                } else {
+                    if (first_prompt) {
+                        input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
+                        first_prompt = false;
+                    }
+                    else {
+                        input = "### Human: " + input + "\n### Assistant: \n";
+                    }
                 }
 
-                if (first_prompt) {
-                    input = "A chat between a curious human (\"Human\") and an artificial intelligence assistant (\"Assistant\"). The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n### Human: " + input + "\n### Assistant: ";
-                    first_prompt = false;
-                }
-                else {
-                    input = "### Human: " + input + "\n### Assistant: \n";
-                }
-
-                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, use_voicechat);
+                MistralGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/mistral_vocab.bin", true, use_voicechat);
             }
         } else {
             std::cout << std::endl;

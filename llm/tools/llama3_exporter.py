@@ -1,10 +1,10 @@
-"""Implementation of exporting Mistral PyTorch model to TinyChatEngine format.
+"""Implementation of exporting LLaMA-3 PyTorch model to TinyChatEngine format.
 
 Usage:
-   python mistral_exporter.py <path of hugging face model checkpoint> <output dir>
+   python llama3_exporter.py <path of hugging face model checkpoint> <output dir>
 
 Example commandline:
-   python tools/mistral_exporter.py --model models/mistral-7b-v0.2 --output models/Mistral_7B
+   python tools/llama3_exporter.py --model models/Meta-Llama-3-8B-Instruct --output models/LLaMA_3_8B_Instruct
 """
 import argparse
 import math
@@ -12,7 +12,7 @@ import os
 import struct
 
 import torch
-from transformers import MistralForCausalLM
+from transformers import LlamaForCausalLM
 import numpy as np
 
 n_head = 32
@@ -28,7 +28,7 @@ def _export_model(model, prefix):
     os.makedirs(outpath, exist_ok=True)
     with open(os.path.join(f"{outpath}", "lm_head.bin"), "wb") as f:
         f.write(model.lm_head._parameters["weight"].cpu().float().numpy().tobytes())
-    _export_mistral_model(model.model, os.path.join(f"{outpath}", "decoder"))
+    _export_llama3_model(model.model, os.path.join(f"{outpath}", "decoder"))
 
 
 def _export_embed_tokens(embed_tokens, prefix):
@@ -38,29 +38,29 @@ def _export_embed_tokens(embed_tokens, prefix):
         f.write(embed_tokens.weight.cpu().float().numpy().tobytes())
 
 
-def _export_mistral_model(model, prefix):
+def _export_llama3_model(model, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
 
     _export_embed_tokens(model.embed_tokens, os.path.join(outpath, "embed_tokens"))
-    _export_MistralRMSNorm(model.norm, os.path.join(outpath, "norm"))
+    _export_LlamaRMSNorm(model.norm, os.path.join(outpath, "norm"))
     for idx, layer in enumerate(model.layers):
-        _export_mistral_layer(layer, os.path.join(outpath, f"layer{idx}"))
+        _export_llama3_layer(layer, os.path.join(outpath, f"layer{idx}"))
 
 
-def _export_MistralRMSNorm(op, prefix):
+def _export_LlamaRMSNorm(op, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
     with open(os.path.join(f"{outpath}", "weight.bin"), "wb") as f:
         f.write(op.weight.cpu().float().numpy().tobytes())
 
 
-def _export_mistral_layer(layer, prefix):
+def _export_llama3_layer(layer, prefix):
     outpath = prefix
     os.makedirs(outpath, exist_ok=True)
     _export_attention_params(layer.self_attn, os.path.join(outpath, "self_attn"))
-    _export_MistralRMSNorm(layer.input_layernorm, os.path.join(outpath, "input_layernorm"))
-    _export_MistralRMSNorm(
+    _export_LlamaRMSNorm(layer.input_layernorm, os.path.join(outpath, "input_layernorm"))
+    _export_LlamaRMSNorm(
         layer.post_attention_layernorm,
         os.path.join(outpath, "post_attention_layernorm"),
     )
@@ -131,10 +131,10 @@ def _export_attention_params(attn, prefix: str):
 
 
 def main():
-    """Export a Mistral model to TinyChatEngine format."""
-    parser = argparse.ArgumentParser(description="export Mistral pytorch model to TinyChatEngine format.")
+    """Export a LLaMA-3 model to TinyChatEngine format."""
+    parser = argparse.ArgumentParser(description="export LLaMA-3 pytorch model to TinyChatEngine format.")
     parser.add_argument("--hf_path", type=str, help="Path to huggingface model hub", default=None)
-    parser.add_argument("--model", type=str, help="Path of the Mistral torch model")
+    parser.add_argument("--model", type=str, help="Path of the LLaMA-3 torch model")
     parser.add_argument("--output", type=str, help="Output directory of the exported model")
 
     args = parser.parse_args()
@@ -150,23 +150,23 @@ def main():
 
         print("Loading model...")
         if args.model.endswith(".pt"):
-            if args.model.split("/")[-1].lower().startswith("mistral"):
-                if args.model.split("-")[-5].lower() == "7b":
-                    print("Loading Mistral 7B model...")
-                    model = MistralForCausalLM.from_pretrained("/home/wweichen/workspace/models/llm/Mistral-7B-Instruct-v0.2", torch_dtype=torch.float16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+            if args.model.split("/")[-1].lower().startswith("llama3"):
+                if args.model.split("-")[2].lower() == "8b":
+                    print("Loading LLaMA-3 8B model...")
+                    model = LlamaForCausalLM.from_pretrained("/home/wweichen/workspace/models/llm/Meta-Llama-3-8B-Instruct", torch_dtype=torch.float16, low_cpu_mem_usage=False, trust_remote_code=True, offload_state_dict=True)
             else:
                 print("Model not supported.")
                 return
             
             model.load_state_dict(torch.load(args.model))
         else:
-            model = MistralForCausalLM.from_pretrained(args.model, torch_dtype=torch.bfloat16, low_cpu_mem_usage=False, trust_remote_code=True, offload_state_dict=True)
+            model = LlamaForCausalLM.from_pretrained(args.model, torch_dtype=torch.bfloat16, low_cpu_mem_usage=False, trust_remote_code=True, offload_state_dict=True)
     else:
-        model = MistralForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
+        model = LlamaForCausalLM.from_pretrained(args.hf_path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, offload_state_dict=True)
 
-    print("Start exporting Mistral model...")
+    print("Start exporting LLaMA-3 model...")
     _export_model(model, args.output)
-    print("Finished exporting Mistral model.")
+    print("Finished exporting LLaMA-3 model.")
 
 
 if __name__ == "__main__":

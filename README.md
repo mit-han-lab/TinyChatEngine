@@ -1,20 +1,20 @@
 ![tinychat_logo](assets/figures/tinychat_logo.png)
 
-# TinyChatEngine: On-Device LLM Inference Library
+# TinyChatEngine: On-Device LLM/VLM Inference Library
 
-Running large language models (LLMs) on the edge is useful: copilot services (coding, office, smart reply) on laptops, cars, robots, and more. Users can get instant responses  with better privacy, as the data is local.
+Running large language models (LLMs) and visual language models (VLMs) on the edge is useful: copilot services (coding, office, smart reply) on laptops, cars, robots, and more. Users can get instant responses  with better privacy, as the data is local.
 
 This is enabled by LLM model compression technique: [SmoothQuant](https://github.com/mit-han-lab/smoothquant) and [AWQ (Activation-aware Weight Quantization)](https://github.com/mit-han-lab/llm-awq), co-designed with TinyChatEngine that implements the compressed low-precision model. 
 
 Feel free to check out our [slides](assets/slides.pdf) for more details!
 
-### Code LLaMA Demo on an NVIDIA GeForce RTX 4070 laptop:
+### Code LLaMA Demo on NVIDIA GeForce RTX 4070 laptop:
 ![coding_demo_gpu](assets/figures/coding_demo_gpu.gif)
 
-### VILA Demo on an Apple MacBook Pro (M1, 2021):
+### VILA Demo on Apple MacBook M1 Pro:
 ![vlm_demo_m1](assets/figures/vlm_demo_m1.gif)
 
-### LLaMA Chat Demo on an Apple MacBook Pro (M1, 2021):
+### LLaMA Chat Demo on Apple MacBook M1 Pro:
 ![chat_demo_m1](assets/figures/chat_demo_m1.gif)
 
 
@@ -37,7 +37,10 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 
 ## News
 
-- **(2024/02)** 🔥We extended the support for vision language models (VLM). Feel free to try running [VILA](#deploy-vision-language-model-vlm-chatbot-with-tinychatengine) on your edge device.
+- **(2024/05)** 🏆 AWQ and TinyChat received the **Best Paper Award** at **MLSys 2024**. 🎉
+- **(2024/05)** 🔥 We released the support for the **Llama-3** model family! Check out our example [here](#step-by-step-to-deploy-llama-3-8b-instruct-with-tinychatengine).
+- **(2024/02)** 🔥AWQ and TinyChat has been accepted to **MLSys 2024**!
+- **(2024/02)** 🔥We extended the support for **vision language models (VLM)**. Feel free to try running **[VILA](#deploy-vision-language-model-vlm-chatbot-with-tinychatengine)** on your edge device.
 <!-- - **(2024/01)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and follow the [instructions](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to deploy it on your device! -->
 - **(2023/10)** We extended the support for the coding assistant [Code Llama](#download-and-deploy-models-from-our-model-zoo). Feel free to check out.
 - **(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability >= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!
@@ -77,9 +80,9 @@ pacman -S --needed base-devel mingw-w64-x86_64-toolchain make unzip git
 - Follow the instructions below and use x64 Native Tools Command Prompt from Visual Studio to compile TinyChatEngine. 
 
 
-## Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine
+## Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine
 
-Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyChatEngine from scratch.
+Here, we provide step-by-step instructions to deploy Llama-3-8B-Instruct with TinyChatEngine from scratch.
 
 - Download the repo.
   ```bash
@@ -94,17 +97,17 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
     conda activate TinyChatEngine
     pip install -r requirements.txt
     ```
-- Download the quantized LLaMA2-7B-chat model from our model zoo.
+- Download the quantized Llama model from our model zoo.
   ```bash
   cd llm
   ```
   - On an x86 device (e.g., Intel/AMD laptop)
     ```bash
-    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_x86
+    python tools/download_model.py --model LLaMA_3_8B_Instruct_awq_int4 --QM QM_x86
     ```
   - On an ARM device (e.g., M1/M2 Macbook, Raspberry Pi)
     ```bash
-    python tools/download_model.py --model LLaMA2_7B_chat_awq_int4 --QM QM_ARM
+    python tools/download_model.py --model LLaMA_3_8B_Instruct_awq_int4 --QM QM_ARM
     ```
   - On a CUDA device (e.g., Jetson AGX Orin, PC/Server)
     ```bash
@@ -118,30 +121,28 @@ Here, we provide step-by-step instructions to deploy LLaMA2-7B-chat with TinyCha
   ./chat
 
   TinyChatEngine by MIT HAN Lab: https://github.com/mit-han-lab/TinyChatEngine
-  Using model: LLaMA2_7B_chat
+  Using model: LLaMA_3_8B_Instruct
   Using AWQ for 4bit quantization: https://github.com/mit-han-lab/llm-awq
   Loading model... Finished!
-  USER: Write a syllabus for Operating Systems.
-  ASSISTANT:
-  Of course! Here is a sample syllabus for a college-level course on operating systems:
-  Course Title: Introduction to Operating Systems
-  Course Description: This course provides an overview of the fundamental concepts and techniques used in modern operating systems, including process management, memory management, file systems, security, and I/O devices. Students will learn how these components work together to provide a platform for running applications and programs on a computer.
-  Course Objectives:
-  * Understand the basic architecture of an operating system
-  * Learn about processes, threads, and process scheduling algorithms
-  * Study memory management techniques such as paging and segmentation
-  * Explore file systems including file organization, storage devices, and file access methods
-  * Investigate security mechanisms to protect against malicious software attacks
-  * Analyze input/output (I/O) operations and their handling by the operating system
+  USER: Write a syllabus for the parallel computing course.
+  ASSISTANT: Here is a sample syllabus for a parallel computing course:
+  
+  **Course Title:** Parallel Computing
+  **Instructor:** [Name]
+  **Description:** This course covers the fundamental concepts of parallel computing, including parallel algorithms, programming models, and architectures. Students will learn how to design, implement, and optimize parallel programs using various languages and frameworks.
+  **Prerequisites:** Basic knowledge of computer science and programming concepts.
+  **Course Objectives:**
+  * Understand the principles of parallelism and its applications
+  * Learn how to write parallel programs using different languages (e.g., OpenMP, MPI)
   ...
   ```
 
 
 <!-- ## Deploy speech-to-speech chatbot with TinyChatEngine [[Demo]](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC)
 
-TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Here, we provide very easy-to-follow instructions to deploy speech-to-speech chatbot (LLaMA2-7B-chat) with TinyChatEngine. 
+TinyChatEngine offers versatile capabilities suitable for various applications. Additionally, we introduce a sophisticated voice chatbot. Here, we provide very easy-to-follow instructions to deploy speech-to-speech chatbot (Llama-3-8B-Instruct) with TinyChatEngine. 
 
-- Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine](#step-by-step-to-deploy-llama2-7b-chat-with-tinychatengine).
+- Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine](#step-by-step-to-deploy-llama-3-8b-instruct-with-tinychatengine).
 
 - Run the shell script to set up the environment for speech-to-speech chatbot.
   ```bash
@@ -162,7 +163,7 @@ TinyChatEngine offers versatile capabilities suitable for various applications. 
 <!-- TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated text/voice chatbot for VLM. Here, we provide easy-to-follow instructions to deploy vision language model chatbot (VILA-7B) with TinyChatEngine. We recommend using M1/M2 MacBooks for this VLM feature. -->
 TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated chatbot for VLM. Here, we provide easy-to-follow instructions to deploy vision language model chatbot (VILA-7B) with TinyChatEngine. We recommend using M1/M2 MacBooks for this VLM feature.
 
-- Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy LLaMA2-7B-chat with TinyChatEngine](#step-by-step-to-deploy-llama2-7b-chat-with-tinychatengine).
+- Follow the instructions above to setup the basic environment, i.e., [Prerequisites](#prerequisites) and [Step-by-step to Deploy Llama-3-8B-Instruct with TinyChatEngine](#step-by-step-to-deploy-llama-3-8b-instruct-with-tinychatengine).
 
 - To demonstrate images in the terminal, please download and install the following toolkit.
   - Install [termvisage](https://github.com/AnonymouX47/termvisage).
@@ -204,11 +205,11 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
 
 ## Backend Support
 
-| Precision | x86<br /> (Intel/AMD CPU) | ARM<br /> (Apple M1/M2 & RPi) | Nvidia GPU | Apple GPU |
-| ------ | --------------------------- | --------- | --------- | --------- |
+| Precision | x86<br /> (Intel/AMD CPU) | ARM<br /> (Apple M1/M2 & RPi) | Nvidia GPU |
+| ------ | --------------------------- | --------- | --------- |
 | FP32   |  ✅    |    ✅  |         |
-| W4A16  |      |      |  ✅  | ✅
-| W4A32  |  ✅  |  ✅  |      | ✅
+| W4A16  |      |      |  ✅  |
+| W4A32  |  ✅  |  ✅  |      |
 | W4A8   |  ✅  |  ✅  |      |
 | W8A8   |  ✅  |  ✅  |      |
 
@@ -247,6 +248,22 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
         </tr>
     </thead>
     <tbody>
+        <tr>
+            <td rowspan="2">LLaMA_3_8B_Instruct</td>
+            <td>fp32</td>
+            <td>LLaMA_3_8B_Instruct_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td> int4</td>
+            <td> LLaMA_3_8B_Instruct_awq_int4</td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+            <td>  </td>
+        </tr>
         <tr>
             <td rowspan="2">LLaMA2_13B_chat</td>
             <td> fp32</td>
@@ -326,6 +343,22 @@ We offer a selection of models that have been tested with TinyChatEngine. These 
             <td> ✅ </td>
             <td> ✅ </td>
             <td> ✅ </td>
+        </tr>
+        <tr>
+            <td rowspan="2">Mistral-7B-Instruct-v0.2</td>
+            <td> fp32</td>
+            <td> Mistral_7B_v0.2_Instruct_fp32 </td>
+            <td> ✅  </td>
+            <td> ✅  </td>
+            <td>  </td>
+        </tr>
+        <tr>
+            <!-- No data for the first column here because it's merged with data1 -->
+            <td>int4</td>
+            <td>Mistral_7B_v0.2_Instruct_awq_int4</td>
+            <td> ✅ </td>
+            <td> ✅ </td>
+            <td>  </td>
         </tr>
         <tr>
             <td rowspan="2">VILA-7B</td>
