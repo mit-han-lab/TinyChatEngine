@@ -105,6 +105,19 @@ bool convertToBool(const char* str) {
 int NUM_THREAD = 5;
 
 int main(int argc, char* argv[]) {
+    bool concurrent = false;
+
+   // Check for -concurrent argument only if -v is passed
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--concurrent") == 0 || strcmp(argv[i], "-c") == 0) {            
+            concurrent = true;
+            for (int j = i; j < argc - 1; ++j) {
+                argv[j] = argv[j + 1];
+            }
+            --argc;
+            break;
+        }
+    }
 
     std::string target_model = "LLaMA2_7B_chat";
     std::string target_data_format = "INT4";
@@ -192,6 +205,13 @@ int main(int argc, char* argv[]) {
     if (isLLaMA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
+        // Voicechat instructions
+        std::cout << "You are using the TinyVoiceChat." << std::endl;
+        std::cout << "*Usage instructions*" << std::endl;
+        std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
+        std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+        std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
+
         // Load model
         std::cout << "Loading model... " << std::flush;
         int model_id = model_config[target_model];
@@ -223,12 +243,17 @@ int main(int argc, char* argv[]) {
                 std::string input;
                 // Set prompt color
                 set_print_yellow();
-                std::cout << "USER: ";
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
                 // set user input color
                 set_print_red();
-                std::getline(std::cin, input);
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
                 // reset color
                 set_print_reset();
+
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
                 if (instruct) {
@@ -259,7 +284,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-                LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, false, false);
+                LLaMAGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama_vocab.bin", true, true, concurrent);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -271,12 +296,17 @@ int main(int argc, char* argv[]) {
                 std::string input;
                 // Set prompt color
                 set_print_yellow();
-                std::cout << "USER: ";
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
                 // set user input color
                 set_print_red();
-                std::getline(std::cin, input);
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
                 // reset color
                 set_print_reset();
+ 
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                     break;
                 if (instruct) {
@@ -306,7 +336,7 @@ int main(int argc, char* argv[]) {
                         input = "### Human: " + input + "\n### Assistant: \n";
                     }
                 }
-                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false, false);
+                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, true, concurrent);
             }
         } else {
             std::cout << std::endl;
@@ -377,6 +407,13 @@ int main(int argc, char* argv[]) {
     } else if (isLLaVA(target_model)) {
         int format_id = data_format_list[target_data_format];
 
+        // Voicechat instructions
+        std::cout << "You are using the TinyVoiceChat." << std::endl;
+        std::cout << "*Usage instructions*" << std::endl;
+        std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
+        std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+        std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
+
         // Load model
         std::cout << "Loading model... " << std::flush;
         std::string clip_m_path = model_path["Clip_ViT_Large"];
@@ -414,10 +451,14 @@ int main(int argc, char* argv[]) {
                 if (prompt_iter > 0) {
                     // Set prompt color
                     set_print_yellow();
-                    std::cout << "USER: ";
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
                     // set user input color
                     set_print_red();
-                    std::getline(std::cin, input);
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
                     // reset color
                     set_print_reset();
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
@@ -457,10 +498,14 @@ int main(int argc, char* argv[]) {
                 if (prompt_iter > 0) {
                     // Set prompt color
                     set_print_yellow();
-                    std::cout << "USER: ";
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
                     // set user input color
                     set_print_red();
-                    std::getline(std::cin, input);
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
                     // reset color
                     set_print_reset();
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
@@ -480,7 +525,7 @@ int main(int argc, char* argv[]) {
                     input = "### USER: " + input + "\n### ASSISTANT: \n";
                 }
 
-                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_INT4, input, img_path, generation_config, "models/llama_vocab.bin", true, false, false);
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, LLaVA_INT4, input, img_path, generation_config, "models/llama_vocab.bin", true, true, false);
             }
         } else {
             std::cout << std::endl;
@@ -488,6 +533,13 @@ int main(int argc, char* argv[]) {
         }
     } else if (isVILA(target_model)) {
         int format_id = data_format_list[target_data_format];
+
+        // Voicechat instructions
+        std::cout << "You are using the TinyVoiceChat." << std::endl;
+        std::cout << "*Usage instructions*" << std::endl;
+        std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
+        std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+        std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
 
         // Load model
         std::cout << "Loading model... " << std::flush;
@@ -527,10 +579,14 @@ int main(int argc, char* argv[]) {
                 if (prompt_iter > 0) {
                     // Set prompt color
                     set_print_yellow();
-                    std::cout << "USER: ";
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
                     // set user input color
                     set_print_red();
-                    std::getline(std::cin, input);
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
                     // reset color
                     set_print_reset();
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
@@ -550,7 +606,7 @@ int main(int argc, char* argv[]) {
                     input = "### USER: " + input + "\n### ASSISTANT: \n";
                 }
 
-                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, VILA_FP32, input, img_path, generation_config, "models/llama_vocab.bin", true, false, false);
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, VILA_FP32, input, img_path, generation_config, "models/llama_vocab.bin", true, false, true);
             }
         } else if (format_id == INT4) {
             Fp32CLIPVisionTransformer clip_model = Fp32CLIPVisionTransformer(clip_m_path, get_opt_model_config(clip_model_id), true);
@@ -570,12 +626,17 @@ int main(int argc, char* argv[]) {
                 if (prompt_iter > 0) {
                     // Set prompt color
                     set_print_yellow();
-                    std::cout << "USER: ";
+                    int result = std::system("./application/sts_utils/listen");
+                    std::ifstream in("tmpfile");
                     // set user input color
                     set_print_red();
-                    std::getline(std::cin, input);
+                    std::getline(in, input);
+                    result = std::system("rm tmpfile");
+                    (void)result;
+                    std::cout << input << std::endl;
                     // reset color
                     set_print_reset();
+
                     if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
                         break;
                     std::cout << "ASSISTANT: ";
@@ -593,7 +654,7 @@ int main(int argc, char* argv[]) {
                     input = "### USER: " + input + "\n### ASSISTANT: \n";
                 }
 
-                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, VILA_INT4, input, img_path, generation_config, "models/llama_vocab.bin", true, false, false);
+                LLaVAGenerate(llama_m_path, &llama_model, clip_m_path, &clip_model, VILA_INT4, input, img_path, generation_config, "models/llama_vocab.bin", true, true, true);
             }
         } else {
             std::cout << std::endl;
@@ -601,6 +662,13 @@ int main(int argc, char* argv[]) {
         }
     } else if (isMistral(target_model)) {
         int format_id = data_format_list[target_data_format];
+
+        // Voicechat instructions
+        std::cout << "You are using the TinyVoiceChat." << std::endl;
+        std::cout << "*Usage instructions*" << std::endl;
+        std::cout << "- Please use this mode in a quiet environment to have a better user experience and avoid speech misdetection." << std::endl;
+        std::cout << "- Please start speaking after \"USER: [Start speaking]\" shows up." << std::endl;
+        std::cout << "- Please press `Ctrl+C` multiple times to exit the program." << std::endl << std::endl;
 
         // Load model
         std::cout << "Loading model... " << std::flush;
@@ -628,10 +696,14 @@ int main(int argc, char* argv[]) {
                 std::string input;
                 // Set prompt color
                 set_print_yellow();
-                std::cout << "USER: ";
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
                 // set user input color
                 set_print_red();
-                std::getline(std::cin, input);
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
                 // reset color
                 set_print_reset();
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
@@ -660,10 +732,14 @@ int main(int argc, char* argv[]) {
                 std::string input;
                 // Set prompt color
                 set_print_yellow();
-                std::cout << "USER: ";
+                int result = std::system("./application/sts_utils/listen");
+                std::ifstream in("tmpfile");
                 // set user input color
                 set_print_red();
-                std::getline(std::cin, input);
+                std::getline(in, input);
+                result = std::system("rm tmpfile");
+                (void)result;
+                std::cout << input << std::endl;
                 // reset color
                 set_print_reset();
                 if (input == "quit" || input == "Quit" || input == "Quit." || input == "quit.")
@@ -680,7 +756,7 @@ int main(int argc, char* argv[]) {
                     input = "### Human: " + input + "\n### Assistant: \n";
                 }
 
-                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, false, false);
+                LLaMAGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama_vocab.bin", true, true, true);
             }
         } else {
             std::cout << std::endl;
@@ -713,10 +789,14 @@ int main(int argc, char* argv[]) {
             std::string input;
             // Set prompt color
             set_print_yellow();
-            std::cout << "USER: ";
+            int result = std::system("./application/sts_utils/listen");
+            std::ifstream in("tmpfile");
             // set user input color
             set_print_red();
-            std::getline(std::cin, input);
+            std::getline(in, input);
+            result = std::system("rm tmpfile");
+            (void)result;
+            std::cout << input << std::endl;
             // reset color
             set_print_reset();
             std::vector<int> input_ids = encoder.encode(input);
@@ -724,7 +804,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, false, false);
+                OPTGenerate(&model, OPT_INT8, input_ids, generation_config, &encoder, true, true, concurrent);
         } else if (format_id == FP32) {
             Fp32OPTForCausalLM model = Fp32OPTForCausalLM(m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl << std::endl;
@@ -733,10 +813,14 @@ int main(int argc, char* argv[]) {
             std::string input;
             // Set prompt color
             set_print_yellow();
-            std::cout << "USER: ";
+            int result = std::system("./application/sts_utils/listen");
+            std::ifstream in("tmpfile");
             // set user input color
             set_print_red();
-            std::getline(std::cin, input);
+            std::getline(in, input);
+            result = std::system("rm tmpfile");
+            (void)result;
+            std::cout << input << std::endl;
             // reset color
             set_print_reset();
             std::vector<int> input_ids = encoder.encode(input);
@@ -744,7 +828,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, false, false);
+                OPTGenerate(&model, OPT_FP32, input_ids, generation_config, &encoder, true, true, concurrent);
         } else if (format_id == INT4) {
             Int4OPTForCausalLM model = Int4OPTForCausalLM("INT4/" + m_path, get_opt_model_config(model_id));
             std::cout << "Finished!" << std::endl << std::endl;
@@ -753,10 +837,14 @@ int main(int argc, char* argv[]) {
             std::string input;
             // Set prompt color
             set_print_yellow();
-            std::cout << "USER: ";
+            int result = std::system("./application/sts_utils/listen");
+            std::ifstream in("tmpfile");
             // set user input color
             set_print_red();
-            std::getline(std::cin, input);
+            std::getline(in, input);
+            result = std::system("rm tmpfile");
+            (void)result;
+            std::cout << input << std::endl;
             // reset color
             set_print_reset();
             
@@ -765,7 +853,7 @@ int main(int argc, char* argv[]) {
 
             // Generate
             std::vector<int> generated_ids =
-                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, false, false);
+                OPTGenerate(&model, OPT_INT4, input_ids, generation_config, &encoder, true, true, concurrent);
         }
 #endif  // QN_CUDA
     }

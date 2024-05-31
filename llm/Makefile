@@ -9,6 +9,7 @@ DEC_SHARED_MEM ?= 0
 # customize define
 DEFINE =
 CHATNAME = chat
+VOICECHATNAME = voicechat
 CXXFLAGS += $(DEFINE)
 
 # Executable and source files
@@ -16,7 +17,9 @@ TEST_TARGET_GENERAL = test_Int8OPTAttention test_Int8OPTDecoderLayer test_Int8OP
 TEST_TARGET_IF_CUDA = test_ops test_Int4llamaAttention test_Int4llamaDecoderLayer test_Int4llamaDecoder test_Int4llamaForCausalLM
 PROFILE_TARGET = profile_Fp32llamaForCausalLM profile_Int4llamaForCausalLM profile_OPTForCausalLM profile_ops
 CHAT_TARGET = chat
-TARGET = $(TEST_TARGET_GENERAL) $(TEST_TARGET_IF_CUDA) $(PROFILE_TARGET) $(CHAT_TARGET)
+VOICECHAT_TARGET = voicechat
+
+TARGET = $(TEST_TARGET_GENERAL) $(TEST_TARGET_IF_CUDA) $(PROFILE_TARGET) $(CHAT_TARGET) $(VOICECHAT_TARGET)
 
 BUILDDIR := build/transformer
 PROFILEDIR := build_profile/transformer
@@ -223,6 +226,10 @@ endif
 # Rule for CHAT_TARGET
 $(CHAT_TARGET): %: application/%.cc $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $(CHATNAME) $^ $(LIB) $(LDFLAGS)
+
+# Rule for VOICECHAT_TARGET
+$(VOICECHAT_TARGET): %: application/%.cc $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -o $(VOICECHATNAME) $^ $(LIB) $(LDFLAGS)
 
 # Clean up
 clean:
