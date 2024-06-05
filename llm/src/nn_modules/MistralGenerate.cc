@@ -16,7 +16,7 @@ static void sayInBackground(const std::string& text) {
 }
 
 std::string MistralGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
-                          std::string voc_path, bool interactive, bool voicechat) {
+                          std::string voc_path, bool interactive, bool voicechat, bool concurrent) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -183,42 +183,43 @@ std::string MistralGenerate(std::string param_path, void *model_ptr, int model_t
                 output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
                 // Remove dashes
                 std::replace(output.begin(), output.end(), '-', ' ');
-
-                size_t lastPos;
-                // starts ealier but slows down dictation
-                bool ended = false;
-                if (output.find(", ") != std::string::npos){
-                    lastPos = output.rfind(',');
-                    ended = true;
-                }
-                if (output.find("\n") != std::string::npos){
-                    lastPos = output.rfind('\n');
-                    ended = true;
-                }
-                else if (output.find(". ") != std::string::npos){
-                    lastPos = output.rfind('.');
-                    ended = true;
-                }
-                else if (output.find("! ") != std::string::npos){
-                    lastPos = output.rfind('!');
-                    ended = true;
-                }
-                else if (output.find("? ") != std::string::npos){
-                    lastPos = output.rfind('?');
-                    ended = true;
-    
-                }
-                else if (output.find(": ") != std::string::npos){
-                    lastPos = output.rfind(':');
-                    ended = true;
-                }
-                if (ended){
-                    // Extract sentence 1 (up to and including the last period)
-                    std::string output_copy = output.substr(0, lastPos + 1);
-                    // Extract beginning of sentence 2 (excluding the space after the last period)
-                    output = output.substr(lastPos + 1); // Skip the last period and space
-                    std::thread sayThread(sayInBackground, output_copy);
-                    sayThread.detach(); 
+                if (concurrent){
+                    size_t lastPos;
+                    // starts ealier but slows down dictation
+                    bool ended = false;
+                    if (output.find(", ") != std::string::npos){
+                        lastPos = output.rfind(',');
+                        ended = true;
+                    }
+                    if (output.find("\n") != std::string::npos){
+                        lastPos = output.rfind('\n');
+                        ended = true;
+                    }
+                    else if (output.find(". ") != std::string::npos){
+                        lastPos = output.rfind('.');
+                        ended = true;
+                    }
+                    else if (output.find("! ") != std::string::npos){
+                        lastPos = output.rfind('!');
+                        ended = true;
+                    }
+                    else if (output.find("? ") != std::string::npos){
+                        lastPos = output.rfind('?');
+                        ended = true;
+        
+                    }
+                    else if (output.find(": ") != std::string::npos){
+                        lastPos = output.rfind(':');
+                        ended = true;
+                    }
+                    if (ended){
+                        // Extract sentence 1 (up to and including the last period)
+                        std::string output_copy = output.substr(0, lastPos + 1);
+                        // Extract beginning of sentence 2 (excluding the space after the last period)
+                        output = output.substr(lastPos + 1); // Skip the last period and space
+                        std::thread sayThread(sayInBackground, output_copy);
+                        sayThread.detach(); 
+                    }
                 }
             } 
         }

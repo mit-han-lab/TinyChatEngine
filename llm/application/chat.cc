@@ -314,7 +314,7 @@ int main(int argc, char* argv[]) {
                     input = "Human: " + input + "\nAssistant: \n";
                 }
 
-                LLaMA3Generate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama3_vocab.bin", true, false);
+                LLaMA3Generate(m_path, &model, LLaMA_FP32, input, generation_config, "models/llama3_vocab.bin", true, false, false);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -361,7 +361,7 @@ int main(int argc, char* argv[]) {
                     input = "Human: " + input + "\nAssistant: \n";
                 }
                     
-                LLaMA3Generate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama3_vocab.bin", true, use_voicechat);
+                LLaMA3Generate(m_path, &model, LLaMA_INT4, input, generation_config, "models/llama3_vocab.bin", true, use_voicechat, concurrent);
             }
         } else {
             std::cout << std::endl;
@@ -1127,7 +1127,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-                MistralGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/mistral_vocab.bin", true, false);
+                MistralGenerate(m_path, &model, LLaMA_FP32, input, generation_config, "models/mistral_vocab.bin", true, false, false);
             }
         } else if (format_id == INT4) {
             m_path = "INT4/" + m_path;
@@ -1182,7 +1182,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-                MistralGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/mistral_vocab.bin", true, use_voicechat);
+                MistralGenerate(m_path, &model, LLaMA_INT4, input, generation_config, "models/mistral_vocab.bin", true, use_voicechat, concurrent);
             }
         } else {
             std::cout << std::endl;
