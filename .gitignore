@@ -39,3 +39,4 @@ chat
 output.wav
 tmpfile
 TTS/
+llm/voicechat
