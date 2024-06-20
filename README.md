@@ -184,7 +184,7 @@ TinyChatEngine supports not only LLM but also VLM. We introduce a sophisticated 
     ```
   - On an ARM device (e.g., M1/M2 Macbook, Raspberry Pi)
     ```bash
-    python tools/download_model.py --model VILA_7B_awq_int4_CLIP_ViT-L --QM QM_ARM
+    python tools/download_model.py --model VILA1.5_8B_awq_int4 --QM QM_ARM
     ```
 
 - (For MacOS) Start the chatbot locally. Please use an appropriate terminal (e.g., iTerm2).
