@@ -1,28 +1,22 @@
+#include <thread>
+#include <string>
+#include <sstream>
+
 #include "Generate.h"
 #include "LLaMATokenizer.h"
 #include "common.h"
 #include "utils.h"
 #include "interface.h"
 
-#include <thread>
-#include <string>
-#include <sstream>
-#include <mutex>
-#include <regex>
-
-std::mutex mtx; // Create a mutex for synchronization
-
-
 // Function to speak in the background
-void sayInBackground(const std::string& text) {
-    std::lock_guard<std::mutex> lock(mtx);
+static void sayInBackground(const std::string& text) {
     std::string command = "./application/sts_utils/speak \"" + text + "\"";
     int result = std::system(command.c_str());
     (void)result;
 }
 
-std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
-                          std::string voc_path, bool interactive, bool voicechat, bool concurrent) {
+std::string MistralGenerate(std::string param_path, void *model_ptr, int model_type, std::string text, const struct opt_params generation_config,
+                          std::string voc_path, bool interactive, bool voicechat) {
     std::vector<int> last_n_tokens(generation_config.n_ctx);
     std::fill(last_n_tokens.begin(), last_n_tokens.end(), 0);
     std::vector<int> embd;
@@ -33,11 +27,6 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
     llama_vocab vocab = llama_init_vocab(voc_path.c_str());
     const int n = llama_tokenize(vocab, text.c_str(), input_ids.data(), input_ids.size(), true);
     input_ids.resize(n);
-
-    bool is_codellama = false;
-    if (param_path.find("CodeLLaMA") != std::string::npos) {
-        is_codellama = true;
-    }
 
     int n_consumed = 0;
     while ((int)input_ids.size() > n_consumed) {
@@ -52,7 +41,6 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
     }
     // if (interactive) std::cout << "ASSISTANT: " << std::endl;
 
-    bool previous_two_hash = false;
     int break_cnt = 2;
     bool new_prompt = true;
     static bool has_past_kv = false;
@@ -176,24 +164,19 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
         else if (id == 1)
             continue;
         break_cnt = 2;
+
         bool skip = false;
-        if (id == 2277 && !previous_two_hash) {
-            previous_two_hash = true;
-            skip = true;
-        } else if (previous_two_hash && id == 29937) {  // token = #
+        if (id == 27332) {  // token = ###
             break_cnt = 0;
             skip = true;
-        } else {
-            if (previous_two_hash) std::cout << "##" << std::endl;
-            previous_two_hash = false;
         }
+
 
         last_n_tokens.erase(last_n_tokens.begin());
         last_n_tokens.push_back(id);
         embd.push_back(id);
         generate_ids.push_back(id);
         input_ids = std::vector<int>{id};
-        
 
         if (interactive && !skip) {
             output += llama_id_to_token(vocab, id);
@@ -205,45 +188,42 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
                 output.erase(std::remove(output.begin(), output.end(), '#'), output.end());
                 // Remove dashes
                 std::replace(output.begin(), output.end(), '-', ' ');
-                // Remove numbered lists
-                output = std::regex_replace(output, std::regex("\\d+\\."), "");
-                if (concurrent){
-                    size_t lastPos;
-                    // starts ealier but slows down dictation
-                    bool ended = false;
-                    if (output.find(", ") != std::string::npos){
-                        lastPos = output.rfind(',');
-                        ended = true;
-                    }
-                    if (output.find("\n") != std::string::npos){
-                        lastPos = output.rfind('\n');
-                        ended = true;
-                    }
-                    else if (output.find(". ") != std::string::npos){
-                        lastPos = output.rfind('.');
-                        ended = true;
-                    }
-                    else if (output.find("! ") != std::string::npos){
-                        lastPos = output.rfind('!');
-                        ended = true;
-                    }
-                    else if (output.find("? ") != std::string::npos){
-                        lastPos = output.rfind('?');
-                        ended = true;
-        
-                    }
-                    else if (output.find(": ") != std::string::npos){
-                        lastPos = output.rfind(':');
-                        ended = true;
-                    }
-                    if (ended){
-                        // Extract sentence 1 (up to and including the last period)
-                        std::string output_copy = output.substr(0, lastPos + 1);
-                        // Extract beginning of sentence 2 (excluding the space after the last period)
-                        output = output.substr(lastPos + 1); // Skip the last period and space
-                        std::thread sayThread(sayInBackground, output_copy);
-                        sayThread.detach(); 
-                    } 
+
+                size_t lastPos;
+                // starts ealier but slows down dictation
+                bool ended = false;
+                if (output.find(", ") != std::string::npos){
+                    lastPos = output.rfind(',');
+                    ended = true;
+                }
+                if (output.find("\n") != std::string::npos){
+                    lastPos = output.rfind('\n');
+                    ended = true;
+                }
+                else if (output.find(". ") != std::string::npos){
+                    lastPos = output.rfind('.');
+                    ended = true;
+                }
+                else if (output.find("! ") != std::string::npos){
+                    lastPos = output.rfind('!');
+                    ended = true;
+                }
+                else if (output.find("? ") != std::string::npos){
+                    lastPos = output.rfind('?');
+                    ended = true;
+    
+                }
+                else if (output.find(": ") != std::string::npos){
+                    lastPos = output.rfind(':');
+                    ended = true;
+                }
+                if (ended){
+                    // Extract sentence 1 (up to and including the last period)
+                    std::string output_copy = output.substr(0, lastPos + 1);
+                    // Extract beginning of sentence 2 (excluding the space after the last period)
+                    output = output.substr(lastPos + 1); // Skip the last period and space
+                    std::thread sayThread(sayInBackground, output_copy);
+                    sayThread.detach(); 
                 }
             } 
         }
@@ -251,7 +231,6 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
         new_prompt = false;
         --n_remain;
     }
-
     if (voicechat && interactive){
         sayInBackground(output);
     }
@@ -264,6 +243,6 @@ std::string LLaMAGenerate(std::string param_path, void *model_ptr, int model_typ
     Profiler::getInstance().reset();
     // Reset color
     set_print_reset();
-
+    
     return output;
 }
