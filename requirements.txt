@@ -3,3 +3,4 @@ tqdm
 torch
 transformers
 pillow
+huggingface_hub
