@@ -38,11 +38,11 @@ Feel free to check out our [slides](assets/slides.pdf) for more details!
 ## News
 
 - **(2024/05)** 🏆 AWQ and TinyChat received the **Best Paper Award** at **MLSys 2024**. 🎉
-- **(2024/05)** 🔥 We released the support for the **Llama-3** model family! Check out our example [here](#step-by-step-to-deploy-llama-3-8b-instruct-with-tinychatengine).
+- **(2024/05)** 🔥 We released the support for the **Llama-3** model family! Check out our [example](#step-by-step-to-deploy-llama-3-8b-instruct-with-tinychatengine) and [model zoo](https://huggingface.co/mit-han-lab/tinychatengine-model-zoo).
 - **(2024/02)** 🔥AWQ and TinyChat has been accepted to **MLSys 2024**!
 - **(2024/02)** 🔥We extended the support for **vision language models (VLM)**. Feel free to try running **[VILA](#deploy-vision-language-model-vlm-chatbot-with-tinychatengine)** on your edge device.
 <!-- - **(2024/01)** 🔥We released TinyVoiceChat, a voice chatbot that can be deployed on your edge devices, such as MacBook and Jetson Orin Nano. Check out our [demo video](https://youtu.be/Bw5Dm3aWMnA?si=CCvZDmq3HwowEQcC) and follow the [instructions](#deploy-speech-to-speech-chatbot-with-tinychatengine-demo) to deploy it on your device! -->
-- **(2023/10)** We extended the support for the coding assistant [Code Llama](#download-and-deploy-models-from-our-model-zoo). Feel free to check out.
+- **(2023/10)** We extended the support for the coding assistant [Code Llama](#download-and-deploy-models-from-our-model-zoo). Feel free to check out our [model zoo](https://huggingface.co/mit-han-lab/tinychatengine-model-zoo).
 - **(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability >= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!
 
 
@@ -232,9 +232,9 @@ To mitigate the runtime overheads associated with weight reordering, TinyChatEng
 
 - Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, \[w0, w1, ... , w30, w31\], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence  \[w0, w16, w1, w17, ..., w15, w31\] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.
 
-## Download and Deploy Models from our Model Zoo
+## TinyChatEngine Model Zoo
 
-We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.
+We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script. Check out our model zoo [here](https://huggingface.co/mit-han-lab/tinychatengine-model-zoo).
 
 <table>
     <thead>
