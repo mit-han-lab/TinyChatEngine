@@ -128,10 +128,10 @@ overview</div></div>
 News</h2>
 <ul>
 <li>**(2024/05)** 🏆 AWQ and TinyChat received the <b>Best Paper Award</b> at <b>MLSys 2024</b>. 🎉</li>
-<li>**(2024/05)** 🔥 We released the support for the <b>Llama-3</b> model family! Check out our example here.</li>
+<li>**(2024/05)** 🔥 We released the support for the <b>Llama-3</b> model family! Check out our example and <a href="https://huggingface.co/mit-han-lab/tinychatengine-model-zoo">model zoo</a>.</li>
 <li>**(2024/02)** 🔥AWQ and TinyChat has been accepted to <b>MLSys 2024</b>!</li>
 <li>**(2024/02)** 🔥We extended the support for <b>vision language models (VLM)</b>. Feel free to try running <b>VILA</b> on your edge device.</li>
-<li>**(2023/10)** We extended the support for the coding assistant Code Llama. Feel free to check out.</li>
+<li>**(2023/10)** We extended the support for the coding assistant Code Llama. Feel free to check out our <a href="https://huggingface.co/mit-han-lab/tinychatengine-model-zoo">model zoo</a>.</li>
 <li>**(2023/10)** ⚡We released the new CUDA backend to support Nvidia GPUs with compute capability &gt;= 6.1 for both server and edge GPUs. Its performance is also speeded up by ~40% compared to the previous version. Feel free to check out!</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md8"></a>
@@ -274,8 +274,8 @@ Device-specific int4 Weight Reordering</h3>
 <li>Example layout of QM_ARM: For QM_ARM, consider the initial configuration of a 128-bit weight vector, [w0, w1, ... , w30, w31], where each wi is a 4-bit quantized weight. TinyChatEngine rearranges these weights in the sequence [w0, w16, w1, w17, ..., w15, w31] by interleaving the lower half and upper half of the weights. This new arrangement facilitates the decoding of both the lower and upper halves using 128-bit AND and shift operations, as depicted in the subsequent figure. This will eliminate runtime reordering overheads and improve performance.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md17"></a>
-Download and Deploy Models from our Model Zoo</h2>
-<p>We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script.</p>
+TinyChatEngine Model Zoo</h2>
+<p>We offer a selection of models that have been tested with TinyChatEngine. These models can be readily downloaded and deployed on your device. To download a model, locate the target model's ID in the table below and use the associated script. Check out our model zoo <a href="https://huggingface.co/mit-han-lab/tinychatengine-model-zoo">here</a>.</p>
 <table class="doxtable">
 <tr>
 <th>Models </th><th>Precisions </th><th>ID </th><th>x86 backend </th><th>ARM backend </th><th>CUDA backend    </th></tr>

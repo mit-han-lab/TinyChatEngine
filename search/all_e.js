@@ -10,6 +10,5 @@ var searchData=
   ['optforcausallm_5finput_7',['OPTForCausalLM_input',['../structOPTForCausalLM__input.html',1,'']]],
   ['optforcausallm_5foutput_8',['OPTForCausalLM_output',['../structOPTForCausalLM__output.html',1,'']]],
   ['optimization_5fparams_9',['optimization_params',['../structoptimization__params.html',1,'']]],
-  ['our_20model_20zoo_10',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md17',1,'']]],
-  ['overview_11',['Overview',['../index.html#autotoc_md4',1,'']]]
+  ['overview_10',['Overview',['../index.html#autotoc_md4',1,'']]]
 ];

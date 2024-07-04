@@ -20,7 +20,6 @@ var searchData=
   ['metalmatmulparams_17',['MetalMatMulParams',['../structMetalMatMulParams.html',1,'']]],
   ['model_20support_18',['Quantization and Model Support',['../index.html#autotoc_md15',1,'']]],
   ['model_20vlm_20chatbot_20with_20tinychatengine_19',['Deploy vision language model (VLM) chatbot with TinyChatEngine',['../index.html#autotoc_md13',1,'']]],
-  ['model_20zoo_20',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md17',1,'']]],
-  ['model_5fconfig_21',['model_config',['../structmodel__config.html',1,'']]],
-  ['models_20from_20our_20model_20zoo_22',['Download and Deploy Models from our Model Zoo',['../index.html#autotoc_md17',1,'']]]
+  ['model_20zoo_20',['TinyChatEngine Model Zoo',['../index.html#autotoc_md17',1,'']]],
+  ['model_5fconfig_21',['model_config',['../structmodel__config.html',1,'']]]
 ];
