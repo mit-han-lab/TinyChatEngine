@@ -32,7 +32,7 @@ void Linear_half_int4::forward(const Matrix3D<float16_t> &x, Matrix3D<float16_t>
     params.int32_zero_point = this->zero_point.m_data;
     params.block_size = QK;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
     op.gemv_forward_cuda(&params);
 
     PROFILE_END(profile_name);
@@ -69,7 +69,7 @@ void Linear_FP16_int4_ref::forward_ref(const Matrix3D<naive_float16_t> &a, Matri
     params.int32_zero_point = this->zero_point.m_data;
     params.block_size = QK;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
     op.naive_mat_mul_fp16_int4((const struct matmul_params *)&params);
 
     PROFILE_END(profile_name);

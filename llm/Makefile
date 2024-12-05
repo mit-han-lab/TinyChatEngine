@@ -5,6 +5,7 @@ CXXFLAGS = -std=c++11 -pthread -Ofast
 # CUDA flag
 DISABLE_CUDA ?= 0
 DEC_SHARED_MEM ?= 0
+USE_MKL ?= 0
 
 # customize define
 DEFINE =
@@ -21,7 +22,9 @@ TARGET = $(TEST_TARGET_GENERAL) $(TEST_TARGET_IF_CUDA) $(PROFILE_TARGET) $(CHAT_
 BUILDDIR := build/transformer
 PROFILEDIR := build_profile/transformer
 LIB_DIR = ../kernels
+FACTORY_SRC = $(LIB_DIR)/matmul_factory.cc # For dynamic dispatching of matmul kernels
 LIB_SRC = $(wildcard $(LIB_DIR)/*.cc)
+LIB_SRC += $(FACTORY_SRC)
 INCLUDE_DIRS = -I$(LIB_DIR) -I./include -I./include/nn_modules -I./json/single_include/ -I./half-2.2.0/include/
 LIB =
 LDFLAGS =
@@ -55,8 +58,15 @@ $(info Detected CUDA_PATH: $(CUDA_HOME))
 	else
 		CUDA_HOME = /usr/local/cuda
 		CXX = $(CUDA_HOME)/bin/nvcc
+		GPU_ARCH := $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader,nounits 2>/dev/null | head -n 1 | sed 's/\.//')
+
+		ifeq ($(GPU_ARCH),)
 # Please modify 'arch=compute_87,code=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-		CXXFLAGS = -std=c++17 -Xptxas -O3 -gencode arch=compute_87,code=sm_87 --forward-unknown-to-host-compiler -Xcompiler "-pthread" -DQM_CUDA -DENABLE_BF16 -U__CUDA_NO_HALF_OPERATORS__ -U__CUDA_NO_HALF_CONVERSIONS__ -U__CUDA_NO_BFLOAT16_OPERATORS__ -U__CUDA_NO_BFLOAT16_CONVERSIONS__ -U__CUDA_NO_BFLOAT162_OPERATORS__ -U__CUDA_NO_BFLOAT162_CONVERSIONS__ --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math --threads=8
+			GPU_ARCH := 87
+			$(warning Unable to detect GPU compute capability. Using default compute capability: compute_$(GPU_ARCH), sm_$(GPU_ARCH))
+		endif
+
+		CXXFLAGS = -std=c++17 -Xptxas -O3 -gencode arch=compute_$(GPU_ARCH),code=sm_$(GPU_ARCH) --forward-unknown-to-host-compiler -Xcompiler "-pthread" -DQM_CUDA -DENABLE_BF16 -U__CUDA_NO_HALF_OPERATORS__ -U__CUDA_NO_HALF_CONVERSIONS__ -U__CUDA_NO_BFLOAT16_OPERATORS__ -U__CUDA_NO_BFLOAT16_CONVERSIONS__ -U__CUDA_NO_BFLOAT162_OPERATORS__ -U__CUDA_NO_BFLOAT162_CONVERSIONS__ --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math --threads=8
 	endif
 	# LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc) $(wildcard $(LIB_DIR)/cuda/attention/*.cc)
 	# LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard $(LIB_DIR)/cuda/attention/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
@@ -82,10 +92,37 @@ ifeq ($(shell uname -m),x86_64)
 		endif
 	else
 # For x86_64 platforms with AVX2
-		# For Intel machines with AVX
-		LIB_AVX_SRC = $(wildcard $(LIB_DIR)/avx/*.cc)
-		LIB_SRC += $(LIB_AVX_SRC)
-		CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
+		ifeq ($(USE_MKL),1)
+            $(info Using MKL kernels instead of AVX kernels)
+            # Set MKLROOT (adjust this path if necessary)
+            MKLROOT ?= /home/elliotliu/miniconda
+
+            # Add MKL compiler flags
+            CXXFLAGS += -DMKL_ILP64 -DUSE_MKL -m64 -mavx2 -mfma -ffast-math -DQM_MKL -DQM_x86
+
+            # Add MKL include directories
+            INCLUDE_DIRS += -I$(MKLROOT)/include
+
+            # Add MKL libraries to LDFLAGS
+            LDFLAGS += -Wl,--start-group \
+                       $(MKLROOT)/lib/libmkl_intel_ilp64.so \
+                       $(MKLROOT)/lib/libmkl_gnu_thread.so \
+                       $(MKLROOT)/lib/libmkl_core.so \
+                       -Wl,--end-group -lgomp -lpthread -lm -ldl \
+                       -Wl,-rpath,$(MKLROOT)/lib
+
+            # Include MKL kernels and AVX kernels
+            LIB_MKL_SRC = $(wildcard $(LIB_DIR)/mkl/*_int*.cc)
+            LIB_SRC += $(LIB_MKL_SRC)
+
+            LIB_AVX_SRC = $(wildcard $(LIB_DIR)/avx/*.cc)
+            LIB_SRC += $(LIB_AVX_SRC)
+        else
+            # Use AVX kernels
+            LIB_AVX_SRC = $(wildcard $(LIB_DIR)/avx/*.cc)
+            LIB_SRC += $(LIB_AVX_SRC)
+            CXXFLAGS += -mavx2 -mfma -ffast-math -DUSE_INT8_INT4_PRODUCT -fpermissive -DQM_x86
+        endif
 	endif
 else ifeq ($(shell uname -m),aarch64)
 	ifdef CUDA_AVAILABLE

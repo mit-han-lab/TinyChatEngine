@@ -5,10 +5,10 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "../matmul.h"
+#include "matmul_ref.h"
 
 namespace matmul {
-void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
+void MatmulOperatorRef::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;

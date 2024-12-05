@@ -10,7 +10,7 @@
 #include <Accelerate/Accelerate.h>
 #endif
 
-#include "../matmul.h"
+#include "matmul_neon.h"
 #include "common.h"
 #include "pthread_pool.h"
 
@@ -1293,7 +1293,7 @@ inline static void* fp32_matmul_transposed_cblas_gemm(void* args) {
 #endif
 
 namespace matmul {
-void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {
+void MatmulOperatorNeon::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;
@@ -1342,7 +1342,7 @@ void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_
     pool_wait(pool);
 };
 
-void MatmulOperator::gemv_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {
+void MatmulOperatorNeon::gemv_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;
@@ -1374,7 +1374,7 @@ void MatmulOperator::gemv_accelerator_int8_int4_fast_no_offset(struct matmul_par
     pool_wait(pool);
 };
 
-void MatmulOperator::gemm_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {
+void MatmulOperatorNeon::gemm_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;
@@ -1406,7 +1406,7 @@ void MatmulOperator::gemm_accelerator_int8_int4_fast_no_offset(struct matmul_par
     pool_wait(pool);
 };
 
-void MatmulOperator::gemm_accelerator_int8_int4_fast_no_offset_v2(struct matmul_params* params) {
+void MatmulOperatorNeon::gemm_accelerator_int8_int4_fast_no_offset_v2(struct matmul_params* params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;
@@ -1439,7 +1439,7 @@ void MatmulOperator::gemm_accelerator_int8_int4_fast_no_offset_v2(struct matmul_
 };
 
 #ifdef USE_ACCELERATE
-void MatmulOperator::cblas_gemm_accelerator_no_offset(struct matmul_params* params) {
+void MatmulOperatorNeon::cblas_gemm_accelerator_no_offset(struct matmul_params* params) {
     int i, j, k;
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
     const int block_size = params->block_size;

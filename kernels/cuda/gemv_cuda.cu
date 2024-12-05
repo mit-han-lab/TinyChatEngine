@@ -17,7 +17,7 @@
 #include <iostream>
 #include <stdio.h>
 
-#include "../matmul.h"
+#include "matmul_cuda.h"
 #include "ops/linear.h"
 
 // #include <cuda_runtime.h>
@@ -210,7 +210,7 @@ namespace matmul{
   Returns:
     out_feats: tensor of shape [B, OC];
   */
-  void MatmulOperator::gemv_forward_cuda(const struct matmul_params *params)
+  void MatmulOperatorCUDA::gemv_forward_cuda(const struct matmul_params *params)
   {
     const struct matrix *A = &params->A, *B = &params->B, *C = &params->C;
 
@@ -259,11 +259,11 @@ namespace matmul{
     PROFILE_END("gemv_forward_cuda");
   }
 
-  void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
+  void MatmulOperatorCUDA::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
     // TODO: remove this
   };
 
-  void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
+  void MatmulOperatorCUDA::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
     // TODO: remove this
   };
 

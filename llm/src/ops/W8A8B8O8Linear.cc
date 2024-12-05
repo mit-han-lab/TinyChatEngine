@@ -55,7 +55,7 @@ void W8A8B8O8Linear::forward(const Matrix3D<int8_t> &x, Matrix3D<int8_t> &output
     params.alpha = alpha;
     params.beta = beta;
 
-    matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
+    matmul::MatmulOperator &matmul_op = matmul::CreateMatmulOperator();
 
     // printf("W8A8B8O8Linear-m,n,k: %d, %d, %d\n", m,n,k);
     if (m == 1) {

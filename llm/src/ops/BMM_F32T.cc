@@ -31,7 +31,7 @@ void BMM_F32T::forward(const Matrix3D<float> &a, const Matrix3D<float> &weight, 
     params.opt_params.num_thread = NUM_THREAD;
     params.alpha = alpha;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
 
     for (int bz = 0; bz < a.m_dim_x; bz++) {
         // if (params.A.column % 8 == 0) // TODO: debug this
@@ -82,7 +82,7 @@ void BMM_F32T::forward_weight_untransposed(const Matrix3D<float> &a, const Matri
     params.opt_params.num_thread = NUM_THREAD;
     params.alpha = alpha;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
 
     for (int i = 0; i < m * n * a.m_dim_x; i++) {
         params.C.data_ptr[i] = 0;

@@ -41,7 +41,7 @@ void BMM_S8T_S8N_S8T::forward(const Matrix3D<int8_t> &x, const Matrix3D<int8_t> 
     params.C.qparams.q_min = -128;
     params.alpha = alpha;
 
-    matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
+    matmul::MatmulOperator &matmul_op = matmul::CreateMatmulOperator();
 
     // process each batch
     if (m == 1 && x.m_dim_x > 1) {

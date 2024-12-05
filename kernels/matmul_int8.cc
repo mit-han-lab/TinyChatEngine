@@ -13,7 +13,7 @@ void MatmulOperator::naive_mat_mul_int8(const struct matmul_params *params) {
     float effective_scale = A_sc * B_sc / C_sc;
     int8_t *data_A = A->int8_data_ptr, *data_B = B->int8_data_ptr, *data_C = C->int8_data_ptr;
     const int8_t q_min = C->qparams.q_min, q_max = C->qparams.q_max;
-    CHECK_MATRICES(A, B, C);
+    // CHECK_MATRICES(A, B, C);
 
     for (i = 0; i < C->row; i++)
         for (j = 0; j < C->column; j++) {

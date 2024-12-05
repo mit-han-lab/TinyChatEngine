@@ -62,7 +62,7 @@ void Linear_FP::forward(const Matrix3D<float> &a, Matrix3D<float> &c) {
     params.opt_params.blk_size = BLK_SIZE;
     params.opt_params.num_thread = NUM_THREAD;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
 #ifndef QM_CUDA  // not support yet
     if (this->has_bias) {
         params.bias.row = this->bias.m_dim_y;
@@ -109,7 +109,7 @@ void Linear_FP_int4::forward_ref(const Matrix3D<float> &a, Matrix3D<float> &c) {
     params.zero_point = this->zero_point.m_data;
     params.block_size = QK;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
     op.naive_mat_mul_int4((const struct matmul_params *)&params);
 
     PROFILE_END(profile_name);
@@ -147,7 +147,7 @@ void Linear_FP_int4::forward_fast(const Matrix3D<float> &x, Matrix3D<float> &out
     params.offset = this->offset.m_data;
     params.block_size = QK;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
     op.mat_mul_accelerator_int4_fast(&params);
 
     PROFILE_END(profile_name);
@@ -201,7 +201,7 @@ void Linear_FP_int4::forward(const Matrix3D<float> &x, Matrix3D<float> &output) 
 
     if (this->has_bias) params.bias.data_ptr = this->bias.m_data;
 
-    matmul::MatmulOperator op = matmul::MatmulOperator();
+    matmul::MatmulOperator &op = matmul::CreateMatmulOperator();
 #ifdef USE_INT8_INT4_PRODUCT
     if (!x_int8) this->initialize_memory(params.block_size);
     params.A.int8_data_ptr = x_int8;

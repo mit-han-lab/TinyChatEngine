@@ -57,7 +57,7 @@ void W8A8B8O8LinearReLU::forward(const Matrix3D<int8_t> &x, Matrix3D<int8_t> &ou
     params.alpha = alpha;
     params.beta = beta;
 
-    matmul::MatmulOperator matmul_op = matmul::MatmulOperator();
+    matmul::MatmulOperator &matmul_op = matmul::CreateMatmulOperator();
 
     if (m == 1) {
         // let's loop over the column dim instead of row

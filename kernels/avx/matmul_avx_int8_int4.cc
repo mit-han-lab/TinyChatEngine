@@ -4,7 +4,7 @@
 #include <cassert>
 #include <cmath>
 
-#include "../matmul.h"
+#include "matmul_avx.h"
 
 #include "pthread_pool.h"
 
@@ -322,7 +322,7 @@ static void quantize_fp_to_int8_block_size32(float *x, int size, int8_t *qx, flo
 
 namespace matmul {
 
-void MatmulOperator::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params) {
+void MatmulOperatorAVX::mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params) {
     // const int num_thread = 4;
     const int num_thread = params->opt_params.num_thread;
     int i, j, k;

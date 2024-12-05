@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-#include "../matmul.h"
+#include "matmul_avx.h"
 
 static inline __m256i bytes_from_nibbles_32(const uint8_t *rsi) {
     // Load 16 bytes from memory
@@ -675,7 +675,7 @@ static void *fast_zp_no_offset_over_column_func_v5(void *args) {
 }
 
 namespace matmul {
-void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
+void MatmulOperatorAVX::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
     const int num_thread = params->opt_params.num_thread;
     int i, j, k;
     pthread_t thread_pool[num_thread];
@@ -693,7 +693,7 @@ void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *p
     for (j = 0; j < num_thread; j++) pthread_join(thread_pool[j], NULL);
 };
 
-void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
+void MatmulOperatorAVX::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
     const int num_thread = params->opt_params.num_thread;
     int i, j, k;
     pthread_t thread_pool[num_thread];

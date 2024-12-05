@@ -11,7 +11,7 @@
 #endif
 
 #include "common.h"
-#include "../matmul.h"
+#include "matmul_neon.h"
 #include "pthread_pool.h"
 
 struct fp32_thread_args {
@@ -120,7 +120,7 @@ void fp32_matmul_bias_cblas_gemm(const struct matmul_params *params) {
 }
 #endif
 
-void MatmulOperator::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
+void MatmulOperatorNeon::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
 #ifdef USE_ACCELERATE
     fp32_matmul_transposed_cblas_gemm(params);
 #else
@@ -128,7 +128,7 @@ void MatmulOperator::mat_mul_accelerator_transposed_fastover_column(const struct
 #endif
 }
 
-void MatmulOperator::mat_mul_accelerator_untransposed_fastover_column(const struct matmul_params *params) {
+void MatmulOperatorNeon::mat_mul_accelerator_untransposed_fastover_column(const struct matmul_params *params) {
 #ifdef USE_ACCELERATE
     fp32_matmul_untransposed_cblas_gemm(params);
 #endif
@@ -260,7 +260,7 @@ inline static void* fp32_matmul_bias_optimized_gemm(void* args) {
     return NULL;
 }
 
-void MatmulOperator::mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params *params) {
+void MatmulOperatorNeon::mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params *params) {
 #ifdef USE_ACCELERATE
     fp32_matmul_bias_cblas_gemm(params);
 #else

@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "../matmul.h"
+#include "matmul_neon.h"
 
 static void dequantize_block_q4(const uint8_t *int4_w, float *y, float scale, float offset, int block_size) {
     const float32x4_t vd = vdupq_n_f32(scale);
@@ -279,7 +279,7 @@ static void *fast_over_column_func_v1(void *args) {
 
 namespace matmul {
 
-void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
+void MatmulOperatorNeon::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
     // const int num_thread = 16;
     const int num_thread = params->opt_params.num_thread;
     int i, j, k;

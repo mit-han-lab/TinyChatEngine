@@ -4,8 +4,9 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <xmmintrin.h>  // intel SSE intrinsic
+#include <iostream>
 
-#include "../matmul.h"
+#include "matmul_avx.h"
 
 namespace matmul {
 
@@ -60,7 +61,7 @@ void *mat_mul_transposed_fastover_column_func(void *args) {
     return NULL;
 }
 
-void MatmulOperator::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
+void MatmulOperatorAVX::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
     int i, j, k;
 
     int num_thread = params->opt_params.num_thread;
@@ -112,7 +113,7 @@ void fp32_ref_matmul_bias(const struct matmul_params *params) {
     }
 }
 
-void MatmulOperator::mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params *params) {
+void MatmulOperatorAVX::mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params *params) {
     fp32_ref_matmul_bias(params);
 }
 

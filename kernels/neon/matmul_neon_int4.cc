@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "../matmul.h"
+#include "matmul_neon.h"
 
 static inline void dequantize_block_q4_unroll2_no_offset(const uint8_t *int4_w, float *y, float scale,
                                                          const uint8_t *int4_w_2, float *y_2, float scale_2,
@@ -398,7 +398,7 @@ static void *fast_zp_no_offset_over_column_func_v3(void *args) {
 
 namespace matmul {
 
-void MatmulOperator::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
+void MatmulOperatorNeon::mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params) {
     // const int num_thread = 32;
     const int num_thread = params->opt_params.num_thread;
     int i, j, k;

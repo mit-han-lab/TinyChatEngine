@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "../matmul.h"
+#include "matmul_cuda.h"
 
 namespace matmul {
 void fp32_ref_matmul(const struct matmul_params *params) {
@@ -28,7 +28,8 @@ void fp32_ref_matmul(const struct matmul_params *params) {
     }
 }
 
-void MatmulOperator::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
+void MatmulOperatorCUDA::mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params) {
+    std::cout<<"mat_mul_accelerator_transposed_fastover_column, fp32"<<std::endl;
     fp32_ref_matmul(params);
 }
 

@@ -109,48 +109,61 @@ struct thread_args {
 namespace matmul {
 class MatmulOperator {
    public:
-    void mat_mul_transposed(const struct matmul_params *params);
-    void mat_mul_accelerator_transposed_fastover_column(const struct matmul_params *params);
-    void mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params *params);
-    void mat_mul_accelerator_untransposed_fastover_column(const struct matmul_params *params);
-    // int8
-    void naive_mat_mul_int8(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_32unroll_over_column(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_32unroll(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_batch(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32_batch(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(const struct matmul_params *params);
-    // void mat_mul_accelerator_int8_fast_2x2_omp(const struct matmul_params *params);
-    // int4
-    void mat_mul_accelerator_int4_fast(const struct matmul_params *params);
-    void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params *params);
-    void mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
-    void gemv_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
-    void gemm_accelerator_int8_int4_fast_no_offset(struct matmul_params *params);
-    void gemm_accelerator_int8_int4_fast_no_offset_v2(struct matmul_params *params);
-    void cblas_gemm_accelerator_no_offset(struct matmul_params *params);
-    void naive_mat_mul_int4(const struct matmul_params *params);
-    void naive_mat_mul_int4_with_offset(const struct matmul_params *params);
-    // cuda
-    void naive_mat_mul_fp16_int4(const struct matmul_params *params);
-    // void naive_mat_mul_fp16_int4_gemv(const struct matmul_params *params);
-    void mat_mul_cuda(const struct matmul_params *params);
-    //// GEMM
-    void gemm_forward_cuda(const struct matmul_params *params, int split_k_iters);
-    void gemm_forward_cuda_8splits(const struct matmul_params *params, float16_t *split_8_buffer);
-    void gemm_forward_cuda_half(const struct matmul_params *params, int split_k_iters);
-    void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
-    //// GEMV
-    void gemv_forward_cuda(const struct matmul_params *params);
+    virtual ~MatmulOperator() = default;
+
+    // Virtual methods for various matrix multiplication operations
+    virtual void mat_mul_transposed(const struct matmul_params* params);
+    virtual void mat_mul_accelerator_transposed_fastover_column(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_transposed_fastover_column_bias(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_untransposed_fastover_column(const struct matmul_params* params) {}
+
+    // int8 operations
+    virtual void naive_mat_mul_int8(const struct matmul_params* params);
+    virtual void mat_mul_accelerator_int8_fast_32unroll_over_column(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_fast_2x2_32unroll(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_batch(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_fast_2x2_32unroll_nobias_ofp32_batch(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_fast_2x2_32unroll_bfp32_ofp32_over_column(const struct matmul_params* params) {}
+
+    // int4 operations
+    virtual void mat_mul_accelerator_int4_fast(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int4_fast_no_offset(const struct matmul_params* params) {}
+    virtual void mat_mul_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {}
+    virtual void gemv_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {}
+    virtual void gemm_accelerator_int8_int4_fast_no_offset(struct matmul_params* params) {}
+    virtual void gemm_accelerator_int8_int4_fast_no_offset_v2(struct matmul_params* params) {}
+    virtual void cblas_gemm_accelerator_no_offset(struct matmul_params* params) {}
+    virtual void naive_mat_mul_int4(const struct matmul_params* params);
+    virtual void naive_mat_mul_int4_with_offset(const struct matmul_params* params);
+
+    // CUDA-specific operations
+    virtual void naive_mat_mul_fp16_int4(const struct matmul_params* params) {}
+    virtual void mat_mul_cuda(const struct matmul_params* params) {}
+    virtual void gemm_forward_cuda(const struct matmul_params* params, int split_k_iters) {}
+    virtual void gemm_forward_cuda_8splits(const struct matmul_params* params, float16_t* split_8_buffer) {}
+    virtual void gemm_forward_cuda_half(const struct matmul_params* params, int split_k_iters) {}
+    virtual void gemm_forward_cuda_half_test(const struct matmul_params* params, int split_k_iters) {}
+    virtual void gemv_forward_cuda(const struct matmul_params* params) {}
+
+   protected:
+    // Protected constructor to prevent direct instantiation
+    // Directly creating an object of this class is not allowed because of the empty constructor
+    MatmulOperator() = default;
 
    private:
+    // Delete copy constructor and assignment operator for safety
+    MatmulOperator& operator=(const MatmulOperator&) = delete;
+
     float interval_to_us(struct timeval *start, struct timeval *end);
     void CHECK_MATRICES(const struct matrix *A, const struct matrix *B, const struct matrix *C);
     void CHECK_MATRICES_int4weight(const struct matrix *A, const struct matrix *B, const struct matrix *C);
 };
+
+MatmulOperator& CreateMatmulOperator();
+
 }  // namespace matmul
 
 #endif
