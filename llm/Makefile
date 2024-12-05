@@ -55,8 +55,15 @@ $(info Detected CUDA_PATH: $(CUDA_HOME))
 	else
 		CUDA_HOME = /usr/local/cuda
 		CXX = $(CUDA_HOME)/bin/nvcc
+		GPU_ARCH := $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader,nounits 2>/dev/null | head -n 1 | sed 's/\.//')
+
+		ifeq ($(GPU_ARCH),)
 # Please modify 'arch=compute_87,code=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-		CXXFLAGS = -std=c++17 -Xptxas -O3 -gencode arch=compute_87,code=sm_87 --forward-unknown-to-host-compiler -Xcompiler "-pthread" -DQM_CUDA -DENABLE_BF16 -U__CUDA_NO_HALF_OPERATORS__ -U__CUDA_NO_HALF_CONVERSIONS__ -U__CUDA_NO_BFLOAT16_OPERATORS__ -U__CUDA_NO_BFLOAT16_CONVERSIONS__ -U__CUDA_NO_BFLOAT162_OPERATORS__ -U__CUDA_NO_BFLOAT162_CONVERSIONS__ --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math --threads=8
+			GPU_ARCH := 87
+			$(warning Unable to detect GPU compute capability. Using default compute capability: compute_$(GPU_ARCH), sm_$(GPU_ARCH))
+		endif
+
+		CXXFLAGS = -std=c++17 -Xptxas -O3 -gencode arch=compute_$(GPU_ARCH),code=sm_$(GPU_ARCH) --forward-unknown-to-host-compiler -Xcompiler "-pthread" -DQM_CUDA -DENABLE_BF16 -U__CUDA_NO_HALF_OPERATORS__ -U__CUDA_NO_HALF_CONVERSIONS__ -U__CUDA_NO_BFLOAT16_OPERATORS__ -U__CUDA_NO_BFLOAT16_CONVERSIONS__ -U__CUDA_NO_BFLOAT162_OPERATORS__ -U__CUDA_NO_BFLOAT162_CONVERSIONS__ --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math --threads=8
 	endif
 	# LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc) $(wildcard $(LIB_DIR)/cuda/attention/*.cc)
 	# LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard $(LIB_DIR)/cuda/attention/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
