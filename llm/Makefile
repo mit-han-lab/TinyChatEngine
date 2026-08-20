@@ -55,8 +55,8 @@ $(info Detected CUDA_PATH: $(CUDA_HOME))
 	else
 		CUDA_HOME = /usr/local/cuda
 		CXX = $(CUDA_HOME)/bin/nvcc
-# Please modify 'arch=compute_87,code=sm_87' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
-		CXXFLAGS = -std=c++17 -Xptxas -O3 -gencode arch=compute_87,code=sm_87 --forward-unknown-to-host-compiler -Xcompiler "-pthread" -DQM_CUDA -DENABLE_BF16 -U__CUDA_NO_HALF_OPERATORS__ -U__CUDA_NO_HALF_CONVERSIONS__ -U__CUDA_NO_BFLOAT16_OPERATORS__ -U__CUDA_NO_BFLOAT16_CONVERSIONS__ -U__CUDA_NO_BFLOAT162_OPERATORS__ -U__CUDA_NO_BFLOAT162_CONVERSIONS__ --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math --threads=8
+# Please modify 'arch=compute_86,code=sm_86' according to your GPU architecture/compute capability (https://developer.nvidia.com/cuda-gpus)
+		CXXFLAGS = -std=c++17 -Xptxas -O3 -gencode arch=compute_86,code=sm_86 --forward-unknown-to-host-compiler -Xcompiler "-pthread" -DQM_CUDA -DENABLE_BF16 -U__CUDA_NO_HALF_OPERATORS__ -U__CUDA_NO_HALF_CONVERSIONS__ -U__CUDA_NO_BFLOAT16_OPERATORS__ -U__CUDA_NO_BFLOAT16_CONVERSIONS__ -U__CUDA_NO_BFLOAT162_OPERATORS__ -U__CUDA_NO_BFLOAT162_CONVERSIONS__ --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math --threads=8
 	endif
 	# LIB_SRC_CUDA_CC = $(wildcard $(LIB_DIR)/cuda/*.cc) $(wildcard $(LIB_DIR)/cuda/attention/*.cc)
 	# LIB_SRC_CUDA_CU = $(wildcard $(LIB_DIR)/cuda/*.cu) $(wildcard $(LIB_DIR)/cuda/attention/*.cu) $(wildcard src/*.cu) $(wildcard src/nn_modules/cuda/*.cu) $(wildcard src/ops/cuda/*.cu)
