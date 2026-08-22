@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 void read_to_array_half(const char* path, half* array, int size) {
     std::ifstream infile(path, std::ios::binary | std::ios::in);
@@ -91,8 +92,51 @@ bool check_two_equal_half_half(half* array, half* array2, int size) {
 
 template <typename T>
 void allocate_aligned_memory_gpu(T*& ptr, size_t size) {
-    // Allocate unified memory
     CHECK_CUDA(cudaMallocManaged((void**)&ptr, size));
+}
+
+template <typename T>
+void allocate_device_memory_gpu(T*& ptr, size_t size) {
+    CHECK_CUDA(cudaMalloc((void**)&ptr, size));
+}
+
+template <typename T>
+void load_file_to_device(
+    const char* path,
+    T* device_ptr,
+    size_t count
+) {
+    std::ifstream infile(path, std::ios::binary | std::ios::in);
+
+    if (infile.fail()) {
+        std::cout << strerror(errno)
+                  << ": "
+                  << path
+                  << std::endl;
+        throw std::runtime_error("Failed to open weight file");
+    }
+
+    std::vector<T> host_buffer(count);
+
+    infile.read(
+        reinterpret_cast<char*>(host_buffer.data()),
+        count * sizeof(T)
+    );
+
+    if (!infile) {
+        throw std::runtime_error(
+            std::string("Failed to read weight file: ") + path
+        );
+    }
+
+    infile.close();
+
+    CHECK_CUDA(cudaMemcpy(
+        device_ptr,
+        host_buffer.data(),
+        count * sizeof(T),
+        cudaMemcpyHostToDevice
+    ));
 }
 
 template <typename T>
@@ -191,3 +235,24 @@ template void free_aligned_memory_gpu(int8_t*& ptr);
 template void free_aligned_memory_gpu(uint8_t*& ptr);
 template void free_aligned_memory_gpu(half*& ptr);
 template void free_aligned_memory_gpu(half_float::half*& ptr);
+template void allocate_device_memory_gpu(
+    int*& ptr,
+    size_t size
+);
+
+template void allocate_device_memory_gpu(
+    half*& ptr,
+    size_t size
+);
+
+template void load_file_to_device<int>(
+    const char* path,
+    int* device_ptr,
+    size_t count
+);
+
+template void load_file_to_device<half>(
+    const char* path,
+    half* device_ptr,
+    size_t count
+);
