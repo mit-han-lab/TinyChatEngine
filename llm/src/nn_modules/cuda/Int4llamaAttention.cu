@@ -64,8 +64,8 @@ __global__ void unshape_cuda(Matrix3D<T> shaped, Matrix3D<T> unshape, int num_he
 }
 
 Int4llamaAttention::Int4llamaAttention(std::string param_path, const struct model_config config, int layer_idx) {
-    allocate_aligned_memory_gpu(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
-    allocate_aligned_memory_gpu(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(int)) / 8);
+    allocate_device_memory_gpu(o_weight, (config.embed_dim * config.embed_dim * sizeof(int)) / 8);
+    allocate_device_memory_gpu(qkv_weight, (config.embed_dim * config.embed_dim * 3 * sizeof(int)) / 8);
     this->o_proj = Linear_half_int4(Matrix3D<int>(o_weight, 1, config.embed_dim, config.embed_dim / 8),
                                   param_path + "/o_proj");
     this->qkv_proj = Linear_half_int4(Matrix3D<int>(qkv_weight, 1, config.embed_dim, config.embed_dim * 3 / 8), 

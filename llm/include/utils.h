@@ -50,9 +50,31 @@ void print_first_k_elelment(std::string name, const float* arr, int k, int start
 #ifdef QM_METAL
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
+// 分配纯 GPU Device Memory
+template <typename T>
+void allocate_device_memory_gpu(T*& ptr, size_t size);
+// 从文件读取到 CPU 临时缓冲区，再拷贝到 GPU
+template <typename T>
+void load_file_to_device(
+    const char* path,
+    T* device_ptr,
+    size_t count
+);
+
 #else
 template <typename T>
 void allocate_aligned_memory(T*& ptr, size_t size);
+
+// 分配纯 GPU Device Memory
+template <typename T>
+void allocate_device_memory_gpu(T*& ptr, size_t size);
+// 从文件读取到 CPU 临时缓冲区，再拷贝到 GPU
+template <typename T>
+void load_file_to_device(
+    const char* path,
+    T* device_ptr,
+    size_t count
+);
 #endif
 
 void deallocate_memory(void* ptr);
