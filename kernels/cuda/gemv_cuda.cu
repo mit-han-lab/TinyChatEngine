@@ -192,6 +192,669 @@ __global__ void gemv_kernel_g128(
      outputs[oc_idx] = __float2half(psum); 
     }
 }
+/*
+ * V1:
+ *   1. Block 内 128 个线程协作、连续读取 activation
+ *   2. activation 缓存到 Shared Memory
+ *   3. 4 个 Warp 复用同一份 activation
+ *   4. 使用 padding=1 降低 Shared Memory Bank Conflict
+ */
+__global__ void gemv_kernel_g128_v1(
+    const float4* _inputs,
+    const uint32_t* weight,
+    const uint32_t* zeros,
+    const half* scaling_factors,
+    half* _outputs,
+    const int IC,
+    const int OC) {
+
+    const int group_size = 128;
+
+    float psum = 0.0f;
+
+    const int batch_idx = blockIdx.z;
+    const int oc_idx =
+        blockIdx.y * blockDim.y + threadIdx.y;
+
+    half* outputs =
+        _outputs + batch_idx * OC;
+
+    const int num_groups_packed =
+        make_divisible(IC / group_size, PACK_FACTOR);
+
+    const int weight_w =
+        IC / PACK_FACTOR;
+
+    const int zeros_w =
+        make_divisible(IC / group_size, PACK_FACTOR);
+
+    const int sf_w =
+        make_divisible(IC / group_size, PACK_FACTOR)
+        * PACK_FACTOR;
+
+
+    // ============================================================
+    // Shared Memory Layout
+    //
+    // 每个 lane 原本负责 32 个 FP16 activation
+    //
+    // 32 FP16 = 16 half2
+    //
+    // [32][17]：
+    //
+    // 第一维  = lane
+    // 第二维  = 16 个 half2 + 1 个 padding
+    //
+    // padding 用于降低 bank conflict。
+    //
+    // 实际大小：
+    // 32 * 17 * 4 B = 2176 B
+    // ============================================================
+
+    __shared__ half2 shared_inputs[WARP_SIZE][17];
+
+
+    // ============================================================
+    // 输入重新解释为 half2
+    //
+    // 一个 half2 = 2 个 FP16 = 4 Bytes
+    // ============================================================
+
+    const half2* input_half2 =
+        reinterpret_cast<const half2*>(_inputs)
+        + batch_idx * (IC / 2);
+
+
+    // Block 共 128 threads
+    const int linear_tid =
+        threadIdx.y * blockDim.x + threadIdx.x;
+
+    const int threads_per_block =
+        blockDim.x * blockDim.y;
+
+
+    // ============================================================
+    // 每个 packed_group_idx 处理 1024 个 FP16 activation
+    //
+    // 1024 FP16
+    // =
+    // 512 half2
+    // ============================================================
+
+    constexpr int HALF2_PER_LANE = 16;
+    constexpr int HALF2_PER_TILE =
+        WARP_SIZE * HALF2_PER_LANE;   // 512
+
+
+    for (int packed_group_idx = 0;
+         packed_group_idx < num_groups_packed;
+         packed_group_idx++) {
+
+
+        // ========================================================
+        // 1. 每个 Warp 对应 output channel 的量化权重
+        // ========================================================
+
+        uint32_t packed_zeros =
+            *(zeros
+              + oc_idx * zeros_w
+              + packed_group_idx);
+
+
+        uint32_t packed_weights[4];
+
+        *((float4*)(packed_weights)) =
+            *((float4*)(
+                weight
+                + oc_idx * weight_w
+                + packed_group_idx * (WARP_SIZE * 4)
+                + threadIdx.x * 4));
+
+
+        // g128：
+        // 4 threads 共用一组 scale / zero
+        float scaling_factor =
+            __half2float(
+                scaling_factors[
+                    oc_idx * sf_w
+                    + packed_group_idx * 8
+                    + threadIdx.x / 4
+                ]
+            );
+
+
+        float current_zeros =
+            static_cast<float>(
+                (packed_zeros
+                 >> ((threadIdx.x / 4) * 4))
+                & 0xF
+            );
+
+
+        // ========================================================
+        // 2. 128 threads 协作加载 activation
+        //
+        // 每个 Block：
+        //
+        // 128 threads
+        // ×
+        // 每线程循环 4 次
+        //
+        // = 512 half2
+        // = 1024 FP16
+        //
+        // 对于每一次循环：
+        //
+        // warp lane0 → half2[p]
+        // warp lane1 → half2[p+1]
+        // ...
+        //
+        // 全局内存访问连续。
+        // ========================================================
+
+        const int tile_half2_base =
+            packed_group_idx * HALF2_PER_TILE;
+
+        #pragma unroll
+        for (int load_iter = 0;
+             load_iter < 4;
+             load_iter++) {
+
+            const int p =
+                linear_tid
+                + load_iter * threads_per_block;
+
+            const int global_half2_idx =
+                tile_half2_base + p;
+
+
+            // p 对应原始布局中的：
+            //
+            // lane      = p / 16
+            // pair_idx  = p % 16
+
+            const int owner_lane =
+                p / HALF2_PER_LANE;
+
+            const int pair_idx =
+                p % HALF2_PER_LANE;
+
+
+            if (global_half2_idx < IC / 2) {
+
+                shared_inputs[owner_lane][pair_idx] =
+                    input_half2[global_half2_idx];
+
+            }
+            else {
+
+                // 最后一个不完整 tile
+                shared_inputs[owner_lane][pair_idx] =
+                    __float2half2_rn(0.0f);
+            }
+        }
+
+
+        // 所有 activation 已进入 Shared Memory
+        __syncthreads();
+
+
+        // ========================================================
+        // 3. 每个 Warp 使用相同的 Shared Memory activation
+        //
+        // threadIdx.x 就是原始 lane
+        //
+        // lane 0:
+        // input 0~31
+        //
+        // lane 1:
+        // input 32~63
+        //
+        // ...
+        // ========================================================
+
+        const int inputs_ptr_delta =
+            packed_group_idx * WARP_SIZE * 4
+            + threadIdx.x * 4;
+
+
+        #pragma unroll
+        for (int ic_0 = 0;
+             ic_0 < 4;
+             ic_0++) {
+
+            uint32_t current_packed_weight =
+                packed_weights[ic_0];
+
+
+            half packed_inputs[PACK_FACTOR];
+
+
+            // 与原始 Kernel 保持一致的边界判断
+            if (inputs_ptr_delta + ic_0
+                < IC / PACK_FACTOR) {
+
+
+                // 一个 uint32 weight 对应 8 个 input
+                //
+                // 8 FP16 = 4 half2
+                //
+                // Shared Memory 中：
+                //
+                // pair:
+                // ic_0*4
+                // ic_0*4+1
+                // ic_0*4+2
+                // ic_0*4+3
+
+                half2* packed_inputs_half2 =
+                    reinterpret_cast<half2*>(
+                        packed_inputs
+                    );
+
+
+                #pragma unroll
+                for (int pair = 0;
+                     pair < 4;
+                     pair++) {
+
+                    packed_inputs_half2[pair] =
+                        shared_inputs[
+                            threadIdx.x
+                        ][
+                            ic_0 * 4 + pair
+                        ];
+                }
+
+
+                // =================================================
+                // 与原始 Kernel 完全相同的 INT4 反量化与计算
+                // =================================================
+
+                #pragma unroll
+                for (int ic_1 = 0;
+                     ic_1 < PACK_FACTOR;
+                     ic_1++) {
+
+                    float current_single_weight_fp =
+                        static_cast<float>(
+                            current_packed_weight
+                            & 0xF
+                        );
+
+
+                    float dequantized_weight =
+                        scaling_factor
+                        * (
+                            current_single_weight_fp
+                            - current_zeros
+                          );
+
+
+                    psum +=
+                        dequantized_weight
+                        * __half2float(
+                            packed_inputs[ic_1]
+                          );
+
+
+                    current_packed_weight >>= 4;
+                }
+            }
+        }
+
+
+        // ========================================================
+        // 必须保证 4 个 Warp 都使用完当前 shared tile，
+        // 才允许下一轮覆盖 shared_inputs。
+        // ========================================================
+
+        __syncthreads();
+    }
+
+
+    // ============================================================
+    // Warp Reduction
+    // ============================================================
+
+    psum = warp_reduce_sum(psum);
+
+
+    if (threadIdx.x == 0) {
+        outputs[oc_idx] =
+            __float2half(psum);
+    }
+}
+
+__global__ void gemv_kernel_g128_v2(
+    const float4* _inputs,
+    const uint32_t* weight,
+    const uint32_t* zeros,
+    const half* scaling_factors,
+    half* _outputs,
+    const int IC,
+    const int OC) {
+
+    const int group_size = 128;
+
+    float psum = 0.0f;
+
+    const int batch_idx = blockIdx.z;
+    const int oc_idx =
+        blockIdx.y * blockDim.y + threadIdx.y;
+
+    half* outputs =
+        _outputs + batch_idx * OC;
+
+    const int num_groups_packed =
+        make_divisible(IC / group_size, PACK_FACTOR);
+
+    const int weight_w =
+        IC / PACK_FACTOR;
+
+    const int zeros_w =
+        make_divisible(IC / group_size, PACK_FACTOR);
+
+    const int sf_w =
+        make_divisible(IC / group_size, PACK_FACTOR)
+        * PACK_FACTOR;
+
+
+    // ============================================================
+    // Shared Memory Layout
+    //
+    // 每个 lane 原本负责 32 个 FP16 activation
+    //
+    // 32 FP16 = 16 half2
+    //
+    // [32][17]：
+    //
+    // 第一维  = lane
+    // 第二维  = 16 个 half2 + 1 个 padding
+    //
+    // padding 用于降低 bank conflict。
+    //
+    // 实际大小：
+    // 32 * 17 * 4 B = 2176 B
+    // ============================================================
+
+    __shared__ half2 shared_inputs[WARP_SIZE][16];
+
+
+    // ============================================================
+    // 输入重新解释为 half2
+    //
+    // 一个 half2 = 2 个 FP16 = 4 Bytes
+    // ============================================================
+
+    const half2* input_half2 =
+        reinterpret_cast<const half2*>(_inputs)
+        + batch_idx * (IC / 2);
+
+
+    // Block 共 128 threads
+    const int linear_tid =
+        threadIdx.y * blockDim.x + threadIdx.x;
+
+    const int threads_per_block =
+        blockDim.x * blockDim.y;
+
+
+    // ============================================================
+    // 每个 packed_group_idx 处理 1024 个 FP16 activation
+    //
+    // 1024 FP16
+    // =
+    // 512 half2
+    // ============================================================
+
+    constexpr int HALF2_PER_LANE = 16;
+    constexpr int HALF2_PER_TILE =
+        WARP_SIZE * HALF2_PER_LANE;   // 512
+
+
+    for (int packed_group_idx = 0;
+         packed_group_idx < num_groups_packed;
+         packed_group_idx++) {
+
+
+        // ========================================================
+        // 1. 每个 Warp 对应 output channel 的量化权重
+        // ========================================================
+
+        uint32_t packed_zeros =
+            *(zeros
+              + oc_idx * zeros_w
+              + packed_group_idx);
+
+
+        uint32_t packed_weights[4];
+
+        *((float4*)(packed_weights)) =
+            *((float4*)(
+                weight
+                + oc_idx * weight_w
+                + packed_group_idx * (WARP_SIZE * 4)
+                + threadIdx.x * 4));
+
+
+        // g128：
+        // 4 threads 共用一组 scale / zero
+        float scaling_factor =
+            __half2float(
+                scaling_factors[
+                    oc_idx * sf_w
+                    + packed_group_idx * 8
+                    + threadIdx.x / 4
+                ]
+            );
+
+
+        float current_zeros =
+            static_cast<float>(
+                (packed_zeros
+                 >> ((threadIdx.x / 4) * 4))
+                & 0xF
+            );
+
+
+        // ========================================================
+        // 2. 128 threads 协作加载 activation
+        //
+        // 每个 Block：
+        //
+        // 128 threads
+        // ×
+        // 每线程循环 4 次
+        //
+        // = 512 half2
+        // = 1024 FP16
+        //
+        // 对于每一次循环：
+        //
+        // warp lane0 → half2[p]
+        // warp lane1 → half2[p+1]
+        // ...
+        //
+        // 全局内存访问连续。
+        // ========================================================
+
+        const int tile_half2_base =
+            packed_group_idx * HALF2_PER_TILE;
+
+        #pragma unroll
+        for (int load_iter = 0;
+             load_iter < 4;
+             load_iter++) {
+
+            const int p =
+                linear_tid
+                + load_iter * threads_per_block;
+
+            const int global_half2_idx =
+                tile_half2_base + p;
+
+
+            // p 对应原始布局中的：
+            //
+            // lane      = p / 16
+            // pair_idx  = p % 16
+
+            const int owner_lane =
+                p / HALF2_PER_LANE;
+
+            const int pair_idx =
+                p % HALF2_PER_LANE;
+            
+            const int swizzled_pair_idx =
+                pair_idx ^ (owner_lane >> 1);
+
+            if (global_half2_idx < IC / 2) {
+
+                shared_inputs[owner_lane][swizzled_pair_idx] =
+                    input_half2[global_half2_idx];
+
+            }
+            else {
+
+                // 最后一个不完整 tile
+                shared_inputs[owner_lane][swizzled_pair_idx] =
+                    __float2half2_rn(0.0f);
+            }
+        }
+
+
+        // 所有 activation 已进入 Shared Memory
+        __syncthreads();
+
+
+        // ========================================================
+        // 3. 每个 Warp 使用相同的 Shared Memory activation
+        //
+        // threadIdx.x 就是原始 lane
+        //
+        // lane 0:
+        // input 0~31
+        //
+        // lane 1:
+        // input 32~63
+        //
+        // ...
+        // ========================================================
+
+        const int inputs_ptr_delta =
+            packed_group_idx * WARP_SIZE * 4
+            + threadIdx.x * 4;
+
+
+        #pragma unroll
+        for (int ic_0 = 0;
+             ic_0 < 4;
+             ic_0++) {
+
+            uint32_t current_packed_weight =
+                packed_weights[ic_0];
+
+
+            half packed_inputs[PACK_FACTOR];
+
+
+            // 与原始 Kernel 保持一致的边界判断
+            if (inputs_ptr_delta + ic_0
+                < IC / PACK_FACTOR) {
+
+
+                // 一个 uint32 weight 对应 8 个 input
+                //
+                // 8 FP16 = 4 half2
+                //
+                // Shared Memory 中：
+                //
+                // pair:
+                // ic_0*4
+                // ic_0*4+1
+                // ic_0*4+2
+                // ic_0*4+3
+
+                half2* packed_inputs_half2 =
+                    reinterpret_cast<half2*>(
+                        packed_inputs
+                    );
+
+
+                #pragma unroll
+                for (int pair = 0;
+                     pair < 4;
+                     pair++) {
+                      const int logical_pair_idx =
+                          ic_0 * 4 + pair;
+
+                      const int swizzled_pair_idx =
+                          logical_pair_idx ^ (threadIdx.x >> 1);
+
+                      packed_inputs_half2[pair] =
+                          shared_inputs[threadIdx.x][swizzled_pair_idx];
+                }
+
+
+                // =================================================
+                // 与原始 Kernel 完全相同的 INT4 反量化与计算
+                // =================================================
+
+                #pragma unroll
+                for (int ic_1 = 0;
+                     ic_1 < PACK_FACTOR;
+                     ic_1++) {
+
+                    float current_single_weight_fp =
+                        static_cast<float>(
+                            current_packed_weight
+                            & 0xF
+                        );
+
+
+                    float dequantized_weight =
+                        scaling_factor
+                        * (
+                            current_single_weight_fp
+                            - current_zeros
+                          );
+
+
+                    psum +=
+                        dequantized_weight
+                        * __half2float(
+                            packed_inputs[ic_1]
+                          );
+
+
+                    current_packed_weight >>= 4;
+                }
+            }
+        }
+
+
+        // ========================================================
+        // 必须保证 4 个 Warp 都使用完当前 shared tile，
+        // 才允许下一轮覆盖 shared_inputs。
+        // ========================================================
+
+        __syncthreads();
+    }
+
+
+    // ============================================================
+    // Warp Reduction
+    // ============================================================
+
+    psum = warp_reduce_sum(psum);
+
+
+    if (threadIdx.x == 0) {
+        outputs[oc_idx] =
+            __float2half(psum);
+    }
+}
 
 
 namespace matmul{
@@ -258,6 +921,169 @@ namespace matmul{
 
     PROFILE_END("gemv_forward_cuda");
   }
+  void MatmulOperator::gemv_forward_cuda_v1(
+    const struct matmul_params* params) {
+
+    const struct matrix* A = &params->A;
+    const struct matrix* B = &params->B;
+    const struct matrix* C = &params->C;
+
+    int num_in_channels =
+        A->column;
+
+    int num_out_feats =
+        C->row;
+
+    int num_out_channels =
+        C->column;
+
+    int group_size =
+        QK;
+
+
+    auto in_feats =
+        reinterpret_cast<float4*>(
+            A->half_data_ptr
+        );
+
+    auto kernel =
+        reinterpret_cast<uint32_t*>(
+            B->int32_data_ptr
+        );
+
+    auto zeros =
+        reinterpret_cast<uint32_t*>(
+            params->int32_zero_point
+        );
+
+    auto scaling_factors =
+        reinterpret_cast<half*>(
+            params->half_scales
+        );
+
+    auto out_feats =
+        reinterpret_cast<half*>(
+            C->half_data_ptr
+        );
+
+
+    dim3 num_blocks(
+        1,
+        num_out_channels / 4,
+        num_out_feats
+    );
+
+    dim3 num_threads(
+        32,
+        4
+    );
+
+
+    if (group_size == 128) {
+
+        gemv_kernel_g128_v1<<<num_blocks, num_threads>>>(
+                in_feats,
+                kernel,
+                zeros,
+                scaling_factors,
+                out_feats,
+                num_in_channels,
+                num_out_channels
+            );
+
+    }
+    else {
+
+        printf(
+            "gemv_kernel_g128_v1 only supports "
+            "group size 128\n"
+        );
+
+        exit(1);
+    }
+}
+  void MatmulOperator::gemv_forward_cuda_v2(
+    const struct matmul_params* params) {
+
+    const struct matrix* A = &params->A;
+    const struct matrix* B = &params->B;
+    const struct matrix* C = &params->C;
+
+    int num_in_channels =
+        A->column;
+
+    int num_out_feats =
+        C->row;
+
+    int num_out_channels =
+        C->column;
+
+    int group_size =
+        QK;
+
+
+    auto in_feats =
+        reinterpret_cast<float4*>(
+            A->half_data_ptr
+        );
+
+    auto kernel =
+        reinterpret_cast<uint32_t*>(
+            B->int32_data_ptr
+        );
+
+    auto zeros =
+        reinterpret_cast<uint32_t*>(
+            params->int32_zero_point
+        );
+
+    auto scaling_factors =
+        reinterpret_cast<half*>(
+            params->half_scales
+        );
+
+    auto out_feats =
+        reinterpret_cast<half*>(
+            C->half_data_ptr
+        );
+
+
+    dim3 num_blocks(
+        1,
+        num_out_channels / 4,
+        num_out_feats
+    );
+
+    dim3 num_threads(
+        32,
+        4
+    );
+
+
+    if (group_size == 128) {
+
+        gemv_kernel_g128_v2<<<num_blocks, num_threads>>>(
+                in_feats,
+                kernel,
+                zeros,
+                scaling_factors,
+                out_feats,
+                num_in_channels,
+                num_out_channels
+            );
+
+    }
+    else {
+
+        printf(
+            "gemv_kernel_g128_v2 only supports "
+            "group size 128\n"
+        );
+
+        exit(1);
+    }
+}
+
 
   void MatmulOperator::mat_mul_accelerator_int4_fast(const struct matmul_params *params) {
     // TODO: remove this
@@ -268,3 +1094,4 @@ namespace matmul{
   };
 
 }  // namespace matmul
+

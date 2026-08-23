@@ -53,6 +53,7 @@ static inline int make_divisible_host(int c, int divisor) {
 void benchmark_gemv(
     int IC,
     int OC,
+    int version,
     int warmup_iters = 20,
     int benchmark_iters = 200
 ) {
@@ -287,6 +288,24 @@ void benchmark_gemv(
 
     matmul::MatmulOperator op;
 
+    auto launch_gemv = [&]() {
+
+    if (version == 2) {
+
+        op.gemv_forward_cuda_v2(&params);
+
+    }
+    else if (version == 1) {
+
+        op.gemv_forward_cuda_v1(&params);
+
+    }
+    else {
+
+        op.gemv_forward_cuda(&params);
+    }
+};
+
 
     // ========================================================
     // 6. Warmup（预热）
@@ -298,7 +317,7 @@ void benchmark_gemv(
     // ========================================================
 
     for (int i = 0; i < warmup_iters; ++i) {
-        op.gemv_forward_cuda(&params);
+        launch_gemv();
     }
 
     CUDA_CHECK(cudaGetLastError());
@@ -357,7 +376,7 @@ void benchmark_gemv(
     CUDA_CHECK(cudaEventRecord(start));
 
     for (int i = 0; i < benchmark_iters; ++i) {
-        op.gemv_forward_cuda(&params);
+        launch_gemv();
     }
 
     CUDA_CHECK(cudaEventRecord(stop));
@@ -486,6 +505,31 @@ void benchmark_gemv(
         << expected
         << "\n";
 
+    std::string kernel_name;
+
+    if (version == 2) {
+
+        kernel_name =
+            "V2 XOR-Swizzled Shared Activation";
+
+    }
+    else if (version == 1) {
+
+        kernel_name =
+            "V1 Shared Activation";
+
+    }
+    else {
+
+        kernel_name =
+            "Original";
+    }
+
+    std::cout
+        << "Kernel            : "
+        << kernel_name
+        << "\n";
+        
     std::cout
         << "============================================\n";
 
@@ -508,54 +552,57 @@ void benchmark_gemv(
 // ============================================================
 // main
 // ============================================================
-int main() {
-    int device = 0;
+#include <string>
 
-    CUDA_CHECK(cudaSetDevice(device));
+int main(int argc, char** argv) {
 
-    cudaDeviceProp prop{};
+    if (argc != 2) {
+        std::cout
+            << "Usage:\n"
+            << "  ./benchmark_int4_gemv original\n"
+            << "  ./benchmark_int4_gemv v1\n"
+            << "  ./benchmark_int4_gemv v2\n";
+        return 1;
+    }
 
-    CUDA_CHECK(cudaGetDeviceProperties(
-        &prop,
-        device));
+    std::string mode = argv[1];
 
-    std::cout
-        << "GPU: "
-        << prop.name
-        << "\n";
+    if (mode == "original") {
 
-    std::cout
-        << "Compute Capability: "
-        << prop.major
-        << "."
-        << prop.minor
-        << "\n";
+        benchmark_gemv(
+            4096,
+            4096,
+            0
+        );
 
+    }
+    else if (mode == "v1") {
 
-    // ========================================================
-    // LLaMA2-7B 三个典型 Linear 形状
-    // ========================================================
+        benchmark_gemv(
+            4096,
+            4096,
+            1
+        );
 
-    // Attention O Projection 等
-    benchmark_gemv(
-        4096,
-        4096
-    );
+    }
+    else if (mode == "v2") {
 
-    // MLP Gate / Up Projection
-    benchmark_gemv(
-        4096,
-        11008
-    );
+        benchmark_gemv(
+            4096,
+            4096,
+            2
+        );
 
-    // MLP Down Projection
-    benchmark_gemv(
-        11008,
-        4096
-    );
+    }
+    else {
 
+        std::cerr
+            << "Unknown mode: "
+            << mode
+            << "\n";
 
-    CUDA_CHECK(cudaDeviceReset());
+        return 1;
+    }
 
     return 0;
 }

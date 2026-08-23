@@ -145,6 +145,8 @@ class MatmulOperator {
     void gemm_forward_cuda_half_test(const struct matmul_params *params, int split_k_iters);
     //// GEMV
     void gemv_forward_cuda(const struct matmul_params *params);
+    void gemv_forward_cuda_v1(const struct matmul_params *params);
+    void gemv_forward_cuda_v2(const struct matmul_params *params);
 
    private:
     float interval_to_us(struct timeval *start, struct timeval *end);
